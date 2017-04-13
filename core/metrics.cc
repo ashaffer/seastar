@@ -22,6 +22,9 @@
 #include "metrics.hh"
 #include "metrics_api.hh"
 #include <boost/range/algorithm.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/range/algorithm_ext/erase.hpp>
 
 namespace seastar {
 namespace metrics {
@@ -112,8 +115,8 @@ label shard_label("shard");
 label type_label("type");
 namespace impl {
 
-registered_metric::registered_metric(data_type type, metric_function f, description d, bool enabled) :
-        _type(type), _d(d), _enabled(enabled), _f(f), _impl(get_local_impl()) {
+registered_metric::registered_metric(metric_id id, data_type type, metric_function f, description d, bool enabled) :
+        _type(type), _d(d), _enabled(enabled), _f(f), _impl(get_local_impl()), _id(id) {
 }
 
 metric_value metric_value::operator+(const metric_value& c) {
@@ -172,7 +175,7 @@ metric_groups_impl& metric_groups_impl::add_metric(group_name_type name, const m
     metric_id id(name, md._impl->name, md._impl->labels);
 
     shared_ptr<registered_metric> rm =
-            ::make_shared<registered_metric>(md._impl->type.base_type, md._impl->f, md._impl->d, md._impl->enabled);
+            ::make_shared<registered_metric>(id, md._impl->type.base_type, md._impl->f, md._impl->d, md._impl->enabled);
 
     get_local_impl()->add_registration(id, rm);
 
@@ -199,6 +202,16 @@ bool metric_id::operator<(
     return as_tuple() < id2.as_tuple();
 }
 
+static std::string safe_name(const sstring& name) {
+    auto rep = boost::replace_all_copy(boost::replace_all_copy(name, "-", "_"), " ", "_");
+    boost::remove_erase_if(rep, boost::is_any_of("+()"));
+    return rep;
+}
+
+sstring metric_id::full_name() const {
+    return safe_name(_group + "_" + _name);
+}
+
 bool metric_id::operator==(
         const metric_id & id2) const {
     return as_tuple() == id2.as_tuple();
@@ -214,9 +227,16 @@ shared_ptr<impl>  get_local_impl() {
 
 void unregister_metric(const metric_id & id) {
     shared_ptr<impl> map = get_local_impl();
-    auto i = map->get_value_map().find(id);
+    auto i = map->get_value_map().find(id.full_name());
     if (i != map->get_value_map().end()) {
-        i->second = nullptr;
+        auto j = i->second.find(id.labels());
+        if (j != i->second.end()) {
+            j->second = nullptr;
+            i->second.erase(j);
+        }
+        if (i->second.empty()) {
+            map->get_value_map().erase(i);
+        }
     }
 }
 
@@ -228,8 +248,14 @@ values_copy get_values() {
     values_copy res;
 
     for (auto i : get_local_impl()->get_value_map()) {
-        if (i.second.get() && i.second->is_enabled()) {
-            res[i.first] = (*(i.second))();
+        std::vector<std::tuple<shared_ptr<registered_metric>, metric_value>> values;
+        for (auto&& v : i.second) {
+            if (v.second.get() && v.second->is_enabled()) {
+                values.emplace_back(v.second, (*(v.second))());
+            }
+        }
+        if (values.size() > 0) {
+            res[i.first] = std::move(values);
         }
     }
     return std::move(res);
@@ -245,9 +271,21 @@ instance_id_type shard() {
 }
 
 void impl::add_registration(const metric_id& id, shared_ptr<registered_metric> rm) {
-    _value_map[id] = rm;
+    sstring name = id.full_name();
+    if (_value_map.find(name) != _value_map.end()) {
+        auto& metric = _value_map[name];
+        if (metric.find(id.labels()) != metric.end()) {
+            throw std::runtime_error("registering metrics twice for metrics: " + name);
+        }
+        if (metric.begin()->second->get_type() != rm->get_type()) {
+            throw std::runtime_error("registering metrics " + name + " registered with different type.");
+        }
+        metric[id.labels()] = rm;
+    } else {
+        _value_map[name].info().type = rm->get_type();
+        _value_map[name][id.labels()] = rm;
+    }
 }
-
 
 }
 

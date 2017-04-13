@@ -199,6 +199,7 @@ tests = [
     'tests/udp_zero_copy',
     'tests/shared_ptr_test',
     'tests/weak_ptr_test',
+    'tests/checked_ptr_test',
     'tests/slab_test',
     'tests/fstream_test',
     'tests/distributed_test',
@@ -440,6 +441,7 @@ deps = {
     'tests/udp_zero_copy': ['tests/udp_zero_copy.cc'] + core + libnet,
     'tests/shared_ptr_test': ['tests/shared_ptr_test.cc'] + core,
     'tests/weak_ptr_test': ['tests/weak_ptr_test.cc'] + core,
+    'tests/checked_ptr_test': ['tests/checked_ptr_test.cc'] + core,
     'tests/slab_test': ['tests/slab_test.cc'] + core,
     'tests/fstream_test': ['tests/fstream_test.cc'] + core,
     'tests/distributed_test': ['tests/distributed_test.cc'] + core,
@@ -704,7 +706,7 @@ with open(buildfile, 'w') as f:
         builddir = {outdir}
         cxx = {cxx}
         # we disable _FORTIFY_SOURCE because it generates false positives with longjmp() (core/thread.cc)
-        cxxflags = -std=gnu++1y {dbgflag} {fpie} -Wall -Werror -Wno-error-deprecated -fvisibility=hidden -pthread -I. -U_FORTIFY_SOURCE {user_cflags} {warnings} {defines}
+        cxxflags = -std=gnu++1y {dbgflag} {fpie} -Wall -Werror -Wno-error=deprecated-declarations -fvisibility=hidden -pthread -I. -U_FORTIFY_SOURCE {user_cflags} {warnings} {defines}
         ldflags = {dbgflag} -Wl,--no-as-needed {static} {pie} -fvisibility=hidden -pthread {user_ldflags}
         libs = {libs}
         pool link_pool

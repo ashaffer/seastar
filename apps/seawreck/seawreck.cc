@@ -28,6 +28,7 @@
 #include "core/semaphore.hh"
 #include "core/future-util.hh"
 #include <chrono>
+#include <http/websocket.hh>
 
 template <typename... Args>
 void http_debug(const char* fmt, Args&&... args) {
@@ -41,20 +42,26 @@ private:
     unsigned _duration;
     unsigned _conn_per_core;
     unsigned _reqs_per_conn;
-    std::vector<connected_socket> _sockets;
+    boost::variant<std::vector<connected_socket>, std::vector<httpd::connected_websocket>> _sockets;
     semaphore _conn_connected{0};
     semaphore _conn_finished{0};
     timer<> _run_timer;
     bool _timer_based;
     bool _timer_done{false};
     uint64_t _total_reqs{0};
+    bool _websocket{false};
 public:
-    http_client(unsigned duration, unsigned total_conn, unsigned reqs_per_conn)
+    http_client(unsigned duration, unsigned total_conn, unsigned reqs_per_conn, bool websocket)
         : _duration(duration)
         , _conn_per_core(total_conn / smp::count)
         , _reqs_per_conn(reqs_per_conn)
         , _run_timer([this] { _timer_done = true; })
-        , _timer_based(reqs_per_conn == 0) {
+        , _timer_based(reqs_per_conn == 0)
+        , _websocket(websocket) {
+        if (websocket)
+            _sockets = std::vector<connected_socket>();
+        else
+            _sockets = std::vector<httpd::connected_websocket>();
     }
 
     class connection {
@@ -110,6 +117,40 @@ public:
         }
     };
 
+    class ws_connection {
+    private:
+        httpd::connected_websocket _fd;
+        httpd::websocket_input_stream _read_buf;
+        httpd::websocket_output_stream _write_buf;
+        http_client* _http_client;
+        uint64_t _nr_done{0};
+    public:
+        ws_connection(httpd::connected_websocket&& fd, http_client* client)
+                : _fd(std::move(fd))
+                , _read_buf(_fd.input())
+                , _write_buf(_fd.output())
+                , _http_client(client) {
+        }
+
+        uint64_t nr_done() {
+            return _nr_done;
+        }
+
+        future<> do_req() {
+            return _write_buf.write(httpd::websocket_message(httpd::websocket_opcode::TEXT, "")).then([this] {
+                return _read_buf.read().then([this] (httpd::websocket_message message) {
+                    _nr_done++;
+                    http_debug("%s\n", message.concat());
+                    if (_http_client->done(_nr_done)) {
+                        return make_ready_future();
+                    } else {
+                        return do_req();
+                    }
+                });
+            });
+        }
+    };
+
     future<uint64_t> total_reqs() {
         print("Requests on cpu %2d: %ld\n", engine().cpu_id(), _total_reqs);
         return make_ready_future<uint64_t>(_total_reqs);
@@ -125,12 +166,25 @@ public:
 
     future<> connect(ipv4_addr server_addr) {
         // Establish all the TCP connections first
-        for (unsigned i = 0; i < _conn_per_core; i++) {
-            engine().net().connect(make_ipv4_address(server_addr)).then([this] (connected_socket fd) {
-                _sockets.push_back(std::move(fd));
-                http_debug("Established connection %6d on cpu %3d\n", _conn_connected.current(), engine().cpu_id());
-                _conn_connected.signal();
-            }).or_terminate();
+        if (_websocket) {
+            for (unsigned i = 0; i < _conn_per_core; i++) {
+                httpd::connected_websocket::connect_websocket(make_ipv4_address(server_addr))
+                        .then([this](httpd::connected_websocket fd) {
+                            boost::get<std::vector<httpd::connected_websocket>>(_sockets).push_back(std::move(fd));
+                            http_debug("Established connection %6d on cpu %3d\n", _conn_connected.current(),
+                                       engine().cpu_id());
+                            _conn_connected.signal();
+                        }).or_terminate();
+            }
+        }
+        else {
+            for (unsigned i = 0; i < _conn_per_core; i++) {
+                engine().net().connect(make_ipv4_address(server_addr)).then([this] (connected_socket fd) {
+                    boost::get<std::vector<connected_socket>>(_sockets).push_back(std::move(fd));
+                    http_debug("Established connection %6d on cpu %3d\n", _conn_connected.current(), engine().cpu_id());
+                    _conn_connected.signal();
+                }).or_terminate();
+            }
         }
         return _conn_connected.wait(_conn_per_core);
     }
@@ -141,19 +195,38 @@ public:
         if (_timer_based) {
             _run_timer.arm(std::chrono::seconds(_duration));
         }
-        for (auto&& fd : _sockets) {
-            auto conn = new connection(std::move(fd), this);
-            conn->do_req().then_wrapped([this, conn] (auto&& f) {
-                http_debug("Finished connection %6d on cpu %3d\n", _conn_finished.current(), engine().cpu_id());
-                _total_reqs += conn->nr_done();
-                _conn_finished.signal();
-                delete conn;
-                try {
-                    f.get();
-                } catch (std::exception& ex) {
-                    print("http request error: %s\n", ex.what());
-                }
-            });
+
+        if (_websocket) {
+            for (auto&& fd : boost::get<std::vector<httpd::connected_websocket>>(_sockets)) {
+                auto conn = new ws_connection(std::move(fd), this);
+                conn->do_req().then_wrapped([this, conn] (auto&& f) {
+                    http_debug("Finished connection %6d on cpu %3d\n", _conn_finished.current(), engine().cpu_id());
+                    _total_reqs += conn->nr_done();
+                    _conn_finished.signal();
+                    delete conn;
+                    try {
+                        f.get();
+                    } catch (std::exception& ex) {
+                        print("websocket error: %s\n", ex.what());
+                    }
+                });
+            }
+        }
+        else {
+            for (auto&& fd : boost::get<std::vector<connected_socket>>(_sockets)) {
+                auto conn = new connection(std::move(fd), this);
+                conn->do_req().then_wrapped([this, conn] (auto&& f) {
+                    http_debug("Finished connection %6d on cpu %3d\n", _conn_finished.current(), engine().cpu_id());
+                    _total_reqs += conn->nr_done();
+                    _conn_finished.signal();
+                    delete conn;
+                    try {
+                        f.get();
+                    } catch (std::exception& ex) {
+                        print("http request error: %s\n", ex.what());
+                    }
+                });
+            }
         }
 
         // All finished
@@ -172,7 +245,8 @@ int main(int ac, char** av) {
         ("server,s", bpo::value<std::string>()->default_value("192.168.66.100:10000"), "Server address")
         ("conn,c", bpo::value<unsigned>()->default_value(100), "total connections")
         ("reqs,r", bpo::value<unsigned>()->default_value(0), "reqs per connection")
-        ("duration,d", bpo::value<unsigned>()->default_value(10), "duration of the test in seconds)");
+        ("duration,d", bpo::value<unsigned>()->default_value(10), "duration of the test in seconds)")
+        ("websocket,w", bpo::value<bool>()->default_value(false), "benchmark websocket");
 
     return app.run(ac, av, [&app] () -> future<int> {
         auto& config = app.configuration();
@@ -180,6 +254,7 @@ int main(int ac, char** av) {
         auto reqs_per_conn = config["reqs"].as<unsigned>();
         auto total_conn= config["conn"].as<unsigned>();
         auto duration = config["duration"].as<unsigned>();
+        auto websocket = config["websocket"].as<bool>();
 
         if (total_conn % smp::count != 0) {
             print("Error: conn needs to be n * cpu_nr\n");
@@ -194,7 +269,7 @@ int main(int ac, char** av) {
         print("Server: %s\n", server);
         print("Connections: %u\n", total_conn);
         print("Requests/connection: %s\n", reqs_per_conn == 0 ? "dynamic (timer based)" : std::to_string(reqs_per_conn));
-        return http_clients->start(std::move(duration), std::move(total_conn), std::move(reqs_per_conn)).then([http_clients, started, server] {
+        return http_clients->start(std::move(duration), std::move(total_conn), std::move(reqs_per_conn), std::move(websocket)).then([http_clients, started, server] {
             return http_clients->invoke_on_all(&http_client::connect, ipv4_addr{server});
         }).then([http_clients] {
             return http_clients->invoke_on_all(&http_client::run);

@@ -59,9 +59,9 @@ public:
         , _timer_based(reqs_per_conn == 0)
         , _websocket(websocket) {
         if (websocket)
-            _sockets = std::vector<connected_socket>();
-        else
             _sockets = std::vector<httpd::connected_websocket>();
+        else
+            _sockets = std::vector<connected_socket>();
     }
 
     class connection {
@@ -137,7 +137,7 @@ public:
         }
 
         future<> do_req() {
-            return _write_buf.write(httpd::websocket_message(httpd::websocket_opcode::TEXT, "")).then([this] {
+            return _write_buf.write(httpd::websocket_message(httpd::websocket_opcode::TEXT, "Hello")).then([this] {
                 return _read_buf.read().then([this] (httpd::websocket_message message) {
                     _nr_done++;
                     http_debug("%s\n", message.concat());

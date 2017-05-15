@@ -11,25 +11,47 @@
 
 namespace httpd {
 
-class websocket_output_stream final {
+class websocket_output_stream_base {
     output_stream<char> _stream;
 public:
-    websocket_output_stream() = default;
+    websocket_output_stream_base() = default;
 
-    websocket_output_stream(output_stream<char> stream) : _stream(std::move(stream)) {}
+    websocket_output_stream_base(output_stream<char> stream) : _stream(std::move(stream)) {}
 
-    websocket_output_stream(websocket_output_stream &&) = default;
+    websocket_output_stream_base(websocket_output_stream_base &&) = default;
 
-    websocket_output_stream &operator=(websocket_output_stream &&) = default;
+    websocket_output_stream_base &operator=(websocket_output_stream_base &&) = default;
 
-    future<> write(httpd::websocket_message message);
-    future<> write(websocket_opcode kind, temporary_buffer<char>);
     future<> close() { return _stream.close(); };
-private:
+protected:
+    virtual future<> write(httpd::websocket_message message);
     friend class reactor;
 };
 
-class websocket_input_stream final {
+template<websocket_type type>
+class websocket_output_stream final : public websocket_output_stream_base {};
+
+template<>
+class websocket_output_stream<CLIENT> final : public websocket_output_stream_base {
+using websocket_output_stream_base::websocket_output_stream_base;
+public:
+    future<> write(httpd::websocket_message message) override final {
+        message.done_mask();
+        return websocket_output_stream_base::write(std::move(message));
+    };
+};
+
+template<>
+class websocket_output_stream<SERVER> final : public websocket_output_stream_base {
+using websocket_output_stream_base::websocket_output_stream_base;
+public:
+    future<> write(httpd::websocket_message message) override final {
+        message.done();
+        return websocket_output_stream_base::write(std::move(message));
+    };
+};
+
+class websocket_input_stream_base {
     input_stream<char> _stream;
     inbound_websocket_fragment _fragment;
     websocket_message _lastmassage;
@@ -37,13 +59,13 @@ class websocket_input_stream final {
     uint32_t _index = 0;
 
 public:
-    websocket_input_stream() = default;
+    websocket_input_stream_base() = default;
 
-    explicit websocket_input_stream(input_stream<char> stream) : _stream(std::move(stream)) {}
+    websocket_input_stream_base(input_stream<char> stream) : _stream(std::move(stream)) {}
 
-    websocket_input_stream(websocket_input_stream &&) = default;
+    websocket_input_stream_base(websocket_input_stream_base &&) = default;
 
-    websocket_input_stream &operator=(websocket_input_stream &&) = default;
+    websocket_input_stream_base &operator=(websocket_input_stream_base &&) = default;
 
     future<httpd::websocket_message> read();
 
@@ -52,6 +74,20 @@ public:
     future<> close() { return _stream.close(); }
 };
 
+template<websocket_type type>
+class websocket_input_stream final : public websocket_input_stream_base {};
+
+template<>
+class websocket_input_stream<CLIENT> final : public websocket_input_stream_base {
+    using websocket_input_stream_base::websocket_input_stream_base;
+};
+
+template<>
+class websocket_input_stream<SERVER> final : public websocket_input_stream_base {
+    using websocket_input_stream_base::websocket_input_stream_base;
+};
+
+template<websocket_type type>
 class connected_websocket {
 private:
     connected_socket _socket;
@@ -59,31 +95,34 @@ private:
 public:
     socket_address remote_adress;
 
-    connected_websocket(connected_socket socket, const socket_address remote_adress) noexcept;
-
-    connected_websocket(connected_websocket &&cs) noexcept;
-
-    connected_websocket &operator=(connected_websocket &&cs) noexcept;
-
-    websocket_input_stream input() {
-        return websocket_input_stream(std::move(_socket.input()));
+    connected_websocket(connected_socket socket, const socket_address remote_adress) noexcept :
+            _socket(std::move(socket)), remote_adress(remote_adress) {
     }
 
-    websocket_output_stream output() {
-        return websocket_output_stream(std::move(_socket.output()));
+    connected_websocket(connected_websocket &&cs) noexcept : _socket(
+            std::move(cs._socket)), remote_adress(cs.remote_adress) {
     }
 
-    void shutdown_output() {
-        _socket.shutdown_output();
+    connected_websocket &operator=(connected_websocket &&cs) noexcept {
+        _socket = std::move(cs._socket);
+        remote_adress = std::move(cs.remote_adress);
+        return *this;
+    };
+
+    websocket_input_stream<type> input() {
+        return websocket_input_stream<type>(std::move(_socket.input()));
     }
 
-    void shutdown_input() {
-        _socket.shutdown_input();
+    websocket_output_stream<type> output() {
+        return websocket_output_stream<type>(std::move(_socket.output()));
     }
 
-    static sstring generate_websocket_key(sstring nonce);
-    static future<connected_websocket> connect_websocket(socket_address sa, socket_address local = socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}}));
+    void shutdown_output() { _socket.shutdown_output(); }
+
+    void shutdown_input() { _socket.shutdown_input(); }
 };
+    sstring generate_websocket_key(sstring nonce);
+    future<connected_websocket<websocket_type::CLIENT>> connect_websocket(socket_address sa, socket_address local = socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}}));
 }
 
 #endif //SEASTARPLAYGROUND_WEBSOCKET_HPP

@@ -151,8 +151,8 @@ public:
 
         future<> do_req() {
             auto start = std::chrono::steady_clock::now();
-            return _write_buf.write(httpd::websocket_message(httpd::websocket_opcode::TEXT, "Hello")).then([this, start] {
-                return _read_buf.read().then([this, start] (httpd::websocket_message message) {
+            return _write_buf.write(httpd::websocket_message<httpd::websocket_type::CLIENT>(httpd::websocket_opcode::TEXT, "Hello")).then([this, start] {
+                return _read_buf.read().then([this, start] (httpd::websocket_message<httpd::websocket_type::CLIENT> message) {
                     auto ping = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
                     if (ping > _max_latency)
                         _max_latency = ping;

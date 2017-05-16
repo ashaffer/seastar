@@ -75,6 +75,9 @@ public:
         http_response_parser _parser;
         http_client* _http_client;
         uint64_t _nr_done{0};
+        long _max_latency{0};
+        long _min_latency{INT_MAX};
+
     public:
         connection(connected_socket&& fd, http_client* client)
             : _fd(std::move(fd))
@@ -87,12 +90,21 @@ public:
             return _nr_done;
         }
 
+        long max_latency() {
+            return _max_latency;
+        }
+
+        long min_latency() {
+            return _min_latency;
+        }
+
         future<> do_req() {
+            auto start = std::chrono::steady_clock::now();
             return _write_buf.write("GET / HTTP/1.1\r\nHost: 127.0.0.1:10000\r\n\r\n").then([this] {
                 return _write_buf.flush();
-            }).then([this] {
+            }).then([this, start] {
                 _parser.init();
-                return _read_buf.consume(_parser).then([this] {
+                return _read_buf.consume(_parser).then([this, start] {
                     // Read HTTP response header first
                     if (_parser.eof()) {
                         return make_ready_future<>();
@@ -106,8 +118,13 @@ public:
                     auto content_len = std::stoi(it->second);
                     http_debug("Content-Length = %d\n", content_len);
                     // Read HTTP response body
-                    return _read_buf.read_exactly(content_len).then([this] (temporary_buffer<char> buf) {
+                    return _read_buf.read_exactly(content_len).then([this, start] (temporary_buffer<char> buf) {
                         _nr_done++;
+                        auto ping = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+                        if (ping > _max_latency)
+                            _max_latency = ping;
+                        if (ping < _min_latency)
+                            _min_latency = ping;
                         http_debug("%s\n", buf.get());
                         if (_http_client->done(_nr_done)) {
                             return make_ready_future();
@@ -249,6 +266,10 @@ public:
                 conn->do_req().then_wrapped([this, conn] (auto&& f) {
                     http_debug("Finished connection %6d on cpu %3d\n", _conn_finished.current(), engine().cpu_id());
                     _total_reqs += conn->nr_done();
+                    if (conn->max_latency() > _max_latency)
+                        _max_latency = conn->max_latency();
+                    if (conn->min_latency() < _min_latency)
+                        _min_latency = conn->min_latency();
                     _conn_finished.signal();
                     delete conn;
                     try {
@@ -313,7 +334,7 @@ int main(int ac, char** av) {
         ("conn,c", bpo::value<unsigned>()->default_value(100), "total connections")
         ("reqs,r", bpo::value<unsigned>()->default_value(0), "reqs per connection")
         ("duration,d", bpo::value<unsigned>()->default_value(10), "duration of the test in seconds)")
-        ("websocket,w", bpo::value<bool>()->default_value(false), "benchmark websocket");
+        ("websocket,w", bpo::bool_switch()->default_value(false), "benchmark websocket");
 
     return app.run(ac, av, [&app] () -> future<int> {
         auto& config = app.configuration();
@@ -346,7 +367,7 @@ int main(int ac, char** av) {
             // All the http requests are finished
             auto finished = steady_clock_type::now();
             auto elapsed = finished - started;
-            auto secs = static_cast<double>(elapsed.count() / 1000000000.0);
+            auto secs = elapsed.count() / 1000000000.0;
             print("Total cpus: %u\n", smp::count);
             print("Total requests: %u\n", total_reqs);
             print("Total time: %f\n", secs);

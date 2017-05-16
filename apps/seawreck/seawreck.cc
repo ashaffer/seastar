@@ -50,6 +50,9 @@ private:
     bool _timer_done{false};
     uint64_t _total_reqs{0};
     bool _websocket{false};
+    long _max_latency{0};
+    long _min_latency{INT_MAX};
+
 public:
     http_client(unsigned duration, unsigned total_conn, unsigned reqs_per_conn, bool websocket)
         : _duration(duration)
@@ -124,6 +127,8 @@ public:
         httpd::websocket_output_stream<httpd::websocket_type::CLIENT> _write_buf;
         http_client* _http_client;
         uint64_t _nr_done{0};
+        long _max_latency{0};
+        long _min_latency{INT_MAX};
     public:
         ws_connection(httpd::connected_websocket<httpd::websocket_type::CLIENT>&& fd, http_client* client)
                 : _fd(std::move(fd))
@@ -136,9 +141,23 @@ public:
             return _nr_done;
         }
 
+        long max_latency() {
+            return _max_latency;
+        }
+
+        long min_latency() {
+            return _min_latency;
+        }
+
         future<> do_req() {
-            return _write_buf.write(httpd::websocket_message(httpd::websocket_opcode::TEXT, "Hello")).then([this] {
-                return _read_buf.read().then([this] (httpd::websocket_message message) {
+            auto start = std::chrono::steady_clock::now();
+            return _write_buf.write(httpd::websocket_message(httpd::websocket_opcode::TEXT, "Hello")).then([this, start] {
+                return _read_buf.read().then([this, start] (httpd::websocket_message message) {
+                    auto ping = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+                    if (ping > _max_latency)
+                        _max_latency = ping;
+                    if (ping < _min_latency)
+                        _min_latency = ping;
                     _nr_done++;
                     if (_http_client->done(_nr_done)) {
                         return make_ready_future();
@@ -153,6 +172,14 @@ public:
     future<uint64_t> total_reqs() {
         print("Requests on cpu %2d: %ld\n", engine().cpu_id(), _total_reqs);
         return make_ready_future<uint64_t>(_total_reqs);
+    }
+
+    long max_latency() {
+        return _max_latency;
+    }
+
+    long min_latency() {
+        return _min_latency;
     }
 
     bool done(uint64_t nr_done) {
@@ -202,6 +229,10 @@ public:
                 conn->do_req().then_wrapped([this, conn] (auto&& f) {
                     http_debug("Finished connection %6d on cpu %3d\n", _conn_finished.current(), engine().cpu_id());
                     _total_reqs += conn->nr_done();
+                    if (conn->max_latency() > _max_latency)
+                        _max_latency = conn->max_latency();
+                    if (conn->min_latency() < _min_latency)
+                        _min_latency = conn->min_latency();
                     _conn_finished.signal();
                     delete conn;
                     try {
@@ -234,6 +265,42 @@ public:
     }
     future<> stop() {
         return make_ready_future();
+    }
+};
+
+// Implements @Reducer concept.
+template <typename Result, typename Addend = Result>
+class max {
+private:
+    Result _result;
+public:
+    future<> operator()(const Addend& value) {
+        if (value > _result)
+            _result += value;
+        return make_ready_future<>();
+    }
+    Result get() && {
+        return std::move(_result);
+    }
+};
+
+// Implements @Reducer concept.
+template <typename Result, typename Addend = Result>
+class min {
+private:
+    Result _result;
+    bool init{false};
+public:
+    future<> operator()(const Addend& value) {
+        if (value < _result || !init)
+        {
+            _result += value;
+            init = true;
+        }
+        return make_ready_future<>();
+    }
+    Result get() && {
+        return std::move(_result);
     }
 };
 
@@ -276,23 +343,30 @@ int main(int ac, char** av) {
         }).then([http_clients] {
             return http_clients->map_reduce(adder<uint64_t>(), &http_client::total_reqs);
         }).then([http_clients, started] (auto total_reqs) {
-           // All the http requests are finished
-           auto finished = steady_clock_type::now();
-           auto elapsed = finished - started;
-           auto secs = static_cast<double>(elapsed.count() / 1000000000.0);
-           print("Total cpus: %u\n", smp::count);
-           print("Total requests: %u\n", total_reqs);
-           print("Total time: %f\n", secs);
-           print("Requests/sec: %f\n", static_cast<double>(total_reqs) / secs);
-           print("==========     done     ============\n");
-           return http_clients->stop().then([http_clients] {
-               // FIXME: If we call engine().exit(0) here to exit when
-               // requests are done. The tcp connection will not be closed
-               // properly, becasue we exit too earily and the FIN packets are
-               // not exchanged.
+            // All the http requests are finished
+            auto finished = steady_clock_type::now();
+            auto elapsed = finished - started;
+            auto secs = static_cast<double>(elapsed.count() / 1000000000.0);
+            print("Total cpus: %u\n", smp::count);
+            print("Total requests: %u\n", total_reqs);
+            print("Total time: %f\n", secs);
+            print("Requests/sec: %f\n", static_cast<double>(total_reqs) / secs);
+        }).then([http_clients] {
+            return when_all(http_clients->map_reduce(max<long>(), &http_client::max_latency),
+                            http_clients->map_reduce(min<long>(), &http_client::min_latency));
+        }).then([http_clients] (std::tuple<future<long>, future<long>> joined) {
+            print("Max latency : %u ms\n", std::get<0>(joined).get0());
+            print("Min latency : %u ms\n", std::get<1>(joined).get0());
+        }).then([http_clients] {
+            print("==========     done     ============\n");
+            return http_clients->stop().then([http_clients] {
+                // FIXME: If we call engine().exit(0) here to exit when
+                // requests are done. The tcp connection will not be closed
+                // properly, becasue we exit too earily and the FIN packets are
+                // not exchanged.
                 delete http_clients;
                 return make_ready_future<int>(0);
-           });
+            });
         });
     });
 }

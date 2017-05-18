@@ -57,20 +57,22 @@ public:
     future<> close() { return _stream.close(); }
 };
 
-    template<websocket_type type>
+template<websocket_type type>
 class websocket_input_stream final : public websocket_input_stream_base {
 using websocket_input_stream_base::websocket_input_stream_base;
 private:
-    inbound_websocket_fragment<type> _fragment;
-    websocket_message<type> _lastmassage;
+    std::vector<inbound_websocket_fragment<type>> _fragments;
+    inbound_websocket_fragment<type> _last_fragments;
+    websocket_message<type> _last_massage;
 public:
     future<> read_fragment() {
         auto parse_fragment = [this] {
-            if (_buf.size() - _index > 2)
-                _fragment.parse(_buf, &_index);
+            if (_buf.size() - _index > 2) {
+              _last_fragments = inbound_websocket_fragment<type>(_buf, &_index);
+            }
         };
 
-        _fragment.reset();
+      _last_fragments.reset();
         if (!_buf || _index >= _buf.size())
             return _stream.read().then([this, parse_fragment](temporary_buffer<char> buf) {
                 _buf = std::move(buf);
@@ -82,23 +84,24 @@ public:
     }
 
     future<httpd::websocket_message<type>> read() {
-        _lastmassage.reset();
+        _fragments.clear();
         return repeat([this] { // gather all fragments and concatenate full message
+            _last_massage.reset();
             return read_fragment().then([this] {
-                if (!_fragment)
-                    return stop_iteration::yes;
-                else if (_fragment.fin) {
-                    if (!_lastmassage)
-                        _lastmassage = websocket_message<type>(std::move(_fragment));
+                if (!_last_fragments)
+                    throw std::exception();
+                else if (_last_fragments.fin) {
+                    if (!_last_massage)
+                        _last_massage = websocket_message<type>(_fragments);
                     else
-                        _lastmassage.append(std::move(_fragment));
+                        _fragments.push_back(std::move(_last_fragments));
                     return stop_iteration::yes;
-                } else if (_fragment.opcode() == CONTINUATION)
-                    _lastmassage.append(std::move(_fragment));
+                } else if (_last_fragments.opcode() == CONTINUATION)
+                  _fragments.push_back(std::move(_last_fragments));
                 return stop_iteration::no;
             });
         }).then([this] {
-            return std::move(_lastmassage);
+            return std::move(_last_massage);
         });
     }
 

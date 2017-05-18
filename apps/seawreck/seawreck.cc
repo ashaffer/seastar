@@ -20,6 +20,7 @@
  */
 
 #include "http/http_response_parser.hh"
+#include "http/websocket.hh"
 #include "core/print.hh"
 #include "core/reactor.hh"
 #include "core/app-template.hh"
@@ -28,7 +29,7 @@
 #include "core/semaphore.hh"
 #include "core/future-util.hh"
 #include <chrono>
-#include <http/websocket.hh>
+#include <climits>
 
 template <typename... Args>
 void http_debug(const char* fmt, Args&&... args) {
@@ -52,15 +53,17 @@ private:
     bool _websocket{false};
     long _max_latency{0};
     long _min_latency{INT_MAX};
+    unsigned _payload_size;
 
 public:
-    http_client(unsigned duration, unsigned total_conn, unsigned reqs_per_conn, bool websocket)
+    http_client(unsigned duration, unsigned total_conn, unsigned reqs_per_conn, bool websocket, unsigned payload_size)
         : _duration(duration)
         , _conn_per_core(total_conn / smp::count)
         , _reqs_per_conn(reqs_per_conn)
         , _run_timer([this] { _timer_done = true; })
         , _timer_based(reqs_per_conn == 0)
-        , _websocket(websocket) {
+        , _websocket(websocket)
+        , _payload_size(payload_size) {
         if (websocket)
             _sockets = std::vector<httpd::connected_websocket<httpd::websocket_type::CLIENT>>();
         else
@@ -146,12 +149,18 @@ public:
         uint64_t _nr_done{0};
         long _max_latency{0};
         long _min_latency{INT_MAX};
+        sstring _payload;
     public:
         ws_connection(httpd::connected_websocket<httpd::websocket_type::CLIENT>&& fd, http_client* client)
                 : _fd(std::move(fd))
                 , _read_buf(_fd.input())
                 , _write_buf(_fd.output())
-                , _http_client(client) {
+                , _http_client(client)
+                , _payload(client->_payload_size, '\0') {
+            using random_bytes_engine = std::independent_bits_engine<
+              std::default_random_engine, std::numeric_limits<unsigned char>::digits, unsigned char>;
+            random_bytes_engine rbe;
+            std::generate(_payload.begin(), _payload.end(), std::ref(rbe));
         }
 
         uint64_t nr_done() {
@@ -168,7 +177,8 @@ public:
 
         future<> do_req() {
             auto start = std::chrono::steady_clock::now();
-            return _write_buf.write(httpd::websocket_message<httpd::websocket_type::CLIENT>(httpd::websocket_opcode::TEXT, "Hello")).then([this, start] {
+            return _write_buf.write(httpd::websocket_message<httpd::websocket_type::CLIENT>
+              (httpd::websocket_opcode::BINARY, _payload)).then([this, start] {
                 return _read_buf.read().then([this, start] (httpd::websocket_message<httpd::websocket_type::CLIENT> message) {
                     auto ping = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
                     if (ping > _max_latency)
@@ -334,7 +344,8 @@ int main(int ac, char** av) {
         ("conn,c", bpo::value<unsigned>()->default_value(100), "total connections")
         ("reqs,r", bpo::value<unsigned>()->default_value(0), "reqs per connection")
         ("duration,d", bpo::value<unsigned>()->default_value(10), "duration of the test in seconds)")
-        ("websocket,w", bpo::bool_switch()->default_value(false), "benchmark websocket");
+        ("websocket,w", bpo::bool_switch()->default_value(false), "benchmark websocket")
+        ("size,z", bpo::value<unsigned>()->default_value(20), "websocket request payload size");
 
     return app.run(ac, av, [&app] () -> future<int> {
         auto& config = app.configuration();
@@ -343,6 +354,7 @@ int main(int ac, char** av) {
         auto total_conn= config["conn"].as<unsigned>();
         auto duration = config["duration"].as<unsigned>();
         auto websocket = config["websocket"].as<bool>();
+        auto payload_size = config["size"].as<unsigned>();
 
         if (total_conn % smp::count != 0) {
             print("Error: conn needs to be n * cpu_nr\n");
@@ -354,10 +366,12 @@ int main(int ac, char** av) {
         // Start http requests on all the cores
         auto started = steady_clock_type::now();
         print("========== http_client ============\n");
+        print("Benchmark: %s\n", websocket ? "websocket" : "http");
         print("Server: %s\n", server);
         print("Connections: %u\n", total_conn);
         print("Requests/connection: %s\n", reqs_per_conn == 0 ? "dynamic (timer based)" : std::to_string(reqs_per_conn));
-        return http_clients->start(std::move(duration), std::move(total_conn), std::move(reqs_per_conn), std::move(websocket)).then([http_clients, started, server] {
+        return http_clients->start(std::move(duration), std::move(total_conn), std::move(reqs_per_conn), std::move
+            (payload_size),  std::move(websocket)).then([http_clients, started, server] {
             return http_clients->invoke_on_all(&http_client::connect, ipv4_addr{server});
         }).then([http_clients] {
             return http_clients->invoke_on_all(&http_client::run);

@@ -84,19 +84,19 @@ public:
 
     future<httpd::websocket_message<type>> read() {
         _fragments.clear();
-        return repeat([this] { // gather all fragments and concatenate full message
+        return repeat([this] { // gather all fragments
             return read_fragment().then([this] {
                 if (!_last_fragment)
                     throw std::exception();
                 else if (_last_fragment.fin) {
-                    _fragments.push_back(std::move(_last_fragment));
+                    _fragments.push_back(std::move(_last_fragment)); //fixme emplace_back would be nice
                     return stop_iteration::yes;
                 } else if (_last_fragment.opcode() == CONTINUATION)
-                  _fragments.push_back(std::move(_last_fragment));
+                  _fragments.push_back(std::move(_last_fragment)); //fixme emplace_back would be nice
                 return stop_iteration::no;
             });
         }).then([this] {
-            return websocket_message<type>(_fragments);
+            return websocket_message<type>(_fragments); //concatenate full message
         });
     }
 

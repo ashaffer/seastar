@@ -53,6 +53,7 @@ private:
     bool _websocket{false};
     long _max_latency{0};
     long _min_latency{INT_MAX};
+    double _sum_avr_latency{0};
     unsigned _payload_size;
 
 public:
@@ -149,6 +150,7 @@ public:
         uint64_t _nr_done{0};
         long _max_latency{0};
         long _min_latency{INT_MAX};
+        long _sum_latency{0};
         sstring _payload;
     public:
         ws_connection(httpd::connected_websocket<httpd::websocket_type::CLIENT>&& fd, http_client* client)
@@ -175,6 +177,10 @@ public:
             return _min_latency;
         }
 
+        double avr_latency() {
+          return (double)_sum_latency / (double)_nr_done;
+        }
+
         future<> do_req() {
             auto start = std::chrono::steady_clock::now();
             return _write_buf.write(httpd::websocket_message<httpd::websocket_type::CLIENT>
@@ -183,6 +189,7 @@ public:
                     auto ping = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
                     if (std::strncmp(_payload.begin(), message.payload.begin(), _http_client->_payload_size) != 0)
                       throw std::runtime_error("payload don't match");
+                    _sum_latency += ping;
                     if (ping > _max_latency)
                         _max_latency = ping;
                     if (ping < _min_latency)
@@ -209,6 +216,10 @@ public:
 
     long min_latency() {
         return _min_latency;
+    }
+
+    double avr_latency() {
+      return _sum_avr_latency / (double)_conn_per_core;
     }
 
     bool done(uint64_t nr_done) {
@@ -258,6 +269,7 @@ public:
                 conn->do_req().then_wrapped([this, conn] (auto&& f) {
                     http_debug("Finished connection %6d on cpu %3d\n", _conn_finished.current(), engine().cpu_id());
                     _total_reqs += conn->nr_done();
+                    _sum_avr_latency += conn->avr_latency();
                     if (conn->max_latency() > _max_latency)
                         _max_latency = conn->max_latency();
                     if (conn->min_latency() < _min_latency)
@@ -390,10 +402,12 @@ int main(int ac, char** av) {
             print("Requests/sec: %f\n", static_cast<double>(total_reqs) / secs);
         }).then([http_clients] {
             return when_all(http_clients->map_reduce(max<long>(), &http_client::max_latency),
-                            http_clients->map_reduce(min<long>(), &http_client::min_latency));
-        }).then([http_clients] (std::tuple<future<long>, future<long>> joined) {
+                            http_clients->map_reduce(min<long>(), &http_client::min_latency),
+                            http_clients->map_reduce(adder<double>(), &http_client::avr_latency));
+        }).then([http_clients] (std::tuple<future<long>, future<long>, future<double>> joined) {
             print("Max latency : %u ms\n", std::get<0>(joined).get0());
             print("Min latency : %u ms\n", std::get<1>(joined).get0());
+            print("Avr latency : %f ms\n", std::get<2>(joined).get0() / (double)smp::count);
         }).then([http_clients] {
             print("==========     done     ============\n");
             return http_clients->stop().then([http_clients] {

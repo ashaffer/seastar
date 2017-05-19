@@ -33,7 +33,7 @@ template<websocket_type type>
 class websocket_output_stream final : public websocket_output_stream_base {
 using websocket_output_stream_base::websocket_output_stream_base;
 public:
-    future<> write(httpd::websocket_message<type>&& message) {
+    future<> write(httpd::websocket_message<type> message) {
         message.done();
         return websocket_output_stream_base::write(std::move(message));
     };
@@ -62,6 +62,7 @@ class websocket_input_stream final : public websocket_input_stream_base {
 using websocket_input_stream_base::websocket_input_stream_base;
 private:
     std::vector<inbound_websocket_fragment<type>> _fragmented_message;
+    websocket_message<type> _message;
 public:
     future<inbound_websocket_fragment<type>> read_fragment() {
         if (!_buf || _index >= _buf.size()) {
@@ -74,25 +75,33 @@ public:
         return make_ready_future<inbound_websocket_fragment<type>>(std::move(inbound_websocket_fragment<type>(_buf, &_index)));
     }
 
-    //FIXME : RFC 6455 specified that a control frame MAY be injected in the middle of a fragmented message.
     future<httpd::websocket_message<type>> read() {
         _fragmented_message.clear();
         return repeat([this] { // gather all fragments
-            return read_fragment().then([this] (inbound_websocket_fragment<type>&& fragment) {
+            return read_fragment().then([this](inbound_websocket_fragment<type> &&fragment) {
                 if (!fragment)
                     throw std::exception();
+                else if (fragment.opcode() > 0x2) {
+                    _message = websocket_message<type>(fragment);
+                    return stop_iteration::yes;
+                }
                 else if (fragment.fin) {
-                    _fragmented_message.push_back(std::move(fragment)); //fixme emplace_back would be nice
+                    if (_fragmented_message.size() > 0) {
+                        _fragmented_message.push_back(std::move(fragment));
+                        _message = websocket_message<type>(_fragmented_message);
+                    } else
+                        _message = websocket_message<type>(fragment);
                     return stop_iteration::yes;
                 } else if (fragment.opcode() == CONTINUATION)
-                  _fragmented_message.push_back(std::move(fragment)); //fixme emplace_back would be nice
+                    _fragmented_message.push_back(std::move(fragment)); //fixme emplace_back would be nice
+                else
+                    return stop_iteration::yes;
                 return stop_iteration::no;
             });
         }).then([this] {
-            return websocket_message<type>(_fragmented_message); //concatenate full message
+            return std::move(_message);
         });
     }
-
 };
 
 template<websocket_type type>

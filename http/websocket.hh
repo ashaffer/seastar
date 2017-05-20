@@ -28,7 +28,7 @@ public:
     future<> flush() { return _stream.flush(); };
 
 protected:
-    future<> write(httpd::websocket_message_base message);
+    future<> write(temporary_buffer<char> header, httpd::websocket_message_base message);
     friend class reactor;
 };
 
@@ -37,16 +37,14 @@ class websocket_output_stream final : public websocket_output_stream_base {
 using websocket_output_stream_base::websocket_output_stream_base;
 public:
     future<> write(httpd::websocket_message<type> message) {
-        message.done();
-        return websocket_output_stream_base::write(std::move(message));
+        auto header = message.get_header();
+        return websocket_output_stream_base::write(std::move(header), std::move(message));
     };
 };
 
 class websocket_input_stream_base {
 protected:
     input_stream<char> _stream;
-    temporary_buffer<char> _buf;
-    uint32_t _index = 0;
 
 public:
     websocket_input_stream_base() = default;
@@ -68,14 +66,20 @@ private:
     websocket_message<type> _message;
 public:
     future<inbound_websocket_fragment<type>> read_fragment() {
-        if (!_buf || _index >= _buf.size()) {
-          return _stream.read().then([this] (temporary_buffer<char>&& buf) {
-            _buf = std::move(buf);
-            _index = 0;
-            return inbound_websocket_fragment<type>(_buf, &_index);
-          });
-        }
-        return make_ready_future<inbound_websocket_fragment<type>>(std::move(inbound_websocket_fragment<type>(_buf, &_index)));
+        return _stream.read_exactly(sizeof(uint16_t)).then([this] (temporary_buffer<char>&& header) {
+            websocket_fragment_header fragment_header(header);
+            if (fragment_header.extended_header_size() > 0) {
+                return _stream.read_exactly(fragment_header.extended_header_size()).then([this, fragment_header] (temporary_buffer<char> extended_header) mutable {
+                    fragment_header.feed_extended_header(extended_header);
+                    return _stream.read_exactly(fragment_header.length).then([this, fragment_header] (temporary_buffer<char>&& payload) {
+                        return inbound_websocket_fragment<type>(fragment_header, payload);
+                    });
+                });
+            }
+            return _stream.read_exactly(fragment_header.length).then([this, fragment_header] (temporary_buffer<char>&& payload) {
+                return inbound_websocket_fragment<type>(fragment_header, payload);
+            });
+        });
     }
 
     future<httpd::websocket_message<type>> read() {
@@ -84,18 +88,18 @@ public:
             return read_fragment().then([this](inbound_websocket_fragment<type> &&fragment) {
                 if (!fragment)
                     throw std::exception();
-                else if (fragment.opcode > 0x2) {
+                else if (fragment.header.opcode > 0x2) {
                     _message = websocket_message<type>(fragment);
                     return stop_iteration::yes;
                 }
-                else if (fragment.fin) {
+                else if (fragment.header.fin) {
                     if (_fragmented_message.size() > 0) {
                         _fragmented_message.push_back(std::move(fragment));
                         _message = websocket_message<type>(_fragmented_message);
                     } else
                         _message = websocket_message<type>(fragment);
                     return stop_iteration::yes;
-                } else if (fragment.opcode == CONTINUATION)
+                } else if (fragment.header.opcode == CONTINUATION)
                     _fragmented_message.push_back(std::move(fragment)); //fixme emplace_back would be nice
                 else
                     return stop_iteration::yes;

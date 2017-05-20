@@ -24,6 +24,9 @@ public:
     websocket_output_stream_base &operator=(websocket_output_stream_base &&) = default;
 
     future<> close() { return _stream.close(); };
+
+    future<> flush() { return _stream.flush(); };
+
 protected:
     future<> write(httpd::websocket_message_base message);
     friend class reactor;
@@ -81,7 +84,7 @@ public:
             return read_fragment().then([this](inbound_websocket_fragment<type> &&fragment) {
                 if (!fragment)
                     throw std::exception();
-                else if (fragment.opcode() > 0x2) {
+                else if (fragment.opcode > 0x2) {
                     _message = websocket_message<type>(fragment);
                     return stop_iteration::yes;
                 }
@@ -92,7 +95,7 @@ public:
                     } else
                         _message = websocket_message<type>(fragment);
                     return stop_iteration::yes;
-                } else if (fragment.opcode() == CONTINUATION)
+                } else if (fragment.opcode == CONTINUATION)
                     _fragmented_message.push_back(std::move(fragment)); //fixme emplace_back would be nice
                 else
                     return stop_iteration::yes;

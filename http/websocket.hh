@@ -65,7 +65,7 @@ private:
     std::vector<inbound_websocket_fragment<type>> _fragmented_message;
     websocket_message<type> _message;
 public:
-    future<inbound_websocket_fragment<type>> read_fragment() {
+    future<inbound_websocket_fragment<type>> read_fragment() noexcept {
         return _stream.read_exactly(sizeof(uint16_t)).then([this] (temporary_buffer<char>&& header) {
             websocket_fragment_header fragment_header(header);
             if (fragment_header.extended_header_size() > 0) {
@@ -82,12 +82,12 @@ public:
         });
     }
 
-    future<httpd::websocket_message<type>> read() {
+    future<httpd::websocket_message<type>> read() noexcept {
         _fragmented_message.clear();
         return repeat([this] { // gather all fragments
             return read_fragment().then([this](inbound_websocket_fragment<type> &&fragment) {
                 if (!fragment)
-                    throw std::exception();
+                    return stop_iteration::yes;
                 else if (fragment.header.opcode > 0x2) {
                     _message = websocket_message<type>(fragment);
                     return stop_iteration::yes;

@@ -67,11 +67,17 @@ private:
 public:
     future<inbound_websocket_fragment<type>> read_fragment() noexcept {
         return _stream.read_exactly(sizeof(uint16_t)).then([this] (temporary_buffer<char>&& header) {
+            if (!header)
+                throw std::exception();
             websocket_fragment_header fragment_header(header);
             if (fragment_header.extended_header_size() > 0) {
                 return _stream.read_exactly(fragment_header.extended_header_size()).then([this, fragment_header] (temporary_buffer<char> extended_header) mutable {
+                    if (!extended_header)
+                        throw std::exception();
                     fragment_header.feed_extended_header(extended_header);
                     return _stream.read_exactly(fragment_header.length).then([this, fragment_header] (temporary_buffer<char>&& payload) {
+                        if (!payload)
+                            throw std::exception();
                         return inbound_websocket_fragment<type>(fragment_header, payload);
                     });
                 });

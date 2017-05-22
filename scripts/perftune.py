@@ -86,6 +86,11 @@ def restart_irqbalance(banned_irqs):
             config_file = '/etc/sysconfig/irqbalance'
             options_key = 'IRQBALANCE_ARGS'
             systemd = True
+        elif os.path.exists('/etc/conf.d/irqbalance'):
+            config_file = '/etc/conf.d/irqbalance'
+            options_key = 'IRQBALANCE_OPTS'
+            with open('/proc/1/comm', 'r') as comm:
+                systemd = 'systemd' in comm.read()
         else:
             print("Unknown system configuration - not restarting irqbalance!")
             print("You have to prevent it from moving IRQs {} manually!".format(banned_irqs_list))
@@ -476,13 +481,14 @@ class NetPerfTuner(PerfTunerBase):
         Otherwise, we will use only IRQs which names fit one of the patterns above.
         """
         irqs2procline = get_irqs2procline_map()
-        all_irqs = learn_all_irqs_one("/sys/class/net/{}/device".format(iface), irqs2procline, iface)
+        # filter 'all_irqs' to only reference valid keys from 'irqs2procline' and avoid an IndexError on the 'irqs' search below
+        all_irqs = set(learn_all_irqs_one("/sys/class/net/{}/device".format(iface), irqs2procline, iface)).intersection(irqs2procline.keys())
         fp_irqs_re = re.compile("\-TxRx\-|\-fp\-|\-Tx\-Rx\-")
         irqs = list(filter(lambda irq : fp_irqs_re.search(irqs2procline[irq]), all_irqs))
         if len(irqs) > 0:
             return irqs
         else:
-            return all_irqs
+            return list(all_irqs)
 
     def __learn_irqs(self):
         """

@@ -27,6 +27,8 @@
 #include <malloc.h>
 #include <string.h>
 
+namespace seastar {
+
 class file_data_source_impl : public data_source_impl {
     struct issued_read {
         uint64_t _pos;
@@ -245,7 +247,7 @@ private:
             _read_buffers.emplace_back(_pos, actual_size, futurize<future<temporary_buffer<char>>>::apply([&] {
                     return _file.dma_read_bulk<char>(start, len, _options.io_priority_class);
             }).then_wrapped(
-                    [this, start, end, pos = _pos, remain = _remain] (future<temporary_buffer<char>> ret) {
+                    [this, start, pos = _pos, remain = _remain] (future<temporary_buffer<char>> ret) {
                 --_reads_in_progress;
                 if (_done && !_reads_in_progress) {
                     _done->set_value();
@@ -424,5 +426,7 @@ output_stream<char> make_file_output_stream(file f, size_t buffer_size) {
 
 output_stream<char> make_file_output_stream(file f, file_output_stream_options options) {
     return output_stream<char>(file_data_sink(std::move(f), options), options.buffer_size, true);
+}
+
 }
 

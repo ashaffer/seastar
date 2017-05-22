@@ -27,6 +27,7 @@
 #include <functional>
 #include <vector>
 
+namespace seastar {
 
 /// \defgroup memory-module Memory management
 ///
@@ -57,7 +58,7 @@ static constexpr size_t page_bits = 12;
 static constexpr size_t page_size = 1 << page_bits;       // 4K
 static constexpr size_t huge_page_size = 512 * page_size; // 2M
 
-void configure(std::vector<resource::memory> m,
+void configure(std::vector<resource::memory> m, bool mbind,
         std::experimental::optional<std::string> hugetlbfs_path = {});
 
 void enable_abort_on_allocation_failure();
@@ -207,9 +208,11 @@ public:
     size_t alignment() const { return _align; }
 };
 
-void* operator new(size_t size, with_alignment wa);
-void* operator new[](size_t size, with_alignment wa);
-void operator delete(void* ptr, with_alignment wa);
-void operator delete[](void* ptr, with_alignment wa);
+}
+
+void* operator new(size_t size, seastar::with_alignment wa);
+void* operator new[](size_t size, seastar::with_alignment wa);
+void operator delete(void* ptr, seastar::with_alignment wa);
+void operator delete[](void* ptr, seastar::with_alignment wa);
 
 #endif /* MEMORY_HH_ */

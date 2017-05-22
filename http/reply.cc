@@ -30,6 +30,8 @@
 //
 #include "reply.hh"
 
+namespace seastar {
+
 namespace httpd {
 
 namespace status_strings {
@@ -99,3 +101,5 @@ sstring reply::response_line() {
 }
 
 } // namespace server
+
+}

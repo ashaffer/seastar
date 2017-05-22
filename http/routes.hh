@@ -33,6 +33,8 @@
 #include "core/future-util.hh"
 #include "websocket.hh"
 
+namespace seastar {
+
 namespace httpd {
 
 /**
@@ -241,6 +243,8 @@ public:
  * @param param the parameter to look for
  */
 void verify_param(const httpd::request& req, const sstring& param);
+
+}
 
 }
 

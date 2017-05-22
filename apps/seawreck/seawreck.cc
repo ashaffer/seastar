@@ -144,8 +144,7 @@ public:
     class ws_connection {
     private:
         httpd::connected_websocket<httpd::websocket_type::CLIENT> _fd;
-        httpd::websocket_input_stream<httpd::websocket_type::CLIENT> _read_buf;
-        httpd::websocket_output_stream<httpd::websocket_type::CLIENT> _write_buf;
+        httpd::websocket_stream<httpd::websocket_type::CLIENT> _stream;
         http_client* _http_client;
         uint64_t _nr_done{0};
         long _max_latency{0};
@@ -155,8 +154,7 @@ public:
     public:
         ws_connection(httpd::connected_websocket<httpd::websocket_type::CLIENT>&& fd, http_client* client)
                 : _fd(std::move(fd))
-                , _read_buf(_fd.input())
-                , _write_buf(_fd.output())
+                , _stream(_fd.stream())
                 , _http_client(client)
                 , _payload(client->_payload_size, '\0') {
             using random_bytes_engine = std::independent_bits_engine<
@@ -183,9 +181,9 @@ public:
 
         future<> do_req() {
             auto start = std::chrono::steady_clock::now();
-            return _write_buf.write(httpd::websocket_message<httpd::websocket_type::CLIENT>
-              (httpd::websocket_opcode::BINARY, _payload)).then([this] { return _write_buf.flush(); }).then([this, start] {
-                return _read_buf.read().then([this, start] (httpd::websocket_message<httpd::websocket_type::CLIENT> message) {
+            return _stream.write(httpd::websocket_message<httpd::websocket_type::CLIENT>
+              (httpd::websocket_opcode::BINARY, _payload)).then([this] { return _stream.flush(); }).then([this, start] {
+                return _stream.read().then([this, start] (httpd::websocket_message<httpd::websocket_type::CLIENT> message) {
                     auto ping = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
                     if (std::strncmp(_payload.begin(), message.payload.begin(), _http_client->_payload_size) != 0)
                       throw std::runtime_error("payload don't match");

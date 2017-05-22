@@ -13,18 +13,19 @@
 namespace httpd {
 
 class websocket_output_stream_base {
+private:
     output_stream<char> _stream;
 public:
-    websocket_output_stream_base() = default;
 
-    websocket_output_stream_base(output_stream<char>&& stream) : _stream(std::move(stream)) {}
+    websocket_output_stream_base() = default; //FIXME should be deleted
 
-    websocket_output_stream_base(websocket_output_stream_base &&) = default;
+    websocket_output_stream_base(output_stream<char>&& stream) noexcept: _stream(std::move(stream)) { }
 
-    websocket_output_stream_base &operator=(websocket_output_stream_base &&) = default;
+    websocket_output_stream_base(websocket_output_stream_base &&) noexcept = default;
+
+    websocket_output_stream_base &operator=(websocket_output_stream_base &&) noexcept = default;
 
     future<> close() { return _stream.close(); };
-
     future<> flush() { return _stream.flush(); };
 
 protected:
@@ -47,13 +48,13 @@ protected:
     input_stream<char> _stream;
 
 public:
-    websocket_input_stream_base() = default;
+    websocket_input_stream_base() = default; //FIXME should be deleted
 
-    websocket_input_stream_base(input_stream<char>&& stream) : _stream(std::move(stream)) {}
+    websocket_input_stream_base(input_stream<char>&& stream) noexcept: _stream(std::move(stream)) { }
 
-    websocket_input_stream_base(websocket_input_stream_base &&) = default;
+    websocket_input_stream_base(websocket_input_stream_base &&) noexcept = default;
 
-    websocket_input_stream_base &operator=(websocket_input_stream_base &&) = default;
+    websocket_input_stream_base &operator=(websocket_input_stream_base &&) noexcept = default;
 
     future<> close() { return _stream.close(); }
 };
@@ -76,13 +77,15 @@ public:
                         throw std::exception();
                     fragment_header.feed_extended_header(extended_header);
                     return _stream.read_exactly(fragment_header.length).then([this, fragment_header] (temporary_buffer<char>&& payload) {
-                        if (!payload)
+                        if (!payload && fragment_header.length > 0)
                             throw std::exception();
                         return inbound_websocket_fragment<type>(fragment_header, payload);
                     });
                 });
             }
             return _stream.read_exactly(fragment_header.length).then([this, fragment_header] (temporary_buffer<char>&& payload) {
+                if (!payload && fragment_header.length > 0)
+                    throw std::exception();
                 return inbound_websocket_fragment<type>(fragment_header, payload);
             });
         });
@@ -92,8 +95,9 @@ public:
         _fragmented_message.clear();
         return repeat([this] { // gather all fragments
             return read_fragment().then([this](inbound_websocket_fragment<type> &&fragment) {
-                if (!fragment)
-                    return stop_iteration::yes;
+                if (!fragment) {
+                    throw std::exception();
+                }
                 else if (fragment.header.opcode > 0x2) {
                     _message = websocket_message<type>(fragment);
                     return stop_iteration::yes;
@@ -102,19 +106,69 @@ public:
                     if (_fragmented_message.size() > 0) {
                         _fragmented_message.push_back(std::move(fragment));
                         _message = websocket_message<type>(_fragmented_message);
-                    } else
+                    }
+                    else {
                         _message = websocket_message<type>(fragment);
+                    }
                     return stop_iteration::yes;
-                } else if (fragment.header.opcode == CONTINUATION)
-                    _fragmented_message.push_back(std::move(fragment)); //fixme emplace_back would be nice
-                else
-                    return stop_iteration::yes;
+                } else {
+                    _fragmented_message.push_back(std::move(fragment));
+                }
                 return stop_iteration::no;
             });
         }).then([this] {
             return std::move(_message);
         });
     }
+};
+
+//TODO Should specialize this class to implement SERVER/CLIENT close behavior
+template<websocket_type type>
+class websocket_stream {
+private:
+    websocket_input_stream<type> _input_stream;
+    websocket_output_stream<type> _output_stream;
+
+public:
+    websocket_stream(websocket_input_stream<type>&& input_stream,
+                     websocket_output_stream<type>&& output_stream) noexcept:
+            _input_stream(std::move(input_stream)),
+            _output_stream(std::move(output_stream)) { }
+
+    websocket_stream() noexcept = delete;
+    websocket_stream(websocket_stream &&) noexcept = default;
+    websocket_stream &operator=(websocket_stream &&) noexcept = default;
+
+    future<httpd::websocket_message<type>> read() {
+        return _input_stream.read().then_wrapped([this] (future<websocket_message<type>> f) {
+            if (f.failed()) {
+                return close().then([f = std::move(f)] () mutable -> future<httpd::websocket_message<type>> {
+                    return make_exception_future<httpd::websocket_message<type>>(f.get_exception());
+                });
+            }
+            auto&& message = f.get0();
+            if (message.opcode == CLOSE) {
+                return close().then([f = std::move(f)] () -> future<httpd::websocket_message<type>> {
+                    return make_exception_future<httpd::websocket_message<type>>(std::exception());
+                });
+            }
+            return make_ready_future<httpd::websocket_message<type>>(std::move(message));
+        });
+    }
+
+    future<> write(httpd::websocket_message<type> message) {
+        return _output_stream.write(std::move(message));
+    };
+
+    future<> close() { //TODO handle close code
+        return write(websocket_message<type>(CLOSE)).then([this] {
+            return _output_stream.flush();
+        }).finally([this] {
+            return when_all(_input_stream.close(), _output_stream.close()).discard_result();
+        });
+    };
+
+    future<> flush() { return _output_stream.flush(); };
 };
 
 template<websocket_type type>
@@ -124,6 +178,7 @@ private:
 
 public:
     socket_address remote_adress;
+    websocket_sate state = OPEN;
 
     connected_websocket(connected_socket socket, const socket_address remote_adress) noexcept :
             _socket(std::move(socket)), remote_adress(remote_adress) {
@@ -139,16 +194,12 @@ public:
         return *this;
     };
 
-    websocket_input_stream<type> input() {
-        return websocket_input_stream<type>(std::move(_socket.input()));
-    }
-
-    websocket_output_stream<type> output() {
-        return websocket_output_stream<type>(std::move(_socket.output()));
+    websocket_stream<type> stream() {
+        return websocket_stream<type>(websocket_input_stream<type>(std::move(_socket.input())),
+                                      websocket_output_stream<type>(std::move(_socket.output())));
     }
 
     void shutdown_output() { _socket.shutdown_output(); }
-
     void shutdown_input() { _socket.shutdown_input(); }
 };
     sstring generate_websocket_key(sstring nonce);

@@ -2,8 +2,7 @@
 // Created by hippolyteb on 3/9/17.
 //
 
-#ifndef SEASTARPLAYGROUND_WEBSOCKET_HPP
-#define SEASTARPLAYGROUND_WEBSOCKET_HPP
+#pragma once
 
 #include <core/reactor.hh>
 #include "request.hh"
@@ -17,12 +16,9 @@ private:
     output_stream<char> _stream;
 public:
 
-    websocket_output_stream_base() = default; //FIXME should be deleted
-
+    websocket_output_stream_base() noexcept = delete;
     websocket_output_stream_base(output_stream<char>&& stream) noexcept: _stream(std::move(stream)) { }
-
     websocket_output_stream_base(websocket_output_stream_base &&) noexcept = default;
-
     websocket_output_stream_base &operator=(websocket_output_stream_base &&) noexcept = default;
 
     future<> close() { return _stream.close(); };
@@ -48,12 +44,9 @@ protected:
     input_stream<char> _stream;
 
 public:
-    websocket_input_stream_base() = default; //FIXME should be deleted
-
+    websocket_input_stream_base() noexcept = delete;
     websocket_input_stream_base(input_stream<char>&& stream) noexcept: _stream(std::move(stream)) { }
-
     websocket_input_stream_base(websocket_input_stream_base &&) noexcept = default;
-
     websocket_input_stream_base &operator=(websocket_input_stream_base &&) noexcept = default;
 
     future<> close() { return _stream.close(); }
@@ -65,71 +58,85 @@ using websocket_input_stream_base::websocket_input_stream_base;
 private:
     std::vector<inbound_websocket_fragment<type>> _fragmented_message;
     websocket_message<type> _message;
+
 public:
-    future<inbound_websocket_fragment<type>> read_fragment() noexcept {
+    future<inbound_websocket_fragment<type>> read_fragment() {
         return _stream.read_exactly(sizeof(uint16_t)).then([this] (temporary_buffer<char>&& header) {
             if (!header)
-                throw std::exception();
+                throw websocket_exception(NORMAL_CLOSURE);
             websocket_fragment_header fragment_header(header);
             if (fragment_header.extended_header_size() > 0) {
                 return _stream.read_exactly(fragment_header.extended_header_size()).then([this, fragment_header] (temporary_buffer<char> extended_header) mutable {
                     if (!extended_header)
-                        throw std::exception();
+                        throw websocket_exception(NORMAL_CLOSURE);
                     fragment_header.feed_extended_header(extended_header);
                     return _stream.read_exactly(fragment_header.length).then([this, fragment_header] (temporary_buffer<char>&& payload) {
                         if (!payload && fragment_header.length > 0)
-                            throw std::exception();
+                            throw websocket_exception(NORMAL_CLOSURE);
                         return inbound_websocket_fragment<type>(fragment_header, payload);
                     });
                 });
             }
             return _stream.read_exactly(fragment_header.length).then([this, fragment_header] (temporary_buffer<char>&& payload) {
                 if (!payload && fragment_header.length > 0)
-                    throw std::exception();
+                    throw websocket_exception(NORMAL_CLOSURE);
                 return inbound_websocket_fragment<type>(fragment_header, payload);
             });
         });
     }
 
-    //TODO : Refactor this function based on fragment opcode. It's unreadable right now.
-    future<httpd::websocket_message<type>> read() noexcept {
+    future<httpd::websocket_message<type>> read() {
         return repeat([this] { // gather all fragments
             return read_fragment().then([this](inbound_websocket_fragment<type> &&fragment) {
-                if (!fragment) {
-                    throw std::exception();
-                }
-                else if (fragment.header.opcode > 0x2) {
-                    _message = websocket_message<type>(fragment);
-                    return stop_iteration::yes;
-                }
-                else if (fragment.header.fin) {
-                    if (!_fragmented_message.empty() && fragment.header.opcode == CONTINUATION) {
-                        _fragmented_message.push_back(std::move(fragment));
-                        _message = websocket_message<type>(_fragmented_message);
+                if (!fragment) { throw websocket_exception(PROTOCOL_ERROR); }
+                switch (fragment.header.opcode) {
+                    case CONTINUATION:
+                    {
+                        if (!_fragmented_message.empty()) { _fragmented_message.emplace_back(std::move(fragment)); }
+                        else { throw websocket_exception(PROTOCOL_ERROR); } //protocol error, close connection
+                        if (fragment.header.fin) {
+                            _message = websocket_message<type>(_fragmented_message);
+                            _fragmented_message.clear();
+                        }
+                        return stop_iteration(fragment.header.fin);
                     }
-                    else if (_fragmented_message.empty() && fragment.header.opcode != CONTINUATION) {
-                        _message = websocket_message<type>(fragment);
+
+                    case TEXT:
+                    case BINARY:
+                    {
+                        if (fragment.header.fin && _fragmented_message.empty()) {
+                            _message = websocket_message<type>(fragment);
+                        }
+                        else if (!fragment.header.fin && _fragmented_message.empty()) {
+                            _fragmented_message.emplace_back(std::move(fragment));
+                        }
+                        else { throw websocket_exception(PROTOCOL_ERROR); } //protocol error, close connection
+                        return stop_iteration(fragment.header.fin);
                     }
-                    else {
-                        throw std::exception();
+
+                    case PING:
+                    case PONG:
+                    {
+                        if (fragment.header.fin) { _message = websocket_message<type>(fragment); }
+                        else { throw websocket_exception(PROTOCOL_ERROR); } //protocol error, close connection
+                        return stop_iteration::yes;
                     }
-                    return stop_iteration::yes;
-                } else if ((fragment.header.opcode == CONTINUATION && !_fragmented_message.empty()) ||
-                        (fragment.header.opcode != CONTINUATION && _fragmented_message.empty())) {
-                    _fragmented_message.push_back(std::move(fragment));
-                    return stop_iteration::no;
+
+                    case CLOSE: //remote pair asked for close
+                        throw websocket_exception(NONE); //protocol error, close connection
+
+                    case RESERVED:
+                    default:
+                        throw websocket_exception(UNEXPECTED_CONDITION); //Hum.. this is embarrassing
                 }
-                throw std::exception();
             });
         }).then([this] {
-            if (_message.opcode == TEXT || _message.opcode == BINARY) //message is not an in-the-middle frame, so we clean up
-                _fragmented_message.clear();
             return std::move(_message);
         });
     }
 };
 
-//TODO Should specialize this class to implement SERVER/CLIENT close behavior
+//TODO Should specialize this class to implement SERVER/CLIENT close behavior. Only SERVER closing is tested
 template<websocket_type type>
 class websocket_stream {
 private:
@@ -142,23 +149,15 @@ public:
             _input_stream(std::move(input_stream)),
             _output_stream(std::move(output_stream)) { }
 
-    websocket_stream() noexcept = delete;
     websocket_stream(websocket_stream &&) noexcept = default;
     websocket_stream &operator=(websocket_stream &&) noexcept = default;
 
     future<httpd::websocket_message<type>> read() {
-        return _input_stream.read().then_wrapped([this] (future<websocket_message<type>> f) {
-            if (f.failed()) {
-                return close().then([f = std::move(f)] () mutable -> future<httpd::websocket_message<type>> {
-                    return make_exception_future<httpd::websocket_message<type>>(f.get_exception());
-                });
-            }
-            auto&& message = f.get0();
-            if (message.opcode == CLOSE) {
-                return close().then([f = std::move(f)] () -> future<httpd::websocket_message<type>> {
-                    return make_exception_future<httpd::websocket_message<type>>(std::exception());
-                });
-            }
+        return _input_stream.read().handle_exception_type([this] (websocket_exception& ex) {
+            return close(ex.status_code).then([ex = std::move(ex)] () -> future<httpd::websocket_message<type>> {
+                return make_exception_future<httpd::websocket_message<type>>(ex);
+            });
+        }).then([] (websocket_message<type> message) {
             return make_ready_future<httpd::websocket_message<type>>(std::move(message));
         });
     }
@@ -167,8 +166,8 @@ public:
         return _output_stream.write(std::move(message));
     };
 
-    future<> close() { //TODO handle close code
-        return write(websocket_message<type>(CLOSE)).then([this] {
+    future<> close(websocket_close_status_code code = NORMAL_CLOSURE) {
+        return write(websocket_message<type>::make_close_message(code)).then([this] {
             return _output_stream.flush();
         }).finally([this] {
             return when_all(_input_stream.close(), _output_stream.close()).discard_result();
@@ -211,5 +210,3 @@ public:
     sstring generate_websocket_key(sstring nonce);
     future<connected_websocket<websocket_type::CLIENT>> connect_websocket(socket_address sa, socket_address local = socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}}));
 }
-
-#endif //SEASTARPLAYGROUND_WEBSOCKET_HPP

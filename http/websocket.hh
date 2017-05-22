@@ -91,8 +91,8 @@ public:
         });
     }
 
+    //TODO : Refactor this function based on fragment opcode. It's unreadable right now.
     future<httpd::websocket_message<type>> read() noexcept {
-        _fragmented_message.clear();
         return repeat([this] { // gather all fragments
             return read_fragment().then([this](inbound_websocket_fragment<type> &&fragment) {
                 if (!fragment) {
@@ -103,20 +103,27 @@ public:
                     return stop_iteration::yes;
                 }
                 else if (fragment.header.fin) {
-                    if (_fragmented_message.size() > 0) {
+                    if (!_fragmented_message.empty() && fragment.header.opcode == CONTINUATION) {
                         _fragmented_message.push_back(std::move(fragment));
                         _message = websocket_message<type>(_fragmented_message);
                     }
-                    else {
+                    else if (_fragmented_message.empty() && fragment.header.opcode != CONTINUATION) {
                         _message = websocket_message<type>(fragment);
                     }
+                    else {
+                        throw std::exception();
+                    }
                     return stop_iteration::yes;
-                } else {
+                } else if ((fragment.header.opcode == CONTINUATION && !_fragmented_message.empty()) ||
+                        (fragment.header.opcode != CONTINUATION && _fragmented_message.empty())) {
                     _fragmented_message.push_back(std::move(fragment));
+                    return stop_iteration::no;
                 }
-                return stop_iteration::no;
+                throw std::exception();
             });
         }).then([this] {
+            if (_message.opcode == TEXT || _message.opcode == BINARY) //message is not an in-the-middle frame, so we clean up
+                _fragmented_message.clear();
             return std::move(_message);
         });
     }
@@ -178,7 +185,6 @@ private:
 
 public:
     socket_address remote_adress;
-    websocket_sate state = OPEN;
 
     connected_websocket(connected_socket socket, const socket_address remote_adress) noexcept :
             _socket(std::move(socket)), remote_adress(remote_adress) {

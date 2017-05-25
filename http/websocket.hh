@@ -1,6 +1,23 @@
-//
-// Created by hippolyteb on 3/9/17.
-//
+/*
+ * This file is open source software, licensed to you under the terms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ *
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+/*
+ * Copyright 2015 Cloudius Systems
+ */
 
 #pragma once
 
@@ -74,21 +91,27 @@ private:
     websocket::message<type> _message;
 
 public:
+    /*
+     * Websocket fragments can be sent in chop, using read_exactly leverage seastar network stack to make an exception
+     * the general case. So, we read_exactly(2) to get the next frame header and from there we read accordingly.
+     * As the RFC states, websocket frames are atomic/indivisible. They cannot be sent as multiple packets, so when the
+     * first read_exactly() returns, the next ones will return immediately.
+     */
     future<inbound_fragment<type>> read_fragment() {
         return _stream.read_exactly(sizeof(uint16_t)).then([this](temporary_buffer<char>&& header) {
             if (!header)
-                throw websocket_exception(NORMAL_CLOSURE);
+                throw websocket_exception(NORMAL_CLOSURE); //EOF
             fragment_header fragment_header(header);
             if (fragment_header.extended_header_size() > 0) {
                 return _stream.read_exactly(fragment_header.extended_header_size()).then(
                         [this, fragment_header](temporary_buffer<char> extended_header) mutable {
                             if (!extended_header)
-                                throw websocket_exception(NORMAL_CLOSURE);
+                                throw websocket_exception(NORMAL_CLOSURE); //EOF
                             fragment_header.feed_extended_header(extended_header);
                             return _stream.read_exactly(fragment_header.length).then(
                                     [this, fragment_header](temporary_buffer<char>&& payload) {
                                         if (!payload && fragment_header.length > 0)
-                                            throw websocket_exception(NORMAL_CLOSURE);
+                                            throw websocket_exception(NORMAL_CLOSURE); //EOF
                                         return inbound_fragment<type>(fragment_header, payload);
                                     });
                         });
@@ -96,12 +119,16 @@ public:
             return _stream.read_exactly(fragment_header.length).then(
                     [this, fragment_header](temporary_buffer<char>&& payload) {
                         if (!payload && fragment_header.length > 0)
-                            throw websocket_exception(NORMAL_CLOSURE);
+                            throw websocket_exception(NORMAL_CLOSURE); //EOF
                         return inbound_fragment<type>(fragment_header, payload);
                     });
         });
     }
 
+    /*
+     * Because empty websocket frames/messages are semantically valid, we cannot reproduce seastar standard behavior
+     * with dealing with EOF (testing operator bool()). So, we use exception instead to signal errors/eof.
+     */
     future<websocket::message<type>> read() {
         return repeat([this] { // gather all fragments
             return read_fragment().then([this](inbound_fragment<type>&& fragment) {
@@ -139,7 +166,7 @@ public:
 
                     case RESERVED:
                     default:
-                        throw websocket_exception(UNEXPECTED_CONDITION); //Hum.. this is embarrassing
+                        throw websocket_exception(UNEXPECTED_CONDITION); //"Hum.. this is embarrassing"
                 }
             });
         }).then([this] {
@@ -148,7 +175,11 @@ public:
     }
 };
 
-//TODO Should specialize this class to implement SERVER/CLIENT close behavior. Only SERVER closing is tested
+/*
+ * The websocket protocol specifies that, when closing a websocket connection, a CLOSE frame must be sent.
+ * Hence the need for a duplex stream able to send messages if a CLOSE frame is received, or if errors occurred
+ * when reading from the underlying socket_stream.
+ */
 template<websocket::endpoint_type type>
 class duplex_stream {
 private:
@@ -166,7 +197,7 @@ public:
     duplex_stream& operator=(duplex_stream&&) noexcept = default;
 
     future<websocket::message<type>> read() {
-        return _input_stream.read().handle_exception_type([this](websocket_exception& ex) {
+        return _input_stream.read().handle_exception_type([this] (websocket_exception& ex) {
             return close(ex.status_code).then([ex = std::move(ex)]() -> future<websocket::message<type>> {
                 return make_exception_future<websocket::message<type>>(ex);
             });
@@ -224,6 +255,12 @@ public:
 
 sstring encode_handshake_key(sstring nonce);
 
+/**
+ * Connect a websocket. Can throw if unable to reach and/or establish the connection to the remote host
+ * @param sa remote host to connect to
+ * @param local local address
+ * @return a connected_websocket
+ */
 future<connected_websocket<CLIENT>>
 connect(socket_address sa, socket_address local = socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}}));
 

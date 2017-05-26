@@ -263,12 +263,13 @@ public:
 sstring encode_handshake_key(sstring nonce);
 
 /**
- * Connect a websocket. Can throw if unable to reach and/or establish the connection to the remote host
+ * Connect a websocket. Can throw if unable to reach and/or establish the connection to the remote host.
+ * This function is provided for seawreck only, it has not been tested thoroughly.
  * @param sa remote host to connect to
  * @param local local address
- * @return a connected_websocket
+ * @return a connected_socket that can then be wrapped inside a connected_websocket
  */
-future<connected_websocket<CLIENT>>
+future<connected_socket>
 connect(socket_address sa, socket_address local = socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}}));
 
 }

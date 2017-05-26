@@ -46,7 +46,7 @@ private:
     unsigned _duration;
     unsigned _conn_per_core;
     unsigned _reqs_per_conn;
-    boost::variant<std::vector<connected_socket>, std::vector<httpd::websocket::connected_websocket<httpd::websocket::endpoint_type::CLIENT>>> _sockets;
+    std::vector<connected_socket> _sockets;
     semaphore _conn_connected{0};
     semaphore _conn_finished{0};
     timer<> _run_timer;
@@ -68,10 +68,6 @@ public:
         , _timer_based(reqs_per_conn == 0)
         , _websocket(websocket)
         , _payload_size(payload_size) {
-        if (websocket)
-            _sockets = std::vector<httpd::websocket::connected_websocket<httpd::websocket::endpoint_type::CLIENT>>();
-        else
-            _sockets = std::vector<connected_socket>();
     }
 
     class connection {
@@ -84,6 +80,7 @@ public:
         uint64_t _nr_done{0};
         long _max_latency{0};
         long _min_latency{INT_MAX};
+        long _sum_latency{0};
 
     public:
         connection(connected_socket&& fd, http_client* client)
@@ -103,6 +100,10 @@ public:
 
         long min_latency() {
             return _min_latency;
+        }
+
+        double avr_latency() {
+            return (double)_sum_latency / (double)_nr_done;
         }
 
         future<> do_req() {
@@ -128,6 +129,7 @@ public:
                     return _read_buf.read_exactly(content_len).then([this, start] (temporary_buffer<char> buf) {
                         _nr_done++;
                         auto ping = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+                        _sum_latency += ping;
                         if (ping > _max_latency)
                             _max_latency = ping;
                         if (ping < _min_latency)
@@ -146,24 +148,33 @@ public:
 
     class ws_connection {
     private:
-        httpd::websocket::connected_websocket<httpd::websocket::endpoint_type::CLIENT> _fd;
-        httpd::websocket::duplex_stream<httpd::websocket::endpoint_type::CLIENT> _stream;
+        connected_socket _fd;
+        input_stream<char> _read_buf;
+        output_stream<char> _write_buf;
         http_client* _http_client;
         uint64_t _nr_done{0};
         long _max_latency{0};
         long _min_latency{INT_MAX};
         long _sum_latency{0};
-        sstring _payload;
+        httpd::websocket::message<httpd::websocket::endpoint_type::CLIENT> _message;
+        temporary_buffer<char> _header;
+        long _read_value;
     public:
-        ws_connection(httpd::websocket::connected_websocket<httpd::websocket::endpoint_type::CLIENT>&& fd, http_client* client)
+        ws_connection(connected_socket&& fd, http_client* client)
                 : _fd(std::move(fd))
-                , _stream(_fd.stream())
-                , _http_client(client)
-                , _payload(client->_payload_size, '\0') {
+                , _read_buf(_fd.input())
+                , _write_buf(_fd.output())
+                , _http_client(client) {
             using random_bytes_engine = std::independent_bits_engine<
               std::default_random_engine, std::numeric_limits<unsigned char>::digits, unsigned char>;
             random_bytes_engine rbe;
-            std::generate(_payload.begin(), _payload.end(), std::ref(rbe));
+
+            sstring payload(client->_payload_size, '\0');
+
+            std::generate(payload.begin(), payload.end(), std::ref(rbe));
+            _message = httpd::websocket::message<httpd::websocket::endpoint_type::CLIENT>(httpd::websocket::opcode::BINARY, payload);
+            _header = _message.get_header();
+            _read_value = _header.size() - 4 + _message.payload.size();
         }
 
         uint64_t nr_done() {
@@ -183,13 +194,13 @@ public:
         }
 
         future<> do_req() {
+
             auto start = std::chrono::steady_clock::now();
-            return _stream.write(httpd::websocket::message<httpd::websocket::endpoint_type::CLIENT>
-              (httpd::websocket::opcode::BINARY, _payload)).then([this] { return _stream.flush(); }).then([this, start] {
-                return _stream.read().then([this, start] (httpd::websocket::message<httpd::websocket::endpoint_type::CLIENT> message) {
+            return _write_buf.write(temporary_buffer<char>(_header.begin(), _header.size())).then([this] {
+                _write_buf.write(temporary_buffer<char>(_message.payload.begin(), _message.payload.size()));
+            }).then([this] { return _write_buf.flush(); }).then([this, start] {
+                return _read_buf.skip(_read_value).then([this, start] {
                     auto ping = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-                    if (std::strncmp(_payload.begin(), message.payload.begin(), _http_client->_payload_size) != 0)
-                      throw std::runtime_error("payload don't match");
                     _sum_latency += ping;
                     if (ping > _max_latency)
                         _max_latency = ping;
@@ -236,9 +247,8 @@ public:
         if (_websocket) {
             for (unsigned i = 0; i < _conn_per_core; i++) {
                 httpd::websocket::connect(make_ipv4_address(server_addr)).then(
-                        [this](httpd::websocket::connected_websocket<httpd::websocket::endpoint_type::CLIENT> fd) {
-                            boost::get<std::vector<httpd::websocket::connected_websocket<httpd::websocket::endpoint_type::CLIENT>>>(
-                                    _sockets).push_back(std::move(fd));
+                        [this](connected_socket fd) {
+                            _sockets.push_back(std::move(fd));
                             http_debug("Established connection %6d on cpu %3d\n", _conn_connected.current(),
                                        engine().cpu_id());
                             _conn_connected.signal();
@@ -248,7 +258,7 @@ public:
         else {
             for (unsigned i = 0; i < _conn_per_core; i++) {
                 engine().net().connect(make_ipv4_address(server_addr)).then([this] (connected_socket fd) {
-                    boost::get<std::vector<connected_socket>>(_sockets).push_back(std::move(fd));
+                    _sockets.push_back(std::move(fd));
                     http_debug("Established connection %6d on cpu %3d\n", _conn_connected.current(), engine().cpu_id());
                     _conn_connected.signal();
                 }).or_terminate();
@@ -265,7 +275,7 @@ public:
         }
 
         if (_websocket) {
-            for (auto&& fd : boost::get<std::vector<httpd::websocket::connected_websocket<httpd::websocket::endpoint_type::CLIENT>>>(_sockets)) {
+            for (auto&& fd : _sockets) {
                 auto conn = new ws_connection(std::move(fd), this);
                 conn->do_req().then_wrapped([this, conn] (auto&& f) {
                     http_debug("Finished connection %6d on cpu %3d\n", _conn_finished.current(), engine().cpu_id());
@@ -286,11 +296,12 @@ public:
             }
         }
         else {
-            for (auto&& fd : boost::get<std::vector<connected_socket>>(_sockets)) {
+            for (auto&& fd : _sockets) {
                 auto conn = new connection(std::move(fd), this);
                 conn->do_req().then_wrapped([this, conn] (auto&& f) {
                     http_debug("Finished connection %6d on cpu %3d\n", _conn_finished.current(), engine().cpu_id());
                     _total_reqs += conn->nr_done();
+                    _sum_avr_latency += conn->avr_latency();
                     if (conn->max_latency() > _max_latency)
                         _max_latency = conn->max_latency();
                     if (conn->min_latency() < _min_latency)

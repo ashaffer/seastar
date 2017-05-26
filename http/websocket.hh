@@ -92,10 +92,11 @@ private:
 
 public:
     /*
-     * Websocket fragments can be sent in chop, using read_exactly leverage seastar network stack to make an exception
-     * the general case. So, we read_exactly(2) to get the next frame header and from there we read accordingly.
-     * As the RFC states, websocket frames are atomic/indivisible. They cannot be sent as multiple packets, so when the
-     * first read_exactly() returns, the next ones will return immediately.
+     * Websocket fragments can be sent in chops. Using read_exactly leverages seastar network stack to make
+     * the exception the general case. So, we read_exactly(2) to get the next frame header and from there we read
+     * accordingly.
+     * As the RFC states, websocket frames are atomic/indivisible. They cannot be sent as multiple TCP packets, so when
+     * the first read_exactly() returns, the next ones will return immediately because there are already buffered.
      */
     future<inbound_fragment<type>> read_fragment() {
         return _stream.read_exactly(sizeof(uint16_t)).then([this](temporary_buffer<char>&& header) {
@@ -103,11 +104,13 @@ public:
                 throw websocket_exception(NORMAL_CLOSURE); //EOF
             fragment_header fragment_header(header);
             if (fragment_header.extended_header_size() > 0) {
+                // The frame has an extended header (bigger payload size and/or there is a masking key)
                 return _stream.read_exactly(fragment_header.extended_header_size()).then(
                         [this, fragment_header](temporary_buffer<char> extended_header) mutable {
                             if (!extended_header)
                                 throw websocket_exception(NORMAL_CLOSURE); //EOF
                             fragment_header.feed_extended_header(extended_header);
+                            // We now know exactly how much to read to get the full frame payload
                             return _stream.read_exactly(fragment_header.length).then(
                                     [this, fragment_header](temporary_buffer<char>&& payload) {
                                         if (!payload && fragment_header.length > 0)
@@ -116,8 +119,10 @@ public:
                                     });
                         });
             }
+            // The frame doesn't have an extended header, so it's payload directly follows.
             return _stream.read_exactly(fragment_header.length).then(
                     [this, fragment_header](temporary_buffer<char>&& payload) {
+                        // Because empty frames are OK, an empty buffer does not necessarally means EOF.
                         if (!payload && fragment_header.length > 0)
                             throw websocket_exception(NORMAL_CLOSURE); //EOF
                         return inbound_fragment<type>(fragment_header, payload);
@@ -127,7 +132,8 @@ public:
 
     /*
      * Because empty websocket frames/messages are semantically valid, we cannot reproduce seastar standard behavior
-     * with dealing with EOF (testing operator bool()). So, we use exception instead to signal errors/eof.
+     * with dealing with EOF. So, we use exception instead to signal errors/eof.
+     * An exception always lead to closing the connection, so it should not hurt performance.
      */
     future<websocket::message<type>> read() {
         return repeat([this] { // gather all fragments
@@ -164,7 +170,8 @@ public:
                     case CLOSE: //remote pair asked for close
                         throw websocket_exception(NONE); //protocol error, close connection
 
-                    case RESERVED:
+                    case RESERVED: //protocol error, close connection
+                        throw websocket_exception(PROTOCOL_ERROR);
                     default:
                         throw websocket_exception(UNEXPECTED_CONDITION); //"Hum.. this is embarrassing"
                 }
@@ -176,9 +183,9 @@ public:
 };
 
 /*
- * The websocket protocol specifies that, when closing a websocket connection, a CLOSE frame must be sent.
- * Hence the need for a duplex stream able to send messages if a CLOSE frame is received, or if errors occurred
- * when reading from the underlying socket_stream.
+ * The websocket protocol specifies that, when closing a connection, a CLOSE frame must be sent. Hence the need for a
+ * duplex stream able to send messages if a CLOSE frame is received, or if errors occurred when reading from the
+ * underlying stream.
  */
 template<websocket::endpoint_type type>
 class duplex_stream {

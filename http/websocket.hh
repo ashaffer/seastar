@@ -87,11 +87,13 @@ template<websocket::endpoint_type type>
 class input_stream final : public input_stream_base {
     using input_stream_base::input_stream_base;
 private:
+    ///Represent a fragmented message
     std::vector<inbound_fragment<type>> _fragmented_message;
+    ///Used for non-fragmented message
     websocket::message<type> _message;
 
 public:
-    /*
+    /**
      * Websocket fragments can be sent in chops. Using read_exactly leverages seastar network stack to make
      * the exception the general case. So, we read_exactly(2) to get the next frame header and from there we read
      * accordingly.
@@ -113,6 +115,7 @@ public:
                             // We now know exactly how much to read to get the full frame payload
                             return _stream.read_exactly(fragment_header.length).then(
                                     [this, fragment_header](temporary_buffer<char>&& payload) {
+                                        // Because empty frames are OK, an empty buffer does not necessarally means EOF.
                                         if (!payload && fragment_header.length > 0)
                                             throw websocket_exception(NORMAL_CLOSURE); //EOF
                                         return inbound_fragment<type>(fragment_header, payload);
@@ -130,7 +133,7 @@ public:
         });
     }
 
-    /*
+    /**
      * Because empty websocket frames/messages are semantically valid, we cannot reproduce seastar standard behavior
      * with dealing with EOF. So, we use exception instead to signal errors/eof.
      * An exception always lead to closing the connection, so it should not hurt performance.
@@ -182,7 +185,7 @@ public:
     }
 };
 
-/*
+/**
  * The websocket protocol specifies that, when closing a connection, a CLOSE frame must be sent. Hence the need for a
  * duplex stream able to send messages if a CLOSE frame is received, or if errors occurred when reading from the
  * underlying stream.

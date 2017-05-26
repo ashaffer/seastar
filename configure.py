@@ -213,7 +213,6 @@ tests = [
     'tests/connect_test',
     'tests/chunked_fifo_test',
     'tests/circular_buffer_test',
-    'tests/scollectd_test',
     'tests/perf/perf_fstream',
     'tests/json_formatter_test',
     'tests/dns_test',
@@ -329,6 +328,8 @@ http = ['http/transformers.cc',
         'http/reply.cc',
         'http/request_parser.rl',
         'http/api_docs.cc',
+        'http/websocket.cc',
+        'http/websocket_message.cc'
         ]
 
 boost_test_lib = [
@@ -426,7 +427,7 @@ deps = {
     'tests/tcp_sctp_client': ['tests/tcp_sctp_client.cc'] + core + libnet,
     'tests/tls_test': ['tests/tls_test.cc'] + core + libnet,
     'tests/fair_queue_test': ['tests/fair_queue_test.cc'] + core,
-    'apps/seawreck/seawreck': ['apps/seawreck/seawreck.cc', 'http/http_response_parser.rl'] + core + libnet,
+    'apps/seawreck/seawreck': ['apps/seawreck/seawreck.cc', 'http/http_response_parser.rl'] + core + libnet + http,
     'apps/fair_queue_tester/fair_queue_tester': ['apps/fair_queue_tester/fair_queue_tester.cc'] + core,
     'apps/iotune/iotune': ['apps/iotune/iotune.cc'] + ['core/resource.cc', 'core/fsqual.cc'],
     'tests/blkdiscard_test': ['tests/blkdiscard_test.cc'] + core,
@@ -449,7 +450,6 @@ deps = {
     'tests/connect_test': ['tests/connect_test.cc'] + core + libnet,
     'tests/chunked_fifo_test': ['tests/chunked_fifo_test.cc'] + core,
     'tests/circular_buffer_test': ['tests/circular_buffer_test.cc'] + core,
-    'tests/scollectd_test': ['tests/scollectd_test.cc'] + core,
     'tests/perf/perf_fstream': ['tests/perf/perf_fstream.cc'] + core,
     'tests/json_formatter_test': ['tests/json_formatter_test.cc'] + core + http,
     'tests/dns_test': ['tests/dns_test.cc'] + core + libnet,
@@ -472,7 +472,6 @@ boost_tests = [
     'tests/fstream_test',
     'tests/rpc_test',
     'tests/connect_test',
-    'tests/scollectd_test',
     'tests/json_formatter_test',
     'tests/dns_test',
     'tests/execution_stage_test',
@@ -570,7 +569,7 @@ if args.dpdk_target:
     if args.with_osv:
         libs += '-lintel_dpdk -lrt -lm -ldl'
     else:
-        libs += '-Wl,--whole-archive -lrte_pmd_vmxnet3_uio -lrte_pmd_i40e -lrte_pmd_ixgbe -lrte_pmd_e1000 -lrte_pmd_ring -lrte_hash -lrte_kvargs -lrte_mbuf -lrte_ethdev -lrte_eal -lrte_mempool -lrte_ring -lrte_cmdline -lrte_cfgfile -Wl,--no-whole-archive -lrt -lm -ldl'
+        libs += '-Wl,--whole-archive -lrte_pmd_vmxnet3_uio -lrte_pmd_i40e -lrte_pmd_ixgbe -lrte_pmd_e1000 -lrte_pmd_ring -lrte_pmd_bnxt -lrte_pmd_cxgbe -lrte_pmd_ena -lrte_pmd_enic -lrte_pmd_fm10k -lrte_pmd_nfp -lrte_pmd_qede -lrte_pmd_sfc_efx -lrte_hash -lrte_kvargs -lrte_mbuf -lrte_ethdev -lrte_eal -lrte_mempool -lrte_ring -lrte_cmdline -lrte_cfgfile -Wl,--no-whole-archive -lrt -lm -ldl'
 
 args.user_cflags += ' -Ifmt'
 
@@ -840,7 +839,7 @@ with open(buildfile, 'w') as f:
             f.write('build {}: ragel {}\n'.format(hh, src))
         for hh in swaggers:
             src = swaggers[hh]
-            f.write('build {}: swagger {}\n'.format(hh,src))
+            f.write('build {}: swagger {} | json/json2code.py\n'.format(hh,src))
         for pb in protobufs:
             src = protobufs[pb]
             c_pb = pb.replace('.h','.cc')

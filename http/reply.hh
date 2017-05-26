@@ -35,6 +35,8 @@
 #include <unordered_map>
 #include "http/mime_types.hh"
 
+namespace seastar {
+
 namespace httpd {
 /**
  * A reply to be sent to a client.
@@ -59,7 +61,8 @@ struct reply {
         internal_server_error = 500, //!< internal_server_error
         not_implemented = 501, //!< not_implemented
         bad_gateway = 502, //!< bad_gateway
-        service_unavailable = 503  //!< service_unavailable
+        service_unavailable = 503,  //!< service_unavailable
+        switching_protocols = 101 //!< switching_protocols
     } _status;
 
     /**
@@ -130,3 +133,5 @@ struct reply {
 };
 
 } // namespace httpd
+
+}

@@ -33,7 +33,6 @@
 #include "core/queue.hh"
 #include "core/future-util.hh"
 #include "core/metrics_registration.hh"
-#include <iostream>
 #include <algorithm>
 #include <unordered_map>
 #include <queue>
@@ -42,12 +41,18 @@
 #include <cctype>
 #include <vector>
 #include <boost/intrusive/list.hpp>
+#include <boost/variant.hpp>
+#include <boost/algorithm/string.hpp>
 #include "reply.hh"
 #include "http/routes.hh"
+#include "http/websocket.hh"
+
+namespace seastar {
 
 namespace httpd {
 
 class http_server;
+
 class http_stats;
 
 using namespace std::chrono_literals;
@@ -68,7 +73,7 @@ class http_server {
     uint64_t _read_errors = 0;
     uint64_t _respond_errors = 0;
     sstring _date = http_date();
-    timer<> _date_format_timer { [this] {_date = http_date();} };
+    timer<> _date_format_timer { [this] { _date = http_date(); }};
     bool _stopping = false;
     promise<> _all_connections_stopped;
     future<> _stopped = _all_connections_stopped.get_future();
@@ -78,12 +83,14 @@ private:
             _all_connections_stopped.set_value();
         }
     }
+
 public:
     routes _routes;
 
     explicit http_server(const sstring& name) : _stats(*this, name) {
         _date_format_timer.arm_periodic(1s);
     }
+
     future<> listen(ipv4_addr addr) {
         listen_options lo;
         lo.reuse_address = true;
@@ -91,6 +98,7 @@ public:
         _stopped = when_all(std::move(_stopped), do_accepts(_listeners.size() - 1)).discard_result();
         return make_ready_future<>();
     }
+
     future<> stop() {
         _stopping = true;
         for (auto&& l : _listeners) {
@@ -101,27 +109,29 @@ public:
         }
         return std::move(_stopped);
     }
+
     future<> do_accepts(int which) {
         ++_connections_being_accepted;
         return _listeners[which].accept().then_wrapped(
-                [this, which] (future<connected_socket, socket_address> f_cs_sa) mutable {
+                [this, which](future<connected_socket, socket_address> f_cs_sa) mutable {
                     --_connections_being_accepted;
                     if (_stopping) {
                         maybe_idle();
                         return;
                     }
                     auto cs_sa = f_cs_sa.get();
-                    auto conn = new connection(*this, std::get<0>(std::move(cs_sa)), std::get<1>(std::move(cs_sa)));
-                    conn->process().then_wrapped([this, conn] (auto&& f) {
-                                delete conn;
-                                try {
-                                    f.get();
-                                } catch (std::exception& ex) {
-                                    std::cerr << "request error " << ex.what() << std::endl;
-                                }
-                            });
+                    auto conn = new connection(*this, std::get<0>(std::move(cs_sa)),
+                            std::get<1>(std::move(cs_sa)));
+                    conn->process().then_wrapped([conn](auto&& f) {
+                        delete conn;
+                        try {
+                            f.get();
+                        } catch (std::exception& ex) {
+                            std::cerr << "request error " << ex.what() << std::endl;
+                        }
+                    });
                     do_accepts(which);
-                }).then_wrapped([] (auto f) {
+                }).then_wrapped([](auto f) {
             try {
                 f.get();
             } catch (std::exception& ex) {
@@ -129,9 +139,18 @@ public:
             }
         });
     }
+
     class connection : public boost::intrusive::list_base_hook<> {
+        enum connection_status {
+            keep_open = 0,
+            close,
+            detach
+        };
+
         http_server& _server;
-        connected_socket _fd;
+        //The underlying sockets can become websockets
+        //FIXME boost::variant makes the code verbose and ugly
+        boost::variant<connected_socket, websocket::connected_websocket<websocket::endpoint_type::SERVER>> _fd;
         input_stream<char> _read_buf;
         output_stream<char> _write_buf;
         static constexpr size_t limit = 4096;
@@ -139,93 +158,132 @@ public:
         http_request_parser _parser;
         std::unique_ptr<request> _req;
         std::unique_ptr<reply> _resp;
+        socket_address _addr;
         // null element marks eof
-        queue<std::unique_ptr<reply>> _replies { 10 };bool _done = false;
+        queue<std::unique_ptr<reply>> _replies { 10 };
+        // connection_status disctates how the connection should be treated after the request as been served
+        connection_status _done = keep_open;
     public:
+
         connection(http_server& server, connected_socket&& fd,
                 socket_address addr)
-                : _server(server), _fd(std::move(fd)), _read_buf(_fd.input()), _write_buf(
-                        _fd.output()) {
+                : _server(server), _fd(std::move(fd)), _read_buf(boost::get<connected_socket>(_fd).input()),
+                _write_buf(boost::get<connected_socket>(_fd).output()), _addr(addr) {
             ++_server._total_connections;
             ++_server._current_connections;
             _server._connections.push_back(*this);
         }
+
         ~connection() {
             --_server._current_connections;
             _server._connections.erase(_server._connections.iterator_to(*this));
             _server.maybe_idle();
         }
+
         future<> process() {
             // Launch read and write "threads" simultaneously:
             return when_all(read(), respond()).then(
-                    [] (std::tuple<future<>, future<>> joined) {
+                    [this](std::tuple<future<>, future<>> joined) {
+                        if (_done == detach) {
+                            // The connection is now detached. It still exists but outside of read and write fibers
+                            sstring url = set_query_param(*_req.get());
+                            return _write_buf.flush().then([this, url] {
+                                _fd = std::move(websocket::connected_websocket<websocket::endpoint_type::SERVER>(
+                                        std::move(boost::get<connected_socket>(_fd)), _addr));
+                                return _server._routes.handle_ws(url,
+                                        boost::get<websocket::connected_websocket<websocket::endpoint_type::SERVER>>
+                                                (_fd), std::move(_req));
+                            }).then_wrapped([](future<> f) {
+                                if (f.failed()) {
+                                    f.get_exception();
+                                }
+                            });
+                        }
                         // FIXME: notify any exceptions in joined?
                         return make_ready_future<>();
                     });
         }
+
         void shutdown() {
-            _fd.shutdown_input();
-            _fd.shutdown_output();
+
+            if (_fd.which() == 0) {
+                boost::get<connected_socket>(_fd).shutdown_input();
+                boost::get<connected_socket>(_fd).shutdown_output();
+            } else {
+                boost::get<websocket::connected_websocket<websocket::endpoint_type::SERVER>> (_fd).shutdown_input();
+                boost::get<websocket::connected_websocket<websocket::endpoint_type::SERVER>> (_fd).shutdown_output();
+            }
         }
+
         future<> read() {
-            return do_until([this] {return _done;}, [this] {
+            return do_until([this] { return _done != keep_open; }, [this] {
                 return read_one();
-            }).then_wrapped([this] (future<> f) {
+            }).then_wrapped([this](future<> f) {
                 // swallow error
-                if (f.failed()) {
+                if (f.failed())
                     _server._read_errors++;
-                }
                 f.ignore_ready_future();
-                return _replies.push_eventually( {});
+                if (_done == detach)
+                    return make_ready_future();
+                return _replies.push_eventually({});
             }).finally([this] {
+                if (_done == detach)
+                    return make_ready_future<>();
                 return _read_buf.close();
             });
         }
+
         future<> read_one() {
             _parser.init();
-            return _read_buf.consume(_parser).then([this] () mutable {
+            return _read_buf.consume(_parser).then([this]() mutable {
                 if (_parser.eof()) {
-                    _done = true;
+                    _done = close;
                     return make_ready_future<>();
                 }
                 ++_server._requests_served;
                 std::unique_ptr<httpd::request> req = _parser.get_parsed_request();
 
-                return _replies.not_full().then([req = std::move(req), this] () mutable {
+                return _replies.not_full().then([req = std::move(req), this]() mutable {
                     return generate_reply(std::move(req));
-                }).then([this](bool done) {
+                }).then([this](connection_status done) {
                     _done = done;
                 });
             });
         }
+
         future<> respond() {
-            return do_response_loop().then_wrapped([this] (future<> f) {
+            return do_response_loop().then_wrapped([this](future<> f) {
                 // swallow error
                 if (f.failed()) {
                     _server._respond_errors++;
                 }
                 f.ignore_ready_future();
+                if (_done == detach)
+                    return make_ready_future<>();
                 return _write_buf.close();
             });
         }
+
         future<> do_response_loop() {
             return _replies.pop_eventually().then(
-                    [this] (std::unique_ptr<reply> resp) {
+                    [this](std::unique_ptr<reply> resp) {
                         if (!resp) {
                             // eof
                             return make_ready_future<>();
                         }
                         _resp = std::move(resp);
                         return start_response().then([this] {
-                                    return do_response_loop();
-                                });
+                            if (_done == keep_open)
+                                return do_response_loop();
+                            return make_ready_future<>();
+                        });
                     });
         }
+
         future<> start_response() {
             _resp->_headers["Server"] = "Seastar httpd";
             _resp->_headers["Date"] = _server._date;
-            _resp->_headers["Content-Length"] = to_sstring(
-                    _resp->_content.size());
+            _resp->_headers["Content-Length"] = to_sstring(_resp->_content.size());
             return _write_buf.write(_resp->_response_line.begin(),
                     _resp->_response_line.size()).then([this] {
                 return write_reply_headers(_resp->_headers.begin());
@@ -239,6 +297,7 @@ public:
                 _resp.reset();
             });
         }
+
         future<> write_reply_headers(
                 std::unordered_map<sstring, sstring>::iterator hi) {
             if (hi == _resp->_headers.end()) {
@@ -251,15 +310,15 @@ public:
                 return _write_buf.write(hi->second.begin(), hi->second.size());
             }).then([this] {
                 return _write_buf.write("\r\n", 2);
-            }).then([hi, this] () mutable {
+            }).then([hi, this]() mutable {
                 return write_reply_headers(++hi);
             });
         }
 
         static short hex_to_byte(char c) {
-            if (c >='a' && c <= 'z') {
+            if (c >= 'a' && c <= 'z') {
                 return c - 'a' + 10;
-            } else if (c >='A' && c <= 'Z') {
+            } else if (c >= 'A' && c <= 'Z') {
                 return c - 'A' + 10;
             }
             return c - '0';
@@ -269,7 +328,6 @@ public:
          * Convert a hex encoded 2 bytes substring to char
          */
         static char hexstr_to_char(const std::experimental::string_view& in, size_t from) {
-
             return static_cast<char>(hex_to_byte(in[from]) * 16 + hex_to_byte(in[from + 1]));
         }
 
@@ -305,18 +363,17 @@ public:
 
             if (split >= param.length() - 1) {
                 sstring key;
-                if (url_decode(param.substr(0,split) , key)) {
+                if (url_decode(param.substr(0, split), key)) {
                     req.query_parameters[key] = "";
                 }
             } else {
                 sstring key;
                 sstring value;
-                if (url_decode(param.substr(0,split), key)
+                if (url_decode(param.substr(0, split), key)
                         && url_decode(param.substr(split + 1), value)) {
                     req.query_parameters[key] = value;
                 }
             }
-
         }
 
         /**
@@ -333,32 +390,38 @@ public:
             size_t end_param;
             std::experimental::string_view url = req._url;
             while ((end_param = req._url.find('&', curr)) != sstring::npos) {
-                add_param(req, url.substr(curr, end_param - curr) );
+                add_param(req, url.substr(curr, end_param - curr));
                 curr = end_param + 1;
             }
             add_param(req, url.substr(curr));
             return req._url.substr(0, pos);
         }
 
-        future<bool> generate_reply(std::unique_ptr<request> req) {
+        future<connection_status> generate_reply(std::unique_ptr<request> req) {
             auto resp = std::make_unique<reply>();
             bool conn_keep_alive = false;
             bool conn_close = false;
+
             auto it = req->_headers.find("Connection");
             if (it != req->_headers.end()) {
                 if (it->second == "Keep-Alive") {
                     conn_keep_alive = true;
                 } else if (it->second == "Close") {
                     conn_close = true;
+                } else if (it->second.find("Upgrade") != std::string::npos) {
+                    auto upgrade = req->_headers.find("Upgrade");
+                    if (upgrade != req->_headers.end() && boost::iequals(upgrade->second.begin(), "websocket"))
+                        return upgrade_websocket(std::move(req)); //websocket upgrade
                 }
             }
             bool should_close;
-            // TODO: Handle HTTP/2.0 when it releases
+            // TODO: Handle HTTP/2.0 when it released
             resp->set_version(req->_version);
 
             if (req->_version == "1.0") {
                 if (conn_keep_alive) {
                     resp->_headers["Connection"] = "Keep-Alive";
+                    std::cout << "keep alive" << std::endl;
                 }
                 should_close = !conn_keep_alive;
             } else if (req->_version == "1.1") {
@@ -369,34 +432,71 @@ public:
             }
             sstring url = set_query_param(*req.get());
             sstring version = req->_version;
-            return _server._routes.handle(url, std::move(req), std::move(resp)).
-            // Caller guarantees enough room
-            then([this, should_close, version = std::move(version)](std::unique_ptr<reply> rep) {
-                rep->set_version(version).done();
-                this->_replies.push(std::move(rep));
-                return make_ready_future<bool>(should_close);
-            });
+
+            return _server._routes.handle(url, std::move(req), std::move(resp)).then(
+                    [this, should_close, version = std::move(version)](std::unique_ptr<reply> rep) {
+                        rep->set_version(version).done();
+                        this->_replies.push(std::move(rep));
+                        if (should_close)
+                            return make_ready_future<connection_status>(close);
+                        return make_ready_future<connection_status>(keep_open);
+                    });
         }
+
+        future<connection_status> upgrade_websocket(std::unique_ptr<request> req) {
+            connection_status done;
+
+            sstring url = set_query_param(*req.get());
+            auto resp = std::make_unique<reply>();
+            resp->set_version(req->_version);
+
+            // We search for the websocket nonce in the request headers
+            auto it = req->_headers.find("Sec-WebSocket-Key");
+            if (it != req->_headers.end() && _server._routes.get_ws_handler(url, _req)) {
+                // Found it, so we compute the websocket handshake key, reply and mark the connection as detached
+                resp->_headers["Upgrade"] = "websocket";
+                resp->_headers["Connection"] = "Upgrade";
+
+                resp->_headers["Sec-WebSocket-Accept"] = httpd::websocket::encode_handshake_key(it->second);
+                resp->set_status(reply::status_type::switching_protocols).done();
+                _req = std::move(req);
+                _done = done = detach;
+            } else {
+                // The upgrade request is invalid
+                _done = done = close;
+                resp->set_status(reply::status_type::bad_request);
+            }
+            resp->done();
+            _replies.push(std::move(resp));
+            return make_ready_future<connection_status>(done);
+        }
+
         future<> write_body() {
             return _write_buf.write(_resp->_content.begin(),
                     _resp->_content.size());
         }
     };
+
     uint64_t total_connections() const {
         return _total_connections;
     }
+
     uint64_t current_connections() const {
         return _current_connections;
     }
+
     uint64_t requests_served() const {
         return _requests_served;
     }
+
     uint64_t read_errors() const {
         return _read_errors;
     }
+
     uint64_t reply_errors() const {
         return _respond_errors;
     }
+
     static sstring http_date() {
         auto t = ::time(nullptr);
         struct tm tm;
@@ -405,6 +505,7 @@ public:
         strftime(tmp, sizeof(tmp), "%d %b %Y %H:%M:%S GMT", &tm);
         return tmp;
     }
+
 private:
     boost::intrusive::list<connection> _connections;
 };
@@ -426,10 +527,11 @@ class http_server_control {
     distributed<http_server>* _server_dist;
 private:
     static sstring generate_server_name();
+
 public:
     http_server_control() : _server_dist(new distributed<http_server>) {
-    }
 
+    }
 
     future<> start(const sstring& name = generate_server_name()) {
         return _server_dist->start(name);
@@ -454,6 +556,7 @@ public:
     }
 };
 
+}
 }
 
 #endif /* APPS_HTTPD_HTTPD_HH_ */

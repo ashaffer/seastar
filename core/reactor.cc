@@ -94,10 +94,11 @@
 #include "core/metrics.hh"
 #include "execution_stage.hh"
 
+namespace seastar {
+
 using namespace std::chrono_literals;
 
 using namespace net;
-using namespace seastar;
 
 seastar::logger seastar_logger("seastar");
 
@@ -113,7 +114,7 @@ timespec to_timespec(steady_clock_type::time_point t) {
 
 lowres_clock::lowres_clock() {
     update();
-    _timer.set_callback([this] { update(); });
+    _timer.set_callback(&lowres_clock::update);
     _timer.arm_periodic(_granularity);
 }
 
@@ -1428,7 +1429,7 @@ append_challenged_posix_file_impl::flush() {
                         _committed_size = _logical_size;
                     }
                     return posix_file_impl::flush();
-                }).then_wrapped([this, pr] (future<> f) {
+                }).then_wrapped([pr] (future<> f) {
                     f.forward_to(std::move(*pr));
                 });
             }
@@ -1635,7 +1636,7 @@ reactor::open_file_dma(sstring name, open_flags flags, file_open_options options
 
 future<>
 reactor::remove_file(sstring pathname) {
-    return engine()._thread_pool.submit<syscall_result<int>>([this, pathname] {
+    return engine()._thread_pool.submit<syscall_result<int>>([pathname] {
         return wrap_syscall<int>(::remove(pathname.c_str()));
     }).then([] (syscall_result<int> sr) {
         sr.throw_if_error();
@@ -1645,7 +1646,7 @@ reactor::remove_file(sstring pathname) {
 
 future<>
 reactor::rename_file(sstring old_pathname, sstring new_pathname) {
-    return engine()._thread_pool.submit<syscall_result<int>>([this, old_pathname, new_pathname] {
+    return engine()._thread_pool.submit<syscall_result<int>>([old_pathname, new_pathname] {
         return wrap_syscall<int>(::rename(old_pathname.c_str(), new_pathname.c_str()));
     }).then([] (syscall_result<int> sr) {
         sr.throw_if_error();
@@ -1655,7 +1656,7 @@ reactor::rename_file(sstring old_pathname, sstring new_pathname) {
 
 future<>
 reactor::link_file(sstring oldpath, sstring newpath) {
-    return engine()._thread_pool.submit<syscall_result<int>>([this, oldpath = std::move(oldpath), newpath = std::move(newpath)] {
+    return engine()._thread_pool.submit<syscall_result<int>>([oldpath = std::move(oldpath), newpath = std::move(newpath)] {
         return wrap_syscall<int>(::link(oldpath.c_str(), newpath.c_str()));
     }).then([] (syscall_result<int> sr) {
         sr.throw_if_error();
@@ -1786,8 +1787,6 @@ reactor::touch_directory(sstring name) {
     });
 }
 
-namespace seastar {
-
 file_handle::file_handle(const file_handle& x)
         : _impl(x._impl ? x._impl->clone() : std::unique_ptr<file_handle_impl>()) {
 }
@@ -1810,8 +1809,6 @@ file_handle::to_file() const & {
 file
 file_handle::to_file() && {
     return file(std::move(*_impl).to_file());
-}
-
 }
 
 file::file(seastar::file_handle&& handle)
@@ -1860,7 +1857,7 @@ posix_file_handle_impl::clone() const {
 
 shared_ptr<file_impl>
 posix_file_handle_impl::to_file() && {
-    auto ret = ::make_shared<posix_file_impl>(_fd, _refcount);
+    auto ret = ::seastar::make_shared<posix_file_impl>(_fd, _refcount);
     _fd = -1;
     _refcount = nullptr;
     return ret;
@@ -1993,7 +1990,7 @@ posix_file_impl::close() noexcept {
             return make_ready_future<syscall_result<int>>(wrap_syscall<int>(::close(fd)));
         }
     }();
-    return closed.then([this] (syscall_result<int> sr) {
+    return closed.then([] (syscall_result<int> sr) {
         sr.throw_if_error();
     });
 }
@@ -2271,11 +2268,11 @@ void reactor::register_metrics() {
                 description(
                         "Counts reads from disk file streams.  A high rate indicates high disk activity."
                         " Contrast with other fstream_read* counters to locate bottlenecks.")),
-        make_derive("fstream_read_bytes", _io_stats.fstream_reads,
+        make_derive("fstream_read_bytes", _io_stats.fstream_read_bytes,
                 description(
                         "Counts bytes read from disk file streams.  A high rate indicates high disk activity."
                         " Divide by fstream_reads to determine average read size.")),
-        make_counter("fstream_reads_blocked", _io_stats.fstream_read_bytes,
+        make_counter("fstream_reads_blocked", _io_stats.fstream_reads_blocked,
                 description(
                         "Counts the number of times a disk read could not be satisfied from read-ahead buffers, and had to block."
                         " Indicates short streams, or incorrect read ahead configuration.")),
@@ -3256,9 +3253,13 @@ void schedule_urgent(std::unique_ptr<task> t) {
     engine().add_urgent_task(std::move(t));
 }
 
+}
+
 bool operator==(const ::sockaddr_in a, const ::sockaddr_in b) {
     return (a.sin_addr.s_addr == b.sin_addr.s_addr) && (a.sin_port == b.sin_port);
 }
+
+namespace seastar {
 
 void network_stack_registry::register_stack(sstring name,
         boost::program_options::options_description opts,
@@ -3350,6 +3351,7 @@ smp::get_options_description()
 #else
         ("max-io-requests", bpo::value<unsigned>(), "Maximum amount of concurrent requests to be sent to the disk. Defaults to 128 times the number of processors")
 #endif
+        ("mbind", bpo::value<bool>()->default_value(true), "enable mbind")
         ;
     return opts;
 }
@@ -3522,6 +3524,10 @@ void smp::configure(boost::program_options::variables_map configuration)
     if (!thread_affinity && _using_dpdk) {
         print("warning: --thread-affinity 0 ignored in dpdk mode\n");
     }
+    auto mbind = configuration["mbind"].as<bool>();
+    if (!thread_affinity) {
+        mbind = false;
+    }
 
     smp::count = 1;
     smp::_tmain = std::this_thread::get_id();
@@ -3597,7 +3603,7 @@ void smp::configure(boost::program_options::variables_map configuration)
     if (thread_affinity) {
         smp::pin(allocations[0].cpu_id);
     }
-    memory::configure(allocations[0].mem, hugepages_path);
+    memory::configure(allocations[0].mem, mbind, hugepages_path);
 
     if (configuration.count("abort-on-seastar-bad-alloc")) {
         memory::enable_abort_on_allocation_failure();
@@ -3657,13 +3663,13 @@ void smp::configure(boost::program_options::variables_map configuration)
     unsigned i;
     for (i = 1; i < smp::count; i++) {
         auto allocation = allocations[i];
-        create_thread([configuration, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled] {
+        create_thread([configuration, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind] {
             auto thread_name = seastar::format("reactor-{}", i);
             pthread_setname_np(pthread_self(), thread_name.c_str());
             if (thread_affinity) {
                 smp::pin(allocation.cpu_id);
             }
-            memory::configure(allocation.mem, hugepages_path);
+            memory::configure(allocation.mem, mbind, hugepages_path);
             memory::set_heap_profiling_enabled(heapprof_enabled);
             sigset_t mask;
             sigfillset(&mask);
@@ -3760,7 +3766,7 @@ public:
     }
     virtual future<> wait() override {
         // convert _read.wait(), a future<size_t>, to a future<>:
-        return _read.wait().then([this] (size_t ignore) {
+        return _read.wait().then([] (size_t ignore) {
             return make_ready_future<>();
         });
     }
@@ -4126,6 +4132,9 @@ network_stack_registrator nsr_posix{"posix",
 };
 
 #ifndef NO_EXCEPTION_INTERCEPT
+
+}
+
 #include <dlfcn.h>
 
 extern "C"
@@ -4138,11 +4147,13 @@ int _Unwind_RaiseException(void *h) {
     if (!org) {
         org = (throw_fn)dlsym (RTLD_NEXT, "_Unwind_RaiseException");
     }
-    if (local_engine) {
-        engine()._cxx_exceptions++;
+    if (seastar::local_engine) {
+        seastar::engine()._cxx_exceptions++;
     }
     return org(h);
 }
+
+namespace seastar {
 
 #endif
 
@@ -4152,4 +4163,6 @@ steady_clock_type::duration reactor::total_idle_time() {
 
 steady_clock_type::duration reactor::total_busy_time() {
     return steady_clock_type::now() - _start_time - _total_idle;
+}
+
 }

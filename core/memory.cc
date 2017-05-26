@@ -53,6 +53,8 @@
 #include "memory.hh"
 #include "reactor.hh"
 
+namespace seastar {
+
 namespace memory {
 
 static thread_local int abort_on_alloc_failure_suppressed = 0;
@@ -63,6 +65,8 @@ disable_abort_on_alloc_failure_temporarily::disable_abort_on_alloc_failure_tempo
 
 disable_abort_on_alloc_failure_temporarily::~disable_abort_on_alloc_failure_temporarily() noexcept {
     --abort_on_alloc_failure_suppressed;
+}
+
 }
 
 }
@@ -92,6 +96,8 @@ disable_abort_on_alloc_failure_temporarily::~disable_abort_on_alloc_failure_temp
 #include <numaif.h>
 #endif
 
+namespace seastar {
+
 struct allocation_site {
     mutable size_t count = 0; // number of live objects allocated at backtrace.
     mutable size_t size = 0; // amount of bytes in live objects allocated at backtrace.
@@ -107,16 +113,20 @@ struct allocation_site {
     }
 };
 
+}
+
 namespace std {
 
 template<>
-struct hash<::allocation_site> {
-    size_t operator()(const ::allocation_site& bi) const {
-        return std::hash<saved_backtrace>()(bi.backtrace);
+struct hash<seastar::allocation_site> {
+    size_t operator()(const seastar::allocation_site& bi) const {
+        return std::hash<seastar::saved_backtrace>()(bi.backtrace);
     }
 };
 
 }
+
+namespace seastar {
 
 using allocation_site_ptr = const allocation_site*;
 
@@ -883,7 +893,7 @@ bool cpu_pages::initialize() {
 }
 
 mmap_area
-allocate_anonymous_memory(optional<void*> where, size_t how_much) {
+allocate_anonymous_memory(std::experimental::optional<void*> where, size_t how_much) {
     return mmap_anonymous(where.value_or(nullptr),
             how_much,
             PROT_READ | PROT_WRITE,
@@ -891,7 +901,7 @@ allocate_anonymous_memory(optional<void*> where, size_t how_much) {
 }
 
 mmap_area
-allocate_hugetlbfs_memory(file_desc& fd, optional<void*> where, size_t how_much) {
+allocate_hugetlbfs_memory(file_desc& fd, std::experimental::optional<void*> where, size_t how_much) {
     auto pos = fd.size();
     fd.truncate(pos + how_much);
     auto ret = fd.map(
@@ -1269,7 +1279,7 @@ reclaimer::~reclaimer() {
     r.erase(std::find(r.begin(), r.end(), this));
 }
 
-void configure(std::vector<resource::memory> m,
+void configure(std::vector<resource::memory> m, bool mbind,
         optional<std::string> hugetlbfs_path) {
     size_t total = 0;
     for (auto&& x : m) {
@@ -1290,16 +1300,18 @@ void configure(std::vector<resource::memory> m,
     for (auto&& x : m) {
 #ifdef HAVE_NUMA
         unsigned long nodemask = 1UL << x.nodeid;
-        auto r = ::mbind(cpu_mem.mem() + pos, x.bytes,
-                        MPOL_PREFERRED,
-                        &nodemask, std::numeric_limits<unsigned long>::digits,
-                        MPOL_MF_MOVE);
+        if (mbind) {
+            auto r = ::mbind(cpu_mem.mem() + pos, x.bytes,
+                            MPOL_PREFERRED,
+                            &nodemask, std::numeric_limits<unsigned long>::digits,
+                            MPOL_MF_MOVE);
 
-        if (r == -1) {
-            char err[1000] = {};
-            strerror_r(errno, err, sizeof(err));
-            std::cerr << "WARNING: unable to mbind shard memory; performance may suffer: "
-                    << err << std::endl;
+            if (r == -1) {
+                char err[1000] = {};
+                strerror_r(errno, err, sizeof(err));
+                std::cerr << "WARNING: unable to mbind shard memory; performance may suffer: "
+                        << err << std::endl;
+            }
         }
 #endif
         pos += x.bytes;
@@ -1345,7 +1357,9 @@ void set_min_free_pages(size_t pages) {
 
 }
 
-using namespace memory;
+}
+
+using namespace seastar::memory;
 
 extern "C"
 [[gnu::visibility("default")]]
@@ -1369,7 +1383,7 @@ extern "C"
 [[gnu::externally_visible]]
 void free(void* ptr) {
     if (ptr) {
-        memory::free(ptr);
+        seastar::memory::free(ptr);
     }
 }
 
@@ -1408,7 +1422,7 @@ void* realloc(void* ptr, size_t size) {
         return nullptr;
     }
     if (size < old_size) {
-        memory::shrink(ptr, size);
+        seastar::memory::shrink(ptr, size);
         return ptr;
     }
     auto nptr = malloc(size);
@@ -1523,28 +1537,28 @@ void* operator new[](size_t size) {
 [[gnu::visibility("default")]]
 void operator delete(void* ptr) throw () {
     if (ptr) {
-        memory::free(ptr);
+        seastar::memory::free(ptr);
     }
 }
 
 [[gnu::visibility("default")]]
 void operator delete[](void* ptr) throw () {
     if (ptr) {
-        memory::free(ptr);
+        seastar::memory::free(ptr);
     }
 }
 
 [[gnu::visibility("default")]]
 void operator delete(void* ptr, size_t size) throw () {
     if (ptr) {
-        memory::free(ptr, size);
+        seastar::memory::free(ptr, size);
     }
 }
 
 [[gnu::visibility("default")]]
 void operator delete[](void* ptr, size_t size) throw () {
     if (ptr) {
-        memory::free(ptr, size);
+        seastar::memory::free(ptr, size);
     }
 }
 
@@ -1575,50 +1589,54 @@ void* operator new[](size_t size, std::nothrow_t) throw () {
 [[gnu::visibility("default")]]
 void operator delete(void* ptr, std::nothrow_t) throw () {
     if (ptr) {
-        memory::free(ptr);
+        seastar::memory::free(ptr);
     }
 }
 
 [[gnu::visibility("default")]]
 void operator delete[](void* ptr, std::nothrow_t) throw () {
     if (ptr) {
-        memory::free(ptr);
+        seastar::memory::free(ptr);
     }
 }
 
 [[gnu::visibility("default")]]
 void operator delete(void* ptr, size_t size, std::nothrow_t) throw () {
     if (ptr) {
-        memory::free(ptr, size);
+        seastar::memory::free(ptr, size);
     }
 }
 
 [[gnu::visibility("default")]]
 void operator delete[](void* ptr, size_t size, std::nothrow_t) throw () {
     if (ptr) {
-        memory::free(ptr, size);
+        seastar::memory::free(ptr, size);
     }
 }
 
-void* operator new(size_t size, with_alignment wa) {
+void* operator new(size_t size, seastar::with_alignment wa) {
     return allocate_aligned(wa.alignment(), size);
 }
 
-void* operator new[](size_t size, with_alignment wa) {
+void* operator new[](size_t size, seastar::with_alignment wa) {
     return allocate_aligned(wa.alignment(), size);
 }
 
-void operator delete(void* ptr, with_alignment wa) {
+void operator delete(void* ptr, seastar::with_alignment wa) {
     // only called for matching operator new, so we know ptr != nullptr
-    return memory::free(ptr);
+    return seastar::memory::free(ptr);
 }
 
-void operator delete[](void* ptr, with_alignment wa) {
+void operator delete[](void* ptr, seastar::with_alignment wa) {
     // only called for matching operator new, so we know ptr != nullptr
-    return memory::free(ptr);
+    return seastar::memory::free(ptr);
 }
+
+namespace seastar {
 
 #else
+
+namespace seastar {
 
 namespace memory {
 
@@ -1639,7 +1657,7 @@ reclaimer::~reclaimer() {
 void set_reclaim_hook(std::function<void (std::function<void ()>)> hook) {
 }
 
-void configure(std::vector<resource::memory> m, std::experimental::optional<std::string> hugepages_path) {
+void configure(std::vector<resource::memory> m, bool mbind, std::experimental::optional<std::string> hugepages_path) {
 }
 
 statistics stats() {
@@ -1669,7 +1687,9 @@ void set_min_free_pages(size_t pages) {
 
 }
 
-void* operator new(size_t size, with_alignment wa) {
+}
+
+void* operator new(size_t size, seastar::with_alignment wa) {
     void* ret;
     if (posix_memalign(&ret, wa.alignment(), size) != 0) {
         throw std::bad_alloc();
@@ -1677,7 +1697,7 @@ void* operator new(size_t size, with_alignment wa) {
     return ret;
 }
 
-void* operator new[](size_t size, with_alignment wa) {
+void* operator new[](size_t size, seastar::with_alignment wa) {
     void* ret;
     if (posix_memalign(&ret, wa.alignment(), size) != 0) {
         throw std::bad_alloc();
@@ -1685,14 +1705,19 @@ void* operator new[](size_t size, with_alignment wa) {
     return ret;
 }
 
-void operator delete(void* ptr, with_alignment wa) {
+void operator delete(void* ptr, seastar::with_alignment wa) {
     return ::free(ptr);
 }
 
-void operator delete[](void* ptr, with_alignment wa) {
+void operator delete[](void* ptr, seastar::with_alignment wa) {
     return ::free(ptr);
 }
+
+namespace seastar {
 
 #endif
 
 /// \endcond
+
+}
+

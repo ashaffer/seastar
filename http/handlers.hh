@@ -26,8 +26,12 @@
 #include "common.hh"
 #include "reply.hh"
 #include "core/future-util.hh"
+#include "websocket.hh"
 
 #include <unordered_map>
+#include <net/api.hh>
+
+namespace seastar {
 
 namespace httpd {
 
@@ -67,6 +71,42 @@ public:
     std::vector<sstring> _mandatory_param;
 
 };
+
+/**
+ * handlers holds the logic for serving an incoming request.
+ * All handlers inherit from the base handler_websocket_base and
+ * implement the handle method.
+ */
+class handler_websocket_base {
+public:
+    /**
+     * All handlers should implement this method.
+     *  It fill the reply according to the request.
+     * @param path the url path used in this call
+     * @param params optional parameter object
+     * @param req the original request
+     * @param rep the reply
+     */
+    virtual future<> handle(const sstring& path, websocket::connected_websocket<websocket::endpoint_type::SERVER>& ws,
+                            std::unique_ptr<request> request) = 0;
+
+    virtual ~handler_websocket_base() = default;
+
+    /**
+     * Add a mandatory parameter
+     * @param param a parameter name
+     * @return a reference to the handler
+     */
+    handler_websocket_base& mandatory(const sstring& param) {
+        _mandatory_param.push_back(param);
+        return *this;
+    }
+
+    std::vector<sstring> _mandatory_param;
+
+};
+
+}
 
 }
 

@@ -845,9 +845,9 @@ if [ -e "${cache_file}" ]; then
     rm "${cache_file}"
 fi
 
-if [ -d "${ingredients_dir}" -a -z "${nested}" ]; then
-    rm -r --preserve-root "${ingredients_dir}"
-fi
+# if [ -d "${ingredients_dir}" -a -z "${nested}" ]; then
+#     rm -r --preserve-root "${ingredients_dir}"
+# fi
 
 mkdir -p "${ingredients_dir}"
 

@@ -299,6 +299,9 @@ public:
             printf("MMAP FAILED HERE\n");
         }
         throw_system_error_on(x == MAP_FAILED, "mmap");
+        if (x == MAP_FAILED) {
+            printf("post mmap failed\n");
+        }
         return mmap_area(static_cast<char*>(x), mmap_deleter{size});
     }
 

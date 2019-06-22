@@ -978,7 +978,7 @@ std::unique_ptr<net::qp> device::init_local_queue(boost::program_options::variab
     assert(!qid);
     assert(!called);
     called = true;
-    printf("virtio init_local_queue\n");
+
 #ifdef HAVE_OSV
     if (osv::assigned_virtio::get && osv::assigned_virtio::get()) {
         std::cout << "In OSv and assigned host's virtio device\n";

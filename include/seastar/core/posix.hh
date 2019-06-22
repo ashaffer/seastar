@@ -295,6 +295,9 @@ public:
     mmap_area map(size_t size, unsigned prot, unsigned flags, size_t offset,
             void* addr = nullptr) {
         void *x = mmap(addr, size, prot, flags, _fd, offset);
+        if (x == MAP_FAILED) {
+            printf("MMAP FAILED HERE\n");
+        }
         throw_system_error_on(x == MAP_FAILED, "mmap");
         return mmap_area(static_cast<char*>(x), mmap_deleter{size});
     }

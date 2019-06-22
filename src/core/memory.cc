@@ -1362,8 +1362,10 @@ void disable_large_allocation_warning() {
 void configure(std::vector<resource::memory> m, bool mbind,
         optional<std::string> hugetlbfs_path) {
     size_t total = 0;
+    printf("Summing memory: %u\n", m.size());
     for (auto&& x : m) {
         total += x.bytes;
+        printf("\t0x%x\n", (uint)x.bytes);
     }
     allocate_system_memory_fn sys_alloc = allocate_anonymous_memory;
     if (hugetlbfs_path) {

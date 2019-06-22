@@ -5417,9 +5417,8 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     if (thread_affinity) {
         smp::pin(allocations[0].cpu_id);
     }
-    printf("calling memory::configure\n");
+
     memory::configure(allocations[0].mem, mbind, hugepages_path);
-    printf("called memory::configure\n");
 
     if (configuration.count("abort-on-seastar-bad-alloc")) {
         memory::enable_abort_on_allocation_failure();

@@ -918,7 +918,7 @@ mmap_area
 allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
     auto pos = fd.size();
     fd.truncate(pos + how_much);
-    printf("allocate_hugetlbfs_memory: 0x%x\n", (uint)how_much);
+
     auto ret = fd.map(
             how_much,
             PROT_READ | PROT_WRITE,
@@ -935,7 +935,6 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // place, map hugetlbfs in place, and copy it back, without modifying it during
     // the operation.
     auto bytes = nr_pages * page_size;
-    printf("replace_memory_backing: %u %u %u\n", (uint)bytes, (uint)nr_pages, (uint)page_size);
     auto old_mem = mem();
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
     std::memcpy(relocated_old_mem.get(), old_mem, bytes);
@@ -983,7 +982,6 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
     auto old_size = nr_pages * page_size;
     auto mmap_start = memory + old_size;
     auto mmap_size = new_size - old_size;
-    printf("do_resize 0x%x (%u pages, %u page_size)\n", (uint)mmap_size, (uint)new_pages, (uint)page_size);
     auto mem = alloc_sys_mem({mmap_start}, mmap_size);
     mem.release();
     ::madvise(mmap_start, mmap_size, MADV_HUGEPAGE);
@@ -1021,7 +1019,6 @@ void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) 
         // don't reallocate all at once, since there might not
         // be enough free memory available to relocate the pages array
         auto tmp_size = std::min(new_size, 4 * nr_pages * page_size);
-        printf("cpu_pages::resize 0x%x 0x%x 0x%x 0x%x\n", (uint)tmp_size, (uint)new_size, (uint)nr_pages, (uint)page_size);
         do_resize(tmp_size, alloc_memory);
     }
 }
@@ -1362,10 +1359,9 @@ void disable_large_allocation_warning() {
 void configure(std::vector<resource::memory> m, bool mbind,
         optional<std::string> hugetlbfs_path) {
     size_t total = 0;
-    printf("Summing memory: %u\n", (uint)m.size());
+
     for (auto&& x : m) {
         total += x.bytes;
-        printf("\t0x%x\n", (uint)x.bytes);
     }
     allocate_system_memory_fn sys_alloc = allocate_anonymous_memory;
     if (hugetlbfs_path) {
@@ -1377,7 +1373,7 @@ void configure(std::vector<resource::memory> m, bool mbind,
         };
         cpu_mem.replace_memory_backing(sys_alloc);
     }
-    printf("cpu_mem.resize(total) 0x%lx\n", (uint64_t)total);
+
     cpu_mem.resize(total, sys_alloc);
     size_t pos = 0;
     for (auto&& x : m) {

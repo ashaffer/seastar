@@ -296,7 +296,7 @@ public:
             void* addr = nullptr) {
         void *x = mmap(addr, size, prot, flags, _fd, offset);
         if (x == MAP_FAILED) {
-            printf("MMAP FAILED HERE: %u 0x%x 0x%x 0x%x 0x%llx\n", size, prot, flags, offset, (uint64_t)addr);
+            printf("MMAP FAILED HERE: %u 0x%x 0x%x 0x%x 0x%llx\n", (uint)size, (uint)prot, (uint)flags, (uint)offset, (uint64_t)addr);
         }
         throw_system_error_on(x == MAP_FAILED, "mmap");
         if (x == MAP_FAILED) {

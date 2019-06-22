@@ -983,7 +983,7 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
     auto old_size = nr_pages * page_size;
     auto mmap_start = memory + old_size;
     auto mmap_size = new_size - old_size;
-    printf("do_resize 0x%x (%u pages)\n", (uint)mmap_size, (uint)new_pages);
+    printf("do_resize 0x%x (%u pages, %u page_size)\n", (uint)mmap_size, (uint)new_pages, (uint)page_size);
     auto mem = alloc_sys_mem({mmap_start}, mmap_size);
     mem.release();
     ::madvise(mmap_start, mmap_size, MADV_HUGEPAGE);

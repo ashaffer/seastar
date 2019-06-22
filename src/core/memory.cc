@@ -935,7 +935,7 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // place, map hugetlbfs in place, and copy it back, without modifying it during
     // the operation.
     auto bytes = nr_pages * page_size;
-    printf("replace_memory_bakcing: %u %u %u\n", (uint)bytes, (uint)nr_pages, (uint)page_size);
+    printf("replace_memory_backing: %u %u %u\n", (uint)bytes, (uint)nr_pages, (uint)page_size);
     auto old_mem = mem();
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
     std::memcpy(relocated_old_mem.get(), old_mem, bytes);
@@ -1020,6 +1020,7 @@ void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) 
         // don't reallocate all at once, since there might not
         // be enough free memory available to relocate the pages array
         auto tmp_size = std::min(new_size, 4 * nr_pages * page_size);
+        printf("cpu_pages::resize %u\n", (uint)tmp_size);
         do_resize(tmp_size, alloc_memory);
     }
 }

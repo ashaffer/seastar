@@ -2251,6 +2251,7 @@ std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variab
         qp = std::make_unique<dpdk_qp<true>>(this, qid,
                                  _stats_plugin_name + "-" + _stats_plugin_inst);
     } else {
+        printf("non-hugepages qp\n");        
         qp = std::make_unique<dpdk_qp<false>>(this, qid,
                                  _stats_plugin_name + "-" + _stats_plugin_inst);
     }

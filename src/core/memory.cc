@@ -918,6 +918,7 @@ mmap_area
 allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
     auto pos = fd.size();
     fd.truncate(pos + how_much);
+    printf("allocate_hugetlbfs_memory: 0x%x\n", (uint)how_much);
     auto ret = fd.map(
             how_much,
             PROT_READ | PROT_WRITE,
@@ -934,6 +935,7 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // place, map hugetlbfs in place, and copy it back, without modifying it during
     // the operation.
     auto bytes = nr_pages * page_size;
+    printf("replace_memory_bakcing: %u %u %u\n", (uint)bytes, (uint)nr_pages, (uint)page_size);
     auto old_mem = mem();
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
     std::memcpy(relocated_old_mem.get(), old_mem, bytes);

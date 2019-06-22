@@ -1375,6 +1375,7 @@ void configure(std::vector<resource::memory> m, bool mbind,
         };
         cpu_mem.replace_memory_backing(sys_alloc);
     }
+    printf("cpu_mem.resize(total) 0x%lx\n", (uint64_t)total);
     cpu_mem.resize(total, sys_alloc);
     size_t pos = 0;
     for (auto&& x : m) {

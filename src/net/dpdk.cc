@@ -1972,8 +1972,6 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
                         sm::description("Counts a number of ingress packets received by this HW queue but dropped by the SW due to low memory. "
                                         "A non-zero value indicates that seastar doesn't have enough memory to handle the packet reception or the memory is too fragmented.")),
     });
-
-    exit(0);
 }
 
 #pragma GCC diagnostic pop
@@ -2249,6 +2247,7 @@ std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variab
 
     std::unique_ptr<qp> qp;
     if (opts.count("hugepages")) {
+        printf("hugepages qp\n");
         qp = std::make_unique<dpdk_qp<true>>(this, qid,
                                  _stats_plugin_name + "-" + _stats_plugin_inst);
     } else {

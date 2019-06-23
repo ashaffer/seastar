@@ -322,9 +322,9 @@ future<> interface::dispatch_packet(packet p) {
             l3.forward(data, p, sizeof(eth_hdr));
             auto hash = toeplitz_hash(rss_key(), data);
 
-            auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this, hash] () {
-                // return hash;
-
+            auto fw = _dev->forward_dst(_dev->hash2qid(hash), [&p, &l3, this, hash] () {
+                return hash;
+                
                 auto hwrss = p.rss_hash();
                 if (hwrss) {
                     return hwrss.value();

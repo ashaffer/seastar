@@ -1802,7 +1802,6 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         //
         struct rte_pktmbuf_pool_private roomsz = {};
         roomsz.mbuf_data_room_size = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
-        printf("Creating hugetlb rx pool: %u %u\n", mbufs_per_queue_rx, mbuf_overhead);
         _pktmbuf_pool_rx =
             rte_mempool_create_empty(name.c_str(),
                                      mbufs_per_queue_rx, mbuf_overhead,

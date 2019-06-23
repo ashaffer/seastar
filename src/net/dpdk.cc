@@ -113,7 +113,7 @@ namespace seastar {
 namespace dpdk {
 
 /******************* Net device related constatns *****************************/
-static constexpr uint16_t default_ring_size      = 1024;
+static constexpr uint16_t default_ring_size      = 512;
 
 // 
 // We need 2 times the ring size of buffers because of the way PMDs 

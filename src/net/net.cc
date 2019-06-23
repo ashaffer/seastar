@@ -318,7 +318,13 @@ future<> interface::dispatch_packet(packet p) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
-            auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
+            forward_hash data;
+            l3.forward(data, p, sizeof(eth_hdr));
+            auto hash = toeplitz_hash(rss_key(), data);
+
+            auto fw = _dev->forward_dst(_dev->hash2qid(hash), [&p, &l3, this, hash] () {
+                return hash;
+                
                 auto hwrss = p.rss_hash();
                 if (hwrss) {
                     return hwrss.value();

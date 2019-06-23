@@ -570,7 +570,7 @@ public:
         gtls_chk(
                 gnutls_credentials_set(*this, GNUTLS_CRD_CERTIFICATE,
                         *_creds->_impl));
-        if (_type == type::SERVER) {
+        // if (_type == type::SERVER) {
             switch (_creds->_impl->get_client_auth()) {
                 case client_auth::NONE:
                 default:
@@ -583,7 +583,7 @@ public:
                     gnutls_certificate_server_set_request(*this, GNUTLS_CERT_REQUIRE);
                     break;
             }
-        }
+        // }
 
         auto prio = _creds->_impl->get_priority();
         if (prio) {
@@ -655,7 +655,7 @@ public:
                     return make_exception_future<>(std::system_error(res, glts_errorc));
                 }
             }
-            if (_type == type::CLIENT || _creds->_impl->get_client_auth() != client_auth::NONE) {
+            if (_creds->_impl->get_client_auth() != client_auth::NONE) {
                 verify();
             }
             _connected = true;

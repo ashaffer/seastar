@@ -266,7 +266,6 @@ private:
 //
 // The data sink will not receive empty chunks.
 //
-static uint streamIdx = 0;
 
 template <typename CharType>
 class output_stream final {
@@ -283,7 +282,6 @@ class output_stream final {
     bool _flush = false;
     bool _flushing = false;
     std::exception_ptr _ex;
-    uint sid;
 private:
     size_t available() const { return _end - _begin; }
     size_t possibly_available() const { return _size - _begin; }
@@ -298,16 +296,10 @@ public:
     using char_type = CharType;
     output_stream() = default;
     output_stream(data_sink fd, size_t size, bool trim_to_size = false, bool batch_flushes = false)
-        : _fd(std::move(fd)), _size(size), _trim_to_size(trim_to_size), _batch_flushes(batch_flushes) {
-            sid = ++seastar::streamIdx;
-            printf("Creating output stream: %u\n", sid);
-        }
+        : _fd(std::move(fd)), _size(size), _trim_to_size(trim_to_size), _batch_flushes(batch_flushes) {}
     output_stream(output_stream&&) = default;
     output_stream& operator=(output_stream&&) = default;
-    ~output_stream() { 
-        printf("Destroying output stream: %u\n", sid);
-        assert(!_in_batch); 
-    }
+    ~output_stream() { assert(!_in_batch); }
     future<> write(const char_type* buf, size_t n);
     future<> write(const char_type* buf);
 

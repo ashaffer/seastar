@@ -649,6 +649,7 @@ public:
                     return make_exception_future<>(verification_error("No certificate was found"));
 #if GNUTLS_VERSION_NUMBER >= 0x030406
                 case GNUTLS_E_CERTIFICATE_ERROR:
+                    printf("verifying here\n");
                     verify(); // should throw. otherwise, fallthrough
 #endif
                 default:
@@ -656,6 +657,7 @@ public:
                 }
             }
             if (_creds->_impl->get_client_auth() != client_auth::NONE) {
+                printf("client auth is not none\n");
                 verify();
             }
             _connected = true;

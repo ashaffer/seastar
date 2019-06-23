@@ -1948,6 +1948,7 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
     static_assert((inline_mbuf_data_size & (inline_mbuf_data_size - 1)) == 0,
                   "inline_mbuf_data_size has to be a power of two!");
 
+    printf("rte_eth_rx_queue_setup default_ring_size: %u\n", (uint)default_ring_size);
     if (rte_eth_rx_queue_setup(_dev->port_idx(), _qid, default_ring_size,
             rte_eth_dev_socket_id(_dev->port_idx()),
             _dev->def_rx_conf(), _pktmbuf_pool_rx) < 0) {

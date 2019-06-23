@@ -266,7 +266,6 @@ private:
 //
 // The data sink will not receive empty chunks.
 //
-uint streamIdx = 0;
 template <typename CharType>
 class output_stream final {
     static_assert(sizeof(CharType) == 1, "must buffer stream of bytes");
@@ -283,6 +282,7 @@ class output_stream final {
     bool _flushing = false;
     std::exception_ptr _ex;
     uint sid;
+    static uint streamIdx = 0;
 private:
     size_t available() const { return _end - _begin; }
     size_t possibly_available() const { return _size - _begin; }
@@ -298,7 +298,7 @@ public:
     output_stream() = default;
     output_stream(data_sink fd, size_t size, bool trim_to_size = false, bool batch_flushes = false)
         : _fd(std::move(fd)), _size(size), _trim_to_size(trim_to_size), _batch_flushes(batch_flushes) {
-            sid = ++streamIdx;
+            sid = ++output_stream::streamIdx;
             printf("Creating output stream: %u\n", sid);
         }
     output_stream(output_stream&&) = default;

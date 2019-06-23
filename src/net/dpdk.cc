@@ -113,7 +113,7 @@ namespace seastar {
 namespace dpdk {
 
 /******************* Net device related constatns *****************************/
-static constexpr uint16_t default_ring_size      = 512;
+static constexpr uint16_t default_ring_size      = 1024;
 
 // 
 // We need 2 times the ring size of buffers because of the way PMDs 
@@ -128,7 +128,7 @@ static constexpr uint16_t rx_gc_thresh           = 64;
 //
 static constexpr uint16_t mbufs_per_queue_tx     = 2 * default_ring_size;
 
-static constexpr uint16_t mbuf_cache_size        = 512;
+static constexpr uint16_t mbuf_cache_size        = 1024;
 static constexpr uint16_t mbuf_overhead          =
                                  sizeof(struct rte_mbuf) + RTE_PKTMBUF_HEADROOM;
 //

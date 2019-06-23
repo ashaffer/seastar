@@ -299,7 +299,7 @@ public:
     output_stream() = default;
     output_stream(data_sink fd, size_t size, bool trim_to_size = false, bool batch_flushes = false)
         : _fd(std::move(fd)), _size(size), _trim_to_size(trim_to_size), _batch_flushes(batch_flushes) {
-            sid = ++output_stream::streamIdx;
+            sid = ++seastar::streamIdx;
             printf("Creating output stream: %u\n", sid);
         }
     output_stream(output_stream&&) = default;

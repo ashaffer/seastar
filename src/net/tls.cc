@@ -730,7 +730,7 @@ public:
         unsigned int status;
         auto res = gnutls_certificate_verify_peers3(*this, _type != type::CLIENT || _hostname.empty()
                         ? nullptr : _hostname.c_str(), &status);
-        if (res == GNUTLS_E_NO_CERTIFICATE_FOUND && _creds->_impl->get_client_auth() != client_auth::REQUIRE) {
+        if (_creds->_impl->get_client_auth() != client_auth::REQUIRE) {
             return;
         }
         if (res < 0) {

@@ -2209,6 +2209,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
 
     /* Now process the NIC packets read */
     if (likely(rx_count > 0)) {
+        printf("poll_rx_once: %u\n", (uint)rx_count);
         process_packets(buf, rx_count);
     }
 

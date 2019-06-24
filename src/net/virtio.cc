@@ -734,7 +734,6 @@ qp::rxq::complete_buffer(single_buffer&& bc, size_t len) {
         packet p(_fragments.begin(), _fragments.end(), std::move(del));
 
         _dev._stats.rx.good.update_frags_stats(p.nr_frags(), p.len());
-        printf("virtio::l2receive\n");
         _dev._dev->l2receive(std::move(p));
 
 

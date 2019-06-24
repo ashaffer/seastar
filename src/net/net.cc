@@ -305,7 +305,6 @@ void interface::forward(unsigned cpuid, packet p) {
         queue_depth++;
         auto src_cpu = engine().cpu_id();
         smp::submit_to(cpuid, [this, p = std::move(p), src_cpu]() mutable {
-            printf("interface::forward l2receive\n");
             _dev->l2receive(p.free_on_cpu(src_cpu));
         }).then([] {
             queue_depth--;
@@ -332,10 +331,8 @@ future<> interface::dispatch_packet(packet p) {
                 if (hwrss) {
                     return hwrss.value();
                 } else {
-                    printf("taking else branch\n");
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        printf("returning hash\n");
                         return toeplitz_hash(rss_key(), data);
                     }
                     return 0u;

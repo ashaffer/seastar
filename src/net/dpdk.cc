@@ -1528,6 +1528,7 @@ int dpdk_device::init_port_start()
         port_conf.rxmode.mq_mode = ETH_MQ_RX_NONE;
     }
 
+    printf("Using hash key size: %u\n", (uint)_dev_info.hash_key_size);
     if (_num_queues > 1) {
         if (_dev_info.reta_size) {
             // RETA size should be a power of 2

@@ -326,26 +326,26 @@ future<> interface::dispatch_packet(packet p) {
             auto hash = crc32_hash(data);            
             printf("\thash: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
 
-            hash = crc32_hash1(data);            
-            printf("\thash1: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
+            // hash = crc32_hash1(data);            
+            // printf("\thash1: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
 
-            hash = crc32_hash2(data);            
-            printf("\thash2: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
+            // hash = crc32_hash2(data);            
+            // printf("\thash2: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
 
-            hash = crc32_hash3(data);            
-            printf("\thash3: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
+            // hash = crc32_hash3(data);            
+            // printf("\thash3: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
 
-            hash = crc32_hash4(data);            
-            printf("\thash4: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
+            // hash = crc32_hash4(data);            
+            // printf("\thash4: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
 
-            hash = crc32_hash5(data);            
-            printf("\thash5: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
+            // hash = crc32_hash5(data);            
+            // printf("\thash5: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
 
-            hash = crc32_hash6(data);            
-            printf("\thash6: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
+            // hash = crc32_hash6(data);            
+            // printf("\thash6: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
 
-            hash = crc32_hash7(data);            
-            printf("\thash7: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
+            // hash = crc32_hash7(data);            
+            // printf("\thash7: %u\n", (uint)_dev->forward_dst(hash, [hash] () { return hash; }));
 
             // auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
             //     return hash;

@@ -44,6 +44,7 @@
 #pragma once
 
 #include <vector>
+#include <boost/crc.hpp>
 
 namespace seastar {
 

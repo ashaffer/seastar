@@ -324,28 +324,28 @@ future<> interface::dispatch_packet(packet p) {
             printf("cpu_id: %u\n", (uint)engine().cpu_id());
 
             auto hash = crc32_hash(data);
-            printf("\thash: %u\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }));
+            printf("\thash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
 
             hash = crc32_hash1(data);            
-            printf("\thash1: %u\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }));
+            printf("\thash1: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
 
             hash = crc32_hash2(data);            
-            printf("\thash2: %u\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }));
+            printf("\thash2: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
 
             hash = crc32_hash3(data);            
-            printf("\thash3: %u\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }));
+            printf("\thash3: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
 
             hash = crc32_hash4(data);            
-            printf("\thash4: %u\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }));
+            printf("\thash4: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
 
             hash = crc32_hash5(data);            
-            printf("\thash5: %u\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }));
+            printf("\thash5: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
 
             hash = crc32_hash6(data);            
-            printf("\thash6: %u\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }));
+            printf("\thash6: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
 
             hash = crc32_hash7(data);            
-            printf("\thash7: %u\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }));
+            printf("\thash7: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
 
             // auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
             //     return hash;

@@ -97,7 +97,7 @@ template<typename T>
 static inline uint32_t
 crc32_hash(const T& data)
 {
-	boost::crc_optimal<32, 0x04C11DB7, 0x00000000, 0xFFFFFFFF, true, true> result;
+	boost::crc_optimal<32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true, true> result;
 	result.process_bytes(data.data, data.size());
 	return result.checksum();	
 }
@@ -106,7 +106,7 @@ template<typename T>
 static inline uint32_t
 crc32_hash1(const T& data)
 {
-	boost::crc_optimal<32, 0x04C11DB7, 0x00000000, 0xFFFFFFFF, true, false> result;
+	boost::crc_optimal<32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true, false> result;
 	result.process_bytes(data.data, data.size());
 	return result.checksum();	
 }
@@ -115,7 +115,7 @@ template<typename T>
 static inline uint32_t
 crc32_hash2(const T& data)
 {
-	boost::crc_optimal<32, 0x04C11DB7, 0x00000000, 0xFFFFFFFF, false, true> result;
+	boost::crc_optimal<32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, false, true> result;
 	result.process_bytes(data.data, data.size());
 	return result.checksum();	
 }
@@ -124,7 +124,7 @@ template<typename T>
 static inline uint32_t
 crc32_hash3(const T& data)
 {
-	boost::crc_optimal<32, 0x04C11DB7, 0x00000000, 0xFFFFFFFF, false, false> result;
+	boost::crc_optimal<32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, false, false> result;
 	result.process_bytes(data.data, data.size());
 	return result.checksum();	
 }
@@ -133,7 +133,7 @@ template<typename T>
 static inline uint32_t
 crc32_hash4(const T& data)
 {
-	boost::crc_optimal<32, 0x04C11DB7, 0x00000000, 0x00000000, true, true> result;
+	boost::crc_optimal<32, 0x04C11DB7, 0xFFFFFFFF, 0x00000000, true, true> result;
 	result.process_bytes(data.data, data.size());
 	return result.checksum();	
 }
@@ -142,7 +142,7 @@ template<typename T>
 static inline uint32_t
 crc32_hash5(const T& data)
 {
-	boost::crc_optimal<32, 0x04C11DB7, 0x00000000, 0x00000000, true, false> result;
+	boost::crc_optimal<32, 0x04C11DB7, 0xFFFFFFFF, 0x00000000, true, false> result;
 	result.process_bytes(data.data, data.size());
 	return result.checksum();	
 }
@@ -151,7 +151,7 @@ template<typename T>
 static inline uint32_t
 crc32_hash6(const T& data)
 {
-	boost::crc_optimal<32, 0x04C11DB7, 0x00000000, 0x00000000, false, true> result;
+	boost::crc_optimal<32, 0x04C11DB7, 0xFFFFFFFF, 0x00000000, false, true> result;
 	result.process_bytes(data.data, data.size());
 	return result.checksum();	
 }
@@ -160,7 +160,7 @@ template<typename T>
 static inline uint32_t
 crc32_hash7(const T& data)
 {
-	boost::crc_optimal<32, 0x04C11DB7, 0x00000000, 0x00000000, false, false> result;
+	boost::crc_optimal<32, 0x04C11DB7, 0xFFFFFFFF, 0x00000000, false, false> result;
 	result.process_bytes(data.data, data.size());
 	return result.checksum();	
 }

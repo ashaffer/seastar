@@ -97,7 +97,7 @@ template<typename T>
 static inline uint32_t
 crc32_hash(const T& data)
 {
-	boost::crc_32_type result;
+	boost::crc_optimal<32, 0x04C11DB7, 0xFFFFFFFF, 0x00000000, true, true> result;
 	result.process_bytes(data.data, data.size());
 	return result.checksum();	
 }

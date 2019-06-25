@@ -1517,7 +1517,6 @@ int dpdk_device::init_port_start()
             _dev_info.hash_key_size = 40;
         }
 
-        printf("Setting port_conf rxmode = ETH_MQ_RX_RSS\n");
         port_conf.rxmode.mq_mode = ETH_MQ_RX_RSS;
         /* enable all supported rss offloads */
         port_conf.rx_adv_conf.rss_conf.rss_hf = _dev_info.flow_type_rss_offloads;
@@ -1529,7 +1528,6 @@ int dpdk_device::init_port_start()
         port_conf.rxmode.mq_mode = ETH_MQ_RX_NONE;
     }
 
-    printf("Using hash key size: %u\n", (uint)_dev_info.hash_key_size);
     if (_num_queues > 1) {
         if (_dev_info.reta_size) {
             // RETA size should be a power of 2

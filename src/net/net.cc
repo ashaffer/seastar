@@ -333,7 +333,8 @@ future<> interface::dispatch_packet(packet p) {
                 } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        return toeplitz_hash(rss_key(), data);
+                        return crc32_hash(data);
+                        // return toeplitz_hash(rss_key(), data);
                     }
                     return 0u;
                 }

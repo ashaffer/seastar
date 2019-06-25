@@ -43,9 +43,10 @@ class qp;
 class l3_protocol;
 
 class forward_hash {
-    uint8_t data[64];
     size_t end_idx = 0;
 public:
+    uint8_t data[64];
+    
     size_t size() const {
         return end_idx;
     }

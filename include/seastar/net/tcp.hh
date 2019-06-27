@@ -828,8 +828,8 @@ auto tcp<InetTraits>::connect(socket_address sa) -> connection {
     printf("tcp::connect: %s %u\n", inet_ntoa(addr), dst_port);
 
     do {
-        // src_port = _port_dist(_e);
-        src_port = 49000;
+        src_port = _port_dist(_e);
+        // src_port = 49000;
         id = connid{src_ip, dst_ip, src_port, dst_port};
     } while (_inet._inet.netif()->hw_queues_count() > 1 &&
              (_inet._inet.netif()->hash2cpu(id.hash()) != engine().cpu_id()

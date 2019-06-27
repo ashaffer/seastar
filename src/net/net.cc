@@ -364,10 +364,9 @@ future<> interface::dispatch_packet(packet p) {
             addr.s_addr = iph->dst_ip.ip;            
             printf("Dst IP: %s\n", inet_ntoa(addr));
 
-            auto l4 = _l4[h.ip_proto];
             auto h = ntoh(*iph);
 
-            if (l4) {
+            if (h.ip_proto == ip_protocol_num::tcp) {
                 if (h.mf() == false && h.offset() == 0) {
                     auto tcph = p.get_header(sizeof(eth_hdr) + sizeof(ip_hdr), tcp_hdr::len);            
                     printf("Src port: %u\n", htons(((uint16_t *)tcph)[0]));

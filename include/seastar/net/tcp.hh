@@ -823,7 +823,7 @@ auto tcp<InetTraits>::connect(socket_address sa) -> connection {
     auto dst_ip = ipv4_address(sa);
     auto dst_port = net::ntoh(sa.u.in.sin_port);
 
-    ip_addr addr;
+    in_addr addr;
     addr.s_addr = src_ip;
     printf("tcp::connect: %s %u\n", inet_ntoa(addr), sa.u.in.sin_port);
 

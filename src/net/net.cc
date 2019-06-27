@@ -363,6 +363,7 @@ future<> interface::dispatch_packet(packet p) {
             printf("Src IP: %s\n", inet_ntoa(addr));
             addr.s_addr = iph->dst_ip.ip;            
             printf("Dst IP: %s\n", inet_ntoa(addr));
+            printf("Ports: 0x%x 0x%x 0x%x 0x%x\n", *(uint8_t *)tcph, *((uint8_t *)(tcph + 1)), *((uint8_t *)(tcph + 2)), *((uint8_t *)(tcph + 3)));
             printf("Src port: %u\n", ((uint16_t *)tcph)[0]);
             printf("Src port: %u\n", ((uint16_t *)tcph)[1]);
 

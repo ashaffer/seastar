@@ -28,6 +28,7 @@
 #include <seastar/core/metrics.hh>
 #include <seastar/core/print.hh>
 #include <seastar/net/inet_address.hh>
+#include <seastar/net/tcp.hh>
 
 namespace seastar {
 

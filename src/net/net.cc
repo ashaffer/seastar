@@ -356,15 +356,23 @@ future<> interface::dispatch_packet(packet p) {
             // });
 
             auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
-            auto tcph = p.get_header(sizeof(eth_hdr) + sizeof(ip_hdr), tcp_hdr::len);
 
             in_addr addr;
             addr.s_addr = iph->src_ip.ip;
             printf("Src IP: %s\n", inet_ntoa(addr));
             addr.s_addr = iph->dst_ip.ip;            
             printf("Dst IP: %s\n", inet_ntoa(addr));
-            printf("Src port: %u\n", htons(((uint16_t *)tcph)[0]));
-            printf("Src port: %u\n", htons(((uint16_t *)tcph)[1]));
+
+            auto l4 = _l4[h.ip_proto];
+            auto h = ntoh(*iph);
+            
+            if (l4) {
+                if (h.mf() == false && h.offset() == 0) {
+                    auto tcph = p.get_header(sizeof(eth_hdr) + sizeof(ip_hdr), tcp_hdr::len);            
+                    printf("Src port: %u\n", htons(((uint16_t *)tcph)[0]));
+                    printf("Src port: %u\n", htons(((uint16_t *)tcph)[1]));
+                }
+            }
 
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {

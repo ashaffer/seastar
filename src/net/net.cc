@@ -356,23 +356,23 @@ future<> interface::dispatch_packet(packet p) {
             //     return hash;
             // });
 
-            // auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
+            auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
 
-            // in_addr addr;
-            // addr.s_addr = iph->src_ip.ip;
-            // printf("Src IP: %s\n", inet_ntoa(addr));
-            // addr.s_addr = iph->dst_ip.ip;            
-            // printf("Dst IP: %s\n", inet_ntoa(addr));
+            in_addr addr;
+            addr.s_addr = iph->src_ip.ip;
+            printf("Src IP: %s\n", inet_ntoa(addr));
+            addr.s_addr = iph->dst_ip.ip;            
+            printf("Dst IP: %s\n", inet_ntoa(addr));
 
-            // auto h = ntoh(*iph);
+            auto h = ntoh(*iph);
 
-            // if (h.ip_proto == (uint8_t)ip_protocol_num::tcp) {
-            //     if (h.mf() == false && h.offset() == 0) {
-            //         auto tcph = p.get_header(sizeof(eth_hdr) + sizeof(ip_hdr), tcp_hdr::len);            
-            //         printf("Src port: %u\n", htons(((uint16_t *)tcph)[0]));
-            //         printf("Src port: %u\n", htons(((uint16_t *)tcph)[1]));
-            //     }
-            // }
+            if (h.ip_proto == (uint8_t)ip_protocol_num::tcp) {
+                if (h.mf() == false && h.offset() == 0) {
+                    auto tcph = p.get_header(sizeof(eth_hdr) + sizeof(ip_hdr), tcp_hdr::len);            
+                    printf("Src port: %u\n", htons(((uint16_t *)tcph)[0]));
+                    printf("Src port: %u\n", htons(((uint16_t *)tcph)[1]));
+                }
+            }
 
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {

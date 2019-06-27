@@ -324,7 +324,7 @@ future<> interface::dispatch_packet(packet p) {
             printf("cpu_id: %u\n", (uint)engine().cpu_id());
 
             uint16_t crc16hash = crc16((char *)data.data, (uint16_t)data.size());
-            printf("\tcrc16hash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(crc16hash), [crc16hash] () { return crc16hash; }));
+            printf("\tcrc16hash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(crc16hash), [crc16hash] () { return (uint)crc16hash; }), (uint)crc16hash);
 
             auto hash = crc32_hash(data);
             printf("\thash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);

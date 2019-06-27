@@ -166,7 +166,7 @@ crc32_hash7(const T& data)
 }
 
 #define POLY 0x8408
-unsigned short crc16(char *data_p, unsigned short length)
+static inline unsigned short crc16(char *data_p, unsigned short length)
 {
       unsigned char i;
       unsigned int data;

@@ -358,8 +358,8 @@ future<> interface::dispatch_packet(packet p) {
             auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
             auto tcph = p.get_header(sizeof(eth_hdr) + sizeof(ip_hdr), tcp_hdr::len);
 
-            printf("Src IP: %s\n", inet_ntoa(iph->src_ip.ip));
-            printf("Dst IP: %s\n", inet_ntoa(iph->dst_ip.ip));
+            printf("Src IP: %s\n", inet_ntoa((in_addr)iph->src_ip.ip));
+            printf("Dst IP: %s\n", inet_ntoa((in_addr)iph->dst_ip.ip));
             printf("Src port: %u\n", ((uint16_t *)tcph)[0]);
             printf("Src port: %u\n", ((uint16_t *)tcph)[1]);
 

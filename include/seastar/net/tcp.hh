@@ -823,6 +823,8 @@ auto tcp<InetTraits>::connect(socket_address sa) -> connection {
     auto dst_ip = ipv4_address(sa);
     auto dst_port = net::ntoh(sa.u.in.sin_port);
 
+    printf("tcp::connect: %s %u\n", inet_ntoa(sa.sin_addr), sa.u.in.sin_port);
+
     do {
         src_port = _port_dist(_e);
         id = connid{src_ip, dst_ip, src_port, dst_port};

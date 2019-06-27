@@ -366,7 +366,7 @@ future<> interface::dispatch_packet(packet p) {
 
             auto h = ntoh(*iph);
 
-            if (h.ip_proto == ip_protocol_num::tcp) {
+            if (h.ip_proto == (uint8_t)ip_protocol_num::tcp) {
                 if (h.mf() == false && h.offset() == 0) {
                     auto tcph = p.get_header(sizeof(eth_hdr) + sizeof(ip_hdr), tcp_hdr::len);            
                     printf("Src port: %u\n", htons(((uint16_t *)tcph)[0]));

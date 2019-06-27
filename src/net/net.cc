@@ -29,6 +29,7 @@
 #include <seastar/core/print.hh>
 #include <seastar/net/inet_address.hh>
 #include <seastar/net/tcp.hh>
+#include <seastar/net/ip.hh>
 
 namespace seastar {
 
@@ -365,7 +366,7 @@ future<> interface::dispatch_packet(packet p) {
 
             auto l4 = _l4[h.ip_proto];
             auto h = ntoh(*iph);
-            
+
             if (l4) {
                 if (h.mf() == false && h.offset() == 0) {
                     auto tcph = p.get_header(sizeof(eth_hdr) + sizeof(ip_hdr), tcp_hdr::len);            

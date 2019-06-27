@@ -825,7 +825,7 @@ auto tcp<InetTraits>::connect(socket_address sa) -> connection {
 
     in_addr addr;
     addr.s_addr = src_ip.ip;
-    printf("tcp::connect: %s %u\n", inet_ntoa(addr),net::ntoh(sa.u.in.sin_port));
+    printf("tcp::connect: %s %u\n", inet_ntoa(addr), dst_port);
 
     do {
         // src_port = _port_dist(_e);

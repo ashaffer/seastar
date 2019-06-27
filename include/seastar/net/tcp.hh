@@ -825,10 +825,11 @@ auto tcp<InetTraits>::connect(socket_address sa) -> connection {
 
     in_addr addr;
     addr.s_addr = src_ip.ip;
-    printf("tcp::connect: %s %u\n", inet_ntoa(addr), sa.u.in.sin_port);
+    printf("tcp::connect: %s %u\n", inet_ntoa(addr),net::ntoh(sa.u.in.sin_port));
 
     do {
-        src_port = _port_dist(_e);
+        // src_port = _port_dist(_e);
+        src_port = 5000;
         id = connid{src_ip, dst_ip, src_port, dst_port};
     } while (_inet._inet.netif()->hw_queues_count() > 1 &&
              (_inet._inet.netif()->hash2cpu(id.hash()) != engine().cpu_id()

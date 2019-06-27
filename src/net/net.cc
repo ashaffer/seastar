@@ -354,6 +354,15 @@ future<> interface::dispatch_packet(packet p) {
             //     return hash;
             // });
 
+            auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
+            auto tcph = p.get_header(sizeof(eth_hdr) + sizeof(ip_hdr), tcp_hdr::len);
+
+            printf("Src IP: %s\n", inet_ntoa(iph->src_ip.ip));
+            printf("Dst IP: %s\n", inet_ntoa(iph->dst_ip.ip));
+            printf("Src port: %u\n", ((uint16_t *)tcph)[0]);
+            printf("Src port: %u\n", ((uint16_t *)tcph)[1]);
+
+
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {

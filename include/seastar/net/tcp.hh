@@ -825,7 +825,6 @@ auto tcp<InetTraits>::connect(socket_address sa) -> connection {
 
     in_addr addr;
     addr.s_addr = src_ip.ip;
-    printf("tcp::connect: %s %u\n", inet_ntoa(addr), dst_port);
 
     do {
         src_port = _port_dist(_e);
@@ -834,6 +833,8 @@ auto tcp<InetTraits>::connect(socket_address sa) -> connection {
     } while (_inet._inet.netif()->hw_queues_count() > 1 &&
              (_inet._inet.netif()->hash2cpu(id.hash()) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
+
+    printf("tcp::connect: %s %u %u\n", inet_ntoa(addr), src_port, dst_port);
 
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});

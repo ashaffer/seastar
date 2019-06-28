@@ -826,14 +826,14 @@ auto tcp<InetTraits>::connect(socket_address sa) -> connection {
     in_addr addr;
     addr.s_addr = src_ip.ip;
 
-    do {
-        src_port = _port_dist(_e);
+    // do {
+    //     src_port = _port_dist(_e);
         src_port = 52293;
         printf("loop\n");
         id = connid{src_ip, dst_ip, src_port, dst_port};
-    } while (_inet._inet.netif()->hw_queues_count() > 1 &&
-             (_inet._inet.netif()->hash2cpu(id.hash()) != engine().cpu_id()
-              || _tcbs.find(id) != _tcbs.end()));
+    // } while (_inet._inet.netif()->hw_queues_count() > 1 &&
+    //          (_inet._inet.netif()->hash2cpu(id.hash()) != engine().cpu_id()
+    //           || _tcbs.find(id) != _tcbs.end()));
 
     printf("tcp::connect: %s %u %u\n", inet_ntoa(addr), src_port, dst_port);
 

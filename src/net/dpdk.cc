@@ -2227,6 +2227,7 @@ void dpdk_device::set_rss_table()
         std::max(1, _dev_info.reta_size / RTE_RETA_GROUP_SIZE);
     rte_eth_rss_reta_entry64 reta_conf[reta_conf_size];
 
+    printf("reta_conf_size: %u\n", reta_conf_size);
     // Configure the HW indirection table
     unsigned i = 0;
     for (auto& x : reta_conf) {

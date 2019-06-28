@@ -194,7 +194,7 @@ static inline unsigned short crc16(char *data_p, unsigned short length)
       return (crc);
 }
 
-uint32_t
+static inline uint32_t
 rc_crc32(uint32_t crc, const char *buf, size_t len)
 {
 	static uint32_t table[256];

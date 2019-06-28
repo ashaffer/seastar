@@ -328,7 +328,10 @@ future<> interface::dispatch_packet(packet p) {
             uint16_t crc16hash = crc16((char *)data.data, (uint16_t)data.size());
             printf("\tcrc16hash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(crc16hash), [crc16hash] () { return (uint)crc16hash; }), (uint)crc16hash);
 
-            auto hash = crc32_hash(data);
+            auto hash = rc_crc32(0xFFFFFFFF, (const char *)data.data(), (size_t)data.size());
+            printf("\thash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
+
+            hash = crc32_hash(data);
             printf("\thash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
 
             hash = crc32_hash1(data);            

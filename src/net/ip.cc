@@ -79,8 +79,8 @@ bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
 {
     auto iph = p.get_header<ip_hdr>(off);
 
-    out_hash_data.push_back(iph->dst_ip.ip);
     out_hash_data.push_back(iph->src_ip.ip);
+    out_hash_data.push_back(iph->dst_ip.ip);
 
     auto h = ntoh(*iph);
     auto l4 = _l4[h.ip_proto];

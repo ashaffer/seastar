@@ -195,7 +195,7 @@ static inline unsigned short crc16(char *data_p, unsigned short length, uint16_t
 }
 
 static inline uint32_t
-rc_crc32(uint32_t crc, const char *buf, size_t len, uint32_t poly)
+rc_crc32(uint32_t crc, const char *buf, size_t len, uint32_t poly=0xDEADBEEF)
 {
 	static uint32_t table[256];
 	static int have_table = 0;
@@ -248,7 +248,7 @@ brute_crc32(uint32_t crc, const char *buf, size_t len, uint32_t target) {
 }
 
 static inline void
-brute_crc16(uint32_t crc, const char *buf, size_t len, uint16_t target) {
+brute_crc16(const char *buf, size_t len, uint16_t target) {
 	for (uint16_t i = 0; i < 0xFFFF; i++) {
 		uint16_t res = crc16(buf, len, i);
 

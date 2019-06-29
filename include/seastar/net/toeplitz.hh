@@ -234,7 +234,7 @@ static inline void
 brute_crc32(uint32_t crc, const char *buf, size_t len, uint32_t target) {
 	for (uint i = 0; i < 0xFFFFFFFF; i++) {
 		uint32_t res = rc_crc32(crc, buf, len, i);
-		if (res == target) {
+		if ((res & 0xFFFF) == (target & 0xFFFF)) {
 			printf("Polynomial crc32 found: 0x%x\n", i);
 			break;
 		}

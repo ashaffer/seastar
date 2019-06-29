@@ -166,7 +166,7 @@ crc32_hash7(const T& data)
 }
 
 #define POLY 0x8408
-static inline unsigned short crc16(char *data_p, unsigned short length)
+static inline unsigned short crc16(char *data_p, unsigned short length, uint16_t poly=POLY)
 {
       unsigned char i;
       unsigned int data;
@@ -182,7 +182,7 @@ static inline unsigned short crc16(char *data_p, unsigned short length)
                  i++, data >>= 1)
             {
                   if ((crc & 0x0001) ^ (data & 0x0001))
-                        crc = (crc >> 1) ^ POLY;
+                        crc = (crc >> 1) ^ poly;
                   else  crc >>= 1;
             }
       } while (--length);
@@ -195,7 +195,7 @@ static inline unsigned short crc16(char *data_p, unsigned short length)
 }
 
 static inline uint32_t
-rc_crc32(uint32_t crc, const char *buf, size_t len)
+rc_crc32(uint32_t crc, const char *buf, size_t len, uint32_t poly)
 {
 	static uint32_t table[256];
 	static int have_table = 0;
@@ -205,21 +205,21 @@ rc_crc32(uint32_t crc, const char *buf, size_t len)
 	const char *p, *q;
  
 	/* This check is not thread safe; there is no mutex. */
-	if (have_table == 0) {
+	// if (have_table == 0) {
 		/* Calculate CRC table. */
 		for (i = 0; i < 256; i++) {
 			rem = i;  /* remainder from polynomial division */
 			for (j = 0; j < 8; j++) {
 				if (rem & 1) {
 					rem >>= 1;
-					rem ^= 0xedb88320;
+					rem ^= poly;
 				} else
 					rem >>= 1;
 			}
 			table[i] = rem;
 		}
-		have_table = 1;
-	}
+	// 	have_table = 1;
+	// }
  
 	crc = ~crc;
 	q = buf + len;
@@ -230,4 +230,32 @@ rc_crc32(uint32_t crc, const char *buf, size_t len)
 	return ~crc;
 }
 
+static inline uint32_t
+brute_crc32(uint32_t crc, const char *buf, size_t len, uint32_t target) {
+	for (uint i = 0; i < 0xFFFFFFFF; i++) {
+		uint32_t res = rc_crc32(crc, buf, len, i);
+		if (res == target) {
+			printf("Polynomial crc32 found: 0x%x\n", i);
+			return res;
+		}
+
+		if (i % 1000000 == 0) {
+			printf("%u crc32 polynomials checked\n", i);
+		}
+	}
+
+	return -1;
+}
+
+static inline void
+brute_crc16(uint32_t crc, const char *buf, size_t len, uint16_t target) {
+	for (uint16_t i = 0; i < 0xFFFF; i++) {
+		uint16_t res = crc16(buf, len, i);
+
+		if (res == target) {
+			printf("Polynomial crc16 found: 0x%x\n", i);
+		}
+	}
+}
+	
 }

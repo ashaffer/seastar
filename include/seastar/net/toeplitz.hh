@@ -230,21 +230,19 @@ rc_crc32(uint32_t crc, const char *buf, size_t len, uint32_t poly=0xDEADBEEF)
 	return ~crc;
 }
 
-static inline uint32_t
+static inline void
 brute_crc32(uint32_t crc, const char *buf, size_t len, uint32_t target) {
 	for (uint i = 0; i < 0xFFFFFFFF; i++) {
 		uint32_t res = rc_crc32(crc, buf, len, i);
 		if (res == target) {
 			printf("Polynomial crc32 found: 0x%x\n", i);
-			return res;
+			break;
 		}
 
 		if (i % 1000000 == 0) {
 			printf("%u crc32 polynomials checked\n", i);
 		}
 	}
-
-	return -1;
 }
 
 static inline void
@@ -254,6 +252,7 @@ brute_crc16(const char *buf, size_t len, uint16_t target) {
 
 		if (res == target) {
 			printf("Polynomial crc16 found: 0x%x\n", i);
+			break;
 		}
 	}
 }

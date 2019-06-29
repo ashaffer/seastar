@@ -166,7 +166,7 @@ crc32_hash7(const T& data)
 }
 
 #define POLY 0x8408
-static inline unsigned short crc16(char *data_p, unsigned short length, uint16_t poly=POLY)
+static inline unsigned short crc16(const char *data_p, unsigned short length, uint16_t poly=POLY)
 {
       unsigned char i;
       unsigned int data;
@@ -198,7 +198,7 @@ static inline uint32_t
 rc_crc32(uint32_t crc, const char *buf, size_t len, uint32_t poly=0xDEADBEEF)
 {
 	static uint32_t table[256];
-	static int have_table = 0;
+	// static int have_table = 0;
 	uint32_t rem;
 	uint8_t octet;
 	int i, j;

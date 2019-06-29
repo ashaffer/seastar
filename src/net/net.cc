@@ -334,6 +334,12 @@ future<> interface::dispatch_packet(packet p) {
                 brute_crc16((const char *)data.data, (size_t)data.size(), (uint16_t)(rss_hash & 0xFFFF));
                 brute_crc32(0xFFFFFFFF, (const char *)data.data, (size_t)data.size(), (uint32_t)rss_hash);
             }
+
+            printf("Buf:");
+            for (uint i = 0; i < data.size(); i++) {
+                printf("0x%x ", (uint)(data.data[i]));
+            }
+            printf("\n");
             
             auto hash = rc_crc32(0xFFFFFFFF, (const char *)data.data, (size_t)data.size());
             printf("\thash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);

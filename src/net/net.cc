@@ -323,87 +323,25 @@ future<> interface::dispatch_packet(packet p) {
 
             forward_hash data;            
             l3.forward(data, p, sizeof(eth_hdr));
-            printf("cpu_id: %u\n", (uint)engine().cpu_id());
 
-            // uint16_t crc16hash = crc16((char *)data.data, (uint16_t)data.size());
-            // printf("\tcrc16hash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(crc16hash), [crc16hash] () { return (uint)crc16hash; }), (uint)crc16hash);
-
-            uint32_t rss_hash = p.rss_hash().value();
-            if (rss_hash != 0) {
-                printf("Bruteforcing rss_hash: 0x%x\n", rss_hash);
-                brute_crc16((const char *)data.data, (size_t)data.size(), (uint16_t)(rss_hash & 0xFFFF));
-                brute_crc32(0xFFFFFFFF, (const char *)data.data, (size_t)data.size(), (uint32_t)rss_hash);
-            }
-
-            printf("Buf:");
-            for (uint i = 0; i < data.size(); i++) {
-                printf("0x%x ", (uint)(data.data[i]));
-            }
-            printf("\n");
-            
-            auto hash = rc_crc32(0xFFFFFFFF, (const char *)data.data, (size_t)data.size());
-            printf("\thash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
-
-            hash = crc32_hash(data);
-            printf("\thash: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
-
-            hash = crc32_hash1(data);            
-            printf("\thash1: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
-
-            hash = crc32_hash2(data);            
-            printf("\thash2: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
-
-            hash = crc32_hash3(data);            
-            printf("\thash3: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
-
-            hash = crc32_hash4(data);            
-            printf("\thash4: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
-
-            hash = crc32_hash5(data);            
-            printf("\thash5: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
-
-            hash = crc32_hash6(data);            
-            printf("\thash6: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
-
-            hash = crc32_hash7(data);            
-            printf("\thash7: %u (0x%x)\n", (uint)_dev->forward_dst(_dev->hash2qid(hash), [hash] () { return hash; }), (uint)hash);
-
-            // auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
-            //     return hash;
-            // });
-
-            auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
-
-            in_addr addr;
-            addr.s_addr = iph->src_ip.ip;
-            printf("Src IP: %s\n", inet_ntoa(addr));
-            addr.s_addr = iph->dst_ip.ip;            
-            printf("Dst IP: %s\n", inet_ntoa(addr));
-
-            auto h = ntoh(*iph);
-
-            if (h.ip_proto == (uint8_t)ip_protocol_num::tcp) {
-                if (h.mf() == false && h.offset() == 0) {
-                    auto tcph = p.get_header(sizeof(eth_hdr) + sizeof(ip_hdr), tcp_hdr::len);            
-                    printf("Src port: %u\n", htons(((uint16_t *)tcph)[0]));
-                    printf("Src port: %u\n", htons(((uint16_t *)tcph)[1]));
-                }
-            }
-
-
-            auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
-                auto hwrss = p.rss_hash();
-                if (hwrss) {
-                    return hwrss.value();
-                } else {
-                    forward_hash data;
-                    if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        return crc32_hash(data);
-                        // return toeplitz_hash(rss_key(), data);
-                    }
-                    return 0u;
-                }
+            auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
+                return hash;
             });
+
+            // auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
+            //     auto hwrss = p.rss_hash();
+            //     if (hwrss) {
+            //         return hwrss.value();
+            //     } else {
+            //         forward_hash data;
+            //         if (l3.forward(data, p, sizeof(eth_hdr))) {
+            //             return crc32_hash(data);
+            //             // return toeplitz_hash(rss_key(), data);
+            //         }
+            //         return 0u;
+            //     }
+            // });
+            
             if (fw != engine().cpu_id()) {
                 forward(fw, std::move(p));
             } else {

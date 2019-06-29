@@ -258,3 +258,5 @@ brute_crc16(const char *buf, size_t len, uint16_t target) {
 }
 	
 }
+
+// 0x428ce

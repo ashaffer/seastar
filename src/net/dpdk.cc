@@ -2181,13 +2181,10 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         }
 
         (*p).set_offload_info(oi);
-        printf("Checking for RSS Hash\n");
-        // if (m->ol_flags & PKT_RX_RSS_HASH) {
-            printf("Setting RSS Hash: 0x%x\n", m->hash.rss);
+        if (m->ol_flags & PKT_RX_RSS_HASH) {
             (*p).set_rss_hash(m->hash.rss);
-        // }
+        }
 
-        printf("dpdk::process_packets l2receive\n");
         _dev->l2receive(std::move(*p));
     }
 
@@ -2211,7 +2208,6 @@ bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
 
     /* Now process the NIC packets read */
     if (likely(rx_count > 0)) {
-        printf("poll_rx_once: %u\n", (uint)rx_count);
         process_packets(buf, rx_count);
     }
 
@@ -2227,7 +2223,6 @@ void dpdk_device::set_rss_table()
         std::max(1, _dev_info.reta_size / RTE_RETA_GROUP_SIZE);
     rte_eth_rss_reta_entry64 reta_conf[reta_conf_size];
 
-    printf("reta_conf_size: %u\n", reta_conf_size);
     // Configure the HW indirection table
     unsigned i = 0;
     for (auto& x : reta_conf) {

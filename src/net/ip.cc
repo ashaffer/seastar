@@ -88,7 +88,6 @@ bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
         if (h.mf() == false && h.offset() == 0) {
             // This IP datagram is atomic, forward according to tcp or udp connection hash
             l4->forward(out_hash_data, p, off + sizeof(ip_hdr));
-            printf("Adding l4 forwarding\n");
         }
         // else forward according to ip fields only
     }

@@ -750,7 +750,7 @@ public:
     void received(packet p, ipaddr from, ipaddr to);
     bool forward(forward_hash& out_hash_data, packet& p, size_t off);
     listener listen(uint16_t port, size_t queue_length = 100);
-    connection connect(socket_address sa);
+    connection connect(socket_address sa, socket_address local);
     const net::hw_features& hw_features() const { return _inet._inet.hw_features(); }
     future<> poll_tcb(ipaddr to, lw_shared_ptr<tcb> tcb);
     void add_connected_tcb(lw_shared_ptr<tcb> tcbp, uint16_t local_port) {
@@ -816,10 +816,10 @@ auto tcp<InetTraits>::listen(uint16_t port, size_t queue_length) -> listener {
 }
 
 template <typename InetTraits>
-auto tcp<InetTraits>::connect(socket_address sa) -> connection {
+auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connection {
     uint16_t src_port;
     connid id;
-    auto src_ip = _inet._inet.host_address();
+    auto src_ip = ipv4_address(local); // _inet._inet.host_address();
     auto dst_ip = ipv4_address(sa);
     auto dst_port = net::ntoh(sa.u.in.sin_port);
 

@@ -323,7 +323,7 @@ future<> interface::dispatch_packet(packet p) {
 
             forward_hash data;            
             l3.forward(data, p, sizeof(eth_hdr));
-
+            auto hash = toeplitz_hash(rss_key(), data);
             auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
                 return hash;
             });
@@ -341,7 +341,7 @@ future<> interface::dispatch_packet(packet p) {
             //         return 0u;
             //     }
             // });
-            
+
             if (fw != engine().cpu_id()) {
                 forward(fw, std::move(p));
             } else {

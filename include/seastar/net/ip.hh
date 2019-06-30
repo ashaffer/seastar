@@ -231,7 +231,7 @@ struct l4connid {
         hash_data.push_back(hton(local_ip.ip));
         hash_data.push_back(hton(foreign_port));
         hash_data.push_back(hton(local_port));
-        return crc32_hash(hash_data);
+        return toeplitz_hash(rss_key(), hash_data);
     }
 };
 

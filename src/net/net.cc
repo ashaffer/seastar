@@ -320,7 +320,7 @@ future<> interface::dispatch_packet(packet p) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
-
+            printf("dispatch received\n");
             forward_hash data;            
             l3.forward(data, p, sizeof(eth_hdr));
             auto hash = toeplitz_hash(rss_key(), data);

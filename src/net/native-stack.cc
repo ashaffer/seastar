@@ -190,6 +190,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
             && opts["netmask-ipv4-addr"].defaulted() && opts["dhcp"].as<bool>();
     if (!_dhcp) {
         for (auto ip : opts["host-ipv4-addr"].as<std::vector<std::string>>()) {
+            printf("Adding host IP: %s\n", ip.c_str());
             _inet.set_host_address(ipv4_address(ip));
         }
         // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
@@ -265,7 +266,6 @@ void native_network_stack::on_dhcp(bool success, const dhcp::lease & res, bool i
 future<> native_network_stack::initialize() {
     return network_stack::initialize().then([this]() {
         if (!_dhcp) {
-            printf("Skipping dhcp\n");
             return make_ready_future();
         }
 

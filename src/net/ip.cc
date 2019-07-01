@@ -146,10 +146,8 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
         return make_ready_future<>();
     }
 
-    bool isSelf = _arp.is_self(h.src_ip);
-    printf("isSelf: %u (%s)\n", (uint)isSelf, h.src_ip.to_string().c_str());
     // FIXME: process options
-    if (in_my_netmask(h.src_ip) && !isSelf) {
+    if (in_my_netmask(h.src_ip) && !_arp.is_self(h.src_ip)) {
         printf("_arp.learn\n");
         // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {
         _arp.learn(from, h.src_ip);
@@ -164,7 +162,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
         }
     }
 
-    if (!isSelf) {
+    if (!_arp.is_self(h.dst_ip)) {
         printf("not isSelf\n");
         // FIXME: forward
         return make_ready_future<>();

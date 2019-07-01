@@ -300,7 +300,7 @@ boost::program_options::options_description nns_options() {
                 boost::program_options::value<std::string>()->default_value("tap0"),
                 "tap device to connect to")
         ("host-ipv4-addr",
-                boost::program_options::value<std::vector<std::string>>()->default_value("192.168.122.2"),
+                boost::program_options::value<std::vector<std::string>>()->default_value({"192.168.122.2"}),
                 "static IPv4 address to use")
         ("gw-ipv4-addr",
                 boost::program_options::value<std::string>()->default_value("192.168.122.1"),

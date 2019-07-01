@@ -147,7 +147,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     }
 
     bool isSelf = _arp.is_self(h.src_ip);
-    printf("isSelf: %u\n", (uint)isSelf);
+    printf("isSelf: %u (%s)\n", (uint)isSelf, inet_ntoa(h.src_ip));
     // FIXME: process options
     if (in_my_netmask(h.src_ip) && !isSelf) {
         printf("_arp.learn\n");

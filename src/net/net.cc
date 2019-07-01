@@ -307,7 +307,6 @@ void interface::forward(unsigned cpuid, packet p) {
         queue_depth++;
         auto src_cpu = engine().cpu_id();
         smp::submit_to(cpuid, [this, p = std::move(p), src_cpu]() mutable {
-            printf("Correct CPU, l2receive\n");
             _dev->l2receive(p.free_on_cpu(src_cpu));
         }).then([] {
             queue_depth--;
@@ -347,6 +346,7 @@ future<> interface::dispatch_packet(packet p) {
                 printf("Wrong CPU, forwarding...\n");
                 forward(fw, std::move(p));
             } else {
+                printf("Correct CPU, processing\n");
                 auto h = ntoh(*eh);
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));

@@ -114,6 +114,7 @@ bool ipv4::needs_frag(packet& p, ip_protocol_num prot_num, net::hw_features hw_f
 
 future<>
 ipv4::handle_received_packet(packet p, ethernet_address from) {
+    printf("ipv4::handle_received_packet\n");
     auto iph = p.get_header<ip_hdr>(0);
     if (!iph) {
         return make_ready_future<>();

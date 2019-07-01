@@ -453,7 +453,7 @@ public:
     // But for now, a simple single raw pointer suffices
     void set_packet_filter(ip_packet_filter *);
     ip_packet_filter * packet_filter() const;
-    void send(ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst);
+    void send(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst);
     tcp<ipv4_traits>& get_tcp() { return *_tcp._tcp; }
     ipv4_udp& get_udp() { return _udp; }
     void register_l4(proto_type id, ip_protocol* handler);

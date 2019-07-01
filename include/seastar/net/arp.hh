@@ -135,7 +135,7 @@ private:
         timer<> _timeout_timer;
     };
 private:
-    std::unordered_map<l3addr, l2addr> _selves;
+    std::unordered_map<l3addr, l3addr> _selves;
     // l3addr _l3self = L3::broadcast_address();
     std::unordered_map<l3addr, l2addr> _table;
     std::unordered_map<l3addr, resolution> _in_progress;
@@ -173,7 +173,7 @@ arp_for<L3>::make_query_packet(l3addr paddr) {
     hdr.plen = sizeof(l3addr);
     hdr.oper = op_request;
     hdr.sender_hwaddr = l2self();
-    hdr.sender_paddr = _l3self;
+    hdr.sender_paddr = _selves.begin()->first;
     hdr.target_hwaddr = ethernet::broadcast_address();
     hdr.target_paddr = paddr;
     auto p = packet();
@@ -286,13 +286,13 @@ arp_for<L3>::received(packet p) {
 template <typename L3>
 future<>
 arp_for<L3>::handle_request(arp_hdr* ah) {
-    if (ah->target_paddr == _l3self
-            && _l3self != L3::broadcast_address()) {
+    if (is_self(ah->target_paddr)
+            && _selves.begin()->first != L3::broadcast_address()) {
         ah->oper = op_reply;
         ah->target_hwaddr = ah->sender_hwaddr;
         ah->target_paddr = ah->sender_paddr;
         ah->sender_hwaddr = l2self();
-        ah->sender_paddr = _l3self;
+        ah->sender_paddr = _selves.begin()->first;
         auto p = packet();
         ah->write(p.prepend_uninitialized_header(ah->size()));
         send(ah->target_hwaddr, std::move(p));

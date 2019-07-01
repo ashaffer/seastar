@@ -95,7 +95,8 @@ bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
 }
 
 bool ipv4::in_my_netmask(ipv4_address a) const {
-    return !((a.ip ^ _host_address.ip) & _netmask.ip);
+    return (a.ip & _netmask.ip) == (_gw_address.ip & _netmask.ip);
+    // return !((a.ip ^ _host_address.ip) & _netmask.ip);
 }
 
 bool ipv4::needs_frag(packet& p, ip_protocol_num prot_num, net::hw_features hw_features) {
@@ -144,8 +145,10 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
         return make_ready_future<>();
     }
 
+    bool isSelf = _arp.is_self(h.src_ip);
     // FIXME: process options
-    if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {
+    if (in_my_netmask(h.src_ip) && !isSelf) {
+        // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {
         _arp.learn(from, h.src_ip);
     }
 
@@ -157,7 +160,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
         }
     }
 
-    if (h.dst_ip != _host_address) {
+    if (!isSelf) {
         // FIXME: forward
         return make_ready_future<>();
     }
@@ -239,10 +242,10 @@ future<ethernet_address> ipv4::get_l2_dst_address(ipv4_address to) {
     return _arp.lookup(dst);
 }
 
-void ipv4::send(ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst) {
+void ipv4::send(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst) {
     auto needs_frag = this->needs_frag(p, proto_num, hw_features());
 
-    auto send_pkt = [this, to, proto_num, needs_frag, e_dst] (packet& pkt, uint16_t remaining, uint16_t offset) mutable  {
+    auto send_pkt = [this, to, proto_num, needs_frag, e_dst, from] (packet& pkt, uint16_t remaining, uint16_t offset) mutable  {
         auto iph = pkt.prepend_header<ip_hdr>();
         iph->ihl = sizeof(*iph) / 4;
         iph->ver = 4;
@@ -262,7 +265,7 @@ void ipv4::send(ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_a
         iph->ttl = 64;
         iph->ip_proto = (uint8_t)proto_num;
         iph->csum = 0;
-        iph->src_ip = _host_address;
+        iph->src_ip = from;
         iph->dst_ip = to;
         *iph = hton(*iph);
 
@@ -307,7 +310,7 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
             }
             if (l4p) {
                 auto l4pv = std::move(l4p.value());
-                send(l4pv.to, l4pv.proto_num, std::move(l4pv.p), l4pv.e_dst);
+                send(l4pv.from, l4pv.to, l4pv.proto_num, std::move(l4pv.p), l4pv.e_dst);
                 break;
             }
         }
@@ -322,7 +325,7 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
 }
 
 void ipv4::set_host_address(ipv4_address ip) {
-    _host_address = ip;
+    // _host_address = ip;
     _arp.set_self_addr(ip);
 }
 

@@ -189,7 +189,10 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
             && opts["gw-ipv4-addr"].defaulted()
             && opts["netmask-ipv4-addr"].defaulted() && opts["dhcp"].as<bool>();
     if (!_dhcp) {
-        _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
+        for (auto ip : opts["host-ipv4-addr"].as(std::vector<std::string>)) {
+            _inet.set_host_address(ipv4_address(ip));
+        }
+        // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
         _inet.set_gw_address(ipv4_address(opts["gw-ipv4-addr"].as<std::string>()));
         _inet.set_netmask_address(ipv4_address(opts["netmask-ipv4-addr"].as<std::string>()));
     }
@@ -262,6 +265,7 @@ void native_network_stack::on_dhcp(bool success, const dhcp::lease & res, bool i
 future<> native_network_stack::initialize() {
     return network_stack::initialize().then([this]() {
         if (!_dhcp) {
+            printf("Skipping dhcp\n");
             return make_ready_future();
         }
 
@@ -296,7 +300,7 @@ boost::program_options::options_description nns_options() {
                 boost::program_options::value<std::string>()->default_value("tap0"),
                 "tap device to connect to")
         ("host-ipv4-addr",
-                boost::program_options::value<std::string>()->default_value("192.168.122.2"),
+                boost::program_options::value<std::vector<std::string>>()->default_value("192.168.122.2"),
                 "static IPv4 address to use")
         ("gw-ipv4-addr",
                 boost::program_options::value<std::string>()->default_value("192.168.122.1"),

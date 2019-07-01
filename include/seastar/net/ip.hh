@@ -172,6 +172,7 @@ struct ipv4_traits {
     using address_type = ipv4_address;
     using inet_type = ipv4_l4<ip_protocol_num::tcp>;
     struct l4packet {
+        ipv4_address from;
         ipv4_address to;
         packet p;
         ethernet_address e_dst;

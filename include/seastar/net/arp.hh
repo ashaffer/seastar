@@ -135,7 +135,8 @@ private:
         timer<> _timeout_timer;
     };
 private:
-    l3addr _l3self = L3::broadcast_address();
+    std::unordered_map<l3addr, l2addr> _selves;
+    // l3addr _l3self = L3::broadcast_address();
     std::unordered_map<l3addr, l2addr> _table;
     std::unordered_map<l3addr, resolution> _in_progress;
 private:
@@ -151,11 +152,13 @@ public:
     }
     future<ethernet_address> lookup(const l3addr& addr);
     void learn(l2addr l2, l3addr l3);
+    bool is_self(l3addr paddr);
     void run();
     void set_self_addr(l3addr addr) {
-        _table.erase(_l3self);
+        // _table.erase(_l3self);
         _table[addr] = l2self();
-        _l3self = addr;
+        _selves[addr] = addr;
+        // _l3self = addr;
     }
     friend class arp;
 };
@@ -250,6 +253,12 @@ arp_for<L3>::learn(l2addr hwaddr, l3addr paddr) {
         }
         _in_progress.erase(i);
     }
+}
+
+template <typename L3>
+bool
+arp_for<L3>::is_self(l3addr paddr) {
+    return _selves.find(paddr) != _selves.end();
 }
 
 template <typename L3>

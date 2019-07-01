@@ -552,7 +552,7 @@ private:
             return _tcp.hw_features().mtu - net::tcp_hdr_len_min - InetTraits::ip_hdr_len_min;
         }
         void queue_packet(packet p) {
-            _packetq.emplace_back(typename InetTraits::l4packet{_foreign_ip, std::move(p)});
+            _packetq.emplace_back(typename InetTraits::l4packet{_local_ip, _foreign_ip, std::move(p)});
         }
         void signal_data_received() {
             if (_rcv._data_received_promise) {
@@ -933,8 +933,8 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
 template <typename InetTraits>
 void tcp<InetTraits>::send_packet_without_tcb(ipaddr from, ipaddr to, packet p) {
     if (_queue_space.try_wait(p.len())) { // drop packets that do not fit the queue
-        _inet.get_l2_dst_address(to).then([this, to, p = std::move(p)] (ethernet_address e_dst) mutable {
-                _packetq.emplace_back(ipv4_traits::l4packet{to, std::move(p), e_dst, ip_protocol_num::tcp});
+        _inet.get_l2_dst_address(to).then([this, from, to, p = std::move(p)] (ethernet_address e_dst) mutable {
+                _packetq.emplace_back(ipv4_traits::l4packet{from, to, std::move(p), e_dst, ip_protocol_num::tcp});
         });
     }
 }

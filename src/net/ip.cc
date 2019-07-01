@@ -148,13 +148,11 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
 
     // FIXME: process options
     if (in_my_netmask(h.src_ip) && !_arp.is_self(h.src_ip)) {
-        printf("_arp.learn\n");
         // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {
         _arp.learn(from, h.src_ip);
     }
 
     if (_packet_filter) {
-        printf("_packet_filter\n");
         bool handled = false;
         auto r = _packet_filter->handle(p, &h, from, handled);
         if (handled) {
@@ -163,7 +161,6 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     }
 
     if (!_arp.is_self(h.dst_ip)) {
-        printf("not isSelf\n");
         // FIXME: forward
         return make_ready_future<>();
     }
@@ -202,10 +199,8 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
                     cpu_id = _netif->hash2cpu(toeplitz_hash(_netif->rss_key(), hash_data));
                     // No need to forward if the dst cpu is the current cpu
                     if (cpu_id == engine().cpu_id()) {
-                        printf("L3 CPUs matched, passing to L4\n");
                         l4->received(std::move(ip_data), h.src_ip, h.dst_ip);
                     } else {
-                        printf("L3 CPU mismatch, forwarding\n");
                         auto to = _netif->hw_address();
                         auto pkt = frag.get_assembled_packet(from, to);
                         _netif->forward(cpu_id, std::move(pkt));

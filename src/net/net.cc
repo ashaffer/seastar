@@ -330,15 +330,21 @@ future<> interface::dispatch_packet(packet p) {
             ipv4_address src{"66.9.149.187"};
             ipv4_address dst{"161.142.100.80"};
 
-            data2.push_back(src.ip);
-            data2.push_back(dst.ip);
-            data2.push_back((uint8_t)94);            
+            data2.push_back(htonl(src.ip));
+            data2.push_back(htonl(dst.ip));
             data2.push_back((uint8_t)27);
-            
-            data2.push_back((uint8_t)66);            
+            data2.push_back((uint8_t)94);
             data2.push_back((uint8_t)17);
+            data2.push_back((uint8_t)66);
 
-            printf("test hash: 0x%x\n", (uint32_t)toeplitz_hash(rss_key(), data2));
+            auto hash2 = toeplitz_hash(rss_key(), data2);
+            printf("test hash: 0x%x\n", (uint32_t)hash2);
+            if (hash2 == 0x51ccc178) {
+                printf("TEST HASH MATCHES TCP FORMAT!!!!\n");
+            }
+            if (hash2 == 0x323e8fc2) {
+                printf("TEST HASH MATCHES IP FORMAT!!!\n");
+            }
             // auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
             //     return hash;
             // });

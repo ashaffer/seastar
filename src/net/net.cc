@@ -334,8 +334,8 @@ future<> interface::dispatch_packet(packet p) {
 
             data2.push_back(src.ip);
             data2.push_back(dst.ip);
-            data2.push_back((uint16_t)0xAEA);
-            data2.push_back((uint16_t)0x6E6);
+            data2.push_back(htons((uint16_t)0xAEA));
+            data2.push_back(htons((uint16_t)0x6E6));
 
             auto hash2 = toeplitz_hash(rss_key(), data2);
             printf("test hash: 0x%x\n", (uint32_t)hash2);

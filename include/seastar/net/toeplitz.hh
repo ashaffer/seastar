@@ -110,14 +110,14 @@ toeplitz_hash2(const T& data)
 
 	/* XXXRW: Perhaps an assertion about key length vs. data length? */
 
-	v = (key[0]<<24) + (key[1]<<16) + (key[2] <<8) + key[3];
+	v = (default_rsskey_40bytes[0]<<24) + (default_rsskey_40bytes[1]<<16) + (default_rsskey_40bytes[2] <<8) + default_rsskey_40bytes[3];
 	for (i = 0; i < data.size(); i++) {
 		for (b = 0; b < 8; b++) {
 			if (data[i] & (1<<(7-b)))
 				hash ^= v;
 			v <<= 1;
 			if ((i + 4) < sizeof(default_rsskey_40bytes) &&
-			    (key[i+4] & (1<<(7-b))))
+			    (default_rsskey_40bytes[i+4] & (1<<(7-b))))
 				v |= 1;
 		}
 	}

@@ -82,7 +82,7 @@ static constexpr uint32_t rsskey2[] = {
 	0x6d5a56da, 0x255b0ec2, 0x4167253d, 0x43a38fb0, 0xd0ca2bcb, 0xae7b30b4, 0x77cb2da3, 0x8030f20c, 0x6a42b73b, 0xbeac01fa
 };
 
-static const uint8_t *default_rsskey_40bytes = rsskey2;
+static const uint8_t *default_rsskey_40bytes = (uint8_t *)rsskey2;
 
 template<typename T>
 static inline uint32_t

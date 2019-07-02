@@ -342,10 +342,10 @@ future<> interface::dispatch_packet(packet p) {
             });
 
             if (fw != engine().cpu_id()) {
-                printf("Wrong cpu\n");
+                printf("Wrong cpu: %u\n", engine().cpu_id());
                 forward(fw, std::move(p));
             } else {
-                printf("Right cpu\n");                
+                printf("Right cpu: %u\n", engine().cpu_id());
                 auto h = ntoh(*eh);
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));

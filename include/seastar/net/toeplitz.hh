@@ -107,4 +107,27 @@ toeplitz_hash(rss_key_type key, const T& data)
 	return (hash);
 }
 
+template<typename T>
+static inline uint16_t
+toeplitz_hash16(rss_key_type key, const T& data)
+{
+	uint16_t hash = 0, v;
+	u_int i, b;
+
+	/* XXXRW: Perhaps an assertion about key length vs. data length? */
+
+	v = (key[0] <<8) + key[1];
+	for (i = 0; i < data.size(); i++) {
+		for (b = 0; b < 8; b++) {
+			if (data[i] & (1<<(3-b)))
+				hash ^= v;
+			v <<= 1;
+			if ((i + 2) < key.size() &&
+			    (key[i+2] & (1<<(3-b))))
+				v |= 1;
+		}
+	}
+	return (hash);
+}
+
 }

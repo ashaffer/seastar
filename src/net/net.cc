@@ -332,12 +332,12 @@ future<> interface::dispatch_packet(packet p) {
 
             printf("RSS Key: 0x%x 0x%x 0x%x\n", rss_key()[0], rss_key()[1], rss_key()[2]);
 
-            data2.push_back(htonl(src.ip));
-            data2.push_back(htonl(dst.ip));
-            // data2.push_back((uint8_t)27);
-            // data2.push_back((uint8_t)94);
-            // data2.push_back((uint8_t)17);
-            // data2.push_back((uint8_t)66);
+            data2.push_back(src.ip);
+            data2.push_back(dst.ip);
+            data2.push_back((uint8_t)27);
+            data2.push_back((uint8_t)94);
+            data2.push_back((uint8_t)17);
+            data2.push_back((uint8_t)66);
 
             auto hash2 = toeplitz_hash(rss_key(), data2);
             printf("test hash: 0x%x\n", (uint32_t)hash2);

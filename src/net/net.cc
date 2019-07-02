@@ -329,16 +329,15 @@ future<> interface::dispatch_packet(packet p) {
             forward_hash data2;
             ipv4_address src{"66.9.149.187"};
             ipv4_address dst{"161.142.100.80"};
+            uint16_t sport = 2794;
+            uint16_t dport = 1766;
 
             printf("RSS Key: 0x%x 0x%x 0x%x\n", rss_key()[0], rss_key()[1], rss_key()[2]);
 
             data2.push_back(src.ip);
             data2.push_back(dst.ip);
-            data2.push_back((uint8_t)0xEA);
-            data2.push_back((uint8_t)0x0A);
-
-            data2.push_back((uint8_t)0xE6);
-            data2.push_back((uint8_t)0x06);
+            data2.push_back(htons(sport));
+            data2.push_back(htons(dport));
 
             auto hash2 = toeplitz_hash(rss_key(), data2);
             printf("test hash: 0x%x\n", (uint32_t)hash2);

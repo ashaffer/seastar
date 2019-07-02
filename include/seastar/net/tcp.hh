@@ -873,7 +873,9 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     auto id = connid{to, from, h.dst_port, h.src_port};
     auto tcbi = _tcbs.find(id);
     lw_shared_ptr<tcb> tcbp;
+    printf("looking up in tcbs\n");
     if (tcbi == _tcbs.end()) {
+        printf("no tcb found\n");
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
             // 1) In CLOSE state
@@ -916,6 +918,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             return;
         }
     } else {
+        printf("tcb found\n");
         tcbp = tcbi->second;
         if (tcbp->state() == tcp_state::SYN_SENT) {
             // 3) In SYN_SENT State

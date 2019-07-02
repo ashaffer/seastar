@@ -2181,9 +2181,10 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         }
 
         (*p).set_offload_info(oi);
-        if (m->ol_flags & PKT_RX_RSS_HASH) {
+        // if (m->ol_flags & PKT_RX_RSS_HASH) {
+            printf("Hardware RSS Hash: 0x%x\n", (uint32_t)m->hash.rss);
             (*p).set_rss_hash(m->hash.rss);
-        }
+        // }
 
         _dev->l2receive(std::move(*p));
     }

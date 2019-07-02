@@ -320,30 +320,32 @@ future<> interface::dispatch_packet(packet p) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
-            forward_hash data;            
-            l3.forward(data, p, sizeof(eth_hdr));
-            auto hash = toeplitz_hash(rss_key(), data);
-            auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
-                return hash;
-            });
-
-            // auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
-            //     auto hwrss = p.rss_hash();
-            //     if (hwrss) {
-            //         return hwrss.value();
-            //     } else {
-            //         forward_hash data;
-            //         if (l3.forward(data, p, sizeof(eth_hdr))) {
-            //             return crc32_hash(data);
-            //             // return toeplitz_hash(rss_key(), data);
-            //         }
-            //         return 0u;
-            //     }
+            // forward_hash data;            
+            // l3.forward(data, p, sizeof(eth_hdr));
+            // auto hash = toeplitz_hash(rss_key(), data);
+            // auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
+            //     return hash;
             // });
 
+            auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
+                auto hwrss = p.rss_hash();
+                if (hwrss) {
+                    return hwrss.value();
+                } else {
+                    forward_hash data;
+                    if (l3.forward(data, p, sizeof(eth_hdr))) {
+                        // return crc32_hash(data);
+                        return toeplitz_hash(rss_key(), data);
+                    }
+                    return 0u;
+                }
+            });
+
             if (fw != engine().cpu_id()) {
+                printf("Wrong cpu\n");
                 forward(fw, std::move(p));
             } else {
+                printf("Right cpu!\n");
                 auto h = ntoh(*eh);
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));

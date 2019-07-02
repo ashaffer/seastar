@@ -323,7 +323,7 @@ future<> interface::dispatch_packet(packet p) {
             forward_hash data;            
             l3.forward(data, p, sizeof(eth_hdr));
             auto hash = toeplitz_hash(rss_key(), data);
-            printf("Software hash: 0x%x\n", (uint32_t)hash);
+            printf("Software hash: 0x%x 0x%x\n", (uint32_t)hash, (uint32_t)toeplitz_hash(default_rsskey_40bytes_old, data));
             // auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
             //     return hash;
             // });

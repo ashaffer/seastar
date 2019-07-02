@@ -99,9 +99,9 @@ toeplitz_hash(rss_key_type key, const T& data)
 			if (data[i] & (1<<(7-b)))
 				hash ^= v;
 			v <<= 1;
-			if ((i + 4) < key.size() &&
-			    (key[i+4] & (1<<(7-b))))
-				v |= 1;
+			// if ((i + 4) < key.size() &&
+			//     (key[i+4] & (1<<(7-b))))
+			// 	v |= 1;
 		}
 	}
 	return (hash);

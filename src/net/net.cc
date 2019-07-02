@@ -330,6 +330,8 @@ future<> interface::dispatch_packet(packet p) {
             ipv4_address src{"66.9.149.187"};
             ipv4_address dst{"161.142.100.80"};
 
+            printf("RSS Key: 0x%x 0x%x 0x%x\n", rss_key()[0], rss_key()[1], rss_key()[2]);
+
             data2.push_back(htonl(src.ip));
             data2.push_back(htonl(dst.ip));
             data2.push_back((uint8_t)27);

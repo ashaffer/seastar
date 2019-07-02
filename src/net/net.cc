@@ -340,7 +340,9 @@ future<> interface::dispatch_packet(packet p) {
             data2.push_back(htons(dport));
 
             auto hash2 = toeplitz_hash(rss_key(), data2);
-            printf("test hash: 0x%x\n", (uint32_t)hash2);
+            auto hash3 = toeplitz_hash2(data2);
+
+            printf("test hash: 0x%x 0x%x\n", (uint32_t)hash2, (uint32_t)hash3);
             if (hash2 == 0x51ccc178) {
                 printf("TEST HASH MATCHES TCP FORMAT!!!!\n");
             }

@@ -323,8 +323,8 @@ future<> interface::dispatch_packet(packet p) {
             forward_hash data;            
             l3.forward(data, p, sizeof(eth_hdr));
             auto hash = toeplitz_hash(rss_key(), data);
-            printf("Software hash: 0x%x 0x%x\n", (uint32_t)hash);
-            printf("Software hash16: 0x%x 0x%x 0x%x 0x%x\n", (uint32_t)toeplitz_hash16(rss_key(), data), (uint32_t)toeplitz_hash162(rss_key(), data));
+            printf("Software hash: 0x%x\n", (uint32_t)hash);
+            printf("Software hash16: 0x%x 0x%x\n", (uint32_t)toeplitz_hash16(rss_key(), data), (uint32_t)toeplitz_hash162(rss_key(), data));
 
             forward_hash data2;
             ipv4_address src{"66.9.149.187"};

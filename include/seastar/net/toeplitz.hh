@@ -78,6 +78,14 @@ static constexpr uint8_t default_rsskey_40bytes[] = {
 	0x6a, 0x42, 0xb7, 0x3b, 0xbe, 0xac, 0x01, 0xfa
 };
 
+static constexpr uint8_t rkey[] = {
+	0x6d, 0x5a, 0x56, 0xda, 0x25, 0x5b, 0x0e, 0xc2,
+	0x41, 0x67, 0x25, 0x3d, 0x43, 0xa3, 0x8f, 0xb0,
+	0xd0, 0xca, 0x2b, 0xcb, 0xae, 0x7b, 0x30, 0xb4,
+	0x77, 0xcb, 0x2d, 0xa3, 0x80, 0x30, 0xf2, 0x0c,
+	0x6a, 0x42, 0xb7, 0x3b, 0xbe, 0xac, 0x01, 0xfa
+};
+
 template<typename T>
 static inline uint32_t
 toeplitz_hash(rss_key_type key, const T& data)
@@ -110,14 +118,14 @@ toeplitz_hash2(const T& data)
 
 	/* XXXRW: Perhaps an assertion about key length vs. data length? */
 
-	v = (default_rsskey_40bytes[0]<<24) + (default_rsskey_40bytes[1]<<16) + (default_rsskey_40bytes[2] <<8) + default_rsskey_40bytes[3];
+	v = (rkey[0]<<24) + (rkey[1]<<16) + (rkey[2] <<8) + rkey[3];
 	for (i = 0; i < data.size(); i++) {
 		for (b = 0; b < 8; b++) {
 			if (data[i] & (1<<(7-b)))
 				hash ^= v;
 			v <<= 1;
-			if ((i + 4) < sizeof(default_rsskey_40bytes) &&
-			    (default_rsskey_40bytes[i+4] & (1<<(7-b))))
+			if ((i + 4) < sizeof(rkey) &&
+			    (rkey[i+4] & (1<<(7-b))))
 				v |= 1;
 		}
 	}

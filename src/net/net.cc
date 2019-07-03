@@ -314,6 +314,23 @@ void interface::forward(unsigned cpuid, packet p) {
     }
 }
 
+uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
+        const uint8_t *rss_key)
+{
+    uint16_t i, j, ret = 0;
+
+    for (j = 0; j < input_len; j++) {
+        for (i = 0; i < 16; i++) {
+            if (input_tuple[j] & (1 << (15 - i))) {
+                ret ^= rte_cpu_to_be_16(((const uint16_t *)rss_key)[j]) << i |
+                    (uint16_t)((uint32_t)(rte_cpu_to_be_16(((const uint16_t *)rss_key)[j + 1])) >>
+                    (16 - i));
+            }
+        }
+    }
+    return ret;
+}
+
 future<> interface::dispatch_packet(packet p) {
     uint8_t rkey[] = {
         0x6d, 0x5a, 0x56, 0xda, 0x25, 0x5b, 0x0e, 0xc2,
@@ -336,11 +353,11 @@ future<> interface::dispatch_packet(packet p) {
 
             uint8_t keybuf[40] = {0};
             rte_convert_rss_key((uint32_t *)rkey, (uint32_t *)keybuf, sizeof(keybuf));
-            uint32_t rte_hash = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)rkey);
-            uint32_t rte_hash2 = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)keybuf);
+            // uint32_t rte_hash = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)rkey);
+            // uint32_t rte_hash2 = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)keybuf);
             uint32_t rte_hash3 = rte_softrss((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)rkey);
-
-            printf("RTE Hash: 0x%x 0x%x 0x%x\n", rte_hash, rte_hash2, rte_hash3);
+            uint16_t rte_hash4 = rte_softrss16((uint16_t *)data.data, data.size() / sizeof(uint16_t), (uint8_t *)rkey);
+            printf("RTE Hash: 0x%x 0x%x\n", rte_hash3, rte_hash4);
 
             printf("\n");
             for (uint j = 0; j < data.size(); j++) {

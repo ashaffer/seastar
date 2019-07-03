@@ -30,7 +30,7 @@
 #include <seastar/net/inet_address.hh>
 #include <seastar/net/tcp.hh>
 #include <seastar/net/ip.hh>
-
+#include <rte_thash.h>
 namespace seastar {
 
 std::ostream& operator<<(std::ostream &os, ipv4_addr addr) {

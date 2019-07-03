@@ -326,6 +326,13 @@ future<> interface::dispatch_packet(packet p) {
             printf("Software hash: 0x%x\n", (uint32_t)hash);
             printf("Software hash16: 0x%x 0x%x\n", (uint32_t)toeplitz_hash16(rss_key(), data), (uint32_t)toeplitz_hash162(rss_key(), data));
 
+            uint8_t keybuf[40] = {0};
+            rte_convert_rss_key(rss_key(), keybuf, sizeof(keybuf));
+            uint32_t rte_hash = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), rss_key());
+            uint32_t rte_hash2 = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), keybuf);
+
+            printf("RTE Hash: 0x%x\n", rte_hash, rte_hash2);
+
             printf("\n");
             for (uint j = 0; j < data.size(); j++) {
                 printf("0x%x ", data.data[j]);

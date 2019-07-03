@@ -326,49 +326,22 @@ future<> interface::dispatch_packet(packet p) {
             printf("Software hash: 0x%x\n", (uint32_t)hash);
             printf("Software hash16: 0x%x 0x%x\n", (uint32_t)toeplitz_hash16(rss_key(), data), (uint32_t)toeplitz_hash162(rss_key(), data));
 
-            forward_hash data2;
-            ipv4_address src2{"66.9.149.187"};
-            // ipv4_address dst{"161.142.100.80"};
-            uint32_t src = inet_addr("66.9.149.187");    
-            uint32_t dst = inet_addr("161.142.100.80");
-
-            uint16_t sport = 2794;
-            uint16_t dport = 1766;
-
-            printf("RSS Key: 0x%x 0x%x 0x%x\n", rss_key()[0], rss_key()[1], rss_key()[2]);
-
-            data2.push_back(src);
-            data2.push_back(dst);
-            data2.push_back(htons(sport));
-            data2.push_back(htons(dport));
-
-            auto hash2 = toeplitz_hash(rss_key(), data2);
-            auto hash3 = toeplitz_hash2(data2);
-
-            printf("IPs: 0x%x 0x%x\n", (uint32_t)src, (uint32_t)src2.ip);
-            printf("test hash: 0x%x 0x%x\n", (uint32_t)hash2, (uint32_t)hash3);
-            if (hash2 == 0x51ccc178) {
-                printf("TEST HASH MATCHES TCP FORMAT!!!!\n");
-            }
-            if (hash2 == 0x323e8fc2) {
-                printf("TEST HASH MATCHES IP FORMAT!!!\n");
-            }
-            // auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
+             // auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
             //     return hash;
             // });
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
-                if (hwrss) {
-                    return hwrss.value();
-                } else {
+                // if (hwrss) {
+                //     return hwrss.value();
+                // } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
                         // return crc32_hash(data);
                         return toeplitz_hash(rss_key(), data);
                     }
                     return 0u;
-                }
+                // }
             });
 
             if (fw != engine().cpu_id()) {

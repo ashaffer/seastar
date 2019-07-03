@@ -79,15 +79,15 @@ bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
 {
     auto iph = p.get_header<ip_hdr>(off);
 
-    out_hash_data.push_back(htonl(iph->src_ip.ip));
-    out_hash_data.push_back(htonl(iph->dst_ip.ip));
+    out_hash_data.push_back(iph->src_ip.ip);
+    out_hash_data.push_back(iph->dst_ip.ip);
 
     auto h = ntoh(*iph);
     auto l4 = _l4[h.ip_proto];
     if (l4) {
         if (h.mf() == false && h.offset() == 0) {
             // This IP datagram is atomic, forward according to tcp or udp connection hash
-            // l4->forward(out_hash_data, p, off + sizeof(ip_hdr));
+            l4->forward(out_hash_data, p, off + sizeof(ip_hdr));
         }
         // else forward according to ip fields only
     }

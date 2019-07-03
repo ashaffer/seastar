@@ -327,7 +327,7 @@ future<> interface::dispatch_packet(packet p) {
             printf("Software hash16: 0x%x 0x%x\n", (uint32_t)toeplitz_hash16(rss_key(), data), (uint32_t)toeplitz_hash162(rss_key(), data));
 
             forward_hash data2;
-            // ipv4_address src{"66.9.149.187"};
+            ipv4_address src2{"66.9.149.187"};
             // ipv4_address dst{"161.142.100.80"};
             uint32_t src = inet_addr("66.9.149.187");    
             uint32_t dst = inet_addr("161.142.100.80");
@@ -345,6 +345,7 @@ future<> interface::dispatch_packet(packet p) {
             auto hash2 = toeplitz_hash(rss_key(), data2);
             auto hash3 = toeplitz_hash2(data2);
 
+            printf("IPs: 0x%x 0x%x\n", (uint32_t)src, (uint32_t)src2.ip);
             printf("test hash: 0x%x 0x%x\n", (uint32_t)hash2, (uint32_t)hash3);
             if (hash2 == 0x51ccc178) {
                 printf("TEST HASH MATCHES TCP FORMAT!!!!\n");

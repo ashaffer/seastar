@@ -331,7 +331,7 @@ future<> interface::dispatch_packet(packet p) {
             // });
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
-                auto hwrss = p.rss_hash();
+                // auto hwrss = p.rss_hash();
                 // if (hwrss) {
                 //     return hwrss.value();
                 // } else {

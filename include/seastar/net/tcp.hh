@@ -824,7 +824,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
     auto dst_port = net::ntoh(sa.u.in.sin_port);
 
     // do {
-        src_port = 57916; //_port_dist(_e);
+        src_port = 57915; //_port_dist(_e);
         id = connid{src_ip, dst_ip, src_port, dst_port};
     // } while (_inet._inet.netif()->hw_queues_count() > 1 &&
     //          (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_key())) != engine().cpu_id()

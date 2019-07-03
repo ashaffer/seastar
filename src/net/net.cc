@@ -328,10 +328,11 @@ future<> interface::dispatch_packet(packet p) {
 
             uint8_t keybuf[40] = {0};
             rte_convert_rss_key((uint32_t *)rss_key(), (uint32_t *)keybuf, sizeof(keybuf));
-            uint32_t rte_hash = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint32_t *)rss_key());
-            uint32_t rte_hash2 = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint32_t *)keybuf);
+            uint32_t rte_hash = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)rss_key());
+            uint32_t rte_hash2 = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)keybuf);
+            uint32_t rte_hash3 = rte_softrss((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)rss_key());
 
-            printf("RTE Hash: 0x%x\n", rte_hash, rte_hash2);
+            printf("RTE Hash: 0x%x 0x%x 0x%x\n", rte_hash, rte_hash2, rte_hash3);
 
             printf("\n");
             for (uint j = 0; j < data.size(); j++) {

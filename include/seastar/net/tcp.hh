@@ -823,12 +823,12 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
     auto dst_ip = ipv4_address(sa);
     auto dst_port = net::ntoh(sa.u.in.sin_port);
 
-    do {
-        src_port = _port_dist(_e);
+    // do {
+        src_port = 57917; //_port_dist(_e);
         id = connid{src_ip, dst_ip, src_port, dst_port};
-    } while (_inet._inet.netif()->hw_queues_count() > 1 &&
-             (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_key())) != engine().cpu_id()
-              || _tcbs.find(id) != _tcbs.end()));
+    // } while (_inet._inet.netif()->hw_queues_count() > 1 &&
+    //          (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_key())) != engine().cpu_id()
+    //           || _tcbs.find(id) != _tcbs.end()));
 
     printf("Connecting from: %u\n", engine().cpu_id());
     auto tcbp = make_lw_shared<tcb>(*this, id);

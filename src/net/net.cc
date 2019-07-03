@@ -326,7 +326,12 @@ future<> interface::dispatch_packet(packet p) {
             printf("Software hash: 0x%x\n", (uint32_t)hash);
             printf("Software hash16: 0x%x 0x%x\n", (uint32_t)toeplitz_hash16(rss_key(), data), (uint32_t)toeplitz_hash162(rss_key(), data));
 
+            printf("\n");
+            for (uint j = 0; j < data.size(); j++) {
+                printf("0x%x ", data.data[j]);
              // auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
+            }
+            printf("\n");
             //     return hash;
             // });
 

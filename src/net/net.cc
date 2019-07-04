@@ -349,24 +349,6 @@ future<> interface::dispatch_packet(packet p) {
             l3.forward(data, p, sizeof(eth_hdr));
             auto hash = toeplitz_hash(rss_key(), data);
             printf("Software hash: 0x%x\n", (uint32_t)hash);
-            printf("Software hash16: 0x%x 0x%x\n", (uint32_t)toeplitz_hash16(rss_key(), data), (uint32_t)toeplitz_hash162(rss_key(), data));
-
-            uint8_t keybuf[40] = {0};
-            rte_convert_rss_key((uint32_t *)rkey, (uint32_t *)keybuf, sizeof(keybuf));
-            // uint32_t rte_hash = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)rkey);
-            // uint32_t rte_hash2 = rte_softrss_be((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)keybuf);
-            uint32_t rte_hash3 = rte_softrss((uint32_t *)data.data, data.size() / sizeof(uint32_t), (uint8_t *)rkey);
-            uint16_t rte_hash4 = rte_softrss16((uint16_t *)data.data, data.size() / sizeof(uint16_t), (uint8_t *)rkey);
-            printf("RTE Hash: 0x%x 0x%x\n", rte_hash3, rte_hash4);
-
-            printf("\n");
-            for (uint j = 0; j < data.size(); j++) {
-                printf("0x%x ", data.data[j]);
-             // auto fw = _dev->forward_dst(_dev->hash2qid(hash), [hash] () {
-            }
-            printf("\n");
-            //     return hash;
-            // });
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 // auto hwrss = p.rss_hash();

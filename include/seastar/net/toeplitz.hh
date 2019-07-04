@@ -106,7 +106,7 @@ toeplitz_hash(rss_key_type key, const T& data)
 				v |= 1;
 		}
 	}
-	return (hash);
+	return (((hash) & 0xFFFF) << 16) | (hash & 0xFFFF);
 }
 
 template<typename T>

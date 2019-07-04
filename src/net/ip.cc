@@ -203,10 +203,8 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
                     cpu_id = _netif->hash2cpu(toeplitz_hash(_netif->rss_key(), hash_data));
                     // No need to forward if the dst cpu is the current cpu
                     if (cpu_id == engine().cpu_id()) {
-                        printf("passing to l4\n");
                         l4->received(std::move(ip_data), h.src_ip, h.dst_ip);
                     } else {
-                        printf("ip forwarding\n");
                         auto to = _netif->hw_address();
                         auto pkt = frag.get_assembled_packet(from, to);
                         _netif->forward(cpu_id, std::move(pkt));

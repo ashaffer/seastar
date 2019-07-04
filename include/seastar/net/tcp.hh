@@ -842,6 +842,7 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
     auto th = p.get_header(off, tcp_hdr::len);
     if (th) {
         tcp_hdr *hdr = (tcp_hdr *)th;
+        printf("forward tcp: %u %u\n", hdr->src_port, hdr->dst_port);
         // src_port, dst_port in network byte order
         if (hdr->src_port < hdr->dst_port) {
             out_hash_data.push_back(uint8_t(th[0]));

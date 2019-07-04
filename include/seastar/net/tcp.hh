@@ -841,11 +841,19 @@ template <typename InetTraits>
 bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off) {
     auto th = p.get_header(off, tcp_hdr::len);
     if (th) {
+        tcp_hdr hdr{th};
         // src_port, dst_port in network byte order
-        out_hash_data.push_back(uint8_t(th[0]));
-        out_hash_data.push_back(uint8_t(th[1]));
-        out_hash_data.push_back(uint8_t(th[2]));
-        out_hash_data.push_back(uint8_t(th[3]));
+        if (th.src_port < th.dst_port) {
+            out_hash_data.push_back(uint8_t(th[0]));
+            out_hash_data.push_back(uint8_t(th[1]));
+            out_hash_data.push_back(uint8_t(th[2]));
+            out_hash_data.push_back(uint8_t(th[3]));
+        } else {
+            out_hash_data.push_back(uint8_t(th[2]));
+            out_hash_data.push_back(uint8_t(th[3]));
+            out_hash_data.push_back(uint8_t(th[0]));
+            out_hash_data.push_back(uint8_t(th[1]));
+        }
     }
     return true;
 }

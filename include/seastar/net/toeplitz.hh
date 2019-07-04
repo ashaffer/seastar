@@ -78,14 +78,6 @@ static constexpr uint8_t default_rsskey_40bytes[] = {
    0x25, 0x5b, 0x0e, 0xc2, 0x6d, 0x5a, 0x56, 0xda
 };
 
-static constexpr uint8_t rkey[] = {
-	0x6d, 0x5a, 0x56, 0xda, 0x25, 0x5b, 0x0e, 0xc2,
-	0x41, 0x67, 0x25, 0x3d, 0x43, 0xa3, 0x8f, 0xb0,
-	0xd0, 0xca, 0x2b, 0xcb, 0xae, 0x7b, 0x30, 0xb4,
-	0x77, 0xcb, 0x2d, 0xa3, 0x80, 0x30, 0xf2, 0x0c,
-	0x6a, 0x42, 0xb7, 0x3b, 0xbe, 0xac, 0x01, 0xfa
-};
-
 template<typename T>
 static inline uint32_t
 toeplitz_hash(rss_key_type key, const T& data)
@@ -109,72 +101,5 @@ toeplitz_hash(rss_key_type key, const T& data)
 	return (((hash) & 0xFFFF) << 16) | (hash & 0xFFFF);
 }
 
-template<typename T>
-static inline uint32_t
-toeplitz_hash2(const T& data)
-{
-	uint32_t hash = 0, v;
-	u_int i, b;
-
-	/* XXXRW: Perhaps an assertion about key length vs. data length? */
-
-	v = (rkey[0]<<24) + (rkey[1]<<16) + (rkey[2] <<8) + rkey[3];
-	for (i = 0; i < data.size(); i++) {
-		for (b = 0; b < 8; b++) {
-			if (data[i] & (1<<(7-b)))
-				hash ^= v;
-			v <<= 1;
-			if ((i + 4) < sizeof(rkey) &&
-			    (rkey[i+4] & (1<<(7-b))))
-				v |= 1;
-		}
-	}
-	return (hash);
-}
-template<typename T>
-static inline uint32_t
-toeplitz_hash162(rss_key_type key, const T& data)
-{
-	uint32_t hash = 0, v;
-	u_int i, b;
-
-	/* XXXRW: Perhaps an assertion about key length vs. data length? */
-
-	v = (key[0]<<24) + (key[1]<<16) + (key[2] <<8) + key[3];
-	for (i = 0; i < data.size(); i++) {
-		for (b = 0; b < 8; b++) {
-			if (data[i] & (1<<(7-b)))
-				hash ^= v;
-			v <<= 1;
-			if ((i + 4) < key.size() &&
-			    (key[i+4] & (1<<(7-b))))
-				v |= 1;
-		}
-	}
-	return ((hash & 0xFFFF0000) >> 16) ^ (hash & 0xFFFF);
-}
-
-template<typename T>
-static inline uint16_t
-toeplitz_hash16(rss_key_type key, const T& data)
-{
-	uint16_t hash = 0, v;
-	u_int i, b;
-
-	/* XXXRW: Perhaps an assertion about key length vs. data length? */
-
-	v = (key[0] <<8) + key[1];
-	for (i = 0; i < data.size(); i++) {
-		for (b = 0; b < 8; b++) {
-			if (data[i] & (1<<(3-b)))
-				hash ^= v;
-			v <<= 1;
-			if ((i + 2) < key.size() &&
-			    (key[i+2] & (1<<(3-b))))
-				v |= 1;
-		}
-	}
-	return (hash);
-}
 
 }

@@ -65,6 +65,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     }
 
     std::unique_ptr<device> dev;
+    device_configs dev_cfgs;
 
     if ( deprecated_config_used) {
 #ifdef SEASTAR_HAVE_DPDK
@@ -77,13 +78,13 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         dev = create_virtio_net_device(opts);
     }
     else {
-        auto device_configs = parse_config(net_config);
+        dev_cfgs = parse_config(net_config);
 
-        if ( device_configs.size() > 1) {
+        if ( dev_cfgs.size() > 1) {
             std::runtime_error("only one network interface is supported");
         }
 
-        for ( auto&& device_config : device_configs) {
+        for ( auto&& device_config : dev_cfgs) {
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK
             if ( hw_config.port_index || !hw_config.pci_address.empty() ) {
@@ -120,11 +121,11 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             sem->signal();
         });
     }
-    sem->wait(smp::count).then([opts, sdev] {
-        sdev->link_ready().then([opts, sdev] {
+    sem->wait(smp::count).then([opts, sdev, dev_cfgs] {
+        sdev->link_ready().then([opts, sdev, dev_cfgs] {
             for (unsigned i = 0; i < smp::count; i++) {
-                smp::submit_to(i, [opts, sdev] {
-                    create_native_stack(opts, sdev);
+                smp::submit_to(i, [opts, sdev, dev_cfgs] {
+                    create_native_stack(opts, sdev, dev_cfgs);
                 });
             }
         });
@@ -182,7 +183,7 @@ add_native_net_options_description(boost::program_options::options_description &
 #endif
 }
 
-native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::shared_ptr<device> dev)
+native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::shared_ptr<device> dev, device_configs dev_cfgs)
     : _netif(std::move(dev))
     , _inet(&_netif) {
     _inet.get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
@@ -288,8 +289,8 @@ void arp_learn(ethernet_address l2, ipv4_address l3)
     }
 }
 
-void create_native_stack(boost::program_options::variables_map opts, std::shared_ptr<device> dev) {
-    native_network_stack::ready_promise.set_value(std::unique_ptr<network_stack>(std::make_unique<native_network_stack>(opts, std::move(dev))));
+void create_native_stack(boost::program_options::variables_map opts, std::shared_ptr<device> dev, device_configs dev_cfgs) {
+    native_network_stack::ready_promise.set_value(std::unique_ptr<network_stack>(std::make_unique<native_network_stack>(opts, std::move(dev), dev_cfgs)));
 }
 
 boost::program_options::options_description nns_options() {

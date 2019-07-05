@@ -23,6 +23,7 @@
 
 #include <seastar/net/net.hh>
 #include <boost/program_options.hpp>
+#include <seastar/net/config.hh>
 
 namespace seastar {
 

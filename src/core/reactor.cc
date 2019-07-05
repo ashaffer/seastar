@@ -2998,10 +2998,11 @@ directory_entry_type stat_to_entry_type(__mode_t type) {
 }
 
 future<compat::optional<directory_entry_type>>
-reactor::file_type(sstring name) {
-    return _thread_pool->submit<syscall_result_extra<struct stat>>([name] {
+reactor::file_type(sstring name, follow_symlink follow) {
+    return _thread_pool->submit<syscall_result_extra<struct stat>>([name, follow] {
         struct stat st;
-        auto ret = stat(name.c_str(), &st);
+        auto stat_syscall = follow ? stat : lstat;
+        auto ret = stat_syscall(name.c_str(), &st);
         return wrap_syscall(ret, st);
     }).then([name] (syscall_result_extra<struct stat> sr) {
         if (long(sr.result) == -1) {
@@ -3195,7 +3196,7 @@ posix_file_impl::dup() {
     }
     auto ret = std::make_unique<posix_file_handle_impl>(_fd, _open_flags, _refcount, _io_queue);
     _refcount->fetch_add(1, std::memory_order_relaxed);
-    return std::move(ret);
+    return ret;
 }
 
 posix_file_impl::posix_file_impl(int fd, open_flags f, std::atomic<unsigned>* refcount, io_queue *ioq)
@@ -3215,7 +3216,7 @@ posix_file_handle_impl::clone() const {
     if (_refcount) {
         _refcount->fetch_add(1, std::memory_order_relaxed);
     }
-    return std::move(ret);
+    return ret;
 }
 
 shared_ptr<file_impl>

@@ -29,8 +29,6 @@
 namespace seastar {
 namespace net {
 
-    typedef std::unordered_map<std::string, device_config> device_configs;
-
     struct ipv4_config {
         std::vector<std::string> ip;
         std::string netmask;
@@ -54,6 +52,8 @@ namespace net {
         ipv4_config ip_cfg;
         hw_config hw_cfg;
     };
+
+    typedef std::unordered_map<std::string, device_config> device_configs;
 
     device_configs parse_config(std::istream& input);
 

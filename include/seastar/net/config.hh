@@ -30,7 +30,7 @@ namespace seastar {
 namespace net {
 
     struct ipv4_config {
-        std::string ip;
+        std::vector<std::string> ip;
         std::string netmask;
         std::string gateway;
         bool dhcp{ false };

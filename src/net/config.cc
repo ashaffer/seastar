@@ -100,7 +100,7 @@ struct convert<seastar::net::device_config> {
     static bool
     decode(const Node& node, seastar::net::device_config& dev_cfg) {
         // test for unsupported key
-
+        printf("Decoding\n");
         for (auto&& item : node) {
             if (none_of(seastar::net::config_keys, [&item](std::string s) {
                     return s == item.first.as<std::string>();

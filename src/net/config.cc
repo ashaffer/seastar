@@ -138,7 +138,7 @@ struct convert<seastar::net::device_config> {
         }
 
         if (node["ip"]) {
-            dev_cfg.ip_cfg.ip = node["ip"].as<std::string>();
+            dev_cfg.ip_cfg.ip = node["ip"].as<std::vector<std::string>>();
         }
 
         if (node["netmask"]) {

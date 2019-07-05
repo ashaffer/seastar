@@ -42,7 +42,9 @@ namespace net {
     parse_config(std::istream& input) {
         std::unordered_map<std::string, device_config> device_configs;
 
+        printf("a\n");
         YAML::Node doc = YAML::Load(input);
+        printf("b\n");
         for (auto&& item : doc) {
             device_configs[item.first.as<std::string>()] = item.second.as<device_config>();
         }

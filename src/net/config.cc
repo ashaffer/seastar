@@ -42,13 +42,10 @@ namespace net {
     parse_config(std::istream& input) {
         std::unordered_map<std::string, device_config> device_configs;
 
-        printf("a\n");
         YAML::Node doc = YAML::Load(input);
-        printf("b\n");
+
         for (auto&& item : doc) {
-            printf("c\n");
             device_configs[item.first.as<std::string>()] = item.second.as<device_config>();
-            printf("d\n");
         }
 
         bool port_index_used = false;
@@ -68,7 +65,6 @@ namespace net {
                 throw config_exception("port_index and pci_address cannot be used together");
             }
         }
-        printf("e\n");
 
         // check if all of ip,gw,nm are specified when dhcp is off
         if (all_of(device_configs, [](std::pair<std::string, device_config> p) {
@@ -100,7 +96,6 @@ struct convert<seastar::net::device_config> {
     static bool
     decode(const Node& node, seastar::net::device_config& dev_cfg) {
         // test for unsupported key
-        printf("Decoding\n");
         for (auto&& item : node) {
             if (none_of(seastar::net::config_keys, [&item](std::string s) {
                     return s == item.first.as<std::string>();

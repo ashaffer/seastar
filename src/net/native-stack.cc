@@ -150,7 +150,7 @@ private:
     }
     using tcp4 = tcp<ipv4_traits>;
 public:
-    explicit native_network_stack(boost::program_options::variables_map opts, std::shared_ptr<device> dev);
+    explicit native_network_stack(boost::program_options::variables_map opts, std::shared_ptr<device> dev, device_configs dev_cfgs);
     virtual server_socket listen(socket_address sa, listen_options opt) override;
     virtual ::seastar::socket socket() override;
     virtual udp_channel make_udp_channel(const socket_address& addr) override;

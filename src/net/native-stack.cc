@@ -31,7 +31,6 @@
 #include <seastar/net/proxy.hh>
 #include <seastar/net/dhcp.hh>
 #include <seastar/net/config.hh>
-#include <seastar/util/json.hh>
 #include <memory>
 #include <queue>
 #include <fstream>
@@ -296,6 +295,9 @@ boost::program_options::options_description nns_options() {
     boost::program_options::options_description opts(
             "Native networking stack options");
     opts.add_options()
+        ("net-config-file",
+                boost::program_options::value<std::string>()->default_value(""),
+                "net config file describing the NIC devices to use")
         ("tap-device",
                 boost::program_options::value<std::string>()->default_value("tap0"),
                 "tap device to connect to")

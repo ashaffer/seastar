@@ -2272,7 +2272,7 @@ std::unique_ptr<net::device> create_dpdk_net_device(
 {
     static bool called = false;
 
-    assert(!called);
+    // assert(!called);
     assert(dpdk::eal::initialized);
 
     called = true;

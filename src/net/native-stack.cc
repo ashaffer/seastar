@@ -85,7 +85,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         // }
 
         for ( auto&& device_config : dev_cfgs) {
-            printf("aaaa\n");
+            printf("aaaa: %s\n", device_config.ip_cfg.ip[0].c_str());
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK
             if ( hw_config.port_index || !hw_config.pci_address.empty() ) {

@@ -2270,7 +2270,7 @@ std::unique_ptr<net::device> create_dpdk_net_device(
                                     bool use_lro,
                                     bool enable_fc)
 {
-    static bool called = false;
+    // static bool called = false;
 
     // assert(!called);
     assert(dpdk::eal::initialized);

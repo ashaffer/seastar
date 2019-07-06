@@ -190,7 +190,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
     for (auto&& device_config : dev_cfgs) {
         auto& ip_config = device_config.second.ip_cfg;
 
-        _dhcp = ip_config["dhcp"];
+        _dhcp = ip_config.dhcp;
 
         if (!_dhcp) {
             for (auto ip : ip_config.ip) {

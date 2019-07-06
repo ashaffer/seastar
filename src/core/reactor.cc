@@ -5483,6 +5483,8 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     auto backend_selector = configuration["reactor-backend"].as<reactor_backend_selector>();
 
     unsigned i;
+    printf("smp::count: %u\n", smp::count);
+    
     for (i = 1; i < smp::count; i++) {
         auto allocation = allocations[i];
         create_thread([configuration, &disk_config, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {

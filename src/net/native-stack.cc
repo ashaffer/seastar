@@ -79,7 +79,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     }
     else {
         dev_cfgs = parse_config(net_config);
-        printf("here: %u\n", dev_cfgs.size());
+        printf("here: %u\n", (uint)dev_cfgs.size());
         if ( dev_cfgs.size() > 1) {
             std::runtime_error("only one network interface is supported");
         }

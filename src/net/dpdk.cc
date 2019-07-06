@@ -2289,7 +2289,7 @@ std::unique_ptr<net::device> create_dpdk_net_device(
 }
 
 std::unique_ptr<net::device> create_dpdk_net_device(
-                                    const hw_config& hw_cfg, uint16_t num_queues = smp::count)
+                                    const hw_config& hw_cfg, uint16_t num_queues)
 {
     return create_dpdk_net_device(*hw_cfg.port_index, num_queues, hw_cfg.lro, hw_cfg.hw_fc);
 }

@@ -37,7 +37,7 @@ std::unique_ptr<net::device> create_dpdk_net_device(
                                     bool enable_fc = true);
 
 std::unique_ptr<net::device> create_dpdk_net_device(
-                                    const net::hw_config& hw_cfg, uint16_t num_queues = smp::count);
+                                    const net::hw_config& hw_cfg, uint16_t num_queues);
 
 
 boost::program_options::options_description get_dpdk_net_options_description();

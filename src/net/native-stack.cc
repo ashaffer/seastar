@@ -88,7 +88,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 #ifdef SEASTAR_HAVE_DPDK
             if ( hw_config.port_index || !hw_config.pci_address.empty() ) {
                 auto dev = create_dpdk_net_device(hw_config, num_queues);
-                std:;shared_ptr<device> sdev(dev.release());
+                std::shared_ptr<device> sdev(dev.release());
 	            devices.push_back(sdev);
 	        } else 
 #endif  
@@ -110,7 +110,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         uint16_t qid = i / devices.size();
         auto sdev = devices[devIdx];
 
-        smp::submit_to(i, [opts, sdev] {
+        smp::submit_to(i, [qid, opts, sdev] {
             if (qid < sdev->hw_queues_count()) {
                 auto qp = sdev->init_local_queue(opts, qid);
                 std::map<unsigned, float> cpu_weights;
@@ -138,7 +138,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             });
         }
 
-        sem->wait(devices.size()).then([devices, dev_cfgs] {
+        sem->wait(devices.size()).then([opts, devices, dev_cfgs] {
             for (unsigned i = 0; i < smp::count; i++) {
                 smp::submit_to(i, [opts, devices, dev_cfgs] {
                     create_native_stack(opts, devices, dev_cfgs);

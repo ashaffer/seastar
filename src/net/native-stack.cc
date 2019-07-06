@@ -140,8 +140,8 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
         sem->wait(devices.size()).then([devices, dev_cfgs] {
             for (unsigned i = 0; i < smp::count; i++) {
-                smp::submit_to(i, [opts, sdev, dev_cfgs] {
-                    create_native_stack(opts, sdev, dev_cfgs);
+                smp::submit_to(i, [opts, devices, dev_cfgs] {
+                    create_native_stack(opts, devices, dev_cfgs);
                 });
             }
         });

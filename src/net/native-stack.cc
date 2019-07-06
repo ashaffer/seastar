@@ -79,16 +79,18 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     }
     else {
         dev_cfgs = parse_config(net_config);
-
+        printf("here: %u\n", dev_cfgs.size());
         if ( dev_cfgs.size() > 1) {
             std::runtime_error("only one network interface is supported");
         }
 
         for ( auto&& device_config : dev_cfgs) {
+            printf("aaaa\n");
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK
             if ( hw_config.port_index || !hw_config.pci_address.empty() ) {
 	            dev = create_dpdk_net_device(hw_config);
+                printf("bbbbb\n");
 	        } else 
 #endif  
             {

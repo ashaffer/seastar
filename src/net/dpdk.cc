@@ -2275,7 +2275,7 @@ std::unique_ptr<net::device> create_dpdk_net_device(
     // assert(!called);
     assert(dpdk::eal::initialized);
 
-    called = true;
+    // called = true;
 
     // Check that we have at least one DPDK-able port
     if (rte_eth_dev_count_avail() == 0) {

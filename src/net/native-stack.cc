@@ -88,7 +88,6 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK
             if ( hw_config.port_index || !hw_config.pci_address.empty() ) {
-                printf("CREATING HW_CONFIG!!!\n");
 	            dev = create_dpdk_net_device(hw_config);
 	        } else 
 #endif  
@@ -187,16 +186,20 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
     : _netif(std::move(dev))
     , _inet(&_netif) {
     _inet.get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
-    _dhcp = opts["host-ipv4-addr"].defaulted()
-            && opts["gw-ipv4-addr"].defaulted()
-            && opts["netmask-ipv4-addr"].defaulted() && opts["dhcp"].as<bool>();
-    if (!_dhcp) {
-        for (auto ip : opts["host-ipv4-addr"].as<std::vector<std::string>>()) {
-            _inet.set_host_address(ipv4_address(ip));
+
+    for (auto&& device_config : dev_cfgs) {
+        auto& ip_config = device_config.second.ip_cfg;
+
+        _dhcp = ip_config["dhcp"];
+
+        if (!_dhcp) {
+            for (auto ip : ip_config.ip) {
+                _inet.set_host_address(ipv4_address(ip));
+            }
+            // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
+            _inet.set_gw_address(ipv4_address(ip_config.gateway));
+            _inet.set_netmask_address(ipv4_address(ip_config.netmask));
         }
-        // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
-        _inet.set_gw_address(ipv4_address(opts["gw-ipv4-addr"].as<std::string>()));
-        _inet.set_netmask_address(ipv4_address(opts["netmask-ipv4-addr"].as<std::string>()));
     }
 }
 

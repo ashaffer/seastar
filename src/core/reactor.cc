@@ -5484,7 +5484,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
 
     unsigned i;
     printf("smp::count: %u\n", smp::count);
-    
+
     for (i = 1; i < smp::count; i++) {
         auto allocation = allocations[i];
         create_thread([configuration, &disk_config, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
@@ -5541,9 +5541,12 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
 #ifdef SEASTAR_HAVE_DPDK
     if (_using_dpdk) {
         auto it = _thread_loops.begin();
+        uint ll = 0;
         RTE_LCORE_FOREACH_SLAVE(i) {
             rte_eal_remote_launch(dpdk_thread_adaptor, static_cast<void*>(&*(it++)), i);
+            ++ll;
         }
+        printf("rte_eal_remote_launch count: %u\n", ll);
     }
 #endif
 

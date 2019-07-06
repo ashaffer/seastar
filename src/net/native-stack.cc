@@ -64,7 +64,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         net_config << fs.rdbuf();
     }
 
-    std::unique_ptr<device> dev;
+    std::vector<std::shared_ptr<device>> devices;
     device_configs dev_cfgs;
 
     if ( deprecated_config_used) {
@@ -79,18 +79,17 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     }
     else {
         dev_cfgs = parse_config(net_config);
-        printf("here: %u\n", (uint)dev_cfgs.size());
         // if ( dev_cfgs.size() > 1) {
         //     std::runtime_error("only one network interface is supported");
         // }
-
+        uint16_t num_queues = smp::count / dev_cfgs.size();
         for ( auto&& device_config : dev_cfgs) {
-            printf("aaaa: %s\n", device_config.second.ip_cfg.ip[0].c_str());
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK
             if ( hw_config.port_index || !hw_config.pci_address.empty() ) {
-	            dev = create_dpdk_net_device(hw_config);
-                printf("bbbbb\n");
+                auto dev = create_dpdk_net_device(hw_config, num_queues);
+                std:;shared_ptr<device> sdev(dev.release());
+	            devices.push_back(sdev);
 	        } else 
 #endif  
             {
@@ -100,11 +99,18 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         }
     }
 
+    if (devices.size() > smp::count) {
+        printf("You can't have more NICs than CPUs at the moment\n");
+        exit(-1);
+    }
+
     auto sem = std::make_shared<semaphore>(0);
-    std::shared_ptr<device> sdev(dev.release());
     for (unsigned i = 0; i < smp::count; i++) {
+        uint devIdx = i % devices.size();
+        uint16_t qid = i / devices.size();
+        auto sdev = devices[devIdx];
+
         smp::submit_to(i, [opts, sdev] {
-            uint16_t qid = engine().cpu_id();
             if (qid < sdev->hw_queues_count()) {
                 auto qp = sdev->init_local_queue(opts, qid);
                 std::map<unsigned, float> cpu_weights;
@@ -113,17 +119,26 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                 }
                 cpu_weights[qid] = opts["hw-queue-weight"].as<float>();
                 qp->configure_proxies(cpu_weights);
-                sdev->set_local_queue(std::move(qp));
+                sdev->set_local_queue(std::move(qp), qid);
             } else {
-                auto master = qid % sdev->hw_queues_count();
-                sdev->set_local_queue(create_proxy_net_device(master, sdev.get()));
+                auto master_qid = qid % sdev->hw_queues_count();
+                auto master_cpuid = sdev->qid2cpuid(master_qid);
+                sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get()), qid);
             }
         }).then([sem] {
             sem->signal();
         });
     }
-    sem->wait(smp::count).then([opts, sdev, dev_cfgs] {
-        sdev->link_ready().then([opts, sdev, dev_cfgs] {
+    sem->wait(smp::count).then([opts, devices, dev_cfgs] {
+        auto sem = std::make_shared<semaphore>(0);
+
+        for (auto sdev : devices) {
+            sdev->link_ready().then([sem] {
+                sem->signal();
+            });
+        }
+
+        sem->wait(devices.size()).then([devices, dev_cfgs] {
             for (unsigned i = 0; i < smp::count; i++) {
                 smp::submit_to(i, [opts, sdev, dev_cfgs] {
                     create_native_stack(opts, sdev, dev_cfgs);
@@ -151,7 +166,7 @@ private:
     }
     using tcp4 = tcp<ipv4_traits>;
 public:
-    explicit native_network_stack(boost::program_options::variables_map opts, std::shared_ptr<device> dev, device_configs dev_cfgs);
+    explicit native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs);
     virtual server_socket listen(socket_address sa, listen_options opt) override;
     virtual ::seastar::socket socket() override;
     virtual udp_channel make_udp_channel(const socket_address& addr) override;
@@ -184,8 +199,8 @@ add_native_net_options_description(boost::program_options::options_description &
 #endif
 }
 
-native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::shared_ptr<device> dev, device_configs dev_cfgs)
-    : _netif(std::move(dev))
+native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs)
+    : _netif(std::move(devices[0]))
     , _inet(&_netif) {
     _inet.get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
 
@@ -294,8 +309,8 @@ void arp_learn(ethernet_address l2, ipv4_address l3)
     }
 }
 
-void create_native_stack(boost::program_options::variables_map opts, std::shared_ptr<device> dev, device_configs dev_cfgs) {
-    native_network_stack::ready_promise.set_value(std::unique_ptr<network_stack>(std::make_unique<native_network_stack>(opts, std::move(dev), dev_cfgs)));
+void create_native_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) { 
+   native_network_stack::ready_promise.set_value(std::unique_ptr<network_stack>(std::make_unique<native_network_stack>(opts, devices, dev_cfgs)));
 }
 
 boost::program_options::options_description nns_options() {

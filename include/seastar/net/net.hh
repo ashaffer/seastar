@@ -258,6 +258,7 @@ public:
 class device {
 protected:
     std::unique_ptr<qp*[]> _queues;
+    std::unordered_map<uint,uint> _qid2cpuid;
     size_t _rss_table_bits = 0;
 public:
     device() {
@@ -266,6 +267,7 @@ public:
     virtual ~device() {};
     qp& queue_for_cpu(unsigned cpu) { return *_queues[cpu]; }
     qp& local_queue() { return queue_for_cpu(engine().cpu_id()); }
+    uint qid2cpuid(qid) { return _qid2cpuid[qid]; }
     void l2receive(packet p) { _queues[engine().cpu_id()]->_rx_stream.produce(std::move(p)); }
     subscription<packet> receive(std::function<future<> (packet)> next_packet);
     virtual ethernet_address hw_address() = 0;
@@ -277,7 +279,7 @@ public:
     virtual unsigned hash2qid(uint32_t hash) {
         return hash % hw_queues_count();
     }
-    void set_local_queue(std::unique_ptr<qp> dev);
+    void set_local_queue(std::unique_ptr<qp> dev, uint qid);
     template <typename Func>
     unsigned forward_dst(unsigned src_cpuid, Func&& hashfn) {
         auto& qp = queue_for_cpu(src_cpuid);
@@ -291,7 +293,7 @@ public:
     virtual unsigned hash2cpu(uint32_t hash) {
         // there is an assumption here that qid == cpu_id which will
         // not necessary be true in the future
-        return forward_dst(hash2qid(hash), [hash] { return hash; });
+        return forward_dst(qid2cpuid(hash2qid(hash)), [hash] { return hash; });
     }
 };
 

@@ -234,9 +234,10 @@ device::receive(std::function<future<> (packet)> next_packet) {
     return sub;
 }
 
-void device::set_local_queue(std::unique_ptr<qp> dev) {
+void device::set_local_queue(std::unique_ptr<qp> dev, uint qid) {
     assert(!_queues[engine().cpu_id()]);
     _queues[engine().cpu_id()] = dev.get();
+    _qid2cpuid[qid] = engine().cpu_id();
     engine().at_destroy([dev = std::move(dev)] {});
 }
 

@@ -2284,7 +2284,6 @@ std::unique_ptr<net::device> create_dpdk_net_device(
         printf("ports number: %d\n", rte_eth_dev_count_avail());
     }
 
-    printf("received num_queues: %u\n", num_queues);
     return std::make_unique<dpdk::dpdk_device>(port_idx, num_queues, use_lro,
                                                enable_fc);
 }

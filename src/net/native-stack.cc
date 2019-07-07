@@ -83,7 +83,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         //     std::runtime_error("only one network interface is supported");
         // }
         uint16_t num_queues = smp::count / dev_cfgs.size();
-        printf("Passing in num_queues: %u\n", num_queues);
+
         for ( auto&& device_config : dev_cfgs) {
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK
@@ -111,8 +111,9 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         uint16_t qid = i / devices.size();
         auto sdev = devices[devIdx];
 
-        smp::submit_to(i, [qid, opts, sdev] {
+        smp::submit_to(i, [qid, opts, sdev, devIdx] {
             if (qid < sdev->hw_queues_count()) {
+                printf("init_local_queue: %u %u\n", devIdx, qid);
                 auto qp = sdev->init_local_queue(opts, qid);
                 std::map<unsigned, float> cpu_weights;
                 for (unsigned i = sdev->hw_queues_count() + qid % sdev->hw_queues_count(); i < smp::count; i+= sdev->hw_queues_count()) {

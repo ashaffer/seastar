@@ -190,7 +190,7 @@ public:
     explicit posix_network_stack(boost::program_options::variables_map opts, compat::polymorphic_allocator<char>* allocator=memory::malloc_allocator) :
         _reuseport(engine().posix_reuseport_available()), _allocator(allocator) {}
     virtual server_socket listen(socket_address sa, listen_options opts) override;
-    virtual ::seastar::socket socket() override;
+    virtual ::seastar::socket socket(socket_address sa={}) override;
     virtual net::udp_channel make_udp_channel(const socket_address&) override;
     static future<std::unique_ptr<network_stack>> create(boost::program_options::variables_map opts, compat::polymorphic_allocator<char>* allocator=memory::malloc_allocator) {
         return make_ready_future<std::unique_ptr<network_stack>>(std::unique_ptr<network_stack>(new posix_network_stack(opts, allocator)));

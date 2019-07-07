@@ -289,7 +289,7 @@ public:
     virtual server_socket listen(socket_address sa, listen_options opts) = 0;
     // FIXME: local parameter assumes ipv4 for now, fix when adding other AF
     future<connected_socket> connect(socket_address sa, socket_address = {}, transport proto = transport::TCP);
-    virtual ::seastar::socket socket() = 0;
+    virtual ::seastar::socket socket(socket_address = {}) = 0;
     virtual net::udp_channel make_udp_channel(const socket_address& = {}) = 0;
     virtual future<> initialize() {
         return make_ready_future();

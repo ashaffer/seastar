@@ -221,7 +221,7 @@ network_stack::connect(socket_address sa, socket_address local, transport proto)
     if (local == socket_address()) {
         local = net::inet_address(sa.addr().in_family());
     }
-    return do_with(socket(), [sa, local, proto](::seastar::socket& s) {
+    return do_with(socket(local), [sa, local, proto](::seastar::socket& s) {
         return s.connect(sa, local, proto);
     });
 }

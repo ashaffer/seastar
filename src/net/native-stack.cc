@@ -158,22 +158,21 @@ class native_network_stack : public network_stack {
 public:
     static thread_local promise<std::unique_ptr<network_stack>> ready_promise;
 private:
-    interface _netif;
-    ipv4 _inet;
+    std::unordered_map<socket_address, ipv4*> _inet_map;
     bool _dhcp = false;
     promise<> _config;
     timer<> _timer;
 
     future<> run_dhcp(bool is_renew = false, const dhcp::lease & res = dhcp::lease());
     void on_dhcp(bool, const dhcp::lease &, bool);
-    void set_ipv4_packet_filter(ip_packet_filter* filter) {
-        _inet.set_packet_filter(filter);
+    void set_ipv4_packet_filter(ipv4 *inet, ip_packet_filter* filter) {
+        inet.set_packet_filter(filter);
     }
     using tcp4 = tcp<ipv4_traits>;
 public:
     explicit native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs);
     virtual server_socket listen(socket_address sa, listen_options opt) override;
-    virtual ::seastar::socket socket() override;
+    virtual ::seastar::socket socket(socket_address local = {}) override;
     virtual udp_channel make_udp_channel(const socket_address& addr) override;
     virtual future<> initialize() override;
     static future<std::unique_ptr<network_stack>> create(boost::program_options::variables_map opts) {
@@ -184,7 +183,9 @@ public:
     }
     virtual bool has_per_core_namespace() override { return true; };
     void arp_learn(ethernet_address l2, ipv4_address l3) {
-        _inet.learn(l2, l3);
+        for (auto ii : _inet_map) {
+            ii.second->learn(l2, l3);
+        }
     }
     friend class native_server_socket_impl<tcp4>;
 };
@@ -193,7 +194,7 @@ thread_local promise<std::unique_ptr<network_stack>> native_network_stack::ready
 
 udp_channel
 native_network_stack::make_udp_channel(const socket_address& addr) {
-    return _inet.get_udp().make_channel(addr);
+    return _inet_map[addr]->get_udp().make_channel(addr);
 }
 
 void
@@ -204,63 +205,75 @@ add_native_net_options_description(boost::program_options::options_description &
 #endif
 }
 
-native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs)
-    : _netif(devices[1])
-    , _inet(&_netif) {
-
-    _inet.get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
-
+native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) {
+    uint i = 0; 
+    
     for (auto&& device_config : dev_cfgs) {
+        auto iface = std::make_shared<interface>(std::move(devices[i]));
+        auto inet = std::make_shared<ipv4>(iface);
         auto& ip_config = device_config.second.ip_cfg;
 
         _dhcp = ip_config.dhcp;
+        inet->get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
 
         if (!_dhcp) {
             for (auto ip : ip_config.ip) {
-                _inet.set_host_address(ipv4_address(ip));
+                auto sa = ipv4_address(ip);
+                inet->set_host_address(sa);
+                _inet_map[sa] = inet;
             }
             // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
-            _inet.set_gw_address(ipv4_address(ip_config.gateway));
-            _inet.set_netmask_address(ipv4_address(ip_config.netmask));
+            inet->set_gw_address(ipv4_address(ip_config.gateway));
+            inet->set_netmask_address(ipv4_address(ip_config.netmask));
         }
+
+        if (i == 0) {
+            socket_address sa = {};
+            _inet_map[sa] = inet;
+        }
+
+        ++i;
     }
 }
 
 server_socket
 native_network_stack::listen(socket_address sa, listen_options opts) {
     assert(sa.as_posix_sockaddr().sa_family == AF_INET);
-    return tcpv4_listen(_inet.get_tcp(), ntohs(sa.as_posix_sockaddr_in().sin_port), opts);
+    return tcpv4_listen(_inet_map[sa]->get_tcp(), ntohs(sa.as_posix_sockaddr_in().sin_port), opts);
 }
 
-seastar::socket native_network_stack::socket() {
-    return tcpv4_socket(_inet.get_tcp());
+seastar::socket native_network_stack::socket(socket_address sa) {
+    return tcpv4_socket(_inet_map[sa]->get_tcp());
 }
 
 using namespace std::chrono_literals;
 
 future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
-    dhcp d(_inet);
-    // Hijack the ip-stack.
-    auto f = d.get_ipv4_filter();
-    return smp::invoke_on_all([f] {
-        auto & ns = static_cast<native_network_stack&>(engine().net());
-        ns.set_ipv4_packet_filter(f);
-    }).then([this, d = std::move(d), is_renew, res]() mutable {
-        net::dhcp::result_type fut = is_renew ? d.renew(res) : d.discover();
-        return fut.then([this, is_renew](bool success, const dhcp::lease & res) {
-            return smp::invoke_on_all([] {
-                auto & ns = static_cast<native_network_stack&>(engine().net());
-                ns.set_ipv4_packet_filter(nullptr);
-            }).then(std::bind(&net::native_network_stack::on_dhcp, this, success, res, is_renew));
-        }).finally([d = std::move(d)] {});
-    });
+    for (auto ii : _inet_map) {
+        auto inet = ii.second;
+        dhcp d(*inet);
+        // Hijack the ip-stack.
+        auto f = d.get_ipv4_filter();
+        return smp::invoke_on_all([f] {
+            auto & ns = static_cast<native_network_stack&>(engine().net());
+            ns.set_ipv4_packet_filter(inet, f);
+        }).then([this, d = std::move(d), is_renew, res]() mutable {
+            net::dhcp::result_type fut = is_renew ? d.renew(res) : d.discover();
+            return fut.then([this, is_renew](bool success, const dhcp::lease & res) {
+                return smp::invoke_on_all([] {
+                    auto & ns = static_cast<native_network_stack&>(engine().net());
+                    ns.set_ipv4_packet_filter(inet, nullptr);
+                }).then(std::bind(&net::native_network_stack::on_dhcp, this, inet, success, res, is_renew));
+            }).finally([d = std::move(d)] {});
+        });
+    }
 }
 
-void native_network_stack::on_dhcp(bool success, const dhcp::lease & res, bool is_renew) {
+void native_network_stack::on_dhcp(ipv4 *inet, bool success, const dhcp::lease & res, bool is_renew) {
     if (success) {
-        _inet.set_host_address(res.ip);
-        _inet.set_gw_address(res.gateway);
-        _inet.set_netmask_address(res.netmask);
+        inet->set_host_address(res.ip);
+        inet->set_gw_address(res.gateway);
+        inet->set_netmask_address(res.netmask);
     }
     // Signal waiters.
     if (!is_renew) {
@@ -273,7 +286,7 @@ void native_network_stack::on_dhcp(bool success, const dhcp::lease & res, bool i
         for (unsigned i = 1; i < smp::count; i++) {
             smp::submit_to(i, [success, res, is_renew]() {
                 auto & ns = static_cast<native_network_stack&>(engine().net());
-                ns.on_dhcp(success, res, is_renew);
+                ns.on_dhcp(inet, success, res, is_renew);
             });
         }
         if (success) {

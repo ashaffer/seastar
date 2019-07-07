@@ -210,6 +210,8 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
 
     _inet.get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
 
+    printf("Using device: %u\n", devices[0]->port_idx());
+
     for (auto&& device_config : dev_cfgs) {
         auto& ip_config = device_config.second.ip_cfg;
 
@@ -217,7 +219,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
 
         if (!_dhcp) {
             for (auto ip : ip_config.ip) {
-                printf("host address: %s\n", ip.c_str());
+                // printf("host address: %s\n", ip.c_str());
                 _inet.set_host_address(ipv4_address(ip));
             }
             // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));

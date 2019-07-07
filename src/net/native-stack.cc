@@ -194,7 +194,7 @@ thread_local promise<std::unique_ptr<network_stack>> native_network_stack::ready
 
 udp_channel
 native_network_stack::make_udp_channel(const socket_address& sa) {
-    return _inet_map[sa.addr()]->get_udp().make_channel(addr);
+    return _inet_map[sa.addr()]->get_udp().make_channel(sa);
 }
 
 void

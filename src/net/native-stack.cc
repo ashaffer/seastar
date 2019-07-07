@@ -208,24 +208,15 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
     : _netif(std::move(devices[0]))
     , _inet(&_netif) {
 
-    printf("a\n");
     _inet.get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
-    printf("b\n");
 
-    // for (auto&& device_config : dev_cfgs) {
-    printf("bbbb\n");
-    auto& device_config = dev_cfgs[0];
-    printf("bbb\n");
+    for (auto&& device_config : dev_cfgs) {
         auto& ip_config = device_config.ip_cfg;
-    printf("bb\n");
+
         _dhcp = ip_config.dhcp;
-    printf("c\n");
 
         if (!_dhcp) {
-            printf("d\n");
-
             for (auto ip : ip_config.ip) {
-                printf("e\n");
                 printf("host address: %s\n", ip.c_str());
                 _inet.set_host_address(ipv4_address(ip));
             }
@@ -235,7 +226,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
             printf("netmask address: %s\n", ip_config.netmask.c_str());            
             _inet.set_netmask_address(ipv4_address(ip_config.netmask));
         }
-    // }
+    }
 }
 
 server_socket

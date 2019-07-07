@@ -208,17 +208,22 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
     : _netif(std::move(devices[0]))
     , _inet(&_netif) {
 
-    printf("HEERERHERHERHE\n");
+    printf("a\n");
     _inet.get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
+    printf("b\n");
 
     // for (auto&& device_config : dev_cfgs) {
     auto&& device_config = dev_cfgs[0];
         auto& ip_config = device_config.ip_cfg;
 
         _dhcp = ip_config.dhcp;
+    printf("c\n");
 
         if (!_dhcp) {
+            printf("d\n");
+
             for (auto ip : ip_config.ip) {
+                printf("e\n");
                 printf("host address: %s\n", ip.c_str());
                 _inet.set_host_address(ipv4_address(ip));
             }
@@ -321,7 +326,6 @@ void arp_learn(ethernet_address l2, ipv4_address l3)
 }
 
 void create_native_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) { 
-    printf("testtest\n");
    native_network_stack::ready_promise.set_value(std::unique_ptr<network_stack>(std::make_unique<native_network_stack>(opts, devices, dev_cfgs)));
 }
 

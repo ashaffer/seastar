@@ -254,12 +254,12 @@ future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
         dhcp d(*inet);
         // Hijack the ip-stack.
         auto f = d.get_ipv4_filter();
-        return smp::invoke_on_all([f] {
+        return smp::invoke_on_all([f, inet] {
             auto & ns = static_cast<native_network_stack&>(engine().net());
             ns.set_ipv4_packet_filter(inet, f);
-        }).then([this, d = std::move(d), is_renew, res]() mutable {
+        }).then([this, inet, d = std::move(d), is_renew, res]() mutable {
             net::dhcp::result_type fut = is_renew ? d.renew(res) : d.discover();
-            return fut.then([this, is_renew](bool success, const dhcp::lease & res) {
+            return fut.then([this, inet, is_renew](bool success, const dhcp::lease & res) {
                 return smp::invoke_on_all([] {
                     auto & ns = static_cast<native_network_stack&>(engine().net());
                     ns.set_ipv4_packet_filter(inet, nullptr);

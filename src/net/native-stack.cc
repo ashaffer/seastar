@@ -158,7 +158,7 @@ class native_network_stack : public network_stack {
 public:
     static thread_local promise<std::unique_ptr<network_stack>> ready_promise;
 private:
-    std::unordered_map<socket_address, std::shared_ptr<ipv4*>> _inet_map;
+    std::unordered_map<socket_address, ipv4*> _inet_map;
     bool _dhcp = false;
     promise<> _config;
     timer<> _timer;
@@ -209,8 +209,8 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
     uint i = 0; 
 
     for (auto&& device_config : dev_cfgs) {
-        auto iface = std::make_shared<interface>(std::move(devices[i]));
-        auto inet = std::make_shared<ipv4>(iface);
+        interface *iface = new interface{std::move(devices[i])};
+        ipv4 *inet = new ipv4{iface};
         auto& ip_config = device_config.second.ip_cfg;
 
         _dhcp = ip_config.dhcp;

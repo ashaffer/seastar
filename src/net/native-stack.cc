@@ -164,7 +164,7 @@ private:
     timer<> _timer;
 
     future<> run_dhcp(bool is_renew = false, const dhcp::lease & res = dhcp::lease());
-    void on_dhcp(bool, const dhcp::lease &, bool);
+    void on_dhcp(ipv4 *inet, bool, const dhcp::lease &, bool);
     void set_ipv4_packet_filter(ipv4 *inet, ip_packet_filter* filter) {
         inet->set_packet_filter(filter);
     }

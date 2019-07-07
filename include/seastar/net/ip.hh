@@ -448,6 +448,10 @@ public:
     interface * netif() const {
         return _netif;
     }
+
+    uint16_t port_idx() {
+        return _netif->port_idx();
+    }
     // TODO or something. Should perhaps truly be a list
     // of filters. With ordering. And blackjack. Etc.
     // But for now, a simple single raw pointer suffices

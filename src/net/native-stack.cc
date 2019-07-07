@@ -284,7 +284,7 @@ void native_network_stack::on_dhcp(ipv4 *inet, bool success, const dhcp::lease &
         // And the other cpus, which, in the case of initial discovery,
         // will be waiting for us.
         for (unsigned i = 1; i < smp::count; i++) {
-            smp::submit_to(i, [success, res, is_renew]() {
+            smp::submit_to(i, [inet, success, res, is_renew]() {
                 auto & ns = static_cast<native_network_stack&>(engine().net());
                 ns.on_dhcp(inet, success, res, is_renew);
             });

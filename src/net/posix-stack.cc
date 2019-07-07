@@ -381,7 +381,7 @@ posix_network_stack::listen(socket_address sa, listen_options opt) {
 }
 
 ::seastar::socket posix_network_stack::socket(socket_address sa = {}) {
-    assert(sa == {});
+    assert(sa == socket_address({}));
     return ::seastar::socket(std::make_unique<posix_socket_impl>(_allocator));
 }
 

@@ -1141,8 +1141,10 @@ build_mbuf_cluster:
             }
 
             if (!_pool) {
-                printf("Failed to create mempool for Tx: (%u)\n", mbufs_per_queue_tx * inline_mbuf_size);
+                printf("Failed to create mempool for Tx: (%u, %s)\n", mbufs_per_queue_tx * inline_mbuf_size, name.c_str());
                 exit(1);
+            } {
+                printf("Successfully created Tx pool: %s\n", name.c_str());
             }
 
             //

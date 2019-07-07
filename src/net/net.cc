@@ -341,23 +341,6 @@ future<> interface::dispatch_packet(packet p) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
-            auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
-            in_addr in1;
-            in1.s_addr = iph->src_ip.ip;
-            in_addr in2;
-            in2.s_addr = iph->dst_ip.ip;
-
-            printf("interface::dispatch_packet:\n");
-            printf("\tsrc: %s (0x%x)\n", inet_ntoa(in1), in1.s_addr);
-            printf("\tdst: %s (0x%x)\n", inet_ntoa(in2), in2.s_addr);
-            
-            if (iph->src_ip.ip == iph->dst_ip.ip) {
-                printf("src and dst ips equal!?!?!?\n");
-            }
-
-            if (in1.s_addr == in2.s_addr) {
-                printf("in1 == in2!?\n");
-            }
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();

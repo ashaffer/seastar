@@ -249,12 +249,14 @@ seastar::socket native_network_stack::socket(socket_address sa) {
 using namespace std::chrono_literals;
 
 future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
+    auto sem = std::make_shared<semaphore>(0);
+
     for (auto ii : _inet_map) {
         auto inet = ii.second;
         dhcp d(*inet);
         // Hijack the ip-stack.
         auto f = d.get_ipv4_filter();
-        return smp::invoke_on_all([f, inet] {
+        smp::invoke_on_all([f, inet] {
             auto & ns = static_cast<native_network_stack&>(engine().net());
             ns.set_ipv4_packet_filter(inet, f);
         }).then([this, inet, d = std::move(d), is_renew, res]() mutable {
@@ -265,8 +267,12 @@ future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
                     ns.set_ipv4_packet_filter(inet, nullptr);
                 }).then(std::bind(&net::native_network_stack::on_dhcp, this, inet, success, res, is_renew));
             }).finally([d = std::move(d)] {});
+        }).then([sem] () {
+            sem->signal();
         });
     }
+
+    return sem->wait(_inet_map.size());
 }
 
 void native_network_stack::on_dhcp(ipv4 *inet, bool success, const dhcp::lease & res, bool is_renew) {

@@ -205,12 +205,12 @@ add_native_net_options_description(boost::program_options::options_description &
 }
 
 native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs)
-    : _netif(devices[0])
+    : _netif(devices[1])
     , _inet(&_netif) {
 
     _inet.get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
 
-    printf("Using device: %u\n", devices[0]->port_idx());
+    printf("Using device: %u\n", devices[1]->port_idx());
 
     for (auto&& device_config : dev_cfgs) {
         auto& ip_config = device_config.second.ip_cfg;

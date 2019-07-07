@@ -343,9 +343,9 @@ future<> interface::dispatch_packet(packet p) {
             l3_rx_stream& l3 = i->second;
             auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
             in_addr in1;
-            in1.s_addr = htonl(iph.src_ip.ip);
+            in1.s_addr = htonl(iph->src_ip.ip);
             in_addr in2;
-            in2.s_addr = htonl(iph.dst_ip.ip);
+            in2.s_addr = htonl(iph->dst_ip.ip);
 
             printf("interface::dispatch_packet: %s %s\n", inet_ntoa(in1), inet_ntoa(in2));
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {

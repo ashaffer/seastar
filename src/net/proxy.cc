@@ -42,7 +42,9 @@ proxy_net_device::proxy_net_device(unsigned cpu, device* dev) :
         _cpu(cpu),
         _dev(dev)
 {
+    printf("_moving.reserve\n");
     _moving.reserve(_send_queue_length);
+    printf("post _moving.reserve\n");
 }
 
 uint32_t proxy_net_device::send(circular_buffer<packet>& p)

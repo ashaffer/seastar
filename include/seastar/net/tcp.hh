@@ -772,8 +772,9 @@ tcp<InetTraits>::tcp(inet_type& inet)
     , _e(_rd()) {
     namespace sm = metrics;
 
+    auto port_idx = _inet.inet().port_idx();
     _metrics.add_group("tcp", {
-        sm::make_derive(sstring("linearizations_") + to_sstring(_inet.inet().port_idx()), [] { return tcp_packet_merger::linearizations(); },
+        sm::make_derive(sstring("linearizations_") + to_sstring(port_idx), [] { return tcp_packet_merger::linearizations(); },
                         sm::description("Counts a number of times a buffer linearization was invoked during the buffers merge process. "
                                         "Divide it by a total TCP receive packet rate to get an everage number of lineraizations per TCP packet."))
     });

@@ -134,6 +134,9 @@ public:
         _pkt_providers.push_back(std::move(func));
     }
     uint16_t hw_queues_count();
+    uint16_t port_idx() {
+        return _dev->port_idx();
+    }
     rss_key_type rss_key() const;
     friend class l3_protocol;
 };

@@ -111,11 +111,8 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         for (unsigned i = 0; i < smp::count; i++) {
             smp::submit_to(i, [i, jj, opts, sdev] {
                 auto qid = engine().cpu_id();
-                printf("submit_to: %u %u\n", jj, i);
 
                 if (qid < sdev->hw_queues_count()) {
-                    printf("submit_to1: %u %u\n", jj, i);
-
                     auto qp = sdev->init_local_queue(opts, qid);
                     std::map<unsigned, float> cpu_weights;
                     for (unsigned i = sdev->hw_queues_count() + qid % sdev->hw_queues_count(); i < smp::count; i+= sdev->hw_queues_count()) {
@@ -125,18 +122,12 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     qp->configure_proxies(cpu_weights);
                     sdev->set_local_queue(std::move(qp), qid);
                 } else {
-                    printf("submit_to2: %u %u\n", jj, i);                    
                     auto master_qid = qid % sdev->hw_queues_count();
-                    printf("submit_to3: %u %u\n", jj, i);                    
                     auto master_cpuid = sdev->qid2cpuid(master_qid);
-                    printf("submit_to4: %u %u\n", jj, i);                    
-                    sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get()), qid);
-                    printf("submit_to5: %u %u\n", jj, i);
+                    sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);
                 }
 
-                printf("submit_to end: %u %u\n", jj, i);                
             }).then([sem, i, jj] {
-                printf("Queue created! %u %u\n", jj, i);
                 sem->signal();
             });
         }

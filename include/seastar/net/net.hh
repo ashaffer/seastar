@@ -229,7 +229,7 @@ protected:
 public:
     qp(bool register_copy_stats = false,
        const std::string stats_plugin_name = std::string("network"),
-       uint8_t qid = 0);
+       uint8_t qid = 0, uint8_t port_idx = 0);
     virtual ~qp();
     virtual future<> send(packet p) = 0;
     virtual uint32_t send(circular_buffer<packet>& p) {

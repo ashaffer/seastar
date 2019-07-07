@@ -108,7 +108,6 @@ qp::qp(bool register_copy_stats,
         , _queue_name(std::string("queue") + std::to_string(qid))
 {
     namespace sm = metrics;
-    printf("qp::qp\n");
     _metrics.add_group(_stats_plugin_name, {
         //
         // Packets rate: DERIVE:0:u
@@ -162,8 +161,6 @@ qp::qp(bool register_copy_stats,
                         sm::description(format("Counts a number of received fragments. Divide this value by a {} to get an average number of fragments in an Rx packet.", _queue_name + "_rx_packets"))),
     });
 
-    printf("qp::qp2\n");
-
     if (register_copy_stats) {
         _metrics.add_group(_stats_plugin_name, {
             //
@@ -188,8 +185,6 @@ qp::qp(bool register_copy_stats,
 
         });
     }
-
-    printf("qp::qp3\n");    
 }
 
 qp::~qp() {

@@ -38,13 +38,12 @@ public:
     virtual uint32_t send(circular_buffer<packet>& p) override;
 };
 
-proxy_net_device::proxy_net_device(unsigned cpu, device* dev) :
+proxy_net_device::proxy_net_device(unsigned cpu, unsigned port_idx, device* dev) :
+        qp(false, "nework", cpu, port_idx),
         _cpu(cpu),
         _dev(dev)
 {
-    printf("_moving.reserve\n");
     _moving.reserve(_send_queue_length);
-    printf("post _moving.reserve\n");
 }
 
 uint32_t proxy_net_device::send(circular_buffer<packet>& p)

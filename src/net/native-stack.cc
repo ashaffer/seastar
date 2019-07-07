@@ -108,6 +108,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     auto sem = std::make_shared<semaphore>(0);
     uint jj = 0; 
     for (auto sdev : devices) {
+        printf("sdev test: %u\n", sdev->port_idx());
         for (unsigned i = 0; i < smp::count; i++) {
             smp::submit_to(i, [i, jj, opts, sdev] {
                 auto qid = engine().cpu_id();

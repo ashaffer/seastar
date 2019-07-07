@@ -111,6 +111,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         for (unsigned i = 0; i < smp::count; i++) {
             smp::submit_to(i, [opts, sdev] {
                 auto qid = engine().cpu_id();
+                printf("submit_to: %u %u\n", jj, i);
 
                 if (qid < sdev->hw_queues_count()) {
                     auto qp = sdev->init_local_queue(opts, qid);
@@ -126,6 +127,8 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     auto master_cpuid = sdev->qid2cpuid(master_qid);
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get()), qid);
                 }
+
+                printf("submit_to end: %u %u\n", jj, i);                
             }).then([sem, i, jj] {
                 printf("Queue created! %u %u\n", jj, i);
                 sem->signal();

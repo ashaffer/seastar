@@ -68,7 +68,7 @@ ipv4::ipv4(interface* netif)
         //
         // Linearized events: DERIVE:0:u
         //
-        sm::make_derive("linearizations", [] { return ipv4_packet_merger::linearizations(); },
+        sm::make_derive(sstring("linearizations_") + to_sstring(port_idx()), [] { return ipv4_packet_merger::linearizations(); },
                         sm::description("Counts a number of times a buffer linearization was invoked during buffers merge process. "
                                         "Divide it by a total IPv4 receive packet rate to get an average number of lineraizations per packet."))
     });

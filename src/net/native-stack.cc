@@ -83,6 +83,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         //     std::runtime_error("only one network interface is supported");
         // }
         uint16_t num_queues = smp::count / dev_cfgs.size();
+        printf("Passing in num_queues: %u\n", num_queues);
         for ( auto&& device_config : dev_cfgs) {
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK

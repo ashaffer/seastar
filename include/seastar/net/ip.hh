@@ -449,7 +449,7 @@ public:
         return _netif;
     }
 
-    uint16_t port_idx() {
+    uint16_t port_idx() const {
         return _netif->port_idx();
     }
     // TODO or something. Should perhaps truly be a list

@@ -31,14 +31,14 @@ private:
     device* _dev;
     std::vector<packet> _moving;
 public:
-    explicit proxy_net_device(unsigned cpu, device* dev);
+    explicit proxy_net_device(unsigned cpu, device* dev, unsigned port_idx);
     virtual future<> send(packet p) override {
         abort();
     }
     virtual uint32_t send(circular_buffer<packet>& p) override;
 };
 
-proxy_net_device::proxy_net_device(unsigned cpu, unsigned port_idx, device* dev) :
+proxy_net_device::proxy_net_device(unsigned cpu, device* dev, unsigned port_idx) :
         qp(false, "nework", cpu, port_idx),
         _cpu(cpu),
         _dev(dev)

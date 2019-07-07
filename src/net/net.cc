@@ -300,6 +300,10 @@ rss_key_type interface::rss_key() const {
     return _dev->rss_key();
 }
 
+uint16_t interface::port_idx () {
+    return _dev->port_idx();
+}
+
 void interface::forward(unsigned cpuid, packet p) {
     static __thread unsigned queue_depth;
 

@@ -2249,10 +2249,10 @@ std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variab
     std::unique_ptr<qp> qp;
     if (opts.count("hugepages")) {
         qp = std::make_unique<dpdk_qp<true>>(this, qid,
-                                 _stats_plugin_name + "-" + _stats_plugin_inst, port_idx());
+                                 _stats_plugin_name + "-" + _stats_plugin_inst);
     } else {
         qp = std::make_unique<dpdk_qp<false>>(this, qid,
-                                 _stats_plugin_name + "-" + _stats_plugin_inst, port_idx());
+                                 _stats_plugin_name + "-" + _stats_plugin_inst);
     }
 
     smp::submit_to(_home_cpu, [this] () mutable {

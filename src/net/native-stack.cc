@@ -82,7 +82,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         // if ( dev_cfgs.size() > 1) {
         //     std::runtime_error("only one network interface is supported");
         // }
-        uint16_t num_queues = 8; //smp::count / dev_cfgs.size();
+        uint16_t num_queues = 4; //smp::count / dev_cfgs.size();
 
         for ( auto&& device_config : dev_cfgs) {
             auto& hw_config = device_config.second.hw_cfg;   

@@ -135,6 +135,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
         for (auto sdev : devices) {
             sdev->link_ready().then([sem] {
+                printf("Link ready!\n");
                 sem->signal();
             });
         }
@@ -142,6 +143,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         sem->wait(devices.size()).then([opts, devices, dev_cfgs] {
             for (unsigned i = 0; i < smp::count; i++) {
                 smp::submit_to(i, [opts, devices, dev_cfgs] {
+                    printf("Creating stack!\n");
                     create_native_stack(opts, devices, dev_cfgs);
                 });
             }

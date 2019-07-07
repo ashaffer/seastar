@@ -211,7 +211,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
     _inet.get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
 
     for (auto&& device_config : dev_cfgs) {
-        auto& ip_config = device_config.ip_cfg;
+        auto& ip_config = device_config.second.ip_cfg;
 
         _dhcp = ip_config.dhcp;
 

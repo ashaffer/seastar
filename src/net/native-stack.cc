@@ -109,7 +109,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     uint jj = 0; 
     for (auto sdev : devices) {
         for (unsigned i = 0; i < smp::count; i++) {
-            smp::submit_to(i, [opts, sdev] {
+            smp::submit_to(i, [i, jj, opts, sdev] {
                 auto qid = engine().cpu_id();
                 printf("submit_to: %u %u\n", jj, i);
 

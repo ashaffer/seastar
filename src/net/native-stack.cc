@@ -158,7 +158,7 @@ class native_network_stack : public network_stack {
 public:
     static thread_local promise<std::unique_ptr<network_stack>> ready_promise;
 private:
-    std::unordered_map<socket_address, ipv4*> _inet_map;
+    std::unordered_map<socket_address, std::shared_ptr<ipv4*>> _inet_map;
     bool _dhcp = false;
     promise<> _config;
     timer<> _timer;
@@ -166,7 +166,7 @@ private:
     future<> run_dhcp(bool is_renew = false, const dhcp::lease & res = dhcp::lease());
     void on_dhcp(bool, const dhcp::lease &, bool);
     void set_ipv4_packet_filter(ipv4 *inet, ip_packet_filter* filter) {
-        inet.set_packet_filter(filter);
+        inet->set_packet_filter(filter);
     }
     using tcp4 = tcp<ipv4_traits>;
 public:

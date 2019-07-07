@@ -82,7 +82,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         // if ( dev_cfgs.size() > 1) {
         //     std::runtime_error("only one network interface is supported");
         // }
-        uint16_t num_queues = 1; //smp::count / dev_cfgs.size();
+        uint16_t num_queues = smp::count; // / dev_cfgs.size();
 
         for ( auto&& device_config : dev_cfgs) {
             auto& hw_config = device_config.second.hw_cfg;   
@@ -106,32 +106,31 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     }
 
     auto sem = std::make_shared<semaphore>(0);
-    for (unsigned i = 0; i < smp::count; i++) {
-        uint devIdx = i % devices.size();
-        uint16_t qid = i / devices.size();
-        auto sdev = devices[devIdx];
+    for (auto sdev : devices) {
+        for (unsigned i = 0; i < smp::count; i++) {
+            smp::submit_to(i, [qid, opts, sdev] {
+                auto qid = engine().cpu_id();
 
-        smp::submit_to(i, [qid, opts, sdev, devIdx] {
-            if (qid < sdev->hw_queues_count()) {
-                printf("init_local_queue: %u %u\n", devIdx, qid);
-                auto qp = sdev->init_local_queue(opts, qid);
-                std::map<unsigned, float> cpu_weights;
-                for (unsigned i = sdev->hw_queues_count() + qid % sdev->hw_queues_count(); i < smp::count; i+= sdev->hw_queues_count()) {
-                    cpu_weights[i] = 1;
+                if (qid < sdev->hw_queues_count()) {
+                    auto qp = sdev->init_local_queue(opts, qid);
+                    std::map<unsigned, float> cpu_weights;
+                    for (unsigned i = sdev->hw_queues_count() + qid % sdev->hw_queues_count(); i < smp::count; i+= sdev->hw_queues_count()) {
+                        cpu_weights[i] = 1;
+                    }
+                    cpu_weights[qid] = opts["hw-queue-weight"].as<float>();
+                    qp->configure_proxies(cpu_weights);
+                    sdev->set_local_queue(std::move(qp), qid);
+                } else {
+                    auto master_qid = qid % sdev->hw_queues_count();
+                    auto master_cpuid = sdev->qid2cpuid(master_qid);
+                    sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get()), qid);
                 }
-                cpu_weights[qid] = opts["hw-queue-weight"].as<float>();
-                qp->configure_proxies(cpu_weights);
-                sdev->set_local_queue(std::move(qp), qid);
-            } else {
-                auto master_qid = qid % sdev->hw_queues_count();
-                auto master_cpuid = sdev->qid2cpuid(master_qid);
-                sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get()), qid);
-            }
-        }).then([sem] {
-            sem->signal();
-        });
+            }).then([sem] {
+                sem->signal();
+            });
+        }
     }
-    sem->wait(smp::count).then([opts, devices, dev_cfgs] {
+    sem->wait(smp::count * devices.size()).then([opts, devices, dev_cfgs] {
         auto sem = std::make_shared<semaphore>(0);
 
         for (auto sdev : devices) {

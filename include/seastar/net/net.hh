@@ -267,7 +267,10 @@ public:
     virtual ~device() {};
     qp& queue_for_cpu(unsigned cpu) { return *_queues[cpu]; }
     qp& local_queue() { return queue_for_cpu(engine().cpu_id()); }
-    uint qid2cpuid(uint qid) { return _qid2cpuid[qid]; }
+    uint qid2cpuid(uint qid) { 
+        return qid;
+        // return _qid2cpuid[qid]; 
+    }
     void l2receive(packet p) { _queues[engine().cpu_id()]->_rx_stream.produce(std::move(p)); }
     subscription<packet> receive(std::function<future<> (packet)> next_packet);
     virtual ethernet_address hw_address() = 0;

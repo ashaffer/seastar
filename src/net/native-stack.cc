@@ -158,7 +158,7 @@ class native_network_stack : public network_stack {
 public:
     static thread_local promise<std::unique_ptr<network_stack>> ready_promise;
 private:
-    std::unordered_map<socket_address, ipv4*> _inet_map;
+    std::unordered_map<inet_address, ipv4*> _inet_map;
     bool _dhcp = false;
     promise<> _config;
     timer<> _timer;
@@ -193,8 +193,8 @@ public:
 thread_local promise<std::unique_ptr<network_stack>> native_network_stack::ready_promise;
 
 udp_channel
-native_network_stack::make_udp_channel(const socket_address& addr) {
-    return _inet_map[addr]->get_udp().make_channel(addr);
+native_network_stack::make_udp_channel(const socket_address& sa) {
+    return _inet_map[sa.addr()]->get_udp().make_channel(addr);
 }
 
 void
@@ -220,7 +220,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
             for (auto ip : ip_config.ip) {
                 auto sa = ipv4_address(ip);
                 inet->set_host_address(sa);
-                _inet_map[(socket_address)sa] = inet;
+                _inet_map[(inet_address)sa] = inet;
             }
             // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
             inet->set_gw_address(ipv4_address(ip_config.gateway));
@@ -229,7 +229,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
 
         if (i == 0) {
             socket_address sa = {};
-            _inet_map[sa] = inet;
+            _inet_map[sa.addr()] = inet;
         }
 
         ++i;
@@ -239,12 +239,12 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
 server_socket
 native_network_stack::listen(socket_address sa, listen_options opts) {
     assert(sa.as_posix_sockaddr().sa_family == AF_INET);
-    return tcpv4_listen(_inet_map[sa]->get_tcp(), ntohs(sa.as_posix_sockaddr_in().sin_port), opts);
+    return tcpv4_listen(_inet_map[sa.addr()]->get_tcp(), ntohs(sa.as_posix_sockaddr_in().sin_port), opts);
 }
 
 seastar::socket native_network_stack::socket(socket_address sa) {
-    printf("Socket called: %s\n", inet_ntoa(sa.u.in.sin_addr));
-    return tcpv4_socket(_inet_map[sa]->get_tcp());
+    printf("Socket called: %s %u\n", inet_ntoa(sa.u.in.sin_addr), _inet_map[sa.addr()]->port_idx());
+    return tcpv4_socket(_inet_map[sa.addr()]->get_tcp());
 }
 
 using namespace std::chrono_literals;

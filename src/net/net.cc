@@ -351,7 +351,11 @@ future<> interface::dispatch_packet(packet p) {
             if (iph->src_ip.ip == iph->dst_ip.ip) {
                 printf("src and dst ips equal!?!?!?\n");
             }
-            
+
+            if (in1.s_addr == in2.s_addr) {
+                printf("in1 == in2!?\n");
+            }
+
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {

@@ -260,7 +260,7 @@ future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
         }).then([this, inet, d = std::move(d), is_renew, res]() mutable {
             net::dhcp::result_type fut = is_renew ? d.renew(res) : d.discover();
             return fut.then([this, inet, is_renew](bool success, const dhcp::lease & res) {
-                return smp::invoke_on_all([] {
+                return smp::invoke_on_all([inet] {
                     auto & ns = static_cast<native_network_stack&>(engine().net());
                     ns.set_ipv4_packet_filter(inet, nullptr);
                 }).then(std::bind(&net::native_network_stack::on_dhcp, this, inet, success, res, is_renew));

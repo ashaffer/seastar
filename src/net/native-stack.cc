@@ -105,10 +105,12 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         exit(-1);
     }
 
+    printf("ASLKJDFSLJDFLKSDJFLKDSJLFKJSDFLJSDFJS")
     auto sem = std::make_shared<semaphore>(0);
     for (auto sdev : devices) {
         for (unsigned i = 0; i < smp::count; i++) {
             smp::submit_to(i, [opts, sdev] {
+                printf("TESTTESTESTEST\n");
                 auto qid = engine().cpu_id();
 
                 if (qid < sdev->hw_queues_count()) {

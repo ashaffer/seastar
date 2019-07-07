@@ -243,7 +243,6 @@ native_network_stack::listen(socket_address sa, listen_options opts) {
 }
 
 seastar::socket native_network_stack::socket(socket_address sa) {
-    printf("Socket called: %s %u\n", inet_ntoa(sa.u.in.sin_addr), _inet_map[sa.addr()]->port_idx());
     return tcpv4_socket(_inet_map[sa.addr()]->get_tcp());
 }
 

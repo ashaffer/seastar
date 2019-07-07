@@ -552,8 +552,6 @@ private:
             return _tcp.hw_features().mtu - net::tcp_hdr_len_min - InetTraits::ip_hdr_len_min;
         }
         void queue_packet(packet p) {
-            in_addr in;
-            in.s_addr = htonl(_local_ip.ip);
             _packetq.emplace_back(typename InetTraits::l4packet{_local_ip, _foreign_ip, std::move(p)});
         }
         void signal_data_received() {

@@ -207,7 +207,7 @@ add_native_net_options_description(boost::program_options::options_description &
 
 native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) {
     uint i = 0; 
-    
+
     for (auto&& device_config : dev_cfgs) {
         auto iface = std::make_shared<interface>(std::move(devices[i]));
         auto inet = std::make_shared<ipv4>(iface);
@@ -220,7 +220,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
             for (auto ip : ip_config.ip) {
                 auto sa = ipv4_address(ip);
                 inet->set_host_address(sa);
-                _inet_map[sa] = inet;
+                _inet_map[(socket_address)sa] = inet;
             }
             // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
             inet->set_gw_address(ipv4_address(ip_config.gateway));

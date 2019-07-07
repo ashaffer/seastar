@@ -124,7 +124,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                 } else {
                     auto master_qid = qid % sdev->hw_queues_count();
                     auto master_cpuid = sdev->qid2cpuid(master_qid);
-                    sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), ((dpdk::dpdk_device *)sdev)->port_idx()), qid);
+                    sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);
                 }
 
             }).then([sem, i, jj] {

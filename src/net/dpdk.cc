@@ -1132,7 +1132,7 @@ build_mbuf_cluster:
             } else {
                 _pool =
                     rte_mempool_create(name.c_str(),
-                                       mbufs_per_queue_tx, inline_mbuf_size,
+                                       mbufs_per_queue_tx, inline_mbuf_size / 4,
                                        mbuf_cache_size,
                                        sizeof(struct rte_pktmbuf_pool_private),
                                        rte_pktmbuf_pool_init, nullptr,

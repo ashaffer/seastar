@@ -552,6 +552,9 @@ private:
             return _tcp.hw_features().mtu - net::tcp_hdr_len_min - InetTraits::ip_hdr_len_min;
         }
         void queue_packet(packet p) {
+            in_addr in;
+            in.s_addr = htonl(_local_ip.ip);
+            printf("queue_packet: %s\n", inet_ntoa(in));
             _packetq.emplace_back(typename InetTraits::l4packet{_local_ip, _foreign_ip, std::move(p)});
         }
         void signal_data_received() {
@@ -832,7 +835,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
               || _tcbs.find(id) != _tcbs.end()));
 
     in_addr in;
-    in.s_addr = src_ip.ip;
+    in.s_addr = htonl(src_ip.ip);
     printf("tcp::connect from %s\n", inet_ntoa((in_addr)in));
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});

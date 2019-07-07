@@ -72,8 +72,8 @@ uint32_t proxy_net_device::send(circular_buffer<packet>& p)
     return _moving.size();
 }
 
-std::unique_ptr<qp> create_proxy_net_device(unsigned master_cpu, device* dev) {
-    return std::make_unique<proxy_net_device>(master_cpu, dev);
+std::unique_ptr<qp> create_proxy_net_device(unsigned master_cpu, device* dev, unsigned port_idx) {
+    return std::make_unique<proxy_net_device>(master_cpu, dev, port_idx);
 }
 }
 

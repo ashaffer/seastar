@@ -223,9 +223,9 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
                 _inet.set_host_address(ipv4_address(ip));
             }
             // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
-            printf("gateway address: %s\n", ip_config.gateway.c_str());
+            // printf("gateway address: %s\n", ip_config.gateway.c_str());
             _inet.set_gw_address(ipv4_address(ip_config.gateway));
-            printf("netmask address: %s\n", ip_config.netmask.c_str());            
+            // printf("netmask address: %s\n", ip_config.netmask.c_str());            
             _inet.set_netmask_address(ipv4_address(ip_config.netmask));
         }
     }

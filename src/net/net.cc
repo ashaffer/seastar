@@ -347,7 +347,10 @@ future<> interface::dispatch_packet(packet p) {
             in_addr in2;
             in2.s_addr = iph->dst_ip.ip;
 
-            printf("interface::dispatch_packet: %s (0x%x) %s (0x%x)\n", inet_ntoa(in1), in1.s_addr, inet_ntoa(in2), in2.s_addr);
+            printf("interface::dispatch_packet:\n");
+            printf("\tsrc: %s (0x%x)\n", inet_ntoa(in1), in1.s_addr);
+            printf("\tdst: %s (0x%x)\n", inet_ntoa(in2), in2.s_addr);
+            
             if (iph->src_ip.ip == iph->dst_ip.ip) {
                 printf("src and dst ips equal!?!?!?\n");
             }

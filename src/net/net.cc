@@ -342,6 +342,12 @@ future<> interface::dispatch_packet(packet p) {
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
 
+            in_addr in1;
+            in1.s_addr = htonl(l3.src_ip.ip);
+            in_addr in2;
+            in2.s_addr = htonl(l3.dst_ip.ip);
+
+            printf("interface::dispatch_packet: %s %s\n", inet_ntoa(in1), inet_ntoa(in2));
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {

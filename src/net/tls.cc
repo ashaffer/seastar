@@ -606,6 +606,7 @@ public:
             connected_socket sock, sstring name = { })
             : session(t, std::move(creds), net::get_impl::get(std::move(sock)),
                     std::move(name)) {
+        printf("Constructing session\n");
     }
 
     ~session() {}

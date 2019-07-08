@@ -764,7 +764,7 @@ public:
                 // it and set the eof flag also, but in that case we're still eof...
                 return handshake().then(std::bind(&session::get, this));
             }
-            printf("session::get returning buf: %s\n", buf.get());
+            // printf("session::get returning buf: %s\n", buf.get());
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
         });
     }

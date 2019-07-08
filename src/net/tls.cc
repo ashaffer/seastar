@@ -803,6 +803,11 @@ public:
             if (n == 0) {
                 _eof = true;
             }
+            uint32_t hash = 0;
+            for (uint i = 0; i < buf.size(); i++) {
+                hash += buf[i];
+            }
+            printf("session::do_get hash: 0x%x\n", hash);
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
         }
         if (eof()) {

@@ -765,7 +765,7 @@ public:
                 // it and set the eof flag also, but in that case we're still eof...
                 return handshake().then(std::bind(&session::get, this));
             }
-            printf("session::get returning buf: %s\n\n", buf.get() + 653);
+            printf("session::get returning buf: %s\n\n", buf.get() + 693);
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
         });
     }
@@ -807,7 +807,7 @@ public:
             for (uint i = 0; i < buf.size(); i++) {
                 hash += buf[i];
             }
-            printf("session::do_get hash: %s\n\n", (buf.get() + 653));
+            printf("session::do_get hash: %s\n\n", (buf.get() + 693));
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
         }
         if (eof()) {
@@ -1093,6 +1093,7 @@ public:
     using session_ref::session_ref;
 private:
     future<temporary_buffer<char>> get() override {
+        printf("source_impl::get\n");
         return _session->get();
     }
     future<> close() override {

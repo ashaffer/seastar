@@ -265,15 +265,19 @@ template <typename CharType>
 future<temporary_buffer<CharType>>
 input_stream<CharType>::read() {
     using tmp_buf = temporary_buffer<CharType>;
+    printf("input_stream::read\n");
     if (_eof) {
         return make_ready_future<tmp_buf>();
     }
     if (_buf.empty()) {
+        printf("calling _fd.get\n");
         return _fd.get().then([this] (tmp_buf buf) {
+            printf("fd get callback\n");
             _eof = buf.empty();
             return make_ready_future<tmp_buf>(std::move(buf));
         });
     } else {
+        printf("buf was not empty\n");
         return make_ready_future<tmp_buf>(std::move(_buf));
     }
 }

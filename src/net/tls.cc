@@ -744,6 +744,7 @@ public:
     }
 
     future<temporary_buffer<char>> get() {
+        printf("session::get\n");
         if (_error) {
             return make_exception_future<temporary_buffer<char>>(std::system_error(EINVAL, std::system_category()));
         }
@@ -763,6 +764,7 @@ public:
                 // it and set the eof flag also, but in that case we're still eof...
                 return handshake().then(std::bind(&session::get, this));
             }
+            printf("session::get returning buf\n");
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
         });
     }

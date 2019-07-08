@@ -606,7 +606,6 @@ public:
             connected_socket sock, sstring name = { })
             : session(t, std::move(creds), net::get_impl::get(std::move(sock)),
                     std::move(name)) {
-        printf("Constructing session: 0x%lx\n", (uint64_t)this);
     }
 
     ~session() {}
@@ -745,7 +744,6 @@ public:
     }
 
     future<temporary_buffer<char>> get() {
-        printf("session::get 0x%lx\n", (uint64_t)this);
         if (_error) {
             return make_exception_future<temporary_buffer<char>>(std::system_error(EINVAL, std::system_category()));
         }
@@ -765,7 +763,7 @@ public:
                 // it and set the eof flag also, but in that case we're still eof...
                 return handshake().then(std::bind(&session::get, this));
             }
-            printf("session::get returning buf: %s\n\n", buf.get() + 695);
+
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
         });
     }
@@ -807,7 +805,6 @@ public:
             for (uint i = 0; i < buf.size(); i++) {
                 hash += buf[i];
             }
-            printf("session::do_get hash: %s\n\n", (buf.get() + 695));
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
         }
         if (eof()) {
@@ -1093,7 +1090,6 @@ public:
     using session_ref::session_ref;
 private:
     future<temporary_buffer<char>> get() override {
-        printf("source_impl::get\n");
         return _session->get();
     }
     future<> close() override {

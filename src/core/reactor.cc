@@ -5483,7 +5483,6 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     auto backend_selector = configuration["reactor-backend"].as<reactor_backend_selector>();
 
     unsigned i;
-    printf("smp::count: %u\n", smp::count);
 
     for (i = 1; i < smp::count; i++) {
         auto allocation = allocations[i];
@@ -5546,7 +5545,6 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
             rte_eal_remote_launch(dpdk_thread_adaptor, static_cast<void*>(&*(it++)), i);
             ++ll;
         }
-        printf("rte_eal_remote_launch count: %u\n", ll);
     }
 #endif
 

@@ -807,7 +807,7 @@ public:
             for (uint i = 0; i < buf.size(); i++) {
                 hash += buf[i];
             }
-            printf("session::do_get hash: 0x%x\n", hash);
+            printf("session::do_get hash: %s\n", buf.get());
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
         }
         if (eof()) {

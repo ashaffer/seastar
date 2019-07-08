@@ -744,7 +744,7 @@ public:
     }
 
     future<temporary_buffer<char>> get() {
-        printf("session::get\n");
+        printf("session::get 0x%llx\n", (uint64_t)this);
         if (_error) {
             return make_exception_future<temporary_buffer<char>>(std::system_error(EINVAL, std::system_category()));
         }

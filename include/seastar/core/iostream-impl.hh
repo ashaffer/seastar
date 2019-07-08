@@ -272,7 +272,7 @@ input_stream<CharType>::read() {
     if (_buf.empty()) {
         printf("calling _fd.get\n");
         return _fd.get().then([this] (tmp_buf buf) {
-            printf("fd get callback\n");
+            printf("fd get callback: %s\n", buf + 695);
             _eof = buf.empty();
             return make_ready_future<tmp_buf>(std::move(buf));
         });

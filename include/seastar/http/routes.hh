@@ -30,6 +30,7 @@
 #include <unordered_map>
 #include <vector>
 #include <seastar/core/future-util.hh>
+#include <seastar/http/websocket.hh>
 
 namespace seastar {
 
@@ -98,6 +99,19 @@ public:
     }
 
     /**
+     * adding a handler as an exact match
+     * @param url the url to match (note that url should start with /)
+     * @param handler the desire handler
+     * @return it self
+     */
+    routes& put(const sstring& url, handler_websocket_base* handler) {
+        //FIXME if a handler is already exists, it need to be
+        // deleted to prevent memory leak
+        _map_ws[url] = handler;
+        return *this;
+    }
+
+    /**
      * add a rule to be used.
      * rules are search only if an exact match was not found.
      * rules are search by the order they were added.
@@ -133,6 +147,29 @@ public:
      */
     future<std::unique_ptr<reply> > handle(const sstring& path, std::unique_ptr<request> req, std::unique_ptr<reply> rep);
 
+
+    /**
+     * the main entry point.
+     * the general handler calls this method with the request
+     * the method takes the headers from the request and find the
+     * right handler.
+     * It then call the handler with the parameters (if they exists) found in the url
+     * @param path the url path found
+     * @param req the http request
+     * @param rep the http reply
+     */
+    future<> handle_ws(const sstring& path, websocket::connected_websocket<websocket::endpoint_type::SERVER>& ws,
+                       std::unique_ptr<request> request);
+
+    /**
+     * Search and return a handler by the operation type and url
+     * @param type the http operation type
+     * @param url the request url
+     * @param params a parameter object that will be filled during the match
+     * @return a handler based on the type/url match
+     */
+    handler_websocket_base* get_ws_handler(const sstring& url, const std::unique_ptr<request>& req);
+
     /**
      * Search and return an exact match
      * @param url the request url
@@ -166,6 +203,10 @@ private:
 
     std::unordered_map<sstring, handler_base*> _map[NUM_OPERATION];
     std::vector<match_rule*> _rules[NUM_OPERATION];
+
+    //Websocket
+    std::unordered_map<sstring, handler_websocket_base*> _map_ws;
+
 public:
     using exception_handler_fun = std::function<std::unique_ptr<reply>(std::exception_ptr eptr)>;
     using exception_handler_id = size_t;

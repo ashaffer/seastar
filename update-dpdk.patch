@@ -1,0 +1,1002 @@
+- Move to new memory subsystem
+  https://doc.dpdk.org/guides/rel_notes/release_18_05.html
+  * Leverage VFIO+IOMMU to use IOVA, not PA, for DMA.
+  * Direct map(IOVA=VA) each core's whole heap space at startup.
+
+- Move to new offloads API
+  DPDK ethdev offloads API has changed since:
+    commit ce17eddefc20 ("ethdev: introduce Rx queue offloads API")
+    commit cba7f53b717d ("ethdev: introduce Tx queue offloads API")
+
+- Other changes
+  * Drop explicit enabling CRC strip offload. From 18.11 release notes:
+      The default behavior of CRC strip offload has changed in this
+      release. Without any specific Rx offload flag, default behavior
+      by a PMD is now to strip CRC.
+  * Replace PKT_RX_VLAN_PKT with PKT_RX_VLAN. From 17.11 release notes:
+      The mbuf flags PKT_RX_VLAN_PKT and PKT_RX_QINQ_PKT have been
+      removed since their behavior was not properly described.
+      Two mbuf flags have been added to indicate that the VLAN identifier
+      has been saved in in the mbuf structure. For instance:
+        If VLAN is not stripped and TCI is saved: PKT_RX_VLAN
+        If VLAN is stripped and TCI is saved: PKT_RX_VLAN | PKT_RX_VLAN_STRIPPED
+  * Set RSS offload rules per dev_info
+      commit aa1a6d87f15d (ethdev: force RSS offload rules again)
+  * Move xstats initialization after port started to fix errors on
+    mellanox nics.
+  * Update port id to 16 bits per 17.11 changes.
+  * Replace deprecated function rte_eth_dev_count() with
+    rte_eth_dev_count_avail().
+  * Update DPDK build scripts and configs. Add "--whole-archive" when
+    generating DPDK enabled applications.
+  * Drop frag0 cross page checking as IOVA is always continuous.
+---
+changes to v1:
+- drop frag0 cross page checking, always do zero copy
+- fix code format issues
+
+ CMakeLists.txt              |   3 +-
+ cmake/Finddpdk.cmake        |  86 +++++++-
+ dpdk                        |   2 +-
+ dpdk_config                 |  11 +-
+ include/seastar/net/dpdk.hh |   4 +-
+ src/net/dpdk.cc             | 394 ++++++++++++++++++------------------
+ 6 files changed, 289 insertions(+), 211 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4c721291..66a9c705 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -754,8 +754,9 @@ if (Seastar_DPDK)
+   target_compile_definitions (seastar
+     PUBLIC SEASTAR_HAVE_DPDK)
+ 
++  # No pmd driver code will be pulled in without "--whole-archive"
+   target_link_libraries (seastar
+-    PUBLIC dpdk::dpdk)
++    PUBLIC -Wl,--whole-archive dpdk::dpdk -Wl,--no-whole-archive)
+ endif ()
+ 
+ if (Seastar_HWLOC)
+diff --git a/cmake/Finddpdk.cmake b/cmake/Finddpdk.cmake
+index 1cd8accb..4a64a2a2 100644
+--- a/cmake/Finddpdk.cmake
++++ b/cmake/Finddpdk.cmake
+@@ -47,6 +47,11 @@ find_library (dpdk_MBUF_LIBRARY rte_mbuf)
+ find_library (dpdk_CFGFILE_LIBRARY rte_cfgfile)
+ find_library (dpdk_EAL_LIBRARY rte_eal)
+ find_library (dpdk_ETHDEV_LIBRARY rte_ethdev)
++find_library (dpdk_NET_LIBRARY rte_net)
++find_library (dpdk_TIMER_LIBRARY rte_timer)
++find_library (dpdk_PCI_LIBRARY rte_pci)
++find_library (dpdk_BUS_PCI_LIBRARY rte_bus_pci)
++find_library (dpdk_BUS_VDEV_LIBRARY rte_bus_vdev)
+ 
+ include (FindPackageHandleStandardArgs)
+ 
+@@ -75,7 +80,12 @@ find_package_handle_standard_args (dpdk
+     dpdk_MBUF_LIBRARY
+     dpdk_CFGFILE_LIBRARY
+     dpdk_EAL_LIBRARY
+-    dpdk_ETHDEV_LIBRARY)
++    dpdk_ETHDEV_LIBRARY
++    dpdk_NET_LIBRARY
++    dpdk_TIMER_LIBRARY
++    dpdk_PCI_LIBRARY
++    dpdk_BUS_PCI_LIBRARY
++    dpdk_BUS_VDEV_LIBRARY)
+ 
+ if (dpdk_FOUND AND NOT (TARGET dpdk::dpdk))
+   set (dpdk_LIBRARIES
+@@ -100,7 +110,12 @@ if (dpdk_FOUND AND NOT (TARGET dpdk::dpdk))
+     ${dpdk_PMD_RING_LIBRARY}
+     ${dpdk_PMD_SFC_EFX_LIBRARY}
+     ${dpdk_PMD_VMXNET3_UIO_LIBRARY}
+-    ${dpdk_RING_LIBRARY})
++    ${dpdk_RING_LIBRARY}
++    ${dpdk_NET_LIBRARY}
++    ${dpdk_TIMER_LIBRARY}
++    ${dpdk_PCI_LIBRARY}
++    ${dpdk_BUS_PCI_LIBRARY}
++    ${dpdk_BUS_VDEV_LIBRARY})
+ 
+   #
+   # pmd_vmxnet3_uio
+@@ -280,7 +295,7 @@ if (dpdk_FOUND AND NOT (TARGET dpdk::dpdk))
+       INTERFACE_LINK_LIBRARIES dpdk::eal)
+ 
+   #
+-  # eal
++  # eal (since dpdk 18.08, eal depends on kvargs)
+   #
+ 
+   add_library (dpdk::eal UNKNOWN IMPORTED)
+@@ -288,7 +303,8 @@ if (dpdk_FOUND AND NOT (TARGET dpdk::dpdk))
+   set_target_properties (dpdk::eal
+     PROPERTIES
+       IMPORTED_LOCATION ${dpdk_EAL_LIBRARY}
+-      INTERFACE_INCLUDE_DIRECTORIES ${dpdk_INCLUDE_DIR})
++      INTERFACE_INCLUDE_DIRECTORIES ${dpdk_INCLUDE_DIR}
++      INTERFACE_LINK_LIBRARIES dpdk::kvargs)
+ 
+   #
+   # ethdev
+@@ -357,6 +373,61 @@ if (dpdk_FOUND AND NOT (TARGET dpdk::dpdk))
+       IMPORTED_LOCATION ${dpdk_CFGFILE_LIBRARY}
+       INTERFACE_INCLUDE_DIRECTORIES ${dpdk_INCLUDE_DIR})
+ 
++  #
++  # net
++  #
++
++  add_library (dpdk::net UNKNOWN IMPORTED)
++
++  set_target_properties (dpdk::net
++    PROPERTIES
++      IMPORTED_LOCATION ${dpdk_NET_LIBRARY}
++      INTERFACE_INCLUDE_DIRECTORIES ${dpdk_INCLUDE_DIR})
++
++  #
++  # timer
++  #
++
++  add_library (dpdk::timer UNKNOWN IMPORTED)
++
++  set_target_properties (dpdk::timer
++    PROPERTIES
++      IMPORTED_LOCATION ${dpdk_TIMER_LIBRARY}
++      INTERFACE_INCLUDE_DIRECTORIES ${dpdk_INCLUDE_DIR})
++
++  #
++  # pci
++  #
++
++  add_library (dpdk::pci UNKNOWN IMPORTED)
++
++  set_target_properties (dpdk::pci
++    PROPERTIES
++      IMPORTED_LOCATION ${dpdk_PCI_LIBRARY}
++      INTERFACE_INCLUDE_DIRECTORIES ${dpdk_INCLUDE_DIR})
++
++  #
++  # bus_pci
++  #
++
++  add_library (dpdk::bus_pci UNKNOWN IMPORTED)
++
++  set_target_properties (dpdk::bus_pci
++    PROPERTIES
++      IMPORTED_LOCATION ${dpdk_BUS_PCI_LIBRARY}
++      INTERFACE_INCLUDE_DIRECTORIES ${dpdk_INCLUDE_DIR})
++
++  #
++  # bus_vdev
++  #
++
++  add_library (dpdk::bus_vdev UNKNOWN IMPORTED)
++
++  set_target_properties (dpdk::bus_vdev
++    PROPERTIES
++      IMPORTED_LOCATION ${dpdk_BUS_VDEV_LIBRARY}
++      INTERFACE_INCLUDE_DIRECTORIES ${dpdk_INCLUDE_DIR})
++
+   #
+   # Summary.
+   #
+@@ -386,7 +457,12 @@ if (dpdk_FOUND AND NOT (TARGET dpdk::dpdk))
+     dpdk::pmd_ring
+     dpdk::pmd_sfc_efx
+     dpdk::pmd_vmxnet3_uio
+-    dpdk::ring)
++    dpdk::ring
++    dpdk::net
++    dpdk::timer
++    dpdk::pci
++    dpdk::bus_pci
++    dpdk::bus_vdev)
+ 
+   set_target_properties (dpdk::dpdk
+     PROPERTIES
+diff --git a/dpdk b/dpdk
+index a1774652..7c29bbc8 160000
+--- a/dpdk
++++ b/dpdk
+@@ -1 +1 @@
+-Subproject commit a1774652fbbb1fe7c0ff392d5e66de60a0154df6
++Subproject commit 7c29bbc804687fca5a2f71d05a120e81b2bd0066
+diff --git a/dpdk_config b/dpdk_config
+index f832a2f8..8b8c60db 100644
+--- a/dpdk_config
++++ b/dpdk_config
+@@ -1,10 +1,9 @@
+ CONFIG_RTE_LIBRTE_PMD_BOND=n
+-CONFIG_RTE_MBUF_SCATTER_GATHER=n
+-CONFIG_RTE_LIBRTE_IP_FRAG=n
++CONFIG_RTE_LIBRTE_PMD_SOFTNIC=n
+ CONFIG_RTE_APP_TEST=n
+ CONFIG_RTE_TEST_PMD=n
+ CONFIG_RTE_MBUF_REFCNT_ATOMIC=n
+-CONFIG_RTE_MAX_MEMSEG=8192
++CONFIG_RTE_MAX_MEMSEG_LISTS=8192
+ CONFIG_RTE_EAL_IGB_UIO=n
+ CONFIG_RTE_LIBRTE_KNI=n
+ CONFIG_RTE_KNI_KMOD=n
+@@ -13,11 +12,13 @@ CONFIG_RTE_LIBRTE_LPM=n
+ CONFIG_RTE_LIBRTE_ACL=n
+ CONFIG_RTE_LIBRTE_POWER=n
+ CONFIG_RTE_LIBRTE_IP_FRAG=n
+-CONFIG_RTE_LIBRTE_METER=n
+-CONFIG_RTE_LIBRTE_SCHED=n
+ CONFIG_RTE_LIBRTE_DISTRIBUTOR=n
+ CONFIG_RTE_LIBRTE_PMD_CRYPTO_SCHEDULER=n
+ CONFIG_RTE_LIBRTE_REORDER=n
+ CONFIG_RTE_LIBRTE_PORT=n
+ CONFIG_RTE_LIBRTE_TABLE=n
+ CONFIG_RTE_LIBRTE_PIPELINE=n
++CONFIG_RTE_LIBRTE_FLOW_CLASSIFY=n
++CONFIG_RTE_LIBRTE_BPF=n
++CONFIG_RTE_LIBRTE_EFD=n
++CONFIG_RTE_LIBRTE_MEMBER=n
+diff --git a/include/seastar/net/dpdk.hh b/include/seastar/net/dpdk.hh
+index 3c4c5d41..18929374 100644
+--- a/include/seastar/net/dpdk.hh
++++ b/include/seastar/net/dpdk.hh
+@@ -31,8 +31,8 @@
+ namespace seastar {
+ 
+ std::unique_ptr<net::device> create_dpdk_net_device(
+-                                    uint8_t port_idx = 0,
+-                                    uint8_t num_queues = 1,
++                                    uint16_t port_idx = 0,
++                                    uint16_t num_queues = 1,
+                                     bool use_lro = true,
+                                     bool enable_fc = true);
+ 
+diff --git a/src/net/dpdk.cc b/src/net/dpdk.cc
+index e8d14579..6d1fc78b 100644
+--- a/src/net/dpdk.cc
++++ b/src/net/dpdk.cc
+@@ -55,6 +55,7 @@
+ #include <rte_ethdev.h>
+ #include <rte_cycles.h>
+ #include <rte_memzone.h>
++#include <rte_vfio.h>
+ 
+ #if RTE_VERSION <= RTE_VERSION_NUM(2,0,0,16)
+ 
+@@ -81,6 +82,30 @@ void* as_cookie(struct rte_pktmbuf_pool_private& p) {
+ typedef void    *MARKER[0];   /**< generic marker for a point in a structure */
+ #endif
+ 
++// Calculate maximum amount of memory required to store given number of objects
++static size_t
++get_mempool_xmem_size(uint32_t elt_num, size_t total_elt_sz, uint32_t pg_shift)
++{
++    size_t obj_per_page, pg_num, pg_sz;
++
++    if (total_elt_sz == 0) {
++        return 0;
++    }
++
++    if (pg_shift == 0) {
++        return total_elt_sz * elt_num;
++    }
++
++    pg_sz = (size_t)1 << pg_shift;
++    obj_per_page = pg_sz / total_elt_sz;
++    if (obj_per_page == 0) {
++        return RTE_ALIGN_CEIL(total_elt_sz, pg_sz) * elt_num;
++    }
++
++    pg_num = (elt_num + obj_per_page - 1) / obj_per_page;
++    return pg_num << pg_shift;
++}
++
+ using namespace seastar::net;
+ 
+ namespace seastar {
+@@ -226,7 +251,7 @@ struct port_stats {
+ 
+ class dpdk_xstats {
+ public:
+-    dpdk_xstats(uint8_t port_id)
++    dpdk_xstats(uint16_t port_id)
+         : _port_id(port_id)
+     {
+     }
+@@ -267,7 +292,7 @@ class dpdk_xstats {
+     }
+ 
+ private:
+-    uint8_t _port_id;
++    uint16_t _port_id;
+     int _len;
+     struct rte_eth_xstat *_xstats = nullptr;
+     struct rte_eth_xstat_name *_xstat_names = nullptr;
+@@ -305,10 +330,10 @@ class dpdk_xstats {
+ };
+ 
+ class dpdk_device : public device {
+-    uint8_t _port_idx;
++    uint16_t _port_idx;
+     uint16_t _num_queues;
+     net::hw_features _hw_features;
+-    uint8_t _queues_ready = 0;
++    uint16_t _queues_ready = 0;
+     unsigned _home_cpu;
+     bool _use_lro;
+     bool _enable_fc;
+@@ -368,7 +393,7 @@ class dpdk_device : public device {
+     void set_hw_flow_control();
+ 
+ public:
+-    dpdk_device(uint8_t port_idx, uint16_t num_queues, bool use_lro,
++    dpdk_device(uint16_t port_idx, uint16_t num_queues, bool use_lro,
+                 bool enable_fc)
+         : _port_idx(port_idx)
+         , _num_queues(num_queues)
+@@ -386,41 +411,6 @@ class dpdk_device : public device {
+             rte_exit(EXIT_FAILURE, "Cannot initialise port %u\n", _port_idx);
+         }
+ 
+-        /* need to defer initialize xstats since NIC specific xstat entries
+-           show up only after port initization */
+-        _xstats.start();
+-
+-        _stats_collector.set_callback([&] {
+-            rte_eth_stats rte_stats = {};
+-            int rc = rte_eth_stats_get(_port_idx, &rte_stats);
+-
+-            if (rc) {
+-                printf("Failed to get port statistics: %s\n", strerror(rc));
+-            }
+-
+-            _stats.rx.good.mcast      =
+-                _xstats.get_value(dpdk_xstats::xstat_id::rx_multicast_packets);
+-            _stats.rx.good.pause_xon  =
+-                _xstats.get_value(dpdk_xstats::xstat_id::rx_xon_packets);
+-            _stats.rx.good.pause_xoff =
+-                _xstats.get_value(dpdk_xstats::xstat_id::rx_xoff_packets);
+-
+-            _stats.rx.bad.crc        =
+-                _xstats.get_value(dpdk_xstats::xstat_id::rx_crc_errors);
+-            _stats.rx.bad.len         =
+-                _xstats.get_value(dpdk_xstats::xstat_id::rx_length_errors) +
+-                _xstats.get_value(dpdk_xstats::xstat_id::rx_undersize_errors) +
+-                _xstats.get_value(dpdk_xstats::xstat_id::rx_oversize_errors);
+-            _stats.rx.bad.total       = rte_stats.ierrors;
+-
+-            _stats.tx.good.pause_xon  =
+-                _xstats.get_value(dpdk_xstats::xstat_id::tx_xon_packets);
+-            _stats.tx.good.pause_xoff =
+-                _xstats.get_value(dpdk_xstats::xstat_id::tx_xoff_packets);
+-
+-            _stats.tx.bad.total       = rte_stats.oerrors;
+-        });
+-
+         // Register port statistics pollers
+         namespace sm = seastar::metrics;
+         _metrics.add_group(_stats_plugin_name, {
+@@ -509,7 +499,7 @@ class dpdk_device : public device {
+         assert(_redir_table.size());
+         return _redir_table[hash & (_redir_table.size() - 1)];
+     }
+-    uint8_t port_idx() { return _port_idx; }
++    uint16_t port_idx() { return _port_idx; }
+     bool is_i40e_device() const {
+         return _is_i40e_device;
+     }
+@@ -678,15 +668,8 @@ class dpdk_qp : public net::qp {
+             rte_mbuf *head = nullptr, *last_seg = nullptr;
+             unsigned nsegs = 0;
+ 
+-            //
+-            // Create a HEAD of the fragmented packet: check if frag0 has to be
+-            // copied and if yes - send it in a copy way
+-            //
+-            if (!check_frag0(p)) {
+-                if (!copy_one_frag(qp, p.frag(0), head, last_seg, nsegs)) {
+-                    return nullptr;
+-                }
+-            } else if (!translate_one_frag(qp, p.frag(0), head, last_seg, nsegs)) {
++            // Create a HEAD of the fragmented packet
++            if (!translate_one_frag(qp, p.frag(0), head, last_seg, nsegs)) {
+                 return nullptr;
+             }
+ 
+@@ -959,17 +942,14 @@ class dpdk_qp : public net::qp {
+             dpdk_qp& qp, rte_mbuf*& m, char* va, size_t buf_len) {
+             static constexpr size_t max_frag_len = 15 * 1024; // 15K
+ 
+-            using namespace memory;
+-            translation tr = translate(va, buf_len);
+-
+             //
+             // Currently we break a buffer on a 15K boundary because 82599
+             // devices have a 15.5K limitation on a maximum single fragment
+             // size.
+             //
+-            phys_addr_t pa = tr.addr;
++            rte_iova_t iova = rte_mem_virt2iova(va);
+ 
+-            if (!tr.size) {
++            if (iova == RTE_BAD_IOVA) {
+                 return copy_one_data_buf(qp, m, va, buf_len);
+             }
+ 
+@@ -978,9 +958,9 @@ class dpdk_qp : public net::qp {
+                 return 0;
+             }
+ 
+-            size_t len = std::min(tr.size, max_frag_len);
++            size_t len = std::min(buf_len, max_frag_len);
+ 
+-            buf->set_zc_info(va, pa, len);
++            buf->set_zc_info(va, iova, len);
+             m = buf->rte_mbuf_p();
+ 
+             return len;
+@@ -1019,62 +999,28 @@ class dpdk_qp : public net::qp {
+             return len;
+         }
+ 
+-        /**
+-         * Checks if the first fragment of the given packet satisfies the
+-         * zero-copy flow requirement: its first 128 bytes should not cross the
+-         * 4K page boundary. This is required in order to avoid splitting packet
+-         * headers.
+-         *
+-         * @param p packet to check
+-         *
+-         * @return TRUE if packet is ok and FALSE otherwise.
+-         */
+-        static bool check_frag0(packet& p)
+-        {
+-            using namespace memory;
+-
+-            //
+-            // First frag is special - it has headers that should not be split.
+-            // If the addressing is such that the first fragment has to be
+-            // split, then send this packet in a (non-zero) copy flow. We'll
+-            // check if the first 128 bytes of the first fragment reside in the
+-            // physically contiguous area. If that's the case - we are good to
+-            // go.
+-            //
+-            size_t frag0_size = p.frag(0).size;
+-            void* base = p.frag(0).base;
+-            translation tr = translate(base, frag0_size);
+-
+-            if (tr.size < frag0_size && tr.size < 128) {
+-                return false;
+-            }
+-
+-            return true;
+-        }
+-
+     public:
+         tx_buf(tx_buf_factory& fc) : _fc(fc) {
+ 
+-            _buf_physaddr = _mbuf.buf_physaddr;
++            _buf_iova     = _mbuf.buf_iova;
+             _data_off     = _mbuf.data_off;
+         }
+ 
+         rte_mbuf* rte_mbuf_p() { return &_mbuf; }
+ 
+-        void set_zc_info(void* va, phys_addr_t pa, size_t len) {
++        void set_zc_info(void* va, rte_iova_t iova, size_t len) {
+             // mbuf_put()
+             _mbuf.data_len           = len;
+             _mbuf.pkt_len            = len;
+ 
+             // Set the mbuf to point to our data
+             _mbuf.buf_addr           = va;
+-            _mbuf.buf_physaddr       = pa;
++            _mbuf.buf_iova           = iova;
+             _mbuf.data_off           = 0;
+             _is_zc                   = true;
+         }
+ 
+         void reset_zc() {
+-
+             //
+             // If this mbuf was the last in a cluster and contains an
+             // original packet object then call the destructor of the
+@@ -1093,7 +1039,7 @@ class dpdk_qp : public net::qp {
+             }
+ 
+             // Restore the rte_mbuf fields we trashed in set_zc_info()
+-            _mbuf.buf_physaddr = _buf_physaddr;
++            _mbuf.buf_iova     = _buf_iova;
+             _mbuf.buf_addr     = rte_mbuf_to_baddr(&_mbuf);
+             _mbuf.data_off     = _data_off;
+ 
+@@ -1119,7 +1065,7 @@ class dpdk_qp : public net::qp {
+         struct rte_mbuf _mbuf;
+         MARKER private_start;
+         compat::optional<packet> _p;
+-        phys_addr_t _buf_physaddr;
++        rte_iova_t _buf_iova;
+         uint16_t _data_off;
+         // TRUE if underlying mbuf has been used in the zero-copy flow
+         bool _is_zc = false;
+@@ -1140,19 +1086,19 @@ class dpdk_qp : public net::qp {
+         //
+         static constexpr int gc_count = 1;
+     public:
+-        tx_buf_factory(uint8_t qid) {
++        tx_buf_factory(uint16_t qid) {
+             using namespace memory;
+ 
+             sstring name = sstring(pktmbuf_pool_name) + to_sstring(qid) + "_tx";
+             printf("Creating Tx mbuf pool '%s' [%u mbufs] ...\n",
+                    name.c_str(), mbufs_per_queue_tx);
+-           
++
+             if (HugetlbfsMemBackend) {
+-                std::vector<phys_addr_t> mappings;
++                size_t xmem_size;
+ 
+                 _xmem.reset(dpdk_qp::alloc_mempool_xmem(mbufs_per_queue_tx,
+                                                         inline_mbuf_size,
+-                                                        mappings));
++                                                        xmem_size));
+                 if (!_xmem.get()) {
+                     printf("Can't allocate a memory for Tx buffers\n");
+                     exit(1);
+@@ -1164,19 +1110,28 @@ class dpdk_qp : public net::qp {
+                 // we prefer to make a mempool non-atomic in this case.
+                 //
+                 _pool =
+-                    rte_mempool_xmem_create(name.c_str(),
+-                                       mbufs_per_queue_tx, inline_mbuf_size,
+-                                       mbuf_cache_size,
+-                                       sizeof(struct rte_pktmbuf_pool_private),
+-                                       rte_pktmbuf_pool_init, nullptr,
+-                                       rte_pktmbuf_init, nullptr,
+-                                       rte_socket_id(), 0,
+-                                       _xmem.get(), mappings.data(),
+-                                       mappings.size(), page_bits);
++                    rte_mempool_create_empty(name.c_str(),
++                                             mbufs_per_queue_tx,
++                                             inline_mbuf_size,
++                                             mbuf_cache_size,
++                                             sizeof(struct rte_pktmbuf_pool_private),
++                                             rte_socket_id(), 0);
++                if (_pool) {
++                    rte_pktmbuf_pool_init(_pool, nullptr);
++
++                    if (rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
++                                                  xmem_size, page_size,
++                                                  nullptr, nullptr) <= 0) {
++                        printf("Failed to populate mempool for Tx\n");
++                        exit(1);
++                    }
++
++                    rte_mempool_obj_iter(_pool, rte_pktmbuf_init, nullptr);
++                }
+ 
+             } else {
+                 _pool =
+-                     rte_mempool_create(name.c_str(),
++                    rte_mempool_create(name.c_str(),
+                                        mbufs_per_queue_tx, inline_mbuf_size,
+                                        mbuf_cache_size,
+                                        sizeof(struct rte_pktmbuf_pool_private),
+@@ -1282,7 +1237,7 @@ class dpdk_qp : public net::qp {
+     };
+ 
+ public:
+-    explicit dpdk_qp(dpdk_device* dev, uint8_t qid,
++    explicit dpdk_qp(dpdk_device* dev, uint16_t qid,
+                      const std::string stats_plugin_name);
+ 
+     virtual void rx_start() override;
+@@ -1366,11 +1321,7 @@ class dpdk_qp : public net::qp {
+             return false;
+         }
+ 
+-        using namespace memory;
+-        translation tr = translate(data, size);
+-
+-        // TODO: assert() in a fast path! Remove me ASAP!
+-        assert(tr.size == size);
++        rte_iova_t iova = rte_mem_virt2iova(data);
+ 
+         //
+         // Set the mbuf to point to our data.
+@@ -1380,7 +1331,7 @@ class dpdk_qp : public net::qp {
+         // actual data buffer.
+         //
+         m->buf_addr      = data - RTE_PKTMBUF_HEADROOM;
+-        m->buf_physaddr  = tr.addr - RTE_PKTMBUF_HEADROOM;
++        m->buf_iova      = iova - RTE_PKTMBUF_HEADROOM;
+         return true;
+     }
+ 
+@@ -1396,6 +1347,7 @@ class dpdk_qp : public net::qp {
+     }
+ 
+     bool init_rx_mbuf_pool();
++    bool map_dma();
+     bool rx_gc();
+     bool refill_one_cluster(rte_mbuf* head);
+ 
+@@ -1404,22 +1356,19 @@ class dpdk_qp : public net::qp {
+      * the given size and fills a vector with underlying physical pages.
+      *
+      * The chunk is going to be used as an external memory buffer of the DPDK
+-     * memory pool (created using rte_mempool_xmem_create()).
++     * memory pool.
+      *
+-     * The chunk size if calculated using rte_mempool_xmem_size() function.
++     * The chunk size if calculated using get_mempool_xmem_size() function.
+      *
+-     * @param num_bufs Number of buffers (in)
+-     * @param buf_sz   Size of each buffer (in)
+-     * @param mappings vector of physical pages (out)
+-     *
+-     * @note this function assumes that "mappings" is properly set and adds the
+-     *       mappings to the back of the vector.
++     * @param num_bufs  Number of buffers (in)
++     * @param buf_sz    Size of each buffer (in)
++     * @param xmem_size Size of allocated memory chunk (out)
+      *
+      * @return a virtual address of the allocated memory chunk or nullptr in
+      *         case of a failure.
+      */
+     static void* alloc_mempool_xmem(uint16_t num_bufs, uint16_t buf_sz,
+-                                    std::vector<phys_addr_t>& mappings);
++                                    size_t& xmem_size);
+ 
+     /**
+      * Polls for a burst of incoming packets. This function will not block and
+@@ -1456,7 +1405,7 @@ class dpdk_qp : public net::qp {
+ 
+ private:
+     dpdk_device* _dev;
+-    uint8_t _qid;
++    uint16_t _qid;
+     rte_mempool *_pktmbuf_pool_rx;
+     std::vector<rte_mbuf*> _rx_free_pkts;
+     std::vector<rte_mbuf*> _rx_free_bufs;
+@@ -1475,7 +1424,7 @@ class dpdk_qp : public net::qp {
+ 
+ int dpdk_device::init_port_start()
+ {
+-    assert(_port_idx < rte_eth_dev_count());
++    assert(_port_idx < rte_eth_dev_count_avail());
+ 
+     rte_eth_dev_info_get(_port_idx, &_dev_info);
+ 
+@@ -1512,42 +1461,36 @@ int dpdk_device::init_port_start()
+         _dev_info.max_rx_queues = std::min(_dev_info.max_rx_queues, (uint16_t)16);
+     }
+ 
+-    // Clear txq_flags - we want to support all available offload features
+-    // except for multi-mempool and refcnt'ing which we don't need
+-    _dev_info.default_txconf.txq_flags =
+-        ETH_TXQ_FLAGS_NOMULTMEMP | ETH_TXQ_FLAGS_NOREFCOUNT;
+-
+-    //
+-    // Disable features that are not supported by port's HW
+-    //
+-    if (!(_dev_info.tx_offload_capa & DEV_TX_OFFLOAD_UDP_CKSUM)) {
+-        _dev_info.default_txconf.txq_flags |= ETH_TXQ_FLAGS_NOXSUMUDP;
+-    }
+-
+-    if (!(_dev_info.tx_offload_capa & DEV_TX_OFFLOAD_TCP_CKSUM)) {
+-        _dev_info.default_txconf.txq_flags |= ETH_TXQ_FLAGS_NOXSUMTCP;
+-    }
+-
+-    if (!(_dev_info.tx_offload_capa & DEV_TX_OFFLOAD_SCTP_CKSUM)) {
+-        _dev_info.default_txconf.txq_flags |= ETH_TXQ_FLAGS_NOXSUMSCTP;
+-    }
+-
+-    if (!(_dev_info.tx_offload_capa & DEV_TX_OFFLOAD_VLAN_INSERT)) {
+-        _dev_info.default_txconf.txq_flags |= ETH_TXQ_FLAGS_NOVLANOFFL;
+-    }
+-
+-    if (!(_dev_info.tx_offload_capa & DEV_TX_OFFLOAD_VLAN_INSERT)) {
+-        _dev_info.default_txconf.txq_flags |= ETH_TXQ_FLAGS_NOVLANOFFL;
+-    }
+-
+-    if (!(_dev_info.tx_offload_capa & DEV_TX_OFFLOAD_TCP_TSO) &&
+-        !(_dev_info.tx_offload_capa & DEV_TX_OFFLOAD_UDP_TSO)) {
+-        _dev_info.default_txconf.txq_flags |= ETH_TXQ_FLAGS_NOMULTSEGS;
+-    }
++    // Hardware offload capabilities
++    // https://github.com/DPDK/dpdk/blob/v19.05/lib/librte_ethdev/rte_ethdev.h#L993-L1074
++
++    // We want to support all available offload features
++    // TODO: below features are implemented in 17.05, should support new ones
++    const uint64_t tx_offloads_wanted =
++        DEV_TX_OFFLOAD_VLAN_INSERT      |
++        DEV_TX_OFFLOAD_IPV4_CKSUM       |
++        DEV_TX_OFFLOAD_UDP_CKSUM        |
++        DEV_TX_OFFLOAD_TCP_CKSUM        |
++        DEV_TX_OFFLOAD_SCTP_CKSUM       |
++        DEV_TX_OFFLOAD_TCP_TSO          |
++        DEV_TX_OFFLOAD_UDP_TSO          |
++        DEV_TX_OFFLOAD_OUTER_IPV4_CKSUM |
++        DEV_TX_OFFLOAD_QINQ_INSERT      |
++        DEV_TX_OFFLOAD_VXLAN_TNL_TSO    |
++        DEV_TX_OFFLOAD_GRE_TNL_TSO      |
++        DEV_TX_OFFLOAD_IPIP_TNL_TSO     |
++        DEV_TX_OFFLOAD_GENEVE_TNL_TSO   |
++        DEV_TX_OFFLOAD_MACSEC_INSERT;
++
++    _dev_info.default_txconf.offloads =
++        _dev_info.tx_offload_capa & tx_offloads_wanted;
+ 
+     /* for port configuration all features are off by default */
+     rte_eth_conf port_conf = { 0 };
+ 
++    /* setting tx offloads for port */
++    port_conf.txmode.offloads = _dev_info.default_txconf.offloads;
++
+     printf("Port %d: max_rx_queues %d max_tx_queues %d\n",
+            _port_idx, _dev_info.max_rx_queues, _dev_info.max_tx_queues);
+ 
+@@ -1575,7 +1518,8 @@ int dpdk_device::init_port_start()
+         }
+ 
+         port_conf.rxmode.mq_mode = ETH_MQ_RX_RSS;
+-        port_conf.rx_adv_conf.rss_conf.rss_hf = ETH_RSS_PROTO_MASK;
++        /* enable all supported rss offloads */
++        port_conf.rx_adv_conf.rss_conf.rss_hf = _dev_info.flow_type_rss_offloads;
+         if (_dev_info.hash_key_size) {
+             port_conf.rx_adv_conf.rss_conf.rss_key = const_cast<uint8_t *>(_rss_key.data());
+             port_conf.rx_adv_conf.rss_conf.rss_key_len = _dev_info.hash_key_size;
+@@ -1603,17 +1547,14 @@ int dpdk_device::init_port_start()
+ 
+     // Set Rx VLAN stripping
+     if (_dev_info.rx_offload_capa & DEV_RX_OFFLOAD_VLAN_STRIP) {
+-        port_conf.rxmode.hw_vlan_strip = 1;
++        port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_VLAN_STRIP;
+     }
+ 
+-    // Enable HW CRC stripping
+-    port_conf.rxmode.hw_strip_crc = 1;
+-
+ #ifdef RTE_ETHDEV_HAS_LRO_SUPPORT
+     // Enable LRO
+     if (_use_lro && (_dev_info.rx_offload_capa & DEV_RX_OFFLOAD_TCP_LRO)) {
+         printf("LRO is on\n");
+-        port_conf.rxmode.enable_lro = 1;
++        port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_TCP_LRO;
+         _hw_features.rx_lro = true;
+     } else
+ #endif
+@@ -1635,7 +1576,7 @@ int dpdk_device::init_port_start()
+           (_dev_info.rx_offload_capa & DEV_RX_OFFLOAD_UDP_CKSUM) &&
+           (_dev_info.rx_offload_capa & DEV_RX_OFFLOAD_TCP_CKSUM)) {
+         printf("RX checksum offload supported\n");
+-        port_conf.rxmode.hw_ip_checksum = 1;
++        port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_CHECKSUM;
+         _hw_features.rx_csum_offload = 1;
+     }
+ 
+@@ -1739,6 +1680,44 @@ void dpdk_device::init_port_fini()
+         rte_exit(EXIT_FAILURE, "Cannot start port %d\n", _port_idx);
+     }
+ 
++    /* need to defer initialize xstats since NIC specific xstat entries
++       show up only after port initization */
++    _xstats.start();
++
++    _stats_collector.set_callback([&] {
++        rte_eth_stats rte_stats = {};
++        int rc = rte_eth_stats_get(_port_idx, &rte_stats);
++
++        if (rc) {
++            printf("Failed to get port statistics: %s\n", strerror(rc));
++        }
++
++        _stats.rx.good.mcast      =
++            _xstats.get_value(dpdk_xstats::xstat_id::rx_multicast_packets);
++        _stats.rx.good.pause_xon  =
++            _xstats.get_value(dpdk_xstats::xstat_id::rx_xon_packets);
++        _stats.rx.good.pause_xoff =
++            _xstats.get_value(dpdk_xstats::xstat_id::rx_xoff_packets);
++
++        _stats.rx.bad.crc        =
++            _xstats.get_value(dpdk_xstats::xstat_id::rx_crc_errors);
++        _stats.rx.bad.len         =
++            _xstats.get_value(dpdk_xstats::xstat_id::rx_length_errors) +
++            _xstats.get_value(dpdk_xstats::xstat_id::rx_undersize_errors) +
++            _xstats.get_value(dpdk_xstats::xstat_id::rx_oversize_errors);
++        _stats.rx.bad.total       = rte_stats.ierrors;
++
++        _stats.tx.good.pause_xon  =
++            _xstats.get_value(dpdk_xstats::xstat_id::tx_xon_packets);
++        _stats.tx.good.pause_xoff =
++            _xstats.get_value(dpdk_xstats::xstat_id::tx_xoff_packets);
++
++        _stats.tx.bad.total       = rte_stats.oerrors;
++    });
++
++    // TODO: replace deprecated filter api with generic flow api
++    #pragma GCC diagnostic push
++    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+     if (_num_queues > 1) {
+         if (!rte_eth_dev_filter_supported(_port_idx, RTE_ETH_FILTER_HASH)) {
+             printf("Port %d: HASH FILTER configuration is supported\n", _port_idx);
+@@ -1757,6 +1736,7 @@ void dpdk_device::init_port_fini()
+ 
+         set_rss_table();
+     }
++    #pragma GCC diagnostic pop
+ 
+     // Wait for a link
+     check_port_link_status();
+@@ -1766,7 +1746,7 @@ void dpdk_device::init_port_fini()
+ 
+ template <bool HugetlbfsMemBackend>
+ void* dpdk_qp<HugetlbfsMemBackend>::alloc_mempool_xmem(
+-    uint16_t num_bufs, uint16_t buf_sz, std::vector<phys_addr_t>& mappings)
++    uint16_t num_bufs, uint16_t buf_sz, size_t& xmem_size)
+ {
+     using namespace memory;
+     char* xmem;
+@@ -1774,8 +1754,8 @@ void* dpdk_qp<HugetlbfsMemBackend>::alloc_mempool_xmem(
+ 
+     rte_mempool_calc_obj_size(buf_sz, 0, &mp_obj_sz);
+ 
+-    size_t xmem_size =
+-        rte_mempool_xmem_size(num_bufs,
++    xmem_size =
++        get_mempool_xmem_size(num_bufs,
+                               mp_obj_sz.elt_size + mp_obj_sz.header_size +
+                                                    mp_obj_sz.trailer_size,
+                               page_bits);
+@@ -1788,12 +1768,6 @@ void* dpdk_qp<HugetlbfsMemBackend>::alloc_mempool_xmem(
+         return nullptr;
+     }
+ 
+-    for (size_t i = 0; i < xmem_size / page_size; ++i) {
+-        translation tr = translate(xmem + i * page_size, page_size);
+-        assert(tr.size);
+-        mappings.push_back(tr.addr);
+-    }
+-
+     return xmem;
+ }
+ 
+@@ -1813,10 +1787,10 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
+     // for the DPDK in this case.
+     //
+     if (HugetlbfsMemBackend) {
+-        std::vector<phys_addr_t> mappings;
++        size_t xmem_size;
+ 
+         _rx_xmem.reset(alloc_mempool_xmem(mbufs_per_queue_rx, mbuf_overhead,
+-                                          mappings));
++                                          xmem_size));
+         if (!_rx_xmem.get()) {
+             printf("Can't allocate a memory for Rx buffers\n");
+             return false;
+@@ -1829,16 +1803,27 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
+         struct rte_pktmbuf_pool_private roomsz = {};
+         roomsz.mbuf_data_room_size = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
+         _pktmbuf_pool_rx =
+-                rte_mempool_xmem_create(name.c_str(),
+-                                   mbufs_per_queue_rx, mbuf_overhead,
+-                                   mbuf_cache_size,
+-                                   sizeof(struct rte_pktmbuf_pool_private),
+-                                   rte_pktmbuf_pool_init, as_cookie(roomsz),
+-                                   rte_pktmbuf_init, nullptr,
+-                                   rte_socket_id(), 0,
+-                                   _rx_xmem.get(), mappings.data(),
+-                                   mappings.size(),
+-                                   page_bits);
++            rte_mempool_create_empty(name.c_str(),
++                                     mbufs_per_queue_rx, mbuf_overhead,
++                                     mbuf_cache_size,
++                                     sizeof(struct rte_pktmbuf_pool_private),
++                                     rte_socket_id(), 0);
++        if (!_pktmbuf_pool_rx) {
++            printf("Failed to create mempool for Rx\n");
++            exit(1);
++        }
++
++        rte_pktmbuf_pool_init(_pktmbuf_pool_rx, as_cookie(roomsz));
++
++        if (rte_mempool_populate_virt(_pktmbuf_pool_rx,
++                                      (char*)(_rx_xmem.get()), xmem_size,
++                                      page_size,
++                                      nullptr, nullptr) < 0) {
++            printf("Failed to populate mempool for Rx\n");
++            exit(1);
++        }
++
++        rte_mempool_obj_iter(_pktmbuf_pool_rx, rte_pktmbuf_init, nullptr);
+ 
+         // reserve the memory for Rx buffers containers
+         _rx_free_pkts.reserve(mbufs_per_queue_rx);
+@@ -1871,7 +1856,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
+         struct rte_pktmbuf_pool_private roomsz = {};
+         roomsz.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
+         _pktmbuf_pool_rx =
+-                rte_mempool_create(name.c_str(),
++            rte_mempool_create(name.c_str(),
+                                mbufs_per_queue_rx, inline_mbuf_size,
+                                mbuf_cache_size,
+                                sizeof(struct rte_pktmbuf_pool_private),
+@@ -1883,6 +1868,17 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
+     return _pktmbuf_pool_rx != nullptr;
+ }
+ 
++// Map DMA address explicitly.
++// XXX: does NOT work with Mellanox NICs as they use IB libs instead of VFIO.
++template <bool HugetlbfsMemBackend>
++bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
++{
++    auto m = memory::get_memory_layout();
++    rte_iova_t iova = rte_mem_virt2iova((const void*)m.start);
++
++    return rte_vfio_dma_map(m.start, iova, m.end - m.start) == 0;
++}
++
+ void dpdk_device::check_port_link_status()
+ {
+     using namespace std::literals::chrono_literals;
+@@ -1925,7 +1921,7 @@ void dpdk_device::check_port_link_status()
+ #pragma GCC diagnostic ignored "-Winvalid-offsetof"
+ 
+ template <bool HugetlbfsMemBackend>
+-dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint8_t qid,
++dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
+                                       const std::string stats_plugin_name)
+      : qp(true, stats_plugin_name, qid), _dev(dev), _qid(qid),
+        _rx_gc_poller(reactor::poller::simple([&] { return rx_gc(); })),
+@@ -1936,6 +1932,10 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint8_t qid,
+         rte_exit(EXIT_FAILURE, "Cannot initialize mbuf pools\n");
+     }
+ 
++    if (HugetlbfsMemBackend && !map_dma()) {
++        rte_exit(EXIT_FAILURE, "Cannot map DMA\n");
++    }
++
+     static_assert(offsetof(class tx_buf, private_end) -
+                   offsetof(class tx_buf, private_start) <= RTE_PKTMBUF_HEADROOM,
+                   "RTE_PKTMBUF_HEADROOM is less than dpdk_qp::tx_buf size! "
+@@ -2161,9 +2161,9 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
+         nr_frags += m->nb_segs;
+         bytes    += m->pkt_len;
+ 
+-        // Set stipped VLAN value if available
+-        if ((_dev->_dev_info.rx_offload_capa & DEV_RX_OFFLOAD_VLAN_STRIP) &&
+-            (m->ol_flags & PKT_RX_VLAN_PKT)) {
++        // Set stripped VLAN value if available
++        if ((m->ol_flags & PKT_RX_VLAN_STRIPPED) &&
++            (m->ol_flags & PKT_RX_VLAN)) {
+ 
+             oi.vlan_tci = m->vlan_tci;
+         }
+@@ -2265,8 +2265,8 @@ std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variab
+ /******************************** Interface functions *************************/
+ 
+ std::unique_ptr<net::device> create_dpdk_net_device(
+-                                    uint8_t port_idx,
+-                                    uint8_t num_queues,
++                                    uint16_t port_idx,
++                                    uint16_t num_queues,
+                                     bool use_lro,
+                                     bool enable_fc)
+ {
+@@ -2278,10 +2278,10 @@ std::unique_ptr<net::device> create_dpdk_net_device(
+     called = true;
+ 
+     // Check that we have at least one DPDK-able port
+-    if (rte_eth_dev_count() == 0) {
++    if (rte_eth_dev_count_avail() == 0) {
+         rte_exit(EXIT_FAILURE, "No Ethernet ports - bye\n");
+     } else {
+-        printf("ports number: %d\n", rte_eth_dev_count());
++        printf("ports number: %d\n", rte_eth_dev_count_avail());
+     }
+ 
+     return std::make_unique<dpdk::dpdk_device>(port_idx, num_queues, use_lro,
+-- 
+2.17.1

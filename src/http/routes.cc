@@ -30,8 +30,8 @@ namespace httpd {
 
 using namespace std;
 
-void verify_param(const request& req, const sstring& param) {
-    if (req.get_query_param(param) == "") {
+void verify_param(const std::unique_ptr<request>& req, const sstring& param) {
+    if (req->get_query_param(param) == "") {
         throw missing_param_exception(param);
     }
 }
@@ -89,7 +89,7 @@ future<std::unique_ptr<reply> > routes::handle(const sstring& path, std::unique_
     if (handler != nullptr) {
         try {
             for (auto& i : handler->_mandatory_param) {
-                verify_param(*req.get(), i);
+                verify_param(req, i);
             }
             auto r =  handler->handle(path, std::move(req), std::move(rep));
             return r.handle_exception(_general_handler);
@@ -107,6 +107,18 @@ future<std::unique_ptr<reply> > routes::handle(const sstring& path, std::unique_
                 "json");
     }
     return make_ready_future<std::unique_ptr<reply>>(std::move(rep));
+}
+
+future<> routes::handle_ws(const sstring &path, websocket::connected_websocket<websocket::endpoint_type::SERVER>& ws,
+                           std::unique_ptr<request> request) {
+    handler_websocket_base* handler = get_ws_handler(normalize_url(path), request);
+    if (handler != nullptr) {
+        for (auto& i : handler->_mandatory_param) {
+            verify_param(request, i);
+        }
+        return handler->handle(path, ws, std::move(request));
+    }
+    return make_ready_future();
 }
 
 sstring routes::normalize_url(const sstring& url) {
@@ -130,6 +142,22 @@ handler_base* routes::get_handler(operation_type type, const sstring& url,
             return handler;
         }
         params.clear();
+    }
+    return nullptr;
+}
+
+handler_websocket_base *routes::get_ws_handler(const sstring &url, const std::unique_ptr<request>& req) {
+    handler_websocket_base* handler = (_map_ws.find(url) == _map_ws.end()) ? nullptr : _map_ws[url];
+    if (handler != nullptr) {
+        try {
+            for (auto& i : handler->_mandatory_param) {
+                verify_param(req, i);
+            }
+        }
+        catch (const missing_param_exception &e) {
+            return nullptr;
+        }
+        return handler;
     }
     return nullptr;
 }

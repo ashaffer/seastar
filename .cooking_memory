@@ -1,0 +1,3 @@
+run_previous() {
+    "./cooking.sh" '-i' 'dpdk' '-d' '/home/andrew/seastar/build/release' '--' '-DCMAKE_BUILD_TYPE=RelWithDebInfo' '-DCMAKE_C_COMPILER=gcc-9' '-DCMAKE_CXX_COMPILER=g++-9' '-DCMAKE_INSTALL_PREFIX=/usr/local' '-DSeastar_EXCLUDE_TESTS_FROM_ALL=yes' '-DSeastar_EXCLUDE_APPS_FROM_ALL=yes' '-DSeastar_EXCLUDE_DEMOS_FROM_ALL=yes' '-DSeastar_CXX_FLAGS=' '-DSeastar_LD_FLAGS=' '-DSeastar_CXX_DIALECT=gnu++17' '-DSeastar_DPDK=yes' '-DSeastar_DPDK_MACHINE=native' '-DSeastar_HWLOC=yes' '-DSeastar_GCC6_CONCEPTS=no' '-DSeastar_ALLOC_FAILURE_INJECTION=no' '-DSeastar_ALLOC_PAGE_SIZE=no' '-DSeastar_STD_OPTIONAL_VARIANT_STRINGVIEW=0' '-DSeastar_SPLIT_DWARF=no' '-DSeastar_EXPERIMENTAL_COROUTINES_TS=yes'
+}

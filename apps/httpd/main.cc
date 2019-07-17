@@ -30,6 +30,7 @@ namespace bpo = boost::program_options;
 
 using namespace seastar;
 using namespace httpd;
+using namespace websocket;
 
 class handl : public httpd::handler_base {
 public:
@@ -48,10 +49,59 @@ void set_routes(routes& r) {
     function_handler* h2 = new function_handler([](std::unique_ptr<request> req) {
         return make_ready_future<json::json_return_type>("json-future");
     });
+
+    auto ws_echo_handler = new websocket::ws_handler<SERVER>();
+
+    ws_echo_handler->on_message_future([] (const std::unique_ptr<request>& req, duplex_stream<SERVER>& stream,
+            message<SERVER> message) {
+        return stream.write(std::move(message)).then([&stream] {
+            return stream.flush();
+        });
+    });
+
+    auto ws_sha1_handler = new websocket::ws_handler<SERVER>();
+
+    ws_sha1_handler->on_connection_future([] (const std::unique_ptr<request>& req, duplex_stream<SERVER>& stream) {
+        return stream.write(websocket::message<SERVER>(TEXT, "Hello from seastar ! Send any message to this endpoint"
+                " and get back it's payload SHA1 in base64 format !")).then([&stream] {
+            return stream.flush();
+        });
+    });
+
+    ws_sha1_handler->on_message_future([] (const std::unique_ptr<request>& req, duplex_stream<SERVER>& stream,
+            message<SERVER> message) {
+        CryptoPP::SHA hash;
+        byte digest[CryptoPP::SHA::DIGESTSIZE];
+        hash.Update((byte*) message.payload.begin(), message.payload.size());
+        hash.Final(digest);
+
+        sstring base64;
+
+        CryptoPP::Base64Encoder encoder;
+        encoder.Put(digest, sizeof(digest));
+        encoder.MessageEnd();
+        CryptoPP::word64 size = encoder.MaxRetrievable();
+        if (size) {
+            base64.resize(size);
+            encoder.Get((byte*) base64.data(), base64.size());
+
+            return stream.write(websocket::message<SERVER>(TEXT, base64.substr(0, base64.size() - 1))).then([&stream] {
+                return stream.flush();
+            });
+        }
+        return make_ready_future();
+    });
+
+    ws_sha1_handler->on_disconnection([] (const std::unique_ptr<request>& req) {
+        print("websocket client disconnected\n");
+    });
+
     r.add(operation_type::GET, url("/"), h1);
     r.add(operation_type::GET, url("/jf"), h2);
-    r.add(operation_type::GET, url("/file").remainder("path"),
-            new directory_handler("/"));
+    r.add(operation_type::GET, url("/file").remainder("path"), new directory_handler("/"));
+    r.put("/", ws_echo_handler);
+    r.put("/sha1", ws_sha1_handler);
+
     demo_json::hello_world.set(r, [] (const_req req) {
         demo_json::my_object obj;
         obj.var1 = req.param.at("var1");
@@ -66,18 +116,18 @@ void set_routes(routes& r) {
 int main(int ac, char** av) {
     app_template app;
     app.add_options()("port", bpo::value<uint16_t>()->default_value(10000),
-            "HTTP Server port");
+                      "HTTP Server port");
     return app.run_deprecated(ac, av, [&] {
-        auto&& config = app.configuration();
+        auto &&config = app.configuration();
         uint16_t port = config["port"].as<uint16_t>();
         auto server = new http_server_control();
         auto rb = make_shared<api_registry_builder>("apps/httpd/");
         server->start().then([server] {
             return server->set_routes(set_routes);
-        }).then([server, rb]{
-            return server->set_routes([rb](routes& r){rb->set_api_doc(r);});
-        }).then([server, rb]{
-            return server->set_routes([rb](routes& r) {rb->register_function(r, "demo", "hello world application");});
+        }).then([server, rb] {
+            return server->set_routes([rb](routes &r) { rb->set_api_doc(r); });
+        }).then([server, rb] {
+            return server->set_routes([rb](routes &r) { rb->register_function(r, "demo", "hello world application"); });
         }).then([server, port] {
             return server->listen(port);
         }).then([server, port] {
@@ -86,6 +136,5 @@ int main(int ac, char** av) {
                 return server->stop();
             });
         });
-
     });
 }

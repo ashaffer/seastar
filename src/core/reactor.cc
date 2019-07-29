@@ -182,7 +182,7 @@ reactor::rename_priority_class(io_priority_class pc, sstring new_name) {
         // holding the lock until all cross shard activity is over.
 
         try {
-            std::lock_guard<std::mutex>(io_queue::_register_lock);
+            std::lock_guard<std::mutex> lock(io_queue::_register_lock);
             for (unsigned i = 0; i < io_queue::_max_classes; ++i) {
                if (!io_queue::_registered_shares[i]) {
                    break;

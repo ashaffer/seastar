@@ -69,7 +69,7 @@ public:
     };
 
     message_base(websocket::opcode opcode, sstring message = "", bool fin = true) noexcept :
-            opcode(opcode), payload(std::move(std::move(message).release())), fin(fin) {
+            opcode(opcode), payload(std::move(message).release()), fin(fin) {
     };
 
     message_base() = default;

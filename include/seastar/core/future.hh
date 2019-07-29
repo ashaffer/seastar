@@ -777,7 +777,7 @@ private:
     [[gnu::always_inline]]
     explicit future(future_state<T...>&& state) noexcept
             : _state(std::move(state)) {
-        this->check_deprecation();
+        // this->check_deprecation();
     }
     promise<T...>* detach_promise() {
         return static_cast<promise<T...>*>(future_base::detach_promise());
@@ -1233,9 +1233,9 @@ public:
 
 #if SEASTAR_COROUTINES_TS
     void set_coroutine(task& coroutine) noexcept {
-        assert(!state()->available());
+        assert(!_state.available());
         assert(_promise);
-        detach_promise()->set_coroutine(_local_state, coroutine);
+        detach_promise()->set_coroutine(_state, coroutine);
     }
 #endif
 private:

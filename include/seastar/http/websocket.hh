@@ -41,7 +41,7 @@ public:
 
     output_stream_base(output_stream_base&&) noexcept = default;
 
-    output_stream_base& operator=(output_stream_base&&) noexcept = default;
+    output_stream_base& operator=(output_stream_base&&) ;
 
     future<> close() { return _stream.close(); };
 
@@ -204,7 +204,7 @@ public:
 
     duplex_stream(duplex_stream&&) noexcept = default;
 
-    duplex_stream& operator=(duplex_stream&&) noexcept = default;
+    duplex_stream& operator=(duplex_stream&&);  // noexcept = default;
 
     future<websocket::message<type>> read() {
         return _input_stream.read().handle_exception_type([this] (websocket_exception& ex) {

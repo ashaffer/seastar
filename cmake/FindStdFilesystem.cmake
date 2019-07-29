@@ -51,17 +51,17 @@ else ()
   _stdfilesystem_check_compiles (StdFilesystem_STDCXXFS_LIBRARY
     stdc++fs)
 
-  if (StdFilesystem_STDCXXFS_LIBRARY)
-    set (StdFilesystem_LIBRARY_NAME stdc++fs)
-  else ()
-    # Try libc++.
-    _stdfilesystem_check_compiles (StdFilesystem_CXXEXPERIMENTAL_LIBRARY
-      libc++experimental)
+  #if (StdFilesystem_STDCXXFS_LIBRARY)
+  set (StdFilesystem_LIBRARY_NAME stdc++fs)
+  #else ()
+#    # Try libc++.
+#    _stdfilesystem_check_compiles (StdFilesystem_CXXEXPERIMENTAL_LIBRARY
+#      libc++experimental)
 
-    if (StdFilesystem_CXXEXPERIMENTAL_LIBRARY)
-      set (StdFilesystem_LIBRARY_NAME c++experimental)
-    endif ()
-  endif ()
+#    if (StdFilesystem_CXXEXPERIMENTAL_LIBRARY)
+#      set (StdFilesystem_LIBRARY_NAME c++experimental)
+#    endif ()
+  #endif ()
 
   if (StdFilesystem_LIBRARY_NAME)
     set (StdFilesystem_LIBRARIES -l${StdFilesystem_LIBRARY_NAME})

@@ -37,10 +37,10 @@ sstring encode_handshake_key(sstring nonce) {
 
 future<connected_socket>
 connect(socket_address sa, socket_address local) {
-    return engine().net().connect(sa, local).then([local](connected_socket fd) {
-        seastar::input_stream<char> in = std::move(fd.input());
-        seastar::output_stream<char> out = std::move(fd.output());
-        return do_with(std::move(fd), std::move(in), std::move(out), [local](connected_socket& fd,
+    return engine().net().connect(sa, local).then([](connected_socket fd) {
+        seastar::input_stream<char> in = fd.input();
+        seastar::output_stream<char> out = fd.output();
+        return do_with(std::move(fd), std::move(in), std::move(out), [](connected_socket& fd,
                 auto& in,
                 auto& out) {
             using random_bytes_engine = std::independent_bits_engine<
@@ -70,11 +70,11 @@ connect(socket_address sa, socket_address local) {
                     << "Sec-WebSocket-Key: " << nonce
                     << "\r\nSec-WebSocket-Protocol: default\r\nSec-WebSocket-Version: 13\r\n\r\n";
 
-            return out.write(stream.str()).then([local, nonce, &out, &in, &fd] {
+            return out.write(stream.str()).then([&out] {
                 return out.flush();
-            }).then([local, nonce, &in, &fd] {
+            }).then([nonce, &in, &fd] {
                 //FIXME extend http request parser to support header only payload (no HTTP verb)
-                return in.read().then([local, nonce, &fd](temporary_buffer<char> response) {
+                return in.read().then([nonce, &fd](temporary_buffer<char> response) {
                     if (!response)
                         throw std::exception(); //FIXME : proper failure
                     if (std::experimental::string_view(response.begin(), response.size())

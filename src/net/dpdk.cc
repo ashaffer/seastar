@@ -1518,8 +1518,11 @@ int dpdk_device::init_port_start()
                 _port_idx, _dev_info.hash_key_size);
         } else {
             try {
+                printf("test\n");
+                auto s = compat::basic_string_view(default_rsskey_40bytes);
+                printf("test2\n");
                 printf("key3\n");
-                _rss_key = default_rsskey_40bytes;
+                _rss_key = s; //default_rsskey_40bytes;
                 printf("key4\n");
                 _dev_info.hash_key_size = 40;
                 printf("key5\n");

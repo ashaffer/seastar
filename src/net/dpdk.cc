@@ -1519,7 +1519,7 @@ int dpdk_device::init_port_start()
         } else {
             try {
                 printf("test\n");
-                auto s = compat::basic_string_view<uint8_t>(default_rsskey_40bytes);
+                auto s = compat::basic_string_view<uint8_t>(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
                 printf("test2\n");
                 printf("key3\n");
                 _rss_key = s; //default_rsskey_40bytes;

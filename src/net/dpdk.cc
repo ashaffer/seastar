@@ -1503,6 +1503,7 @@ int dpdk_device::init_port_start()
     // Even if port has a single queue we still want the RSS feature to be
     // available in order to make HW calculate RSS hash for us.
     if (smp::count > 1) {
+        printf("smp::count > 1\n");
         if (_dev_info.hash_key_size == 40) {
             _rss_key = default_rsskey_40bytes;
         } else if (_dev_info.hash_key_size == 52) {
@@ -1525,6 +1526,7 @@ int dpdk_device::init_port_start()
             port_conf.rx_adv_conf.rss_conf.rss_key_len = _dev_info.hash_key_size;
         }
     } else {
+        printf("smp::count == 1\n");
         port_conf.rxmode.mq_mode = ETH_MQ_RX_NONE;
     }
     printf("here\n");

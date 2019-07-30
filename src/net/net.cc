@@ -355,6 +355,7 @@ future<> interface::dispatch_packet(packet p) {
                 }
             });
 
+            printf("disptaching packet to: %u\n", (uint)fw);
             if (fw != engine().cpu_id()) {
                 forward(fw, std::move(p));
             } else {

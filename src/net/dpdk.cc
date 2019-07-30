@@ -1509,6 +1509,7 @@ int dpdk_device::init_port_start()
         } else if (_dev_info.hash_key_size == 52) {
             _rss_key = default_rsskey_52bytes;
         } else if (_dev_info.hash_key_size != 0) {
+            printf("exit failure\n");
             // WTF?!!
             rte_exit(EXIT_FAILURE,
                 "Port %d: We support only 40 or 52 bytes RSS hash keys, %d bytes key requested",
@@ -1518,13 +1519,16 @@ int dpdk_device::init_port_start()
             _dev_info.hash_key_size = 40;
         }
 
+        printf("smp2\n");
         port_conf.rxmode.mq_mode = ETH_MQ_RX_RSS;
         /* enable all supported rss offloads */
         port_conf.rx_adv_conf.rss_conf.rss_hf = _dev_info.flow_type_rss_offloads;
+        printf("smp3\n");
         if (_dev_info.hash_key_size) {
             port_conf.rx_adv_conf.rss_conf.rss_key = const_cast<uint8_t *>(_rss_key.data());
             port_conf.rx_adv_conf.rss_conf.rss_key_len = _dev_info.hash_key_size;
         }
+        printf("smp4\n");
     } else {
         printf("smp::count == 1\n");
         port_conf.rxmode.mq_mode = ETH_MQ_RX_NONE;

@@ -1503,50 +1503,32 @@ int dpdk_device::init_port_start()
     // Even if port has a single queue we still want the RSS feature to be
     // available in order to make HW calculate RSS hash for us.
     if (smp::count > 1) {
-        printf("smp::count > 1\n");
-        if (_dev_info.hash_key_size == 40) {
-            printf("key1\n");
-            _rss_key = default_rsskey_40bytes;
+        if (_dev_info.hash_key_size == 40) {            
+            _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
         } else if (_dev_info.hash_key_size == 52) {
-            printf("key2\n");
-            _rss_key = default_rsskey_52bytes;
+            _rss_key = rss_key_type(default_rsskey_52bytes, sizeof(default_rsskey_52bytes));
         } else if (_dev_info.hash_key_size != 0) {
-            printf("exit failure\n");
             // WTF?!!
             rte_exit(EXIT_FAILURE,
                 "Port %d: We support only 40 or 52 bytes RSS hash keys, %d bytes key requested",
                 _port_idx, _dev_info.hash_key_size);
         } else {
-            try {
-                printf("test\n");
-                auto s = compat::basic_string_view<uint8_t>(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
-                printf("test2\n");
-                printf("key3\n");
-                _rss_key = s; //default_rsskey_40bytes;
-                printf("key4\n");
-                _dev_info.hash_key_size = 40;
-                printf("key5\n");
-            } catch (std::exception& e) {
-                printf("caught exception\n");
-                throw e;
-            }
+            printf("SIZEOF KEY: %u\n", (uint)sizeof(default_rsskey_40bytes));
+            _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
+            _dev_info.hash_key_size = 40;
         }
 
-        printf("smp2\n");
         port_conf.rxmode.mq_mode = ETH_MQ_RX_RSS;
         /* enable all supported rss offloads */
         port_conf.rx_adv_conf.rss_conf.rss_hf = _dev_info.flow_type_rss_offloads;
-        printf("smp3\n");
         if (_dev_info.hash_key_size) {
             port_conf.rx_adv_conf.rss_conf.rss_key = const_cast<uint8_t *>(_rss_key.data());
             port_conf.rx_adv_conf.rss_conf.rss_key_len = _dev_info.hash_key_size;
         }
-        printf("smp4\n");
     } else {
-        printf("smp::count == 1\n");
         port_conf.rxmode.mq_mode = ETH_MQ_RX_NONE;
     }
-    printf("here\n");
+
     if (_num_queues > 1) {
         if (_dev_info.reta_size) {
             // RETA size should be a power of 2
@@ -1563,7 +1545,7 @@ int dpdk_device::init_port_start()
     } else {
         _redir_table.push_back(0);
     }
-    printf("there\n");
+
     // Set Rx VLAN stripping
     if (_dev_info.rx_offload_capa & DEV_RX_OFFLOAD_VLAN_STRIP) {
         port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_VLAN_STRIP;

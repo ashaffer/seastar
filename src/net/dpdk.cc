@@ -1519,7 +1519,9 @@ int dpdk_device::init_port_start()
         } else {
             printf("key3\n");
             _rss_key = default_rsskey_40bytes;
+            printf("key4\n");
             _dev_info.hash_key_size = 40;
+            printf("key5\n");
         }
 
         printf("smp2\n");

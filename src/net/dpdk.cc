@@ -1527,7 +1527,7 @@ int dpdk_device::init_port_start()
     } else {
         port_conf.rxmode.mq_mode = ETH_MQ_RX_NONE;
     }
-
+    printf("here\n");
     if (_num_queues > 1) {
         if (_dev_info.reta_size) {
             // RETA size should be a power of 2
@@ -1544,7 +1544,7 @@ int dpdk_device::init_port_start()
     } else {
         _redir_table.push_back(0);
     }
-
+    printf("there\n");
     // Set Rx VLAN stripping
     if (_dev_info.rx_offload_capa & DEV_RX_OFFLOAD_VLAN_STRIP) {
         port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_VLAN_STRIP;

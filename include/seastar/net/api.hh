@@ -302,6 +302,8 @@ public:
     virtual bool supports_ipv6() const {
         return false;
     }
+
+    virtual std::vector<std::vector<std::string>> getLocalIps () = 0;
 };
 
 }

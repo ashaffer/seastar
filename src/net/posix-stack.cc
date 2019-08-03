@@ -27,6 +27,10 @@
 #include <seastar/util/std-compat.hh>
 #include <netinet/tcp.h>
 #include <netinet/sctp.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
+
 
 namespace seastar {
 
@@ -378,6 +382,26 @@ posix_network_stack::listen(socket_address sa, listen_options opt) {
             :
             server_socket(std::make_unique<posix_server_sctp_socket_impl>(sa, engine().posix_listen(sa, opt), opt.lba, _allocator));
     }
+}
+
+std::vector<std::vector<std::string>> posix_network_stack::getLocalIps () {
+    std::vector<std::vector<std::string>> result;
+
+    ifaddrs *ifap;
+    getifaddrs(&ifap);
+
+    while (ifap) {
+        char *ip = inet_ntoa(((sockaddr_in *)ifap->ifa_addr)->sin_addr);
+
+        if (ifap->ifa_addr->sa_family == AF_INET && strcmp(ifap->ifa_name, "lo") != 0 && strcmp(ip, "127.0.0.1") != 0) {
+            result.push_back({ifap->ifa_name, ip});
+        }
+
+        ifap = ifap->ifa_next;
+    }
+
+    freeifaddrs(ifap);
+    return result;
 }
 
 ::seastar::socket posix_network_stack::socket(socket_address sa) {

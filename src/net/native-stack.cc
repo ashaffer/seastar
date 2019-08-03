@@ -156,8 +156,10 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 class native_network_stack : public network_stack {
 public:
     static thread_local promise<std::unique_ptr<network_stack>> ready_promise;
+
 private:
     std::unordered_map<inet_address, ipv4*> _inet_map;
+    std::unordered_map<ipv4*, std::string> _devname_map;
     bool _dhcp = false;
     promise<> _config;
     timer<> _timer;
@@ -186,6 +188,7 @@ public:
             ii.second->learn(l2, l3);
         }
     }
+    virtual std::vector<std::vector<std::string>> getLocalIps() override;    
     friend class native_server_socket_impl<tcp4>;
 };
 
@@ -212,7 +215,9 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
         ipv4 *inet = new ipv4{iface};
         auto& ip_config = device_config.second.ip_cfg;
 
+        _devname_map[inet] = device_config.first;
         _dhcp = ip_config.dhcp;
+
         inet->get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
 
         if (!_dhcp) {
@@ -233,6 +238,17 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
 
         ++i;
     }
+}
+
+std::vector<std::vector<std::string>> native_network_stack::getLocalIps () {
+    std::vector<std::vector<std::string>> result;
+
+    for (auto addr : _inet_map) {
+        char *ip = inet_ntoa(in_addr(addr.first));
+        result.push_back({_devname_map[addr.second], ip});
+    }
+
+    return result;
 }
 
 server_socket

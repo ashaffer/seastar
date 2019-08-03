@@ -196,6 +196,7 @@ public:
         return make_ready_future<std::unique_ptr<network_stack>>(std::unique_ptr<network_stack>(new posix_network_stack(opts, allocator)));
     }
     virtual bool has_per_core_namespace() override { return _reuseport; };
+    virtual std::vector<std::vector<std::string>> getLocalIps() override;
     bool supports_ipv6() const override;
 };
 

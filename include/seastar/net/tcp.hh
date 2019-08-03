@@ -825,12 +825,6 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
     auto dst_ip = ipv4_address(sa);
     auto dst_port = net::ntoh(sa.u.in.sin_port);
 
-    if (lh == local) {
-        printf("lh == local\n");
-    }
-
-    printf("connecting from: %s\n", inet_ntoa(in_addr(inet_address(src_ip))));
-
     do {
         src_port = _port_dist(_e);
         id = connid{src_ip, dst_ip, src_port, dst_port};

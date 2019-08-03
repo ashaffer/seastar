@@ -225,7 +225,6 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
             for (auto ip : ip_config.ip) {
                 auto sa = ipv4_address(ip);
                 inet->set_host_address(sa);
-                printf("set_host_address: %s\n", inet_ntoa(in_addr(inet_address(sa))));
                 _inet_map[(inet_address)sa] = inet;
             }
             // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));

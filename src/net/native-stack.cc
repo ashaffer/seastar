@@ -248,6 +248,7 @@ std::vector<std::vector<std::string>> native_network_stack::getLocalIps () {
         if (in_addr(addr.first).s_addr != in_addr(sa.addr()).s_addr) {
             char *ip = inet_ntoa(in_addr(addr.first));
             result.push_back({_devname_map[addr.second], ip});
+            free(ip);
         }
     }
 

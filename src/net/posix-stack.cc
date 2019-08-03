@@ -398,6 +398,7 @@ std::vector<std::vector<std::string>> posix_network_stack::getLocalIps () {
         }
 
         ifap = ifap->ifa_next;
+        free(ip);
     }
 
     freeifaddrs(ifap);

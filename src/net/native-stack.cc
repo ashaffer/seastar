@@ -244,8 +244,11 @@ std::vector<std::vector<std::string>> native_network_stack::getLocalIps () {
     std::vector<std::vector<std::string>> result;
 
     for (auto addr : _inet_map) {
-        char *ip = inet_ntoa(in_addr(addr.first));
-        result.push_back({_devname_map[addr.second], ip});
+        socket_address sa = {};
+        if (in_addr(addr.first).s_addr != in_addr(sa.addr()).s_addr) {
+            char *ip = inet_ntoa(in_addr(addr.first));
+            result.push_back({_devname_map[addr.second], ip});
+        }
     }
 
     return result;

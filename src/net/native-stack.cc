@@ -262,7 +262,12 @@ native_network_stack::listen(socket_address sa, listen_options opts) {
 }
 
 seastar::socket native_network_stack::socket(socket_address sa) {
-    return tcpv4_socket(_inet_map[sa.addr()]->get_tcp());
+    socket_address localhost{};
+    if (sa == localhost) {
+        return tcpv4_socket(_inet_map.begin()->second->get_tcp());
+    } else {
+        return tcpv4_socket(_inet_map[sa.addr()]->get_tcp());
+    }
 }
 
 using namespace std::chrono_literals;

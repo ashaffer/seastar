@@ -820,7 +820,8 @@ template <typename InetTraits>
 auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connection {
     uint16_t src_port;
     connid id;
-    auto src_ip = ipv4_address(local); // _inet._inet.host_address();
+    socket_address lh{};
+    auto src_ip = lh == local ? _inet._inet.host_address() : ipv4_address(local);
     auto dst_ip = ipv4_address(sa);
     auto dst_port = net::ntoh(sa.u.in.sin_port);
 

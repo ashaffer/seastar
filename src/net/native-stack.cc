@@ -158,6 +158,7 @@ public:
     static thread_local promise<std::unique_ptr<network_stack>> ready_promise;
 
 private:
+    ipv4 *default_device;
     std::unordered_map<inet_address, ipv4*> _inet_map;
     std::unordered_map<ipv4*, std::string> _devname_map;
     bool _dhcp = false;
@@ -234,6 +235,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
         if (i == 0) {
             socket_address sa = {};
             _inet_map[sa.addr()] = inet;
+            default_device = inet;
         }
 
         ++i;
@@ -262,14 +264,13 @@ native_network_stack::listen(socket_address sa, listen_options opts) {
 }
 
 seastar::socket native_network_stack::socket(socket_address sa) {
-    socket_address localhost{};
-    if (sa == localhost) {
-        auto i = _inet_map.begin();
-        printf("saw localhost, using: %s\n", inet_ntoa(in_addr(i->first)));
-        return tcpv4_socket(i->second->get_tcp());
-    } else {
-        return tcpv4_socket(_inet_map[sa.addr()]->get_tcp());
+    socket_address lh{};
+
+    if (sa == lh) {
+        return tcpv4_socket(default_device->get_tcp());
     }
+    
+    return tcpv4_socket(_inet_map[sa.addr()]->get_tcp());
 }
 
 using namespace std::chrono_literals;

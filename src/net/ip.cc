@@ -329,7 +329,7 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
 }
 
 void ipv4::set_host_address(ipv4_address ip) {
-    // _host_address = ip;
+    _host_address = ip;
     _arp.set_self_addr(ip);
 }
 

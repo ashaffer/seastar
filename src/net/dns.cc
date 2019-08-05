@@ -265,9 +265,11 @@ public:
             switch (status) {
             default:
                 dns_log.debug("Query failed: {}", status);
+                printf("C-Ares default error\n");
                 p->set_exception(std::system_error(status, ares_errorc, p->name));
                 break;
             case ARES_SUCCESS:
+                printf("C-Ares success\n");
                 p->set_value(make_hostent(*host));
                 break;
             }

@@ -236,7 +236,7 @@ public:
             {}
             sstring name;
         };
-
+        printf("a\n");
         dns_log.debug("Query name {} ({})", name, family);
 
         if (!family) {
@@ -252,12 +252,13 @@ public:
 
         auto p = new promise_wrap(std::move(name));
         auto f = p->get_future();
-
+        printf("b\n");
         dns_call call(*this);
-
+        printf("c\n");
         auto af = family ? int(*family) : AF_UNSPEC;
-
+        printf("d\n");
         ares_gethostbyname(_channel, p->name.c_str(), af, [](void* arg, int status, int timeouts, ::hostent* host) {
+            printf("e\n");
             // we do potentially allocating operations below, so wrap the pointer in a
             // unique here.
             std::unique_ptr<promise_wrap> p(reinterpret_cast<promise_wrap *>(arg));
@@ -276,8 +277,9 @@ public:
 
         }, reinterpret_cast<void *>(p));
 
-
+        printf("g\n");
         poll_sockets();
+        printf("h\n");
 
         return f.finally([this] {
             end_call();

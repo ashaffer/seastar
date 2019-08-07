@@ -410,6 +410,7 @@ output_stream<CharType>::flush() {
             if (!_in_batch) {
                 add_to_flush_poller(this);
                 _in_batch = promise<>();
+                printf("_in_batch = promise<>()\n");
             }
         }
     }
@@ -441,6 +442,7 @@ output_stream<CharType>::poll_flush() {
         _flushing = false;
         _in_batch.value().set_value();
         _in_batch = compat::nullopt;
+        printf("_in_batch = compat::nullopt\n");
         return;
     }
 

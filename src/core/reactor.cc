@@ -5757,6 +5757,14 @@ void engine_exit(std::exception_ptr eptr) {
 }
 
 void report_failed_future(const std::exception_ptr& eptr) noexcept {
+    if (eptr) {
+        try {
+            std::rethrow_exception(eptr);
+        } catch (const std::exception& e) {
+            printf("Exceptional future: %s\n", e.what());
+        }
+    }
+
     seastar_logger.warn("Exceptional future ignored: {}, backtrace: {}", eptr, current_backtrace());
 }
 

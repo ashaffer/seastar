@@ -86,6 +86,10 @@ saved_backtrace current_backtrace() noexcept {
             v.emplace_back(std::move(f));
         }
     });
+
+    backtrace_symbols_fd((void *const *)&v[0], v.size(), STDERR_FILENO);
+    backtrace_symbols_fd((void *const *)&v[0], v.size(), STDOUT_FILENO);
+
     return saved_backtrace(std::move(v));
 }
 

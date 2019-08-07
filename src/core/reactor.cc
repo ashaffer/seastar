@@ -5762,8 +5762,6 @@ void report_failed_future(const std::exception_ptr& eptr) noexcept {
             std::rethrow_exception(eptr);
         } catch (char const* msg) {
             printf("Caught char const: %s\n", msg);
-        } catch (const char *msg) {
-            printf("Caught const char: %s\n", msg);
         } catch (const std::exception& e) {
             printf("Exceptional future: %s\n", e.what());
         }

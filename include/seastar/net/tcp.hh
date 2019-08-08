@@ -383,6 +383,7 @@ private:
             // The maximun memory buffer size allowed for receiving
             // Currently, it is the same as default receive window size when window scaling is enabled
             size_t max_receive_buf_size = 3737600;
+            std::chrono::high_resolution_clock::time_point lastReceivedAt;
         } _rcv;
         tcp_option _option;
         timer<lowres_clock> _delayed_ack;
@@ -667,6 +668,8 @@ public:
     }
     class connection {
         lw_shared_ptr<tcb> _tcb;
+        std::chrono::high_resolution_clock::time_point _receivedAt;
+
     public:
         explicit connection(lw_shared_ptr<tcb> tcbp) : _tcb(std::move(tcbp)) { _tcb->_conn = this; }
         connection(const connection&) = delete;
@@ -700,6 +703,15 @@ public:
         uint16_t foreign_port() {
             return _tcb->_foreign_port;
         }
+
+        void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
+            _receivedAt = receivedAt;
+        }
+
+        std::chrono::high_resolution_clock::time_point getReceivedAt () {
+            return _receivedAt;
+        }
+
         void shutdown_connect();
         void close_read();
         void close_write();
@@ -1501,6 +1513,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             _rcv.data_size += p.len();
             _rcv.data.push_back(std::move(p));
             _rcv.next += seg_len;
+            _rcv.lastReceivedAt = p.getReceivedAt();
             auto merged = merge_out_of_order();
             _rcv.window = get_modified_receive_window_size();
             signal_data_received();
@@ -1782,6 +1795,7 @@ packet tcp<InetTraits>::tcb::read() {
     _rcv.data_size = 0;
     _rcv.data.clear();
     _rcv.window = get_default_receive_window_size();
+    p.setReceivedAt(_rcv.lastReceivedAt);
     return p;
 }
 
@@ -1895,6 +1909,7 @@ bool tcp<InetTraits>::tcb::merge_out_of_order() {
             _rcv.next += seg_len;
             _rcv.data_size += p.len();
             _rcv.data.push_back(std::move(p));
+            _rcv.lastReceivedAt = p.getReceivedAt();
             // Since c++11, erase() always returns the value of the following element
             it = _rcv.out_of_order.map.erase(it);
             merged = true;

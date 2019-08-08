@@ -1383,7 +1383,7 @@ private:
      * @param bufs An array of received rte_mbuf's
      * @param count Number of buffers in the bufs[]
      */
-    void process_packets(struct rte_mbuf **bufs, uint16_t count);
+    void process_packets(struct rte_mbuf **bufs, uint16_t count, std::chrono::high_resolution_clock::time_point receivedAt);
 
     /**
      * Translate rte_mbuf into the "packet".
@@ -2142,7 +2142,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
 
 template <bool HugetlbfsMemBackend>
 void dpdk_qp<HugetlbfsMemBackend>::process_packets(
-    struct rte_mbuf **bufs, uint16_t count)
+    struct rte_mbuf **bufs, uint16_t count, std::chrono::high_resolution_clock::time_point receivedAt)
 {
     uint64_t nr_frags = 0, bytes = 0;
 
@@ -2151,6 +2151,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         offload_info oi;
 
         compat::optional<packet> p = from_mbuf(m);
+        p->setReceivedAt(receivedAt);
 
         // Drop the packet if translation above has failed
         if (!p) {
@@ -2207,7 +2208,8 @@ bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
 
     /* Now process the NIC packets read */
     if (likely(rx_count > 0)) {
-        process_packets(buf, rx_count);
+        auto receivedAt = std::chrono::high_resolution_clock::now();
+        process_packets(buf, rx_count, receivedAt);
     }
 
     return rx_count;

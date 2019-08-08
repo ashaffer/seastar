@@ -191,6 +191,8 @@ public:
     /// This is useful to abort operations on a socket that is not making
     /// progress due to a peer failure.
     void shutdown_input();
+
+    std::chrono::high_resolution_clock::time_point getReceivedAt();
 };
 /// @}
 

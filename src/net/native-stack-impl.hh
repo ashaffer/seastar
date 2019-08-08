@@ -97,10 +97,15 @@ public:
     virtual void shutdown_output() override;
     virtual void set_nodelay(bool nodelay) override;
     virtual bool get_nodelay() const override;
+
     void set_keepalive(bool keepalive) override;
     bool get_keepalive() const override;
     void set_keepalive_parameters(const keepalive_params&) override;
     keepalive_params get_keepalive_parameters() const override;
+
+    std::chrono::high_resolution_clock::time_point getReceivedAt () {
+        return _conn.getReceivedAt();
+    }
 };
 
 template <typename Protocol>
@@ -155,6 +160,7 @@ public:
         }
         return _conn->wait_for_data().then([this] {
             _buf = _conn->read();
+            _conn->setReceivedAt(_buf.getReceivedAt());
             _cur_frag = 0;
             _eof = !_buf.len();
             return get();

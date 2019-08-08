@@ -102,6 +102,7 @@ class packet final {
         char _data[internal_data_size]; // only _frags[0] may use
         unsigned _headroom = internal_data_size; // in _data
         // FIXME: share _data/_frags space
+        std::chrono::high_resolution_clock::time_point _receivedAt;
 
         fragment _frags[];
 
@@ -267,6 +268,14 @@ public:
     void linearize() { return linearize(0, len()); }
 
     void reset() { _impl.reset(); }
+
+    void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
+        _impl->_receivedAt = receivedAt;
+    }
+
+    std::chrono::high_resolution_clock::time_point getReceivedAt () {
+        return _impl->_receivedAt;
+    }
 
     void reserve(int n_frags) {
         if (n_frags > _impl->_nr_frags) {

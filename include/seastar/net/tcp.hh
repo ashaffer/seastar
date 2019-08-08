@@ -376,6 +376,7 @@ private:
             tcp_seq urgent;
             tcp_seq initial;
             std::deque<packet> data;
+
             // The total size of data stored in std::deque<packet> data
             size_t data_size = 0;
             tcp_packet_merger out_of_order;
@@ -383,7 +384,6 @@ private:
             // The maximun memory buffer size allowed for receiving
             // Currently, it is the same as default receive window size when window scaling is enabled
             size_t max_receive_buf_size = 3737600;
-            std::chrono::high_resolution_clock::time_point lastReceivedAt;
         } _rcv;
         tcp_option _option;
         timer<lowres_clock> _delayed_ack;
@@ -397,6 +397,8 @@ private:
         static constexpr uint16_t _max_nr_retransmit{5};
         timer<lowres_clock> _retransmit;
         timer<lowres_clock> _persist;
+        std::chrono::high_resolution_clock::time_point lastReceivedAt;
+
         uint16_t _nr_full_seg_received = 0;
         struct isn_secret {
             // 512 bits secretkey for ISN generating
@@ -1514,7 +1516,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             _rcv.data.push_back(std::move(p));
             _rcv.next += seg_len;
             printf("e\n");
-            _rcv.lastReceivedAt = p.getReceivedAt();
+            _lastReceivedAt = p.getReceivedAt();
             printf("f\n");
             auto merged = merge_out_of_order();
             _rcv.window = get_modified_receive_window_size();
@@ -1798,7 +1800,7 @@ packet tcp<InetTraits>::tcb::read() {
     _rcv.data.clear();
     _rcv.window = get_default_receive_window_size();
     printf("c\n");
-    p.setReceivedAt(_rcv.lastReceivedAt);
+    p.setReceivedAt(_lastReceivedAt);
     printf("d\n");
     return p;
 }

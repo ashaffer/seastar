@@ -1513,7 +1513,9 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             _rcv.data_size += p.len();
             _rcv.data.push_back(std::move(p));
             _rcv.next += seg_len;
+            printf("e\n");
             _rcv.lastReceivedAt = p.getReceivedAt();
+            printf("f\n"):
             auto merged = merge_out_of_order();
             _rcv.window = get_modified_receive_window_size();
             signal_data_received();
@@ -1795,7 +1797,9 @@ packet tcp<InetTraits>::tcb::read() {
     _rcv.data_size = 0;
     _rcv.data.clear();
     _rcv.window = get_default_receive_window_size();
+    printf("c\n");
     p.setReceivedAt(_rcv.lastReceivedAt);
+    printf("d\n");
     return p;
 }
 
@@ -1909,7 +1913,9 @@ bool tcp<InetTraits>::tcb::merge_out_of_order() {
             _rcv.next += seg_len;
             _rcv.data_size += p.len();
             _rcv.data.push_back(std::move(p));
+            printf("g\n");
             _rcv.lastReceivedAt = p.getReceivedAt();
+            printf("h\n");
             // Since c++11, erase() always returns the value of the following element
             it = _rcv.out_of_order.map.erase(it);
             merged = true;

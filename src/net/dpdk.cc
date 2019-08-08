@@ -2151,7 +2151,9 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         offload_info oi;
 
         compat::optional<packet> p = from_mbuf(m);
+        printf("a\n");
         p->setReceivedAt(receivedAt);
+        printf("b\n");
 
         // Drop the packet if translation above has failed
         if (!p) {

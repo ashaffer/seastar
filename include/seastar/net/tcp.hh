@@ -876,6 +876,10 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
 
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
+    auto tp = p.getReceivedAt();
+    uint delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - tp).count();
+    printf("Delta2: %u\n", delta);
+
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
         return;

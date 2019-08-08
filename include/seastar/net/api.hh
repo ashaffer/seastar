@@ -192,7 +192,7 @@ public:
     /// progress due to a peer failure.
     void shutdown_input();
 
-    std::chrono::high_resolution_clock::time_point getReceivedAt();
+    virtual std::chrono::high_resolution_clock::time_point getReceivedAt();
 };
 /// @}
 

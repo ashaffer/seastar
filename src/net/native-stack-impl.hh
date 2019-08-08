@@ -103,7 +103,7 @@ public:
     void set_keepalive_parameters(const keepalive_params&) override;
     keepalive_params get_keepalive_parameters() const override;
 
-    std::chrono::high_resolution_clock::time_point getReceivedAt () override {
+    std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
         return _conn.getReceivedAt();
     }
 };

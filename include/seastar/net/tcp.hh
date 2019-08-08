@@ -950,9 +950,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // 4) In other state, can be one of the following:
             // SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2
             // CLOSE_WAIT, CLOSING, LAST_ACK, TIME_WAIT
-            auto tp = p.getReceivedAt();
-            uint delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - tp).count();
-            printf("Delta2: %u\n", delta);
             return tcbp->input_handle_other_state(&h, std::move(p));
         }
     }
@@ -1235,10 +1232,6 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
     auto seg_ack = th->ack;
     auto seg_len = p.len();
 
-    auto tp = p.getReceivedAt();
-    uint delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - tp).count();
-    printf("Delta3: %u\n", delta);
-
     // 4.1 first check sequence number
     if (!segment_acceptable(seg_seq, seg_len)) {
         //<SEQ=SND.NXT><ACK=RCV.NXT><CTL=ACK>
@@ -1262,10 +1255,6 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         // when an out-of-order segment arrives.
         return output();
     }
-
-    tp = p.getReceivedAt();
-    delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - tp).count();
-    printf("Delta4: %u\n", delta);
 
     // 4.2 second check the RST bit
     if (th->f_rst) {
@@ -1524,14 +1513,9 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // apporopriate to the current buffer availability.  The total of
             // RCV.NXT and RCV.WND should not be reduced.
             _rcv.data_size += p.len();
+            _lastReceivedAt = p.getReceivedAt();
             _rcv.data.push_back(std::move(p));
             _rcv.next += seg_len;
-            printf("e\n");
-            auto tmp = p.getReceivedAt();
-            printf("ee\n");
-            _lastReceivedAt = tmp;
-            // _lastReceivedAt = p.getReceivedAt();
-            printf("f\n");
             auto merged = merge_out_of_order();
             _rcv.window = get_modified_receive_window_size();
             signal_data_received();
@@ -1813,9 +1797,7 @@ packet tcp<InetTraits>::tcb::read() {
     _rcv.data_size = 0;
     _rcv.data.clear();
     _rcv.window = get_default_receive_window_size();
-    printf("c\n");
     p.setReceivedAt(_lastReceivedAt);
-    printf("d\n");
     return p;
 }
 
@@ -1925,13 +1907,13 @@ bool tcp<InetTraits>::tcb::merge_out_of_order() {
             if (trim) {
                 p.trim_front(trim);
                 seg_len -= trim;
+
             }
+
+            _lastReceivedAt = p.getReceivedAt();            
             _rcv.next += seg_len;
             _rcv.data_size += p.len();
             _rcv.data.push_back(std::move(p));
-            printf("g\n");
-            _lastReceivedAt = p.getReceivedAt();
-            printf("h\n");
             // Since c++11, erase() always returns the value of the following element
             it = _rcv.out_of_order.map.erase(it);
             merged = true;

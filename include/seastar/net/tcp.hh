@@ -876,10 +876,6 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
 
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
-    auto tp = p.getReceivedAt();
-    uint delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - tp).count();
-    printf("Delta2: %u\n", delta);
-
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
         return;
@@ -954,6 +950,9 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // 4) In other state, can be one of the following:
             // SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2
             // CLOSE_WAIT, CLOSING, LAST_ACK, TIME_WAIT
+            auto tp = p.getReceivedAt();
+            uint delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - tp).count();
+            printf("Delta2: %u\n", delta);
             return tcbp->input_handle_other_state(&h, std::move(p));
         }
     }
@@ -1236,6 +1235,10 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
     auto seg_ack = th->ack;
     auto seg_len = p.len();
 
+    auto tp = p.getReceivedAt();
+    uint delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - tp).count();
+    printf("Delta3: %u\n", delta);
+
     // 4.1 first check sequence number
     if (!segment_acceptable(seg_seq, seg_len)) {
         //<SEQ=SND.NXT><ACK=RCV.NXT><CTL=ACK>
@@ -1259,6 +1262,10 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         // when an out-of-order segment arrives.
         return output();
     }
+
+    tp = p.getReceivedAt();
+    delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - tp).count();
+    printf("Delta4: %u\n", delta);
 
     // 4.2 second check the RST bit
     if (th->f_rst) {

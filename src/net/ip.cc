@@ -228,9 +228,6 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     if (l4) {
         // Trim IP header and pass to upper layer
         p.trim_front(ip_hdr_len);
-        auto tp = p.getReceivedAt();
-        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - tp).count();
-        printf("Delta1: %u\n", delta);
         l4->received(std::move(p), h.src_ip, h.dst_ip);
     }
     return make_ready_future<>();

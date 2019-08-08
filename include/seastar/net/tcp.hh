@@ -1916,7 +1916,7 @@ bool tcp<InetTraits>::tcb::merge_out_of_order() {
             _rcv.data_size += p.len();
             _rcv.data.push_back(std::move(p));
             printf("g\n");
-            _rcv.lastReceivedAt = p.getReceivedAt();
+            _lastReceivedAt = p.getReceivedAt();
             printf("h\n");
             // Since c++11, erase() always returns the value of the following element
             it = _rcv.out_of_order.map.erase(it);

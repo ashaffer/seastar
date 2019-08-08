@@ -203,6 +203,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
                     cpu_id = _netif->hash2cpu(toeplitz_hash(_netif->rss_key(), hash_data));
                     // No need to forward if the dst cpu is the current cpu
                     if (cpu_id == engine().cpu_id()) {
+                        printf("ip_data\n");
                         l4->received(std::move(ip_data), h.src_ip, h.dst_ip);
                     } else {
                         auto to = _netif->hw_address();
@@ -228,6 +229,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     if (l4) {
         // Trim IP header and pass to upper layer
         p.trim_front(ip_hdr_len);
+        printf("packet\n");
         l4->received(std::move(p), h.src_ip, h.dst_ip);
     }
     return make_ready_future<>();

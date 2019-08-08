@@ -1515,7 +1515,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             _rcv.next += seg_len;
             printf("e\n");
             _rcv.lastReceivedAt = p.getReceivedAt();
-            printf("f\n"):
+            printf("f\n");
             auto merged = merge_out_of_order();
             _rcv.window = get_modified_receive_window_size();
             signal_data_received();

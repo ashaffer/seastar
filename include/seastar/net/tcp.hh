@@ -397,7 +397,7 @@ private:
         static constexpr uint16_t _max_nr_retransmit{5};
         timer<lowres_clock> _retransmit;
         timer<lowres_clock> _persist;
-        std::chrono::high_resolution_clock::time_point lastReceivedAt;
+        std::chrono::high_resolution_clock::time_point _lastReceivedAt;
 
         uint16_t _nr_full_seg_received = 0;
         struct isn_secret {

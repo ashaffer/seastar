@@ -1082,6 +1082,9 @@ public:
     net::keepalive_params get_keepalive_parameters() const override {
         return _session->socket().get_keepalive_parameters();
     }
+    std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
+        return _session->socket().getReceivedAt();
+    }
 };
 
 

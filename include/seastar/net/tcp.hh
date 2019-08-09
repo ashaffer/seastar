@@ -397,7 +397,7 @@ private:
         static constexpr uint16_t _max_nr_retransmit{5};
         timer<lowres_clock> _retransmit;
         timer<lowres_clock> _persist;
-        std::chrono::high_resolution_clock::time_point _lastReceivedAt;
+        std::chrono::high_resolution_clock::time_point _receivedAt;
 
         uint16_t _nr_full_seg_received = 0;
         struct isn_secret {
@@ -711,7 +711,6 @@ public:
         }
 
         std::chrono::high_resolution_clock::time_point getReceivedAt () {
-            printf("native getReceivedAt\n");
             return _receivedAt;
         }
 
@@ -1514,7 +1513,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // apporopriate to the current buffer availability.  The total of
             // RCV.NXT and RCV.WND should not be reduced.
             _rcv.data_size += p.len();
-            _lastReceivedAt = p.getReceivedAt();
+            _receivedAt = p.getReceivedAt();
             _rcv.data.push_back(std::move(p));
             _rcv.next += seg_len;
             auto merged = merge_out_of_order();
@@ -1798,7 +1797,7 @@ packet tcp<InetTraits>::tcb::read() {
     _rcv.data_size = 0;
     _rcv.data.clear();
     _rcv.window = get_default_receive_window_size();
-    p.setReceivedAt(_lastReceivedAt);
+    p.setReceivedAt(_receivedAt);
     return p;
 }
 
@@ -1911,7 +1910,7 @@ bool tcp<InetTraits>::tcb::merge_out_of_order() {
 
             }
 
-            _lastReceivedAt = p.getReceivedAt();            
+            _receivedAt = p.getReceivedAt();            
             _rcv.next += seg_len;
             _rcv.data_size += p.len();
             _rcv.data.push_back(std::move(p));

@@ -146,7 +146,6 @@ public:
     }
 
     std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
-        printf("posix getReceivedAt\n");
         return std::chrono::high_resolution_clock::now();
     }
 

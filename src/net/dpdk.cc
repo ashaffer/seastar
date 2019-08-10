@@ -2293,15 +2293,20 @@ std::unique_ptr<net::device> create_dpdk_net_device(
 std::string get_mac_for_port (uint16_t port_idx) {
     char buf[32] = {0};
     struct ether_addr addr;
+    printf("a\n");
     rte_eth_macaddr_get(port_idx, &addr);
+    printf("b\n");
     sprintf(buf, "%0x:%0x:%0x:%0x:%0x:%0x", addr.addr_bytes[0], addr.addr_bytes[1], addr.addr_bytes[2], addr.addr_bytes[3], addr.addr_bytes[4], addr.addr_bytes[5]);
+    printf("c\n");
     return buf;
 }
 
 uint16_t get_port_index_by_mac (std::string mac) {
     uint n = rte_eth_dev_count_avail();
+    printf("checking string: %s\n", mac.c_str());
     for (uint i = 0; i < n; i++) {
         std::string m = get_mac_for_port(i);
+        printf("got mac\n");
         printf("Mac: %s (%u)\n", m.c_str(), i);
         if (m == mac) {
             return i;

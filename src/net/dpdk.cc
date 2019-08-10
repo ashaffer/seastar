@@ -2294,7 +2294,7 @@ std::string get_mac_for_port (uint16_t port_idx) {
     char buf[32] = {0};
     struct ether_addr addr;
     rte_eth_macaddr_get(port_idx, &addr);
-    sprintf(buf, "%0x:%0x:%0x:%0x", addr.addr_bytes[0], addr.addr_bytes[1], addr.addr_bytes[2], addr.addr_bytes[3]);
+    sprintf(buf, "%0x:%0x:%0x:%0x:%0x:%0x", addr.addr_bytes[0], addr.addr_bytes[1], addr.addr_bytes[2], addr.addr_bytes[3], addr.addr_bytes[4], addr.addr_bytes[5]);
     return buf;
 }
 

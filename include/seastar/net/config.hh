@@ -46,6 +46,7 @@ namespace net {
         bool event_index{ true };
         bool csum_offload{ true };
         compat::optional<unsigned> ring_size;
+        std::string mac_address;
     };
 
     struct device_config {

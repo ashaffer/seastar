@@ -2290,12 +2290,37 @@ std::unique_ptr<net::device> create_dpdk_net_device(
                                                enable_fc);
 }
 
+std::string get_mac_for_port (uint16_t port_idx) {
+    char buf[32] = {0};
+    struct ether_addr addr;
+    rte_eth_macaddr_get(port_idx, &addr);
+    sprintf(buf, "%0x:%0x:%0x:%0x", addr.addr_bytes[0], addr.addr_bytes[1], addr.addr_bytes[2], addr.addr_bytes[3]);
+    return buf;
+}
+
+uint16_t get_port_index_by_mac (std::string mac) {
+    uint n = rte_eth_dev_count_avail();
+    for (uint i = 0; i < n; i++) {
+        std::string m = get_mac_for_port(i);
+        printf("Mac: %s (%u)\n", m.c_str(), i);
+        if (m == mac) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 std::unique_ptr<net::device> create_dpdk_net_device(
                                     const hw_config& hw_cfg, uint16_t num_queues)
 {
-    return create_dpdk_net_device(*hw_cfg.port_index, num_queues, hw_cfg.lro, hw_cfg.hw_fc);
+    if (hw_cfg.mac_address != "") {
+        uint portIdx = get_port_index_by_mac(hw_cfg.mac_address);
+        return create_dpdk_net_device(portIdx, num_queues, hw_cfg.lro, hw_cfg.hw_fc);
+    } else {
+        return create_dpdk_net_device(*hw_cfg.port_index, num_queues, hw_cfg.lro, hw_cfg.hw_fc);
+    }
 }
-
 
 boost::program_options::options_description
 get_dpdk_net_options_description()

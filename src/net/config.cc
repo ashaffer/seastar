@@ -36,7 +36,7 @@ namespace seastar {
 namespace net {
 
     // list of supported config keys
-    std::string config_keys[]{ "pci-address", "port-index", "ip", "gateway", "netmask", "dhcp", "lro", "tso", "ufo", "hw-fc", "event-index", "csum-offload","ring-size" };
+    std::string config_keys[]{ "mac-address", "pci-address", "port-index", "ip", "gateway", "netmask", "dhcp", "lro", "tso", "ufo", "hw-fc", "event-index", "csum-offload","ring-size" };
 
     std::unordered_map<std::string, device_config>
     parse_config(std::istream& input) {
@@ -107,6 +107,10 @@ struct convert<seastar::net::device_config> {
 
         if (node["pci-address"]) {
             dev_cfg.hw_cfg.pci_address = node["pci-address"].as<std::string>();
+        }
+
+        if (node["mac-address"]) {
+            dev_cfg.hw_cfg.mac_address = node["mac-address"].as<std::string>();
         }
 
         if (node["port-index"]) {

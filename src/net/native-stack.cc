@@ -78,7 +78,9 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         devices.push_back(create_virtio_net_device(opts));
     }
     else {
+        printf("ee\n");
         dev_cfgs = parse_config(net_config);
+        printf("ff\n");
         // if ( dev_cfgs.size() > 1) {
         //     std::runtime_error("only one network interface is supported");
         // }

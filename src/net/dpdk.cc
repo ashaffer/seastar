@@ -2319,6 +2319,7 @@ uint16_t get_port_index_by_mac (std::string mac) {
 std::unique_ptr<net::device> create_dpdk_net_device(
                                     const hw_config& hw_cfg, uint16_t num_queues)
 {
+    printf("aaaa\n");
     if (hw_cfg.mac_address != "") {
         uint portIdx = get_port_index_by_mac(hw_cfg.mac_address);
         return create_dpdk_net_device(portIdx, num_queues, hw_cfg.lro, hw_cfg.hw_fc);

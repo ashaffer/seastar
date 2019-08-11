@@ -2301,14 +2301,19 @@ std::string get_mac_for_port (uint16_t port_idx) {
     return buf;
 }
 
+std::string toLowerCase (std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(),
+        [](unsigned char c){ return std::tolower(c); });
+    return s;
+}
+
 uint16_t get_port_index_by_mac (std::string mac) {
     uint n = rte_eth_dev_count_avail();
-    printf("checking string: %s\n", mac.c_str());
+    mac = toLowerCase(mac);
+
     for (uint i = 0; i < n; i++) {
         std::string m = get_mac_for_port(i);
-        printf("got mac\n");
-        printf("Mac: %s (%u)\n", m.c_str(), i);
-        if (m == mac) {
+        if (toLowerCase(m) == mac) {
             return i;
         }
     }
@@ -2319,7 +2324,6 @@ uint16_t get_port_index_by_mac (std::string mac) {
 std::unique_ptr<net::device> create_dpdk_net_device(
                                     const hw_config& hw_cfg, uint16_t num_queues)
 {
-    printf("aaaa\n");
     if (hw_cfg.mac_address != "") {
         uint portIdx = get_port_index_by_mac(hw_cfg.mac_address);
         return create_dpdk_net_device(portIdx, num_queues, hw_cfg.lro, hw_cfg.hw_fc);

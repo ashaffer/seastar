@@ -2293,11 +2293,8 @@ std::unique_ptr<net::device> create_dpdk_net_device(
 std::string get_mac_for_port (uint16_t port_idx) {
     char buf[32] = {0};
     struct ether_addr addr;
-    printf("a\n");
     rte_eth_macaddr_get(port_idx, &addr);
-    printf("b\n");
     sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x", addr.addr_bytes[0], addr.addr_bytes[1], addr.addr_bytes[2], addr.addr_bytes[3], addr.addr_bytes[4], addr.addr_bytes[5]);
-    printf("c\n");
     return buf;
 }
 

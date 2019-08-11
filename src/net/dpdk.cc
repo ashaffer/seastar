@@ -2296,7 +2296,7 @@ std::string get_mac_for_port (uint16_t port_idx) {
     printf("a\n");
     rte_eth_macaddr_get(port_idx, &addr);
     printf("b\n");
-    sprintf(buf, "%0x:%0x:%0x:%0x:%0x:%0x", addr.addr_bytes[0], addr.addr_bytes[1], addr.addr_bytes[2], addr.addr_bytes[3], addr.addr_bytes[4], addr.addr_bytes[5]);
+    sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x", addr.addr_bytes[0], addr.addr_bytes[1], addr.addr_bytes[2], addr.addr_bytes[3], addr.addr_bytes[4], addr.addr_bytes[5]);
     printf("c\n");
     return buf;
 }

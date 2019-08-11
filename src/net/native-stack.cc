@@ -89,13 +89,16 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         for ( auto&& device_config : dev_cfgs) {
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK
+            printf("gg\n");
             if ( hw_config.port_index || !hw_config.pci_address.empty() ) {
+                printf("hh\n");
                 auto dev = create_dpdk_net_device(hw_config, num_queues);
                 std::shared_ptr<device> sdev(dev.release());
 	            devices.push_back(sdev);
 	        } else 
 #endif  
             {
+                printf("jj\n");
                 (void)hw_config;        
                 std::runtime_error("only DPDK supports new configuration format"); 
             }

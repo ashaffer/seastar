@@ -404,13 +404,12 @@ public:
         , _stats_plugin_inst(std::string("port") + std::to_string(_port_idx))
         , _xstats(port_idx)
     {
-        printf("a\n");
         /* now initialise the port we will use */
         int ret = init_port_start();
         if (ret != 0) {
             rte_exit(EXIT_FAILURE, "Cannot initialise port %u\n", _port_idx);
         }
-        printf("b\n");
+
         // Register port statistics pollers
         namespace sm = seastar::metrics;
         _metrics.add_group(_stats_plugin_name, {
@@ -1425,7 +1424,6 @@ private:
 int dpdk_device::init_port_start()
 {
     assert(_port_idx < rte_eth_dev_count_avail());
-    printf("c\n");
     rte_eth_dev_info_get(_port_idx, &_dev_info);
 
     //
@@ -1443,7 +1441,6 @@ int dpdk_device::init_port_start()
       printf("Device is a VMWare Virtual NIC. Enabling 16 fragments hack!\n");
       _is_vmxnet3_device = true;
     }
-    printf("d\n");
 
     //
     // Another workaround: this time for a lack of number of RSS bits.

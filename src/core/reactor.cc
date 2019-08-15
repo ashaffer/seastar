@@ -5525,6 +5525,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         for (auto&& a : allocations) {
             cpus[a.cpu_id] = true;
         }
+
         dpdk::eal::init(cpus, configuration);
     }
 #endif

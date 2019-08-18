@@ -783,16 +783,19 @@ public:
             if (n < 0) {
                 switch (n) {
                 case GNUTLS_E_AGAIN:
+                    printf("GNUTLS_E_AGAIN\n");
                     // Assume we got this because we read to little underlying
                     // data to finish a tls packet
                     // Our input buffer should be empty now, so just go again
                     return do_get();
                 case GNUTLS_E_REHANDSHAKE:
+                    printf("GNUTLS_E_REHANDSHAKE\n");
                     // server requests new HS. must release semaphore, so set new state
                     // and return nada.
                     _connected = false;
                     return make_ready_future<temporary_buffer<char>>();
                 default:
+                    printf("TLS Default: %u\n", n);
                     _error = true;
                     return make_exception_future<temporary_buffer<char>>(std::system_error(n, glts_errorc));
                 }
@@ -801,10 +804,7 @@ public:
             if (n == 0) {
                 _eof = true;
             }
-            uint32_t hash = 0;
-            for (uint i = 0; i < buf.size(); i++) {
-                hash += buf[i];
-            }
+
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
         }
         if (eof()) {

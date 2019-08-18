@@ -795,7 +795,7 @@ public:
                     _connected = false;
                     return make_ready_future<temporary_buffer<char>>();
                 default:
-                    printf("TLS Default: %u\n", n);
+                    printf("TLS Default: %u\n", (uint)n);
                     _error = true;
                     return make_exception_future<temporary_buffer<char>>(std::system_error(n, glts_errorc));
                 }

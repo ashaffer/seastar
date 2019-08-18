@@ -783,7 +783,6 @@ public:
             if (n < 0) {
                 switch (n) {
                 case GNUTLS_E_AGAIN:
-                    printf("GNUTLS_E_AGAIN\n");
                     // Assume we got this because we read to little underlying
                     // data to finish a tls packet
                     // Our input buffer should be empty now, so just go again

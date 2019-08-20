@@ -902,8 +902,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     auto tcbi = _tcbs.find(id);
     lw_shared_ptr<tcb> tcbp;
 
-    tcbi->setReceivedAt(p.getReceivedAt());
-
     if (tcbi == _tcbs.end()) {
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
@@ -948,6 +946,8 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
         }
     } else {
         tcbp = tcbi->second;
+        tcbp->setReceivedAt(p.getReceivedAt());
+
         if (tcbp->state() == tcp_state::SYN_SENT) {
             // 3) In SYN_SENT State
             return tcbp->input_handle_syn_sent_state(&h, std::move(p));

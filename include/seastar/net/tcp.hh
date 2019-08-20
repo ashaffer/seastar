@@ -444,6 +444,9 @@ private:
             auto id = connid{_local_ip, _foreign_ip, _local_port, _foreign_port};
             _tcp._tcbs.erase(id);
         }
+        void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
+            _receivedAt = receivedAt;
+        }
         compat::optional<typename InetTraits::l4packet> get_packet();
         void output() {
             if (!_poll_active) {
@@ -898,6 +901,8 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     auto id = connid{to, from, h.dst_port, h.src_port};
     auto tcbi = _tcbs.find(id);
     lw_shared_ptr<tcb> tcbp;
+
+    tcbi->setReceivedAt(p.getReceivedAt());
 
     if (tcbi == _tcbs.end()) {
         auto listener = _listening.find(id.local_port);
@@ -1513,7 +1518,6 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // apporopriate to the current buffer availability.  The total of
             // RCV.NXT and RCV.WND should not be reduced.
             _rcv.data_size += p.len();
-            _receivedAt = p.getReceivedAt();
             _rcv.data.push_back(std::move(p));
             _rcv.next += seg_len;
             auto merged = merge_out_of_order();
@@ -1910,7 +1914,6 @@ bool tcp<InetTraits>::tcb::merge_out_of_order() {
 
             }
 
-            _receivedAt = p.getReceivedAt();            
             _rcv.next += seg_len;
             _rcv.data_size += p.len();
             _rcv.data.push_back(std::move(p));

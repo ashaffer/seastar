@@ -989,6 +989,7 @@ tcp<InetTraits>::tcb::tcb(tcp& t, connid id)
     , _delayed_ack([this] { _nr_full_seg_received = 0; output(); })
     , _retransmit([this] { retransmit(); })
     , _persist([this] { persist(); }) {
+        _receivedAt = std::chrono::high_resolution_clock::now();
 }
 
 template <typename InetTraits>

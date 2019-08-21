@@ -900,6 +900,16 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
     auto tcbi = _tcbs.find(id);
+
+    auto now = std::chrono::high_resolution_clock::now();
+    if (now < p.getReceivedAt()) {
+        printf("[TCP] Timestamps out of order\n");
+    }
+    uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
+    if (delta > 1000) {
+        printf("[TCP] Delta too large: %u\n", delta);
+    }
+
     lw_shared_ptr<tcb> tcbp;
 
     if (tcbi == _tcbs.end()) {

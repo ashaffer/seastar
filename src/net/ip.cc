@@ -119,6 +119,15 @@ bool ipv4::needs_frag(packet& p, ip_protocol_num prot_num, net::hw_features hw_f
 
 future<>
 ipv4::handle_received_packet(packet p, ethernet_address from) {   
+    auto now = std::chrono::high_resolution_clock::now();
+    if (now < p.getReceivedAt()) {
+        printf("[IP] Timestamps out of order\n");
+    }
+    uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
+    if (delta > 1000) {
+        printf("[IP] Delta too large: %u\n", delta);
+    }
+
     auto iph = p.get_header<ip_hdr>(0);
     if (!iph) {
         return make_ready_future<>();

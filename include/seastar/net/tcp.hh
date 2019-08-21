@@ -946,8 +946,15 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
         }
     } else {
         tcbp = tcbi->second;
+        auto now = std::chrono::high_resolution_clock::now();
+        if (now < p.getReceivedAt()) {
+            printf("Timestamps out of order\n");
+        }
+        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
+        if (delta > 1000) {
+            printf("Delta too large: %u\n", delta);
+        }
         tcbp->setReceivedAt(p.getReceivedAt());
-
         if (tcbp->state() == tcp_state::SYN_SENT) {
             // 3) In SYN_SENT State
             return tcbp->input_handle_syn_sent_state(&h, std::move(p));

@@ -144,15 +144,6 @@ ipv4_tcp::~ipv4_tcp() {
 }
 
 void ipv4_tcp::received(packet p, ipv4_address from, ipv4_address to) {
-    auto now = std::chrono::high_resolution_clock::now();
-    if (now < p.getReceivedAt()) {
-        printf("[TCP Pre] Timestamps out of order\n");
-    }
-    uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
-    if (delta > 1000) {
-        printf("[TCP Pre] Delta too large: %u\n", delta);
-    }
-
     _tcp->received(std::move(p), from, to);
 }
 

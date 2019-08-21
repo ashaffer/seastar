@@ -342,6 +342,8 @@ future<> interface::dispatch_packet(packet p) {
     uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
     if (delta > 1000) {
         printf("[interface::dispatch_packet] delta too large: %u\n", delta);
+    } else {
+        printf("Reasonable delta\n");
     }
 
     if (eh) {

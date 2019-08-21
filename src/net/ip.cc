@@ -326,10 +326,12 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
         _packetq.pop_front();
     }
 
-    auto now = std::chrono::high_resolution_clock::now();
-    uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.get().getReceivedAt()).count();
-    if (delta > 1000) {
-        printf("[IP::get_packet] delta too large: %u\n", delta);
+    if (p) {
+        auto now = std::chrono::high_resolution_clock::now();
+        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p->getReceivedAt()).count();
+        if (delta > 1000) {
+            printf("[IP::get_packet] delta too large: %u\n", delta);
+        }
     }
 
     return p;

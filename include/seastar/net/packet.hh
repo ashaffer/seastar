@@ -223,9 +223,13 @@ public:
     packet(packet&& x, deleter d);
 
     packet& operator=(packet&& x) {
+        auto tmp = x.getReceivedAt();
         if (this != &x) {
             this->~packet();
             new (this) packet(std::move(x));
+        }
+        if (tmp != this->getReceivedAt()) {
+            printf("unequal received ats after copy\n");
         }
         return *this;
     }

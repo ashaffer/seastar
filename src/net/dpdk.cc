@@ -2183,14 +2183,6 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
             (*p).set_rss_hash(m->hash.rss);
         // }
 
-        auto now = std::chrono::high_resolution_clock::now();
-        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p->getReceivedAt()).count();
-        if (delta > 1000) {
-            printf("[interface::dispatch_packet] delta too large: %u\n", delta);
-        } else {
-            printf("Reasonable delta\n");
-        }
-
         _dev->l2receive(std::move(*p));
     }
 

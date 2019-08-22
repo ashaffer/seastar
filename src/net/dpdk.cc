@@ -2184,7 +2184,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         // }
 
         auto now = std::chrono::high_resolution_clock::now();
-        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
+        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p->getReceivedAt()).count();
         if (delta > 1000) {
             printf("[interface::dispatch_packet] delta too large: %u\n", delta);
         } else {

@@ -255,14 +255,6 @@ subscription<packet, ethernet_address> l3_protocol::receive(
 interface::interface(std::shared_ptr<device> dev)
     : _dev(dev)
     , _rx(_dev->receive([this] (packet p) { 
-        auto now = std::chrono::high_resolution_clock::now();
-        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
-        if (delta > 1000) {
-            printf("[interface::dispatch_packet] delta too large: %u\n", delta);
-        } else {
-            printf("Reasonable delta\n");
-        }
-
         return dispatch_packet(std::move(p)); }))
     , _hw_address(_dev->hw_address())
     , _hw_features(_dev->hw_features()) {
@@ -316,13 +308,19 @@ uint16_t interface::port_idx () {
 void interface::forward(unsigned cpuid, packet p) {
     static __thread unsigned queue_depth;
 
+    auto now = std::chrono::high_resolution_clock::now();
+    uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
+    if (delta > 1000) {
+        printf("[interface::dispatch_packet] delta too large: %u\n", delta);
+    } else {
+        printf("Reasonable delta\n");
+    }
+
     if (queue_depth < 1000) {
         queue_depth++;
         auto src_cpu = engine().cpu_id();
         smp::submit_to(cpuid, [this, p = std::move(p), src_cpu]() mutable {
-            printf("a\n");
             _dev->l2receive(p.free_on_cpu(src_cpu));
-            printf("b\n");
         }).then([] {
             queue_depth--;
         });

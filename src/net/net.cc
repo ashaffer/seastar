@@ -320,7 +320,9 @@ void interface::forward(unsigned cpuid, packet p) {
         queue_depth++;
         auto src_cpu = engine().cpu_id();
         smp::submit_to(cpuid, [this, p = std::move(p), src_cpu]() mutable {
+            printf("a\n");
             _dev->l2receive(p.free_on_cpu(src_cpu));
+            printf("b\n");
         }).then([] {
             queue_depth--;
         });

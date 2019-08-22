@@ -338,15 +338,7 @@ uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
 future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
 
-    auto now = std::chrono::high_resolution_clock::now();
-    uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
-    if (delta > 1000) {
-        printf("[interface::dispatch_packet] delta too large: %u\n", delta);
-    } else {
-        printf("Reasonable delta\n");
-    }
-
-    if (eh) {
+     if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;

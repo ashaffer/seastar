@@ -372,7 +372,10 @@ future<> interface::dispatch_packet(packet p) {
             });
 
             if (fw != engine().cpu_id()) {
-                printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
+                auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
+                const char *src = inet_ntoa(in_addr(inet_address{iph->src_ip}));
+                const char *dst = inet_ntoa(in_addr(inet_address{iph->dst_ip}));
+                printf("Hit incorrect CPU: %u -> %u (%u, %s -> %s)\n", engine().cpu_id(), fw, _dev->port_idx(), src, dst);
                 forward(fw, std::move(p));
             } else {
                 auto h = ntoh(*eh);

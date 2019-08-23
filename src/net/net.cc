@@ -315,7 +315,6 @@ void interface::forward(unsigned cpuid, packet p) {
     } else {
         printf("Reasonable delta\n");
     }
-    auto tmp = p.getReceivedAt();
     if (queue_depth < 1000) {
         queue_depth++;
         auto src_cpu = engine().cpu_id();

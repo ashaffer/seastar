@@ -2179,9 +2179,9 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         }
 
         (*p).set_offload_info(oi);
-        // if (m->ol_flags & PKT_RX_RSS_HASH) {
+        if (m->ol_flags & PKT_RX_RSS_HASH) {
             (*p).set_rss_hash(m->hash.rss);
-        // }
+        }
 
         printf("L2Receive: %u (%u)\n", engine().cpu_id(), _dev->port_idx());
         _dev->l2receive(std::move(*p));

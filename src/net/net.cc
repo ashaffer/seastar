@@ -319,7 +319,7 @@ void interface::forward(unsigned cpuid, packet p) {
     if (queue_depth < 1000) {
         queue_depth++;
         auto src_cpu = engine().cpu_id();
-        smp::submit_to(cpuid, [this, tmp, p = std::move(p), src_cpu]() mutable {
+        smp::submit_to(cpuid, [this, p = std::move(p), src_cpu]() mutable {
             auto now = std::chrono::high_resolution_clock::now();
             uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
             if (delta > 1000) {

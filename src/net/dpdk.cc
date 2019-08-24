@@ -2157,19 +2157,6 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
             continue;
         }
 
-        auto iph = p->get_header<ip_hdr>(sizeof(eth_hdr));
-        if (iph->src_ip.ip != iph->dst_ip.ip) {
-            printf("src/dst not equal\n");
-        }
-
-        in_addr in_dst;
-        in_dst.s_addr = (iph->dst_ip.ip);
-        in_addr in_src;
-        in_src.s_addr = (iph->src_ip.ip);
-        const char *dst = inet_ntoa(in_dst);        
-        const char *src = inet_ntoa(in_src);
-        printf("process_packets: %s -> %s\n", src, dst);
-
         nr_frags += m->nb_segs;
         bytes    += m->pkt_len;
 
@@ -2192,9 +2179,9 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         }
 
         (*p).set_offload_info(oi);
-        if (m->ol_flags & PKT_RX_RSS_HASH) {
+        // if (m->ol_flags & PKT_RX_RSS_HASH) {
             (*p).set_rss_hash(m->hash.rss);
-        }
+        // }
 
         printf("L2Receive: %u (%u)\n", engine().cpu_id(), _dev->port_idx());
         _dev->l2receive(std::move(*p));

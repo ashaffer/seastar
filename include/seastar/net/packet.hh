@@ -126,6 +126,7 @@ class packet final {
             n->_offload_info = old->_offload_info;
             n->_rss_hash = old->_rss_hash;
             std::copy(old->_frags, old->_frags + old->_nr_frags, n->_frags);
+            n->_receivedAt = old->_receivedAt;
             old->copy_internal_fragment_to(n.get());
             return n;
         }

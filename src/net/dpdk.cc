@@ -2161,12 +2161,13 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         if (iph->src_ip.ip != iph->dst_ip.ip) {
             printf("src/dst not equal\n");
         }
-        in_addr in_src;
-        in_src.s_addr = (iph->src_ip.ip);
+
         in_addr in_dst;
         in_dst.s_addr = (iph->dst_ip.ip);
+        in_addr in_src;
+        in_src.s_addr = (iph->src_ip.ip);
+        const char *dst = inet_ntoa(in_dst);        
         const char *src = inet_ntoa(in_src);
-        const char *dst = inet_ntoa(in_dst);
         printf("process_packets: %s -> %s\n", src, dst);
 
         nr_frags += m->nb_segs;

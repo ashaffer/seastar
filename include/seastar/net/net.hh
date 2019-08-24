@@ -273,7 +273,15 @@ public:
         return qid;
         // return _qid2cpuid[qid]; 
     }
-    void l2receive(packet p) { _queues[engine().cpu_id()]->_rx_stream.produce(std::move(p)); }
+    void l2receive(packet p) { 
+        auto now = std::chrono::high_resolution_clock::now();
+        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
+        if (delta > 1000) {
+            printf("[interface::dispatch_packet3] delta too large: %u\n", delta);
+        }
+
+        _queues[engine().cpu_id()]->_rx_stream.produce(std::move(p)); 
+    }
     subscription<packet> receive(std::function<future<> (packet)> next_packet);
     virtual ethernet_address hw_address() = 0;
     virtual net::hw_features hw_features() = 0;

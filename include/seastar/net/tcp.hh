@@ -907,6 +907,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
         printf("Packet hit wrong CPU: %u\n", engine().cpu_id());
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
+            printf("Responding with reset\n");
             // 1) In CLOSE state
             // 1.1 all data in the incoming segment is discarded.  An incoming
             // segment containing a RST is discarded. An incoming segment not
@@ -916,6 +917,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             //      if ACK on:  <SEQ=SEG.ACK><CTL=RST>
             return respond_with_reset(&h, id.local_ip, id.foreign_ip);
         } else {
+            printf("Found listening port wtf?\n");
             // 2) In LISTEN state
             // 2.1 first check for an RST
             if (h.f_rst) {

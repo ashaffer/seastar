@@ -370,7 +370,7 @@ future<> interface::dispatch_packet(packet p) {
             });
 
             if (fw != engine().cpu_id()) {
-                printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
+                // printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
                 forward(fw, std::move(p));
             } else {
                 auto h = ntoh(*eh);

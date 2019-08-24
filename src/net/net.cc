@@ -380,7 +380,7 @@ future<> interface::dispatch_packet(packet p) {
             });
 
             if (fw != engine().cpu_id()) {
-                auto iph = p->get_header<ip_hdr>(sizeof(eth_hdr));
+                auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
 
                 in_addr in_src;
                 in_src.s_addr = (iph->src_ip.ip);

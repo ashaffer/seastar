@@ -309,9 +309,21 @@ void interface::forward(unsigned cpuid, packet p) {
     static __thread unsigned queue_depth;
 
     if (queue_depth < 1000) {
+        auto now = std::chrono::high_resolution_clock::now();
+        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
+        if (delta > 1000) {
+            printf("[interface::dispatch_packet] delta too large: %u\n", delta);
+        }
+
         queue_depth++;
         auto src_cpu = engine().cpu_id();
         smp::submit_to(cpuid, [this, p = std::move(p), src_cpu]() mutable {
+            auto now = std::chrono::high_resolution_clock::now();
+            uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
+            if (delta > 1000) {
+                printf("[interface::dispatch_packet2] delta too large: %u\n", delta);
+            }
+
             _dev->l2receive(p.free_on_cpu(src_cpu));
         }).then([] {
             queue_depth--;
@@ -356,12 +368,6 @@ future<> interface::dispatch_packet(packet p) {
                     return 0u;
                 }
             });
-
-            auto now = std::chrono::high_resolution_clock::now();
-            uint delta = std::chrono::duration_cast<std::chrono::microseconds>(now - p.getReceivedAt()).count();
-            if (delta > 1000) {
-                printf("[interface::dispatch_packet] delta too large: %u\n", delta);
-            }
 
             if (fw != engine().cpu_id()) {
                 printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());

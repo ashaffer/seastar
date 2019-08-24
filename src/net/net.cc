@@ -371,15 +371,16 @@ future<> interface::dispatch_packet(packet p) {
                 }
             });
 
+            auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
+            in_addr in_src;
+            in_src.s_addr = (iph->src_ip.ip);
+            in_addr in_dst;
+            in_dst.s_addr = (iph->dst_ip.ip);
+            const char *src = inet_ntoa(in_src);
+            const char *dst = inet_ntoa(in_dst);
+            printf("Hit incorrect CPU: %u -> %u (%u, %s -> %s)\n", engine().cpu_id(), fw, _dev->port_idx(), src, dst);
+
             if (fw != engine().cpu_id()) {
-                auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
-                in_addr in_src;
-                in_src.s_addr = (iph->src_ip.ip);
-                in_addr in_dst;
-                in_dst.s_addr = (iph->dst_ip.ip);
-                const char *src = inet_ntoa(in_src);
-                const char *dst = inet_ntoa(in_dst);
-                printf("Hit incorrect CPU: %u -> %u (%u, %s -> %s)\n", engine().cpu_id(), fw, _dev->port_idx(), src, dst);
                 forward(fw, std::move(p));
             } else {
                 auto h = ntoh(*eh);

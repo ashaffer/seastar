@@ -323,7 +323,7 @@ void interface::forward(unsigned cpuid, packet p) {
             if (delta > 1000) {
                 printf("[interface::dispatch_packet2] delta too large: %u\n", delta);
             }
-
+            printf("forwarding: %u\n", (uint)engine().cpu_id());
             _dev->l2receive(p.free_on_cpu(src_cpu));
         }).then([] {
             queue_depth--;

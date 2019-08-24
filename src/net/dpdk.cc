@@ -2157,7 +2157,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
             continue;
         }
 
-        auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
+        auto iph = p->get_header<ip_hdr>(sizeof(eth_hdr));
         if (iph->src_ip.ip != iph->dst_ip.ip) {
             printf("src/dst not equal\n");
         }

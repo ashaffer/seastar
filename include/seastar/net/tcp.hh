@@ -904,6 +904,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     lw_shared_ptr<tcb> tcbp;
 
     if (tcbi == _tcbs.end()) {
+        printf("Packet hit wrong CPU: %u\n", engine().cpu_id());
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
             // 1) In CLOSE state

@@ -375,6 +375,9 @@ future<> interface::dispatch_packet(packet p) {
                 printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
                 forward(fw, std::move(p));
             } else {
+                if (engine().cpu_id() > 7) {
+                    printf("Packet received on %u\n", (uint)engine().cpu_id());
+                }
                 auto h = ntoh(*eh);
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));

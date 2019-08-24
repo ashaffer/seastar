@@ -2232,6 +2232,7 @@ void dpdk_device::set_rss_table()
         }
     }
 
+    printf("Configuring RSS table: %u %u\n", _num_queues, reta_conf_size);
     if (rte_eth_dev_rss_reta_update(_port_idx, reta_conf, _dev_info.reta_size)) {
         rte_exit(EXIT_FAILURE, "Port %d: Failed to update an RSS indirection table", _port_idx);
     }

@@ -358,6 +358,14 @@ future<> interface::dispatch_packet(packet p) {
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
 
+            auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
+            in_addr in_src;
+            in_src.s_addr = (iph->src_ip.ip);
+            in_addr in_dst;
+            in_dst.s_addr = (iph->dst_ip.ip);
+            const char *src = inet_ntoa(in_src);
+            const char *dst = inet_ntoa(in_dst);
+
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {
@@ -371,13 +379,6 @@ future<> interface::dispatch_packet(packet p) {
                 }
             });
 
-            auto iph = p.get_header<ip_hdr>(sizeof(eth_hdr));
-            in_addr in_src;
-            in_src.s_addr = (iph->src_ip.ip);
-            in_addr in_dst;
-            in_dst.s_addr = (iph->dst_ip.ip);
-            const char *src = inet_ntoa(in_src);
-            const char *dst = inet_ntoa(in_dst);
             printf("Hit incorrect CPU: %u -> %u (%u, %s -> %s)\n", engine().cpu_id(), fw, _dev->port_idx(), src, dst);
 
             if (fw != engine().cpu_id()) {

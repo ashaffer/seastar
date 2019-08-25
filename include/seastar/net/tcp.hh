@@ -851,6 +851,16 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
 
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
+
+    char src[32];
+    char dst[32];
+    in_addr in_src, in_dst;
+    in_src.s_addr = htonl(src_ip.ip);
+    in_dst.s_addr = htonl(dst_ip.ip);
+    strcpy(src, inet_ntoa(in_src));
+    strcpy(dst, inet_ntoa(in_dst));
+    printf("Inserting TCBP on %u: %s:%u -> %s:%u\n", (uint)engine().cpu_id(), src, src_port, dst, dst_port);
+
     tcbp->connect();
     return connection(tcbp);
 }
@@ -910,8 +920,8 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             char src[32];
             char dst[32];
             in_addr in_src, in_dst;
-            in_src.s_addr = from.ip;
-            in_dst.s_addr = to.ip;
+            in_src.s_addr = htonl(from.ip);
+            in_dst.s_addr = htonl(to.ip);
             strcpy(src, inet_ntoa(in_src));
             strcpy(dst, inet_ntoa(in_dst));
             printf("Responding with reset: %s:%u -> %s:%u\n", src, h.src_port, dst, h.dst_port);

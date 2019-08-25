@@ -907,7 +907,14 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
         printf("Packet hit wrong CPU: %u\n", engine().cpu_id());
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
-            printf("Responding with reset\n");
+            char src[32];
+            char dst[32];
+            in_addr in_src, in_dst;
+            in_src.s_addr = from.ip;
+            in_dst.s_addr = to.ip;
+            strcpy(src, inet_ntoa(in_src));
+            strcpy(dst, inet_ntoa(in_dst));
+            printf("Responding with reset: %s:%u -> %s:%u\n", src, h.src_port, dst, h.dst_port);
             // 1) In CLOSE state
             // 1.1 all data in the incoming segment is discarded.  An incoming
             // segment containing a RST is discarded. An incoming segment not

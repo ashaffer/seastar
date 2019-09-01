@@ -1044,6 +1044,7 @@ void reactor_backend_epoll::stop_tick() {
 }
 
 void reactor_backend_epoll::arm_highres_timer(const ::itimerspec& its) {
+    printf("arm_highres_timer\n");
     auto ret = timer_settime(_steady_clock_timer, TIMER_ABSTIME, &its, NULL);
     throw_system_error_on(ret == -1);
     if (!_timer_enabled) {
@@ -1604,6 +1605,7 @@ void cpu_stall_detector::report_suppressions(std::chrono::steady_clock::time_poi
 
 void cpu_stall_detector::arm_timer() {
     auto its = posix::to_relative_itimerspec(_threshold * _report_at + _slack, 0s);
+    printf("arm_timer\n");
     timer_settime(_timer, 0, &its, nullptr);
 }
 
@@ -1626,6 +1628,7 @@ void cpu_stall_detector::end_task_run(std::chrono::steady_clock::time_point now)
 
 void cpu_stall_detector::start_sleep() {
     auto its = posix::to_relative_itimerspec(0s,  0s);
+    printf("start_sleep\n");
     timer_settime(_timer, 0, &its, nullptr);
     _rearm_timer_at = std::chrono::steady_clock::now();
 }

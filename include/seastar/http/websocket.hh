@@ -261,6 +261,10 @@ public:
     void shutdown_output() { _socket.shutdown_output(); }
 
     void shutdown_input() { _socket.shutdown_input(); }
+
+    std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
+        return _socket.getReceivedAt();
+    }
 };
 
 sstring encode_handshake_key(sstring nonce);

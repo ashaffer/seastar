@@ -262,7 +262,7 @@ public:
 
     void shutdown_input() { _socket.shutdown_input(); }
 
-    std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
+    std::chrono::high_resolution_clock::time_point getReceivedAt () const {
         return _socket.getReceivedAt();
     }
 };

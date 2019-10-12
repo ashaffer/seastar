@@ -287,8 +287,11 @@ class smp_message_queue {
         async_work_item(smp_message_queue& queue, smp_service_group ssg, Func&& func) : work_item(ssg), _queue(queue), _func(std::move(func)) {}
         virtual void process() override {
             try {
-              with_scheduling_group(this->sg, [this] {
-                futurator::apply(this->_func).then_wrapped([this] (auto f) {
+              // Run _func asynchronously and set either _result or _ex.
+              // Respond to _queue when done.
+              // Caller must get the future returned by get_future() to synchronize and retrieve the result.
+              (void)with_scheduling_group(this->sg, [this] {
+                return futurator::apply(this->_func).then_wrapped([this] (auto f) {
                     if (f.failed()) {
                         _ex = f.get_exception();
                     } else {
@@ -494,8 +497,8 @@ private:
     promise<> _start_promise;
     semaphore _cpu_started;
     internal::preemption_monitor _preemption_monitor{};
-    std::atomic<uint64_t> _tasks_processed = { 0 };
-    std::atomic<uint64_t> _polls = { 0 };
+    uint64_t _global_tasks_processed = 0;
+    uint64_t _polls = 0;
     std::unique_ptr<internal::cpu_stall_detector> _cpu_stall_detector;
 
     unsigned _max_task_backlog = 1000;
@@ -694,7 +697,7 @@ public:
     lw_shared_ptr<pollable_fd> make_pollable_fd(socket_address sa, transport proto = transport::TCP);
     future<> posix_connect(lw_shared_ptr<pollable_fd> pfd, socket_address sa, socket_address local);
 
-    future<pollable_fd, socket_address> accept(pollable_fd_state& listen_fd);
+    future<std::tuple<pollable_fd, socket_address>> accept(pollable_fd_state& listen_fd);
 
     future<size_t> read_some(pollable_fd_state& fd, void* buffer, size_t size);
     future<size_t> read_some(pollable_fd_state& fd, const std::vector<iovec>& iov);
@@ -1015,6 +1018,17 @@ public:
         static_assert(std::is_same<future<>, typename futurize<std::result_of_t<Func()>>::type>::value, "bad Func signature");
         return parallel_for_each(all_cpus(), [&func] (unsigned id) {
             return smp::submit_to(id, Func(func));
+        });
+    }
+    // Invokes func on all other shards.
+    // The returned future resolves when all async invocations finish.
+    // The func may return void or future<>.
+    // Each async invocation will work with a separate copy of func.
+    template<typename Func>
+    static future<> invoke_on_others(unsigned cpu_id, Func func) {
+        static_assert(std::is_same<future<>, typename futurize<std::result_of_t<Func()>>::type>::value, "bad Func signature");
+        return parallel_for_each(all_cpus(), [cpu_id, func = std::move(func)] (unsigned id) {
+            return id != cpu_id ? smp::submit_to(id, func) : make_ready_future<>();
         });
     }
 private:

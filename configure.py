@@ -65,6 +65,8 @@ arg_parser.add_argument('--ldflags', action = 'store', dest = 'user_ldflags', de
                         help = 'Extra flags for the linker')
 arg_parser.add_argument('--optflags', action = 'store', dest = 'user_optflags', default = '',
                         help = 'Extra optimization flags for the release mode')
+arg_parser.add_argument('--api-level', action='store', dest='api_level', default='2',
+                        help='Compatibility API level (2=latest)')
 arg_parser.add_argument('--compiler', action = 'store', dest = 'cxx', default = 'g++',
                         help = 'C++ compiler path')
 arg_parser.add_argument('--c-compiler', action='store', dest='cc', default='gcc',
@@ -98,6 +100,11 @@ add_tristate(
     name = 'experimental-coroutines-ts',
     dest = "coroutines_ts",
     help = 'experimental support for Coroutines TS')
+add_tristate(
+    arg_parser,
+    name = 'unused-result-error',
+    dest = "unused_result_error",
+    help = 'Make [[nodiscard]] violations an error')
 arg_parser.add_argument('--allocator-page-size', dest='alloc_page_size', type=int, help='override allocator page size')
 arg_parser.add_argument('--without-tests', dest='exclude_tests', action='store_true', help='Do not build tests by default')
 arg_parser.add_argument('--without-apps', dest='exclude_apps', action='store_true', help='Do not build applications by default')
@@ -174,6 +181,7 @@ def configure_mode(mode):
         '-DCMAKE_C_COMPILER={}'.format(args.cc),
         '-DCMAKE_CXX_COMPILER={}'.format(args.cxx),
         '-DCMAKE_INSTALL_PREFIX={}'.format(args.install_prefix),
+        '-DSeastar_API_LEVEL={}'.format(args.api_level),
         tr(args.exclude_tests, 'EXCLUDE_TESTS_FROM_ALL'),
         tr(args.exclude_apps, 'EXCLUDE_APPS_FROM_ALL'),
         tr(args.exclude_demos, 'EXCLUDE_DEMOS_FROM_ALL'),
@@ -189,6 +197,7 @@ def configure_mode(mode):
         tr(args.cpp17_goodies, 'STD_OPTIONAL_VARIANT_STRINGVIEW'),
         tr(args.split_dwarf, 'SPLIT_DWARF'),
         tr(args.coroutines_ts, 'EXPERIMENTAL_COROUTINES_TS'),
+        tr(args.unused_result_error, 'UNUSED_RESULT_ERROR'),
     ]
 
     ingredients_to_cook = set(args.cook)

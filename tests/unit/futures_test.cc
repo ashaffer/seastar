@@ -572,7 +572,7 @@ SEASTAR_TEST_CASE(test_high_priority_task_runs_before_ready_continuations) {
         engine().add_high_priority_task(make_task([flag] {
             *flag = true;
         }));
-        make_ready_future().then([flag] {
+        return make_ready_future().then([flag] {
             BOOST_REQUIRE(*flag);
         });
     });
@@ -689,6 +689,12 @@ SEASTAR_TEST_CASE(futurize_apply_void_future_ok) {
             BOOST_FAIL("should not have thrown");
         }
     });
+}
+
+SEASTAR_TEST_CASE(test_unused_shared_future_is_not_a_broken_future) {
+    promise<> p;
+    shared_future<> s(p.get_future());
+    return make_ready_future<>();
 }
 
 SEASTAR_TEST_CASE(test_shared_future_propagates_value_to_all) {

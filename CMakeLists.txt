@@ -48,6 +48,16 @@ option (Seastar_EXPERIMENTAL_COROUTINES_TS
   "Enable experimental support for Coroutines TS."
   OFF)
 
+set (Seastar_API_LEVEL
+  "2"
+  CACHE
+  STRING
+  "Seastar compatibility API level (2=server_socket::accept() returns accept_result)")
+
+set_property (CACHE Seastar_API_LEVEL
+  PROPERTY
+  STRINGS 1 2)
+
 #
 # Add a dev build type.
 #
@@ -98,7 +108,7 @@ set (CMAKE_CXX_FLAGS_SANITIZE
   FORCE)
 
 set (CMAKE_C_FLAGS_SANITIZE
-  "-O1"
+  "-Os -g"
   CACHE
   STRING
   "Flags used by the C compiler during sanitize builds."
@@ -234,6 +244,10 @@ set (Seastar_TEST_TIMEOUT
   CACHE
   STRING
   "Maximum allowed time for a test to run, in seconds.")
+
+option (Seastar_UNUSED_RESULT_ERROR
+  "Make [[nodiscard]] violations an error (instead of a warning)."
+  OFF)
 
 # When Seastar is embedded with `add_subdirectory`, disable the non-library targets.
 if (NOT (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
@@ -659,6 +673,10 @@ target_compile_options (seastar
     -std=${Seastar_CXX_DIALECT}
     -U_FORTIFY_SOURCE)
 
+target_compile_definitions(seastar
+  PUBLIC
+  SEASTAR_API_LEVEL=${Seastar_API_LEVEL})
+
 function (seastar_supports_flag flag var)
   set (CMAKE_REQUIRED_FLAGS ${flag})
   check_cxx_source_compiles ("int main() { return 0; }" result)
@@ -794,13 +812,23 @@ if (lz4_HAVE_COMPRESS_DEFAULT)
   list (APPEND Seastar_PRIVATE_COMPILE_DEFINITIONS SEASTAR_HAVE_LZ4_COMPRESS_DEFAULT)
 endif ()
 
+seastar_supports_flag ("-Werror=unused-result" ErrorUnused_FOUND)
+if (ErrorUnused_FOUND)
+  if (Seastar_UNUSED_RESULT_ERROR)
+    target_compile_options (seastar
+      PUBLIC -Werror=unused-result)
+  else()
+    target_compile_options (seastar
+      PUBLIC -Wno-error=unused-result)
+  endif ()
+endif ()
+
 if ((CMAKE_BUILD_TYPE STREQUAL "Debug") OR (CMAKE_BUILD_TYPE STREQUAL "Sanitize"))
   target_compile_definitions (seastar
     PUBLIC
       SEASTAR_DEBUG
       SEASTAR_DEFAULT_ALLOCATOR
       SEASTAR_DEBUG_SHARED_PTR
-      SEASTAR_ASAN_ENABLED
       SEASTAR_SHUFFLE_TASK_QUEUE
       SEASTAR_THREAD_STACK_GUARDS)
 endif ()

@@ -45,6 +45,7 @@
 #include <seastar/core/report_exception.hh>
 #include <seastar/core/stall_sampler.hh>
 #include <seastar/core/thread_cputime_clock.hh>
+#include <seastar/core/abort_on_ebadf.hh>
 #include <seastar/util/log.hh>
 #include "core/file-impl.hh"
 #include "syscall_work_queue.hh"
@@ -84,6 +85,7 @@
 #include <seastar/core/prefetch.hh>
 #include <exception>
 #include <regex>
+#include <fstream>
 #ifdef __GNUC__
 #include <iostream>
 #include <system_error>
@@ -182,7 +184,7 @@ reactor::rename_priority_class(io_priority_class pc, sstring new_name) {
         // holding the lock until all cross shard activity is over.
 
         try {
-            std::lock_guard<std::mutex> lock(io_queue::_register_lock);
+            std::lock_guard<std::mutex> guard(io_queue::_register_lock);
             for (unsigned i = 0; i < io_queue::_max_classes; ++i) {
                if (!io_queue::_registered_shares[i]) {
                    break;
@@ -210,14 +212,24 @@ reactor::rename_priority_class(io_priority_class pc, sstring new_name) {
     });
 }
 
-future<pollable_fd, socket_address>
+future<std::tuple<pollable_fd, socket_address>>
 reactor::accept(pollable_fd_state& listenfd) {
-    return readable_or_writeable(listenfd).then([&listenfd] () mutable {
+    return readable_or_writeable(listenfd).then([this, &listenfd] () mutable {
         socket_address sa;
-        socklen_t sl = sizeof(&sa.u.sas);
-        file_desc fd = listenfd.fd.accept(sa.u.sa, sl, SOCK_NONBLOCK | SOCK_CLOEXEC);
-        pollable_fd pfd(std::move(fd), pollable_fd::speculation(EPOLLOUT));
-        return make_ready_future<pollable_fd, socket_address>(std::move(pfd), std::move(sa));
+        socklen_t sl = sizeof(sa.u.sas);
+        auto maybe_fd = listenfd.fd.try_accept(sa.u.sa, sl, SOCK_NONBLOCK | SOCK_CLOEXEC);
+        if (!maybe_fd) {
+            // We speculated that we will have an another connection, but got a false
+            // positive. Try again without speculation.
+            return accept(listenfd);
+        }
+        // Speculate that there is another connection on this listening socket, to avoid
+        // a task-quota delay. Usually this will fail, but accept is a rare-enough operation
+        // that it is worth the false positive in order to withstand a connection storm
+        // without having to accept at a rate of 1 per task quota.
+        listenfd.speculate_epoll(EPOLLIN);
+        pollable_fd pfd(std::move(*maybe_fd), pollable_fd::speculation(EPOLLOUT));
+        return make_ready_future<std::tuple<pollable_fd, socket_address>>(std::make_tuple(std::move(pfd), std::move(sa)));
     });
 }
 
@@ -362,7 +374,7 @@ pollable_fd::abort_writer() {
     engine().abort_writer(*_s);
 }
 
-future<pollable_fd, socket_address> pollable_fd::accept() {
+future<std::tuple<pollable_fd, socket_address>> pollable_fd::accept() {
     return engine().accept(*_s);
 }
 
@@ -485,6 +497,16 @@ sched_print(const char* fmt, Args&&... args) {
     if (sched_debug()) {
         sched_logger.trace(fmt, std::forward<Args>(args)...);
     }
+}
+
+static std::atomic<bool> abort_on_ebadf = { false };
+
+void set_abort_on_ebadf(bool do_abort) {
+    abort_on_ebadf.store(do_abort);
+}
+
+bool is_abort_on_ebadf_enabled() {
+    return abort_on_ebadf.load();
 }
 
 timespec to_timespec(steady_clock_type::time_point t) {
@@ -1517,24 +1539,14 @@ void reactor_backend_epoll::start_handling_signal() {
     request_preemption();
 }
 
-// Add to an atomic integral non-atomically and returns the previous value
-template <typename Integral>
-inline Integral add_nonatomically(std::atomic<Integral>& value, Integral inc) {
-    auto tmp = value.load(std::memory_order_relaxed);
-    value.store(tmp + inc, std::memory_order_relaxed);
-    return tmp;
-}
-
-// Increments an atomic integral non-atomically and returns the previous value
-// Akin to value++;
-template <typename Integral>
-inline Integral increment_nonatomically(std::atomic<Integral>& value) {
-    return add_nonatomically(value, Integral(1));
-}
-
 cpu_stall_detector::cpu_stall_detector(reactor* r, cpu_stall_detector_config cfg)
         : _r(r)
         , _shard_id(_r->cpu_id()) {
+    // glib's backtrace() calls dlopen("libgcc_s.so.1") once to resolve unwind related symbols.
+    // If first stall detector invocation happens during another dlopen() call the calling thread
+    // will deadlock. The dummy call here makes sure that backtrace's initialization happens in
+    // a safe place.
+    backtrace([] (frame) {});
     update_config(cfg);
     struct sigevent sev = {};
     sev.sigev_notify = SIGEV_THREAD_ID;
@@ -1576,22 +1588,28 @@ void cpu_stall_detector::maybe_report() {
 //
 // We can do it a cheaper if we don't report suppressed backtraces.
 void cpu_stall_detector::on_signal() {
-    if (_active.load(std::memory_order_relaxed)) {
+    auto tasks_processed = engine().tasks_processed();
+    auto last_seen = _last_tasks_processed_seen.load(std::memory_order_relaxed);
+    if (!last_seen) {
+        return; // stall detector in not active
+    } else if (last_seen == tasks_processed) { // no task was processed - report
         maybe_report();
         _report_at <<= 1;
-        arm_timer();
+    } else {
+        _last_tasks_processed_seen.store(tasks_processed, std::memory_order_relaxed);
     }
+    arm_timer();
 }
 
 void cpu_stall_detector::report_suppressions(std::chrono::steady_clock::time_point now) {
     if (now > _minute_mark + 60s) {
-        if (_reported) {
-            auto supressed = _reported - _max_reports_per_minute;
+        if (_reported > _max_reports_per_minute) {
+            auto suppressed = _reported - _max_reports_per_minute;
             backtrace_buffer buf;
             // Reuse backtrace buffer infrastructure so we don't have to allocate here
-            buf.append("Rate-limit: supressed ");
-            buf.append_decimal(_reported - _max_reports_per_minute);
-            supressed == 1 ? buf.append(" backtrace") : buf.append(" backtraces");
+            buf.append("Rate-limit: suppressed ");
+            buf.append_decimal(suppressed);
+            suppressed == 1 ? buf.append(" backtrace") : buf.append(" backtraces");
             buf.append(" on shard ");
             buf.append_decimal(_shard_id);
             buf.append("\n");
@@ -1615,13 +1633,13 @@ void cpu_stall_detector::start_task_run(std::chrono::steady_clock::time_point no
         _rearm_timer_at = now + _threshold * _report_at;
         arm_timer();
     }
-    _active.store(true, std::memory_order_relaxed);
+    _last_tasks_processed_seen.store(engine().tasks_processed(), std::memory_order_relaxed);
     std::atomic_signal_fence(std::memory_order_release); // Don't delay this write, so the signal handler can see it
 }
 
 void cpu_stall_detector::end_task_run(std::chrono::steady_clock::time_point now) {
     std::atomic_signal_fence(std::memory_order_acquire); // Don't hoist this write, so the signal handler can see it
-    _active.store(false, std::memory_order_relaxed);
+    _last_tasks_processed_seen.store(0, std::memory_order_relaxed);
 }
 
 void cpu_stall_detector::start_sleep() {
@@ -1809,7 +1827,8 @@ void reactor::configure(boost::program_options::variables_map vm) {
     auto network_stack_ready = vm.count("network-stack")
         ? network_stack_registry::create(sstring(vm["network-stack"].as<std::string>()), vm)
         : network_stack_registry::create(vm);
-    network_stack_ready.then([this] (std::unique_ptr<network_stack> stack) {
+    // FIXME: future is discarded
+    (void)network_stack_ready.then([this] (std::unique_ptr<network_stack> stack) {
         _network_stack_ready_promise.set_value(std::move(stack));
     });
 
@@ -1885,6 +1904,23 @@ void reactor_backend_epoll::forget(pollable_fd_state& fd) {
 
 pollable_fd
 reactor::posix_listen(socket_address sa, listen_options opts) {
+    static auto somaxconn = [] {
+        compat::optional<int> result;
+        std::ifstream ifs("/proc/sys/net/core/somaxconn");
+        if (ifs) {
+            result = 0;
+            ifs >> *result;
+        }
+        return result;
+    }();
+    if (somaxconn && *somaxconn < opts.listen_backlog) {
+        fmt::print(
+            "Warning: /proc/sys/net/core/somaxconn is set to {:d} "
+            "which is lower than the backlog parameter {:d} used for listen(), "
+            "please change it with `sysctl -w net.core.somaxconn={:d}`\n",
+            *somaxconn, opts.listen_backlog, opts.listen_backlog);
+    }
+
     file_desc fd = file_desc::socket(sa.u.sa.sa_family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, int(opts.proto));
     if (opts.reuse_address) {
         fd.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1);
@@ -2088,7 +2124,8 @@ reactor::flush_pending_aio() {
     }
     if (!_pending_aio_retry.empty()) {
         auto retries = std::exchange(_pending_aio_retry, {});
-        _thread_pool->submit<syscall_result<int>>([this, retries] () mutable {
+        // FIXME: future is discarded
+        (void)_thread_pool->submit<syscall_result<int>>([this, retries] () mutable {
             auto r = io_submit(_io_context, retries.size(), retries.data());
             return wrap_syscall<int>(r);
         }).then([this, retries] (syscall_result<int> result) {
@@ -2589,6 +2626,9 @@ append_challenged_posix_file_impl::append_challenged_posix_file_impl(int fd, ope
 }
 
 append_challenged_posix_file_impl::~append_challenged_posix_file_impl() {
+    // If the file has not been closed we risk having running tasks
+    // that will try to access freed memory.
+    assert(_closing_state == state::closed);
 }
 
 bool
@@ -2618,7 +2658,8 @@ append_challenged_posix_file_impl::dispatch(op& candidate) noexcept {
     unsigned* op_counter = size_changing(candidate)
             ? &_current_size_changing_ops : &_current_non_size_changing_ops;
     ++*op_counter;
-    candidate.run().then([me = shared_from_this(), op_counter] {
+    // FIXME: future is discarded
+    (void)candidate.run().then([me = shared_from_this(), op_counter] {
         --*op_counter;
         me->process_queue();
     });
@@ -2675,7 +2716,7 @@ append_challenged_posix_file_impl::process_queue() noexcept {
     }
     if (may_quit()) {
         _completed.set_value();
-        _done = false; // prevents _completed to be signaled again in case of recursion
+        _closing_state = state::closing; // prevents _completed to be signaled again in case of recursion
     }
 }
 
@@ -2687,7 +2728,8 @@ append_challenged_posix_file_impl::enqueue(op&& op) {
 
 bool
 append_challenged_posix_file_impl::may_quit() const noexcept {
-    return _done && _q.empty() && !_current_non_size_changing_ops && !_current_size_changing_ops;
+    return _closing_state == state::draining && _q.empty() && !_current_non_size_changing_ops &&
+           !_current_size_changing_ops;
 }
 
 void
@@ -2876,7 +2918,7 @@ append_challenged_posix_file_impl::size() {
 future<>
 append_challenged_posix_file_impl::close() noexcept {
     // Caller should have drained all pending I/O
-    _done = true;
+    _closing_state = state::draining;
     process_queue();
     return _completed.get_future().then([this] {
         if (_logical_size != _committed_size) {
@@ -2885,7 +2927,7 @@ append_challenged_posix_file_impl::close() noexcept {
                 _committed_size = _logical_size;
             }
         }
-        return posix_file_impl::close();
+        return posix_file_impl::close().finally([this] { _closing_state = state::closed; });
     });
 }
 
@@ -3493,7 +3535,9 @@ posix_file_impl::list_directory(std::function<future<> (directory_entry de)> nex
 
     auto w = make_lw_shared<work>();
     auto ret = w->s.listen(std::move(next));
-    w->s.started().then([w, this] {
+    // List the directory asynchronously in the background.
+    // Caller synchronizes using the returned subscription.
+    (void)w->s.started().then([w, this] {
         auto eofcond = [w] { return w->eof; };
         return do_until(eofcond, [w, this] {
             if (w->current == w->total) {
@@ -3641,19 +3685,21 @@ void reactor::stop() {
     assert(engine()._id == 0);
     smp::cleanup_cpu();
     if (!_stopping) {
-        run_exit_tasks().then([this] {
-            do_with(semaphore(0), [this] (semaphore& sem) {
-                for (unsigned i = 1; i < smp::count; i++) {
-                    smp::submit_to<>(i, []() {
-                        smp::cleanup_cpu();
-                        return engine().run_exit_tasks().then([] {
-                                engine()._stopped = true;
-                        });
-                    }).then([&sem]() {
-                        sem.signal();
+        // Run exit tasks locally and then stop all other engines
+        // in the background and wait on semaphore for all to complete.
+        // Finally, set _stopped on cpu 0.
+        (void)run_exit_tasks().then([this] {
+            return do_with(semaphore(0), [this] (semaphore& sem) {
+                // Stop other cpus asynchronously, signal when done.
+                (void)smp::invoke_on_others(0, [] {
+                    smp::cleanup_cpu();
+                    return engine().run_exit_tasks().then([] {
+                        engine()._stopped = true;
                     });
-                }
-                return sem.wait(smp::count - 1).then([this] {
+                }).then([&sem]() {
+                    sem.signal();
+                });
+                return sem.wait().then([this] {
                     _stopped = true;
                 });
             });
@@ -3662,7 +3708,8 @@ void reactor::stop() {
 }
 
 void reactor::exit(int ret) {
-    smp::submit_to(0, [this, ret] { _return = ret; stop(); });
+    // Run stop() asynchronously on cpu 0.
+    (void)smp::submit_to(0, [this, ret] { _return = ret; stop(); });
 }
 
 uint64_t
@@ -3676,11 +3723,7 @@ reactor::pending_task_count() const {
 
 uint64_t
 reactor::tasks_processed() const {
-    uint64_t ret = 0;
-    for (auto&& tq : _task_queues) {
-        ret += tq->_tasks_processed;
-    }
-    return ret;
+    return _global_tasks_processed;
 }
 
 void reactor::register_metrics() {
@@ -3691,7 +3734,7 @@ void reactor::register_metrics() {
             sm::make_gauge("tasks_pending", std::bind(&reactor::pending_task_count, this), sm::description("Number of pending tasks in the queue")),
             // total_operations value:DERIVE:0:U
             sm::make_derive("tasks_processed", std::bind(&reactor::tasks_processed, this), sm::description("Total tasks processed")),
-            sm::make_derive("polls", [this] { return _polls.load(std::memory_order_relaxed); }, sm::description("Number of times pollers were executed")),
+            sm::make_derive("polls", _polls, sm::description("Number of times pollers were executed")),
             sm::make_derive("timers_pending", std::bind(&decltype(_timers)::size, &_timers), sm::description("Number of tasks in the timer-pending queue")),
             sm::make_gauge("utilization", [this] { return (1-_load)  * 100; }, sm::description("CPU utilization")),
             sm::make_derive("cpu_busy_ms", [this] () -> int64_t { return total_busy_time() / 1ms; },
@@ -3783,6 +3826,7 @@ void reactor::run_tasks(task_queue& tq) {
         tsk.release();
         STAP_PROBE(seastar, reactor_run_tasks_single_end);
         ++tq._tasks_processed;
+        ++_global_tasks_processed;
         // check at end of loop, to allow at least one task to run
         if (need_preempt()) {
             if (tasks.size() <= _max_task_backlog) {
@@ -3855,7 +3899,8 @@ manual_clock::advance(manual_clock::duration d) {
     _now.fetch_add(d.count());
     if (local_engine) {
         schedule_urgent(make_task(default_scheduling_group(), &manual_clock::expire_timers));
-        smp::invoke_on_all(&manual_clock::expire_timers);
+        // Expire timers on all cores in the background.
+        (void)smp::invoke_on_all(&manual_clock::expire_timers);
     }
 }
 
@@ -4284,18 +4329,19 @@ int reactor::run() {
        _signals.handle_signal_once(SIGTERM, [this] { stop(); });
     }
 
-    _cpu_started.wait(smp::count).then([this] {
-        _network_stack->initialize().then([this] {
+    // Start initialization in the background.
+    // Communicate when done using _start_promise.
+    (void)_cpu_started.wait(smp::count).then([this] {
+        (void)_network_stack->initialize().then([this] {
             _start_promise.set_value();
         });
     });
-    _network_stack_ready_promise.get_future().then([this] (std::unique_ptr<network_stack> stack) {
+    // Wait for network stack in the background and then signal all cpus.
+    (void)_network_stack_ready_promise.get_future().then([this] (std::unique_ptr<network_stack> stack) {
         _network_stack = std::move(stack);
-        for (unsigned c = 0; c < smp::count; c++) {
-            smp::submit_to(c, [] {
-                    engine()._cpu_started.signal();
-            });
-        }
+        return smp::invoke_on_all([] {
+            engine()._cpu_started.signal();
+        });
     });
 
     poller syscall_poller(std::make_unique<syscall_pollfn>(*this));
@@ -4341,10 +4387,10 @@ int reactor::run() {
     bool idle = false;
 
     std::function<bool()> check_for_work = [this] () {
-        return poll_once() || have_more_tasks() || seastar::thread::try_run_one_yielded_thread();
+        return poll_once() || have_more_tasks();
     };
     std::function<bool()> pure_check_for_work = [this] () {
-        return pure_poll_once() || have_more_tasks() || seastar::thread::try_run_one_yielded_thread();
+        return pure_poll_once() || have_more_tasks();
     };
     while (true) {
         run_some_tasks();
@@ -4364,7 +4410,7 @@ int reactor::run() {
             break;
         }
 
-        increment_nonatomically(_polls);
+        _polls++;
 
         if (check_for_work()) {
             if (idle) {
@@ -4573,6 +4619,11 @@ reactor_backend_epoll::wait_and_process(int timeout, const sigset_t* active_sigm
             _r->_notify_eventfd.read(dummy, 8);
             continue;
         }
+        if (evt.events & (EPOLLHUP | EPOLLERR)) {
+            // treat the events as required events when error occurs, let
+            // send/recv/accept/connect handle the specific error.
+            evt.events = pfd->events_requested;
+        }
         auto events = evt.events & (EPOLLIN | EPOLLOUT);
         auto events_to_remove = events & ~pfd->events_requested;
         if (pfd->events_rw) {
@@ -4603,7 +4654,8 @@ syscall_work_queue::syscall_work_queue()
 }
 
 void syscall_work_queue::submit_item(std::unique_ptr<syscall_work_queue::work_item> item) {
-    _queue_has_room.wait().then([this, item = std::move(item)] () mutable {
+    // FIXME: future is discarded
+    (void)_queue_has_room.wait().then([this, item = std::move(item)] () mutable {
         _pending.push(item.release());
         _start_eventfd.signal(1);
     });
@@ -4725,7 +4777,8 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
   // matching signal() in process_completions()
   auto ssg_id = internal::smp_service_group_id(item->ssg);
   auto& sem = smp_service_groups[ssg_id].clients[t];
-  get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
+  // FIXME: future is discarded
+  (void)get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
     _tx.a.pending_fifo.push_back(item.get());
     // no exceptions from this point
     item.release();
@@ -5782,13 +5835,11 @@ promise_base::promise_base(promise_base&& x) noexcept
     }
 }
 
-void promise_base::check_during_destruction() noexcept {
+promise_base::~promise_base() noexcept {
     if (_future) {
         assert(_state);
         assert(_state->available() || !_task);
         _future->detach_promise();
-    } else if (_state && _state->failed()) {
-        report_failed_future(_state->get_exception());
     } else if (__builtin_expect(bool(_task), false)) {
         assert(_state && !_state->available());
         _state->set_to_broken_promise();
@@ -5831,8 +5882,11 @@ future<> check_direct_io_support(sstring path) {
         auto w = w::parse(path, type);
         return open_file_dma(w.path, w.flags).then_wrapped([path = w.path, cleanup = std::move(w.cleanup)] (future<file> f) {
             try {
-                f.get0();
-                return cleanup();
+                auto fd = f.get0();
+                return cleanup().finally([fd = std::move(fd)] () mutable {
+                    auto closing = fd.close();
+                    return closing.finally([fd = std::move(fd)] { });
+                });
             } catch (std::system_error& e) {
                 if (e.code() == std::error_code(EINVAL, std::system_category())) {
                     report_exception(format("Could not open file at {}. Does your filesystem support O_DIRECT?", path), std::current_exception());

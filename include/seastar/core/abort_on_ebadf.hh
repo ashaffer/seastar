@@ -16,41 +16,21 @@
  * under the License.
  */
 /*
- * Copyright (C) 2014 Cloudius Systems, Ltd.
+ * Copyright 2019 ScyllaDB
  */
-
-// tcp/network-stack integration
 
 #pragma once
 
-#include <seastar/core/future.hh>
-#include "../core/internal/api-level.hh"
-
 namespace seastar {
 
-struct listen_options;
+/// Determines whether seastar should throw or abort when operation made by
+/// seastar fails because the target file descriptor is not valid. This is
+/// detected when underlying system calls return EBADF or ENOTSOCK.
+/// The default behavior is to throw std::system_error.
+void set_abort_on_ebadf(bool do_abort);
 
-#if SEASTAR_API_LEVEL <= 1
-
-SEASTAR_INCLUDE_API_V1 namespace api_v1 { class server_socket; }
-
-#endif
-
-SEASTAR_INCLUDE_API_V2 namespace api_v2 { class server_socket; }
-class connected_socket;
-
-namespace net {
-
-struct ipv4_traits;
-template <typename InetTraits>
-class tcp;
-
-server_socket
-tcpv4_listen(tcp<ipv4_traits>& tcpv4, uint16_t port, listen_options opts);
-
-seastar::socket
-tcpv4_socket(tcp<ipv4_traits>& tcpv4);
-
-}
+/// Queries the current setting for seastar's behavior on invalid file descriptor access.
+/// See set_abort_on_ebadf().
+bool is_abort_on_ebadf_enabled();
 
 }

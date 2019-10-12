@@ -217,7 +217,7 @@ public:
 class http_server_tester;
 
 class http_server {
-    std::vector<server_socket> _listeners;
+    std::vector<api_v2::server_socket> _listeners;
     http_stats _stats;
     uint64_t _total_connections = 0;
     uint64_t _current_connections = 0;
@@ -242,12 +242,15 @@ public:
     explicit http_server(const sstring& name) : _stats(*this, name) {
         _date_format_timer.arm_periodic(1s);
     }
-    future<> listen(socket_address addr) {
-        listen_options lo;
-        lo.reuse_address = true;
+    future<> listen(socket_address addr, listen_options lo) {
         _listeners.push_back(engine().listen(addr, lo));
         _stopped = when_all(std::move(_stopped), do_accepts(_listeners.size() - 1)).discard_result();
         return make_ready_future<>();
+    }
+    future<> listen(socket_address addr) {
+        listen_options lo;
+        lo.reuse_address = true;
+        return listen(addr, lo);
     }
     future<> stop() {
         _stopping = true;
@@ -264,16 +267,17 @@ public:
     future<> do_accepts(int which) {
         ++_connections_being_accepted;
         return _listeners[which].accept().then_wrapped(
-                [this, which] (future<connected_socket, socket_address> f_cs_sa) mutable {
+                [this, which] (future<accept_result> f_ar) mutable {
             --_connections_being_accepted;
-            if (_stopping || f_cs_sa.failed()) {
-                f_cs_sa.ignore_ready_future();
+            if (_stopping || f_ar.failed()) {
+                f_ar.ignore_ready_future();
                 maybe_idle();
                 return;
             }
-            auto cs_sa = f_cs_sa.get();
-            auto conn = new connection(*this, std::get<0>(std::move(cs_sa)), std::get<1>(std::move(cs_sa)));
-            conn->process().then_wrapped([conn] (auto&& f) {
+            auto ar = f_ar.get0();
+            auto conn = new connection(*this, std::move(ar.connection), std::move(ar.remote_address));
+            // FIXME: future is discarded
+            (void)conn->process().then_wrapped([conn] (auto&& f) {
                 delete conn;
                 try {
                     f.get();
@@ -281,7 +285,8 @@ public:
                     std::cerr << "request error " << ex.what() << std::endl;
                 }
             });
-            do_accepts(which);
+            // FIXME: future is discarded
+            (void)do_accepts(which);
         }).then_wrapped([] (auto f) {
             try {
                 f.get();
@@ -322,7 +327,7 @@ private:
 
 class http_server_tester {
 public:
-    static std::vector<server_socket>& listeners(http_server& server) {
+    static std::vector<api_v2::server_socket>& listeners(http_server& server) {
         return server._listeners;
     }
 };
@@ -365,6 +370,10 @@ public:
 
     future<> listen(socket_address addr) {
         return _server_dist->invoke_on_all(&http_server::listen, addr);
+    }
+
+    future<> listen(socket_address addr, listen_options lo) {
+        return _server_dist->invoke_on_all(&http_server::listen, addr, lo);
     }
 
     distributed<http_server>& server() {

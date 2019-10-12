@@ -237,7 +237,8 @@ public:
     virtual uint32_t send(circular_buffer<packet>& p) {
         uint32_t sent = 0;
         while (!p.empty()) {
-            send(std::move(p.front()));
+            // FIXME: future is discarded
+            (void)send(std::move(p.front()));
             p.pop_front();
             sent++;
         }
@@ -269,12 +270,13 @@ public:
     virtual ~device() {};
     qp& queue_for_cpu(unsigned cpu) { return *_queues[cpu]; }
     qp& local_queue() { return queue_for_cpu(engine().cpu_id()); }
+
     uint qid2cpuid(uint qid) { 
         return qid;
         // return _qid2cpuid[qid]; 
     }
     void l2receive(packet p) { 
-        _queues[engine().cpu_id()]->_rx_stream.produce(std::move(p)); 
+        (void)_queues[engine().cpu_id()]->_rx_stream.produce(std::move(p)); 
     }
     subscription<packet> receive(std::function<future<> (packet)> next_packet);
     virtual ethernet_address hw_address() = 0;

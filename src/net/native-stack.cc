@@ -109,7 +109,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     uint jj = 0; 
     for (auto sdev : devices) {
         for (unsigned i = 0; i < smp::count; i++) {
-            smp::submit_to(i, [opts, sdev] {
+            (void)smp::submit_to(i, [opts, sdev] {
                 auto qid = engine().cpu_id();
 
                 if (qid < sdev->hw_queues_count()) {
@@ -133,18 +133,19 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         }
         jj++;
     }
-    sem->wait(smp::count * devices.size()).then([opts, devices, dev_cfgs] {
+
+    (void)sem->wait(smp::count * devices.size()).then([opts, devices, dev_cfgs] {
         auto sem = std::make_shared<semaphore>(0);
 
         for (auto sdev : devices) {
-            sdev->link_ready().then([sem] {
+            (void)sdev->link_ready().then([sem] {
                 sem->signal();
             });
         }
 
-        sem->wait(devices.size()).then([opts, devices, dev_cfgs] {
+        (void)sem->wait(devices.size()).then([opts, devices, dev_cfgs] {
             for (unsigned i = 0; i < smp::count; i++) {
-                smp::submit_to(i, [opts, devices, dev_cfgs] {
+                (void)smp::submit_to(i, [opts, devices, dev_cfgs] {
                     create_native_stack(opts, devices, dev_cfgs);
                 });
             }
@@ -166,7 +167,7 @@ private:
     timer<> _timer;
 
     future<> run_dhcp(bool is_renew = false, const dhcp::lease & res = dhcp::lease());
-    void on_dhcp(ipv4 *inet, bool, const dhcp::lease &, bool);
+    void on_dhcp(ipv4 *inet, compat::optional<dhcp::lease> lease, bool is_renew);
     void set_ipv4_packet_filter(ipv4 *inet, ip_packet_filter* filter) {
         inet->set_packet_filter(filter);
     }
@@ -283,27 +284,28 @@ future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
         dhcp d(*inet);
         // Hijack the ip-stack.
         auto f = d.get_ipv4_filter();
-        smp::invoke_on_all([f, inet] {
+        (void)smp::invoke_on_all([f, inet] {
             auto & ns = static_cast<native_network_stack&>(engine().net());
             ns.set_ipv4_packet_filter(inet, f);
-        }).then([this, inet, d = std::move(d), is_renew, res]() mutable {
+        }).then([this, sem, inet, d = std::move(d), is_renew, res]() mutable {
             net::dhcp::result_type fut = is_renew ? d.renew(res) : d.discover();
-            return fut.then([this, inet, is_renew](bool success, const dhcp::lease & res) {
+            return fut.then([this, is_renew, inet](compat::optional<dhcp::lease> lease) {
                 return smp::invoke_on_all([inet] {
                     auto & ns = static_cast<native_network_stack&>(engine().net());
                     ns.set_ipv4_packet_filter(inet, nullptr);
-                }).then(std::bind(&net::native_network_stack::on_dhcp, this, inet, success, res, is_renew));
-            }).finally([d = std::move(d)] {});
-        }).then([sem] () {
-            sem->signal();
+                }).then(std::bind(&net::native_network_stack::on_dhcp, this, inet, lease, is_renew));
+            }).finally([sem, d = std::move(d)] {
+                sem->signal();
+            });
         });
     }
 
     return sem->wait(_inet_map.size());
 }
 
-void native_network_stack::on_dhcp(ipv4 *inet, bool success, const dhcp::lease & res, bool is_renew) {
-    if (success) {
+void native_network_stack::on_dhcp(ipv4 *inet, compat::optional<dhcp::lease> lease, bool is_renew) {
+    if (lease) {
+        auto& res = *lease;
         inet->set_host_address(res.ip);
         inet->set_gw_address(res.gateway);
         inet->set_netmask_address(res.netmask);
@@ -317,17 +319,19 @@ void native_network_stack::on_dhcp(ipv4 *inet, bool success, const dhcp::lease &
         // And the other cpus, which, in the case of initial discovery,
         // will be waiting for us.
         for (unsigned i = 1; i < smp::count; i++) {
-            smp::submit_to(i, [inet, success, res, is_renew]() {
+            (void)smp::submit_to(i, [inet, lease, is_renew]() {
                 auto & ns = static_cast<native_network_stack&>(engine().net());
-                ns.on_dhcp(inet, success, res, is_renew);
+                ns.on_dhcp(inet, lease, is_renew);
             });
         }
-        if (success) {
+        if (lease) {
             // And set up to renew the lease later on.
+            auto& res = *lease;
             _timer.set_callback(
                     [this, res]() {
                         _config = promise<>();
-                        run_dhcp(true, res);
+                        // callback ignores future result
+                        (void)run_dhcp(true, res);
                     });
             _timer.arm(
                     std::chrono::duration_cast<steady_clock_type::duration>(
@@ -345,7 +349,8 @@ future<> native_network_stack::initialize() {
         // Only run actual discover on main cpu.
         // All other cpus must simply for main thread to complete and signal them.
         if (engine().cpu_id() == 0) {
-            run_dhcp();
+            // FIXME: future is discarded
+            (void)run_dhcp();
         }
         return _config.get_future();
     });
@@ -353,12 +358,11 @@ future<> native_network_stack::initialize() {
 
 void arp_learn(ethernet_address l2, ipv4_address l3)
 {
-    for (unsigned i = 0; i < smp::count; i++) {
-        smp::submit_to(i, [l2, l3] {
-            auto & ns = static_cast<native_network_stack&>(engine().net());
-            ns.arp_learn(l2, l3);
-        });
-    }
+    // Run arp_learn on all shard in the background
+    (void)smp::invoke_on_all([l2, l3] {
+        auto & ns = static_cast<native_network_stack&>(engine().net());
+        ns.arp_learn(l2, l3);
+    });
 }
 
 void create_native_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) { 

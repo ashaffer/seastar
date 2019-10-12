@@ -570,6 +570,57 @@ sharded<Service>::start_single(Args&&... args) {
     });
 }
 
+namespace internal {
+
+// Helper check if Service::stop exists
+
+struct sharded_has_stop {
+    // If a member names "stop" exists, try to call it, even if it doesn't
+    // have the correct signature. This is so that we don't ignore a function
+    // named stop() just because the signature is incorrect, and instead
+    // force the user to resolve the ambiguity.
+    template <typename Service>
+    constexpr static auto check(int) -> std::enable_if_t<(sizeof(&Service::stop) >= 0), bool> {
+        return true;
+    }
+
+    // Fallback in case Service::stop doesn't exist.
+    template<typename>
+    static constexpr auto check(...) -> bool {
+        return false;
+    }
+};
+
+template <bool stop_exists>
+struct sharded_call_stop {
+    template <typename Service>
+    static future<> call(Service& instance);
+};
+
+template <>
+template <typename Service>
+inline
+future<> sharded_call_stop<true>::call(Service& instance) {
+    return instance.stop();
+}
+
+template <>
+template <typename Service>
+inline
+future<> sharded_call_stop<false>::call(Service& instance) {
+    return make_ready_future<>();
+}
+
+template <typename Service>
+inline
+future<>
+stop_sharded_instance(Service& instance) {
+    constexpr bool has_stop = internal::sharded_has_stop::check<Service>(0);
+    return internal::sharded_call_stop<has_stop>::call(instance);
+}
+
+}
+
 template <typename Service>
 future<>
 sharded<Service>::stop() {
@@ -579,7 +630,7 @@ sharded<Service>::stop() {
             if (!inst) {
                 return make_ready_future<>();
             }
-            return inst->stop();
+            return internal::stop_sharded_instance(*inst);
         });
     }).then([this] {
         return internal::sharded_parallel_for_each(_instances.size(), [this] (unsigned c) {
@@ -707,7 +758,10 @@ private:
 private:
     void destroy(PtrType p, unsigned cpu) {
         if (p && engine().cpu_id() != cpu) {
-            smp::submit_to(cpu, [v = std::move(p)] () mutable {
+            // `destroy()` is called from the destructor and other
+            // synchronous methods (like `reset()`), that have no way to
+            // wait for this future.
+            (void)smp::submit_to(cpu, [v = std::move(p)] () mutable {
                 // Destroy the contained pointer. We do this explicitly
                 // in the current shard, because the lambda is destroyed
                 // in the shard that submitted the task.

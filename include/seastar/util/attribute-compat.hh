@@ -16,41 +16,12 @@
  * under the License.
  */
 /*
- * Copyright (C) 2014 Cloudius Systems, Ltd.
+ * Copyright (C) 2019 ScyllaDB
  */
-
-// tcp/network-stack integration
-
 #pragma once
 
-#include <seastar/core/future.hh>
-#include "../core/internal/api-level.hh"
-
-namespace seastar {
-
-struct listen_options;
-
-#if SEASTAR_API_LEVEL <= 1
-
-SEASTAR_INCLUDE_API_V1 namespace api_v1 { class server_socket; }
-
-#endif
-
-SEASTAR_INCLUDE_API_V2 namespace api_v2 { class server_socket; }
-class connected_socket;
-
-namespace net {
-
-struct ipv4_traits;
-template <typename InetTraits>
-class tcp;
-
-server_socket
-tcpv4_listen(tcp<ipv4_traits>& tcpv4, uint16_t port, listen_options opts);
-
-seastar::socket
-tcpv4_socket(tcp<ipv4_traits>& tcpv4);
-
-}
-
-}
+// #if defined(__has_cpp_attribute) && __has_cpp_attribute(nodiscard)
+//     #define SEASTAR_NODISCARD [[nodiscard]]
+// #else
+    #define SEASTAR_NODISCARD
+// #endif

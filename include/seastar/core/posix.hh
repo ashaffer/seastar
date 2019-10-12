@@ -22,6 +22,7 @@
 #pragma once
 
 #include <seastar/core/sstring.hh>
+#include "abort_on_ebadf.hh"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -44,6 +45,7 @@
 #include <sys/uio.h>
 
 #include <seastar/net/socket_defs.hh>
+#include <seastar/util/std-compat.hh>
 
 namespace seastar {
 
@@ -127,6 +129,15 @@ public:
     }
     file_desc accept(sockaddr& sa, socklen_t& sl, int flags = 0) {
         auto ret = ::accept4(_fd, &sa, &sl, flags);
+        throw_system_error_on(ret == -1, "accept4");
+        return file_desc(ret);
+    }
+    // return nullopt if no connection is availbale to be accepted
+    compat::optional<file_desc> try_accept(sockaddr& sa, socklen_t& sl, int flags = 0) {
+        auto ret = ::accept4(_fd, &sa, &sl, flags);
+        if (ret == -1 && errno == EAGAIN) {
+            return {};
+        }
         throw_system_error_on(ret == -1, "accept4");
         return file_desc(ret);
     }
@@ -413,6 +424,9 @@ public:
 inline
 void throw_system_error_on(bool condition, const char* what_arg) {
     if (condition) {
+        if ((errno == EBADF || errno == ENOTSOCK) && is_abort_on_ebadf_enabled()) {
+            abort();
+        }
         throw std::system_error(errno, std::system_category(), what_arg);
     }
 }
@@ -422,6 +436,10 @@ inline
 void throw_kernel_error(T r) {
     static_assert(std::is_signed<T>::value, "kernel error variables must be signed");
     if (r < 0) {
+        auto ec = -r;
+        if ((ec == EBADF || ec == ENOTSOCK) && is_abort_on_ebadf_enabled()) {
+            abort();
+        }
         throw std::system_error(-r, std::system_category());
     }
 }

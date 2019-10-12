@@ -192,6 +192,10 @@ concept bool ObsoleteInputStreamConsumer = requires (Consumer c) {
 };
 )
 
+/// Buffers data from a data_source and provides a stream interface to the user.
+///
+/// \note All methods must be called sequentially.  That is, no method may be
+/// invoked before the previous method's returned future is resolved.
 template <typename CharType>
 class input_stream final {
     static_assert(sizeof(CharType) == 1, "must buffer stream of bytes");
@@ -220,7 +224,7 @@ public:
     template <typename Consumer>
     GCC6_CONCEPT(requires InputStreamConsumer<Consumer, CharType> || ObsoleteInputStreamConsumer<Consumer, CharType>)
     future<> consume(Consumer& c);
-    bool eof() { return _eof; }
+    bool eof() const { return _eof; }
     /// Returns some data from the stream, or an empty buffer on end of
     /// stream.
     future<tmp_buf> read();
@@ -266,7 +270,9 @@ private:
 //
 // The data sink will not receive empty chunks.
 //
-
+// \note All methods must be called sequentially.  That is, no method
+// may be invoked before the previous method's returned future is
+// resolved.
 template <typename CharType>
 class output_stream final {
     static_assert(sizeof(CharType) == 1, "must buffer stream of bytes");
@@ -299,7 +305,7 @@ public:
         : _fd(std::move(fd)), _size(size), _trim_to_size(trim_to_size), _batch_flushes(batch_flushes) {}
     output_stream(output_stream&&) = default;
     output_stream& operator=(output_stream&&) = default;
-    ~output_stream() { assert(!_in_batch); }
+    ~output_stream() { assert(!_in_batch && "Was this stream properly closed?"); }
     future<> write(const char_type* buf, size_t n);
     future<> write(const char_type* buf);
 
@@ -311,6 +317,10 @@ public:
     future<> write(scattered_message<char_type> msg);
     future<> write(temporary_buffer<char_type>);
     future<> flush();
+
+    /// Flushes the stream before closing it (and the underlying data sink) to
+    /// any further writes.  The resulting future must be waited on before
+    /// destroying this object.
     future<> close();
 
     /// Detaches the underlying \c data_sink from the \c output_stream.

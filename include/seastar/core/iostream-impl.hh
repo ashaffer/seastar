@@ -465,6 +465,7 @@ output_stream<CharType>::poll_flush() {
         try {
             f.get();
         } catch (...) {
+            printf("setting exception\n");
             _ex = std::current_exception();
         }
         // if flush() was called while flushing flush once more

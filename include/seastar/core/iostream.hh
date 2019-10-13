@@ -87,6 +87,7 @@ public:
         return put(std::move(p));
     }
     virtual future<> put(temporary_buffer<char> buf) {
+        printf("sink put\n");
         return put(net::packet(net::fragment{buf.get_write(), buf.size()}, buf.release()));
     }
     virtual future<> flush() {

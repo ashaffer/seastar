@@ -63,9 +63,7 @@ public:
     data_source& operator=(data_source&& x) = default;
     future<temporary_buffer<char>> get() { return _dsi->get(); }
     future<temporary_buffer<char>> skip(uint64_t n) { return _dsi->skip(n); }
-    future<> close() { 
-        printf("source close\n");
-        return _dsi->close(); }
+    future<> close() { return _dsi->close(); }
 };
 
 class data_sink_impl {
@@ -77,17 +75,15 @@ public:
     virtual future<> put(net::packet data) = 0;
     virtual future<> put(std::vector<temporary_buffer<char>> data) {
         net::packet p;
-        printf("put a\n");
         p.reserve(data.size());
-        printf("b\n");
+
         for (auto& buf : data) {
             p = net::packet(std::move(p), net::fragment{buf.get_write(), buf.size()}, buf.release());
         }
-        printf("c\n");
+
         return put(std::move(p));
     }
     virtual future<> put(temporary_buffer<char> buf) {
-        printf("sink put\n");
         return put(net::packet(net::fragment{buf.get_write(), buf.size()}, buf.release()));
     }
     virtual future<> flush() {
@@ -107,23 +103,18 @@ public:
         return _dsi->allocate_buffer(size);
     }
     future<> put(std::vector<temporary_buffer<char>> data) {
-        printf("aaa\n");
         return _dsi->put(std::move(data));
     }
     future<> put(temporary_buffer<char> data) {
-        printf("data sink put\n");
         return _dsi->put(std::move(data));
     }
     future<> put(net::packet p) {
-        printf("bbb\n");
         return _dsi->put(std::move(p));
     }
     future<> flush() {
         return _dsi->flush();
     }
-    future<> close() { 
-        printf("sink close\n");
-        return _dsi->close(); }
+    future<> close() { return _dsi->close(); }
 };
 
 struct continue_consuming {};
@@ -252,7 +243,6 @@ public:
     /// \return a future that becomes ready when this stream no longer
     ///         needs the data source.
     future<> close() {
-        printf("input_stream close\n");
         return _fd.close();
     }
     /// Ignores n next bytes from the stream.

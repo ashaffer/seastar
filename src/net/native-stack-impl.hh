@@ -192,7 +192,6 @@ public:
         : _conn(std::move(conn)) {}
     using data_sink_impl::put;
     virtual future<> put(packet p) override {
-        printf("native sink put\n");
         return _conn->send(std::move(p));
     }
     virtual future<> close() override {

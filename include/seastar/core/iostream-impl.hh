@@ -403,7 +403,6 @@ output_stream<CharType>::flush() {
         }
     } else {
         if (_ex) {
-            printf("delivering exception\n");
             // flush is a good time to deliver outstanding errors
             return make_exception_future<>(std::move(_ex));
         } else {
@@ -450,13 +449,11 @@ output_stream<CharType>::poll_flush() {
     _flushing = true; // make whoever wants to write into the fd to wait for flush to complete
 
     if (_end) {
-        printf("_end is true\n");
         // send whatever is in the buffer right now
         _buf.trim(_end);
         _end = 0;
         f = _fd.put(std::move(_buf));
     } else if(_zc_bufs) {
-        printf("_end is false\n");
         f = _fd.put(std::move(_zc_bufs));
     }
 
@@ -467,7 +464,6 @@ output_stream<CharType>::poll_flush() {
         try {
             f.get();
         } catch (...) {
-            printf("setting exception\n");
             _ex = std::current_exception();
         }
         // if flush() was called while flushing flush once more

@@ -453,7 +453,7 @@ output_stream<CharType>::poll_flush() {
         _buf.trim(_end);
         _end = 0;
         f = _fd.put(std::move(_buf));
-    } else if(_zc_bufs) {
+    } else if(_zc_bufs != net::packet::make_null_packet()) {
         f = _fd.put(std::move(_zc_bufs));
     }
 

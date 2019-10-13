@@ -227,7 +227,11 @@ public:
             return _output_stream.flush();
         }).finally([this] {
             printf("c\n");
-            return when_all(_input_stream.close(), _output_stream.close()).discard_result().then([] () {
+            auto a = _input_stream.close();
+            printf("cc\n");
+            auto b = _output_stream.close();
+            printf("ccc\n");
+            return when_all(a, b).discard_result().then([] () {
                 printf("d\n");
                 return;
             });

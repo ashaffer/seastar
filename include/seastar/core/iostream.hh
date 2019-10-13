@@ -77,10 +77,13 @@ public:
     virtual future<> put(net::packet data) = 0;
     virtual future<> put(std::vector<temporary_buffer<char>> data) {
         net::packet p;
+        printf("put a\n");
         p.reserve(data.size());
+        printf("b\n");
         for (auto& buf : data) {
             p = net::packet(std::move(p), net::fragment{buf.get_write(), buf.size()}, buf.release());
         }
+        printf("c\n");
         return put(std::move(p));
     }
     virtual future<> put(temporary_buffer<char> buf) {

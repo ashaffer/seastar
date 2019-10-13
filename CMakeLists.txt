@@ -363,9 +363,14 @@ seastar_generate_protobuf (
   IN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/src/proto/metrics2.proto
   OUT_DIR ${Seastar_GEN_BINARY_DIR}/src/proto)
 
+if (Seastar_DPDK)
+  set (seastar_dpdk_obj seastar-dpdk.o)
+endif ()
+
 add_library (seastar STATIC
   ${http_request_parser_file}
   ${proto_metrics2_files}
+  ${seastar_dpdk_obj}
   include/seastar/core/abort_source.hh
   include/seastar/core/alien.hh
   include/seastar/core/align.hh
@@ -495,6 +500,7 @@ add_library (seastar STATIC
   include/seastar/net/tls.hh
   include/seastar/net/toeplitz.hh
   include/seastar/net/udp.hh
+  include/seastar/net/unix_address.hh
   include/seastar/net/virtio-interface.hh
   include/seastar/net/virtio.hh
   include/seastar/rpc/lz4_compressor.hh
@@ -528,6 +534,8 @@ add_library (seastar STATIC
   include/seastar/util/tuple_utils.hh
   include/seastar/util/variant_utils.hh
   src/core/alien.cc
+  src/core/file.cc
+  src/core/thread_pool.cc
   src/core/app-template.cc
   src/core/dpdk_rte.cc
   src/core/exception_hacks.cc
@@ -550,6 +558,7 @@ add_library (seastar STATIC
   src/core/thread.cc
   src/core/uname.cc
   src/core/vla.hh
+  src/core/io_queue.cc
   src/http/api_docs.cc
   src/http/common.cc
   src/http/file_handler.cc
@@ -577,10 +586,12 @@ add_library (seastar STATIC
   src/net/packet.cc
   src/net/posix-stack.cc
   src/net/proxy.cc
+  src/net/socket_address.cc
   src/net/stack.cc
   src/net/tcp.cc
   src/net/tls.cc
   src/net/udp.cc
+  src/net/unix_address.cc
   src/net/virtio.cc
   src/rpc/lz4_compressor.cc
   src/rpc/lz4_fragmented_compressor.cc
@@ -775,9 +786,17 @@ if (Seastar_DPDK)
   target_compile_definitions (seastar
     PUBLIC SEASTAR_HAVE_DPDK)
 
-  # No pmd driver code will be pulled in without "--whole-archive"
+  # No pmd driver code will be pulled in without "--whole-archive". To
+  # avoid exposing that to seastar users, combine dpdk into a single
+  # .o file.
+  add_custom_command (
+    OUTPUT seastar-dpdk.o
+    COMMAND ld -r -o seastar-dpdk.o --whole-archive ${dpdk_LIBRARIES} --no-whole-archive
+  )
+
+  # This just provides the include path to cmake
   target_link_libraries (seastar
-    PUBLIC -Wl,--whole-archive dpdk::dpdk -Wl,--no-whole-archive)
+    PUBLIC dpdk::dpdk)
 endif ()
 
 if (Seastar_HWLOC)
@@ -885,6 +904,19 @@ if (Seastar_INSTALL OR Seastar_TESTING)
     PUBLIC
       Boost::unit_test_framework
       seastar)
+
+  add_library(seastar_perf_testing
+    include/seastar/testing/perf_tests.hh
+    tests/perf/perf_tests.cc)
+  add_library (Seastar::seastar_perf_testing ALIAS seastar_perf_testing)
+  target_compile_definitions (seastar_perf_testing
+    PRIVATE ${Seastar_PRIVATE_COMPILE_DEFINITIONS})
+  target_compile_options (seastar_perf_testing
+    PRIVATE ${Seastar_PRIVATE_CXX_FLAGS})
+  target_link_libraries (seastar_perf_testing
+    PUBLIC
+    seastar)
+
 endif ()
 
 #
@@ -1019,6 +1051,7 @@ if (Seastar_INSTALL)
     TARGETS
       seastar
       seastar_testing
+      seastar_perf_testing
     EXPORT seastar-export
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

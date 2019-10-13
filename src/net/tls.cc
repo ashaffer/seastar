@@ -842,6 +842,8 @@ public:
     future<> put(net::packet p) {
         printf("tls put\n");
         if (_error || _shutdown) {
+            if (_error) printf("tls error\n");
+            if (_shutdown) printf("tls shutdown\n");
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
         }
         printf("tls1\n");

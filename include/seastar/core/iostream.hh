@@ -110,6 +110,7 @@ public:
         return _dsi->put(std::move(data));
     }
     future<> put(temporary_buffer<char> data) {
+        printf("data sink put\n");
         return _dsi->put(std::move(data));
     }
     future<> put(net::packet p) {

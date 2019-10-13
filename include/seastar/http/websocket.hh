@@ -231,7 +231,7 @@ public:
             printf("cc\n");
             auto b = _output_stream.close();
             printf("ccc\n");
-            return when_all(a, b).discard_result().then([] () {
+            return when_all(std::move(a), std::move(b)).discard_result().then([] () {
                 printf("d\n");
                 return;
             });

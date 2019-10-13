@@ -840,16 +840,20 @@ public:
         });
     }
     future<> put(net::packet p) {
+        printf("tls put\n");
         if (_error || _shutdown) {
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
         }
+        printf("tls1\n");
         if (!_connected) {
             return handshake().then([this, p = std::move(p)]() mutable {
                return put(std::move(p));
             });
         }
+        printf("tls2\n");
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
+        printf("tls3\n");
         return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e)).finally([p = std::move(p)] {});
     }
 

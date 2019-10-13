@@ -221,10 +221,16 @@ public:
     };
 
     future<> close(close_status_code code = NORMAL_CLOSURE) {
+        printf("a\n");
         return write(websocket::make_close_message<type>(code)).then([this] {
+            printf("b\n");
             return _output_stream.flush();
         }).finally([this] {
-            return when_all(_input_stream.close(), _output_stream.close()).discard_result();
+            printf("c\n");
+            return when_all(_input_stream.close(), _output_stream.close()).discard_result().then([] () {
+                printf("d\n");
+                return;
+            });
         });
     };
 

@@ -63,7 +63,9 @@ public:
     data_source& operator=(data_source&& x) = default;
     future<temporary_buffer<char>> get() { return _dsi->get(); }
     future<temporary_buffer<char>> skip(uint64_t n) { return _dsi->skip(n); }
-    future<> close() { return _dsi->close(); }
+    future<> close() { 
+        printf("source close\n");
+        return _dsi->close(); }
 };
 
 class data_sink_impl {
@@ -112,7 +114,9 @@ public:
     future<> flush() {
         return _dsi->flush();
     }
-    future<> close() { return _dsi->close(); }
+    future<> close() { 
+        printf("sink close\n");
+        return _dsi->close(); }
 };
 
 struct continue_consuming {};
@@ -241,6 +245,7 @@ public:
     /// \return a future that becomes ready when this stream no longer
     ///         needs the data source.
     future<> close() {
+        printf("input_stream close\n");
         return _fd.close();
     }
     /// Ignores n next bytes from the stream.

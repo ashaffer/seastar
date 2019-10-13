@@ -177,9 +177,7 @@ public:
         });
     }
     future<> close() override {
-        printf("in here\n");
         _conn->close_write();
-        printf("a\n");
         return make_ready_future<>();
     }
 };
@@ -197,9 +195,7 @@ public:
         return _conn->send(std::move(p));
     }
     virtual future<> close() override {
-        printf("in there\n");
         _conn->close_write();
-        printf("b\n");
         return make_ready_future<>();
     }
 };

@@ -479,6 +479,9 @@ output_stream<CharType>::close() {
         printf("asdf\n");
         if (_in_batch) {
             printf("g\n");
+            if (!_in_batch) {
+                printf("testtest\n");
+            }
             return _in_batch.value().get_future();
         } else {
             printf("f\n");

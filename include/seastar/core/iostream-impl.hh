@@ -403,6 +403,7 @@ output_stream<CharType>::flush() {
         }
     } else {
         if (_ex) {
+            printf("delivering exception\n");
             // flush is a good time to deliver outstanding errors
             return make_exception_future<>(std::move(_ex));
         } else {
@@ -474,27 +475,17 @@ output_stream<CharType>::poll_flush() {
 template <typename CharType>
 future<>
 output_stream<CharType>::close() {
-    printf("output_stream close\n");
     return flush().finally([this] {
-        printf("asdf\n");
         if (_in_batch) {
-            printf("g\n");
-            if (!_in_batch) {
-                printf("testtest\n");
-            }
             return _in_batch.value().get_future();
         } else {
-            printf("f\n");
             return make_ready_future();
         }
     }).then([this] {
-        printf("i\n");
         // report final exception as close error
         if (_ex) {
-            printf("q\n");
             std::rethrow_exception(_ex);
         }
-        printf("z\n");
     }).finally([this] {
         return _fd.close();
     });

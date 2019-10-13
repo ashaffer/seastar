@@ -107,6 +107,7 @@ public:
         return _dsi->allocate_buffer(size);
     }
     future<> put(std::vector<temporary_buffer<char>> data) {
+        printf("aaa\n");
         return _dsi->put(std::move(data));
     }
     future<> put(temporary_buffer<char> data) {
@@ -114,6 +115,7 @@ public:
         return _dsi->put(std::move(data));
     }
     future<> put(net::packet p) {
+        printf("bbb\n");
         return _dsi->put(std::move(p));
     }
     future<> flush() {

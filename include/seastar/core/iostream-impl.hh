@@ -397,6 +397,7 @@ output_stream<CharType>::flush() {
                 return _fd.flush();
             });
         } else if (_zc_bufs) {
+            printf("flush zero copy put\n");
             return zero_copy_put(std::move(_zc_bufs)).then([this] {
                 return _fd.flush();
             });

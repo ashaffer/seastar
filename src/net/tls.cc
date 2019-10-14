@@ -966,7 +966,9 @@ public:
     }
     void close() {
         // only do once.
+        printf("tls close\n");
         if (!std::exchange(_shutdown, true)) {
+            printf("tls closed\n");
             auto me = shared_from_this();
             // running in background. try to bye-handshake us nicely, but after 10s we forcefully close.
             (void)with_timeout(timer<>::clock::now() + std::chrono::seconds(10), shutdown()).finally([this] {

@@ -454,8 +454,6 @@ output_stream<CharType>::poll_flush() {
         _end = 0;
         f = _fd.put(std::move(_buf));
     } else if(_zc_bufs) {
-        printf("zc buf put\n");
-        printf("zc buf put2: %u\n", (uint)_zc_bufs.len());
         f = _fd.put(std::move(_zc_bufs));
     }
 

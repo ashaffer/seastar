@@ -225,7 +225,7 @@ public:
             return _output_stream.flush();
         }).finally([this] {
             return _output_stream.close().then([this]() {
-                _input_stream.close()
+                return _input_stream.close();
             });
             // return when_all(_input_stream.close(), _output_stream.close()).discard_result();
         });

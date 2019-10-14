@@ -224,8 +224,8 @@ public:
         return write(websocket::make_close_message<type>(code)).then([this] {
             return _output_stream.flush();
         }).finally([this] {
-            return output_stream.close().then([this]() {
-                input_stream.close()
+            return _output_stream.close().then([this]() {
+                _input_stream.close()
             });
             // return when_all(_input_stream.close(), _output_stream.close()).discard_result();
         });

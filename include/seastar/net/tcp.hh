@@ -600,14 +600,17 @@ private:
             _state = CLOSED;
             cleanup();
             if (_rcv._data_received_promise) {
+                printf("connection reset: _data_received_promise\n");
                 _rcv._data_received_promise->set_exception(tcp_reset_error());
                 _rcv._data_received_promise = compat::nullopt;
             }
             if (_snd._all_data_acked_promise) {
+                printf("connection reset: _all_data_acked_promise\n");
                 _snd._all_data_acked_promise->set_exception(tcp_reset_error());
                 _snd._all_data_acked_promise = compat::nullopt;
             }
             if (_snd._send_available_promise) {
+                printf("connection reset: _send_available_promise\n");
                 _snd._send_available_promise->set_exception(tcp_reset_error());
                 _snd._send_available_promise = compat::nullopt;
             }
@@ -1822,6 +1825,13 @@ template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::send(packet p) {
     // We can not send after the connection is closed
     if (_snd.closed || in_state(CLOSED)) {
+        printf("connection reset: _snd.closed || in_state(CLOSED)\n");
+        if (_snd.closed) {
+            printf("\tsnd_closed\n");
+        }
+        if (in_state(CLOSED)) {
+            printf("\tin_state(CLOSED)\n");
+        }
         return make_exception_future<>(tcp_reset_error());
     }
 

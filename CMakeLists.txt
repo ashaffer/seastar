@@ -535,6 +535,8 @@ add_library (seastar STATIC
   include/seastar/util/variant_utils.hh
   src/core/alien.cc
   src/core/file.cc
+  src/core/fair_queue.cc
+  src/core/reactor_backend.cc
   src/core/thread_pool.cc
   src/core/app-template.cc
   src/core/dpdk_rte.cc
@@ -1080,7 +1082,6 @@ if (Seastar_INSTALL)
 
   install (
     FILES
-      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/bundled_boost/FindBoost.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindConcepts.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindGnuTLS.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindLinuxMembarrier.cmake

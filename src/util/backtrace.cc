@@ -80,11 +80,11 @@ frame decorate(uintptr_t addr) {
 }
 
 void print_backtrace () {
-    void *array[10];
+    void *array[20];
     size_t size;
 
     // Get void*'s for all entries on the stack
-    size = ::backtrace(array, 10);
+    size = ::backtrace(array, 20);
 
     // Print out all the frames to stderr
     fprintf(stderr, "Error: signal:\n");

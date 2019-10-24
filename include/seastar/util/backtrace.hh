@@ -59,6 +59,22 @@ void backtrace(Func&& func) noexcept(noexcept(func(frame()))) {
     }
 }
 
+void print_backtrace () {
+    void *array[10];
+    size_t size;
+
+    // Get void*'s for all entries on the stack
+    size = ::backtrace(array, 10);
+
+    // Print out all the frames to stderr
+    fprintf(stderr, "Error: signal:\n");
+    ::backtrace_symbols_fd(array, size, STDERR_FILENO);
+
+    // Print out all the frames to stdout
+    fprintf(stdout, "Error: signal:\n");
+    ::backtrace_symbols_fd(array, size, STDOUT_FILENO);
+}
+
 class saved_backtrace {
 public:
     using vector_type = boost::container::static_vector<frame, 64>;

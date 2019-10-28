@@ -1869,6 +1869,9 @@ void tcp<InetTraits>::tcb::close() {
         // tcp::tcb::get_packet(), packet with FIN will not be generated.
         output_one();
         output();
+    }).handle_exception([] (auto ep) {
+        std::cerr << "tcp::tcb::close error: " << ep << std::endl;
+        printf("tcp::tcb::close error: %s\n", ep.what());
     });
 }
 

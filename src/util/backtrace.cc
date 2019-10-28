@@ -79,22 +79,6 @@ frame decorate(uintptr_t addr) {
     return {&so, addr - so.begin};
 }
 
-void print_backtrace () {
-    void *array[20];
-    size_t size;
-
-    // Get void*'s for all entries on the stack
-    size = ::backtrace(array, 20);
-
-    // Print out all the frames to stderr
-    fprintf(stderr, "Error: signal:\n");
-    ::backtrace_symbols_fd(array, size, STDERR_FILENO);
-
-    // Print out all the frames to stdout
-    fprintf(stdout, "Error: signal:\n");
-    ::backtrace_symbols_fd(array, size, STDOUT_FILENO);
-}
-
 saved_backtrace current_backtrace() noexcept {
     saved_backtrace::vector_type v;
     backtrace([&] (frame f) {

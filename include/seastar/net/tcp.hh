@@ -1871,7 +1871,14 @@ void tcp<InetTraits>::tcb::close() {
         output();
     }).handle_exception([] (auto ep) {
         std::cerr << "tcp::tcb::close error: " << ep << std::endl;
-        printf("tcp::tcb::close error: %s\n", ep.what());
+        
+        try {
+            if (ep) {
+                std::rethrow_exception(ep);
+            }
+        } catch (const std::exception& e) {
+            printf("tcp::tcb::close error: %s\n", e.what());
+        }
     });
 }
 

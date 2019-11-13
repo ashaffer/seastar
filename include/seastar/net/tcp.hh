@@ -589,9 +589,11 @@ private:
             _state = SYN_RECEIVED;
             _snd.syn_tx_time = clock_type::now();
             // Send <SYN,ACK> to remote
+            printf("sent syn\n");
             output();
         }
         void do_established() {
+            printf("established\n");
             _state = ESTABLISHED;
             update_rto(_snd.syn_tx_time);
             _connect_done.set_value();
@@ -855,7 +857,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
 
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
-
+    printf("tcbp->connect\n");
     tcbp->connect();
     return connection(tcbp);
 }
@@ -1167,6 +1169,7 @@ void tcp<InetTraits>::tcb::input_handle_listen_state(tcp_hdr* th, packet p) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
+    printf("received packet in syn_sent state\n");
     auto opt_len = th->data_offset * 4 - tcp_hdr::len;
     auto opt_start = reinterpret_cast<uint8_t*>(p.get_header(0, th->data_offset * 4)) + tcp_hdr::len;
     auto opt_end = opt_start + opt_len;
@@ -1795,7 +1798,7 @@ void tcp<InetTraits>::tcb::connect() {
     // Maximum segment size local can receive
     _rcv.mss = _option._local_mss = local_mss();
     _rcv.window = get_default_receive_window_size();
-
+    printf("do_syn_sent\n");
     do_syn_sent();
 }
 

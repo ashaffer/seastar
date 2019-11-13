@@ -921,7 +921,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     auto id = connid{to, from, h.dst_port, h.src_port};
     printConnid(id);
     auto tcbi = _tcbs.find(id);
-    printf("Here: %u\n", _tcbs.size());
+    printf("Here: %u\n", (uint)_tcbs.size());
     for (auto it : _tcbs) {
         printf("\t");
         printConnid(it.first);

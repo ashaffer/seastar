@@ -858,7 +858,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
     printf("tcbp->connect: %u (%u)\n", (uint)_tcbs.size(), (uint)engine().cpu_id());
-    printConnid(id);
+    printConnid(id, _inet);
     tcbp->connect();
     return connection(tcbp);
 }
@@ -885,13 +885,13 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
     return true;
 }
 
-template<typename Connid>
-void printConnid (Connid &connid) {
+template<typename Connid, typname Inet>
+void printConnid (Connid &connid, Inet &inet) {
     in_addr local;
     in_addr foreign;
     local.s_addr = htonl(connid.local_ip.ip);
     foreign.s_addr = htonl(connid.foreign_ip.ip);
-    printf("%s:%u -> %s:%u\n", inet_ntoa(local), connid.local_port, inet_ntoa(foreign), connid.foreign_port);   
+    printf("%s:%u -> %s:%u (0x%x)\n", inet_ntoa(local), connid.local_port, inet_ntoa(foreign), connid.foreign_port, id.hash(inet._inet.netif()->rss_key()));
 }
 
 template <typename InetTraits>
@@ -920,12 +920,12 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     }
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
-    printConnid(id);
+    printConnid(id, _inet);
     auto tcbi = _tcbs.find(id);
     printf("Here: %u\n", (uint)_tcbs.size());
     for (auto it : _tcbs) {
         printf("\t");
-        printConnid(it.first);
+        printConnid(it.first, _inet);
     }
 
     lw_shared_ptr<tcb> tcbp;

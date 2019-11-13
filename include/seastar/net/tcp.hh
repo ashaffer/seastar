@@ -916,6 +916,13 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     infrom.s_addr = htonl(from.ip);
     printf("Here: %s:%u %s:%u\n", inet_ntoa(into), h.dst_port, inet_ntoa(infrom), h.src_port);
     auto tcbi = _tcbs.find(id);
+    for (auto it : _tcbs) {
+        in_addr into1;
+        in_addr infrom1;
+        into1.s_addr = htonl(to.ip);
+        infrom1.s_addr = htonl(from.ip);
+        printf("\t%s:%u %s:%u\n", inet_ntoa(into1), h.dst_port, inet_ntoa(infrom1), h.src_port);
+    }
 
     lw_shared_ptr<tcb> tcbp;
 

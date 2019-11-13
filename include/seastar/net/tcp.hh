@@ -884,6 +884,15 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
     return true;
 }
 
+template<typename Connid>
+void printConnid (Connid &connid) {
+    in_addr local;
+    in_addr foreign;
+    local.s_addr = htonl(connid.local_ip);
+    foreign.s_addr = htonl(connid.foreign_ip);
+    printf("%s:%u -> %s:%u\n", inet_ntoa(local), connid.local_port, inet_ntoa(foreign), connid.foreign_port);   
+}
+
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     printf("received\n");
@@ -910,18 +919,11 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     }
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
-    in_addr into;
-    in_addr infrom;
-    into.s_addr = htonl(to.ip);
-    infrom.s_addr = htonl(from.ip);
-    printf("Here: %s:%u %s:%u\n", inet_ntoa(into), h.dst_port, inet_ntoa(infrom), h.src_port);
+    printConnid(id);
     auto tcbi = _tcbs.find(id);
     for (auto it : _tcbs) {
-        in_addr into1;
-        in_addr infrom1;
-        into1.s_addr = htonl(to.ip);
-        infrom1.s_addr = htonl(from.ip);
-        printf("\t%s:%u %s:%u\n", inet_ntoa(into1), h.dst_port, inet_ntoa(infrom1), h.src_port);
+        printf("\t");
+        printConnid(it.first);
     }
 
     lw_shared_ptr<tcb> tcbp;

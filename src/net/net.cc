@@ -339,13 +339,10 @@ uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
 
 future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
-    printf("dispatch_packet\n");
 
      if (eh) {
-        printf("eh\n");
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
-            printf("found proto\n");
             l3_rx_stream& l3 = i->second;
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {

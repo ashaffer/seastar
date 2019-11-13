@@ -885,7 +885,7 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
     return true;
 }
 
-template<typename Connid, typname Inet>
+template<typename Connid, typename Inet>
 void printConnid (Connid &connid, Inet &inet) {
     in_addr local;
     in_addr foreign;

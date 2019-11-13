@@ -924,8 +924,9 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     auto tcbi = _tcbs.find(id);
     printf("Here: %u\n", (uint)_tcbs.size());
     for (auto it : _tcbs) {
+        auto id = it.first;
         printf("\t");
-        printConnid(it.first, _inet);
+        printConnid(id, _inet);
     }
 
     lw_shared_ptr<tcb> tcbp;

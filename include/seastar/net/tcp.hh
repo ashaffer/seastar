@@ -857,7 +857,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
 
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
-    printf("tcbp->connect\n");
+    printf("tcbp->connect: %u (%u)\n", (uint)_tcbs.size(), (uint)engine().cpu_id());
     tcbp->connect();
     return connection(tcbp);
 }
@@ -895,7 +895,7 @@ void printConnid (Connid &connid) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
-    printf("received\n");
+    printf("received: %u\n", (uint)engine().cpu_id());
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
         printf("no th\n");

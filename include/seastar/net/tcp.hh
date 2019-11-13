@@ -912,8 +912,8 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     auto id = connid{to, from, h.dst_port, h.src_port};
     in_addr into;
     in_addr infrom;
-    into.s_addr = to.ip;
-    infrom.s_addr = from.ip;
+    into.s_addr = htonl(to.ip);
+    infrom.s_addr = htonl(from.ip);
     printf("Here: %s:%u %s:%u\n", inet_ntoa(into), h.dst_port, inet_ntoa(infrom), h.src_port);
     auto tcbi = _tcbs.find(id);
 

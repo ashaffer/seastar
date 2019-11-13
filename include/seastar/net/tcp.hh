@@ -889,11 +889,13 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     printf("received\n");
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
+        printf("no th\n");
         return;
     }
     // data_offset is correct even before ntoh()
     auto data_offset = uint8_t(th[12]) >> 4;
     if (size_t(data_offset * 4) < tcp_hdr::len) {
+        printf("incorrect offset\n");
         return;
     }
 
@@ -902,6 +904,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
         InetTraits::tcp_pseudo_header_checksum(csum, from, to, p.len());
         csum.sum(p);
         if (csum.get() != 0) {
+            printf("incorrect csum\n");
             return;
         }
     }
@@ -921,12 +924,14 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // FIXME:
             //      if ACK off: <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
             //      if ACK on:  <SEQ=SEG.ACK><CTL=RST>
+            printf("no listener\n");
             return respond_with_reset(&h, id.local_ip, id.foreign_ip);
         } else {
             // 2) In LISTEN state
             // 2.1 first check for an RST
             if (h.f_rst) {
                 // An incoming RST should be ignored
+                printf("incoming rst\n");
                 return;
             }
             // 2.2 second check for an ACK
@@ -934,6 +939,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
                 // Any acknowledgment is bad if it arrives on a connection
                 // still in the LISTEN state.
                 // <SEQ=SEG.ACK><CTL=RST>
+                printf("sent ack to listener?\n");
                 return respond_with_reset(&h, id.local_ip, id.foreign_ip);
             }
             // 2.3 third check for a SYN
@@ -945,7 +951,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
                 // TODO: we need to remove the tcb and decrease the pending if
                 // it stays SYN_RECEIVED state forever.
                 listener->second->inc_pending();
-
+                printf("input_handle_listen_state\n");
                 return tcbp->input_handle_listen_state(&h, std::move(p));
             }
             // 2.4 fourth other text or control
@@ -956,10 +962,13 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     } else {
         tcbp = tcbi->second;
         tcbp->setReceivedAt(p.getReceivedAt());
+        printf("tcb found\n");
         if (tcbp->state() == tcp_state::SYN_SENT) {
+            printf("handle_syn_sent\n");
             // 3) In SYN_SENT State
             return tcbp->input_handle_syn_sent_state(&h, std::move(p));
         } else {
+            printf("handle_other\n");
             // 4) In other state, can be one of the following:
             // SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2
             // CLOSE_WAIT, CLOSING, LAST_ACK, TIME_WAIT

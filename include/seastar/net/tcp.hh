@@ -910,7 +910,11 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     }
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
-    printf("Here: %s:%u %s:%u\n", inet_ntoa(to.ip), h.dst_port, inet_ntoa(from.ip), h.src_port);
+    in_addr into;
+    in_addr infrom;
+    into.s_addr = to.ip;
+    infrom.s_addr = from.ip;
+    printf("Here: %s:%u %s:%u\n", inet_ntoa(into), h.dst_port, inet_ntoa(infrom), h.src_port);
     auto tcbi = _tcbs.find(id);
 
     lw_shared_ptr<tcb> tcbp;

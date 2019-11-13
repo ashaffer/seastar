@@ -888,8 +888,8 @@ template<typename Connid>
 void printConnid (Connid &connid) {
     in_addr local;
     in_addr foreign;
-    local.s_addr = htonl(connid.local_ip);
-    foreign.s_addr = htonl(connid.foreign_ip);
+    local.s_addr = htonl(connid.local_ip.ip);
+    foreign.s_addr = htonl(connid.foreign_ip.ip);
     printf("%s:%u -> %s:%u\n", inet_ntoa(local), connid.local_port, inet_ntoa(foreign), connid.foreign_port);   
 }
 

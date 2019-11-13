@@ -858,6 +858,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
     printf("tcbp->connect: %u (%u)\n", (uint)_tcbs.size(), (uint)engine().cpu_id());
+    printConnid(id);
     tcbp->connect();
     return connection(tcbp);
 }

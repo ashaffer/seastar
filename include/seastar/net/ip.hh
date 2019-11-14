@@ -228,13 +228,13 @@ struct l4connid {
 
     uint32_t hash(rss_key_type rss_key) {
         forward_hash hash_data;
-        // if (htonl(local_ip.ip) < htonl(foreign_ip.ip)) {
-        //     hash_data.push_back(htonl(local_ip.ip));
-        //     hash_data.push_back(htonl(foreign_ip.ip));
-        // } else {
+        if (htonl(local_ip.ip) < htonl(foreign_ip.ip)) {
+            hash_data.push_back(htonl(local_ip.ip));
+            hash_data.push_back(htonl(foreign_ip.ip));
+        } else {
             hash_data.push_back(htonl(foreign_ip.ip));
             hash_data.push_back(htonl(local_ip.ip));           
-        // }
+        }
 
         // if (htons(local_port) < htons(foreign_port)) {
         //     hash_data.push_back(htons(local_port));

@@ -855,7 +855,6 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
 
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
-    printConnid(id, _inet);
     tcbp->connect();
     return connection(tcbp);
 }
@@ -912,13 +911,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     }
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
-    printConnid(id, _inet);
     auto tcbi = _tcbs.find(id);
-    for (auto it : _tcbs) {
-        auto id = it.first;
-        printf("\t");
-        printConnid(id, _inet);
-    }
 
     lw_shared_ptr<tcb> tcbp;
 

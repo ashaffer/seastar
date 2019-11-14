@@ -345,6 +345,7 @@ future<> interface::dispatch_packet(packet p) {
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
 
+            printf("hwrss-pre: 0x%x\n", p.rss_hash().value());
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {

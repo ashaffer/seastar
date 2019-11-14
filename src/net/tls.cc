@@ -590,6 +590,8 @@ public:
             gtls_chk(gnutls_priority_set(*this, prio));
         }
 
+        char name[] = "api.binance.com";
+        gnutls_server_name_set(*this, GNUTLS_NAME_DNS, name, strlen(name));
         gnutls_transport_set_ptr(*this, this);
         gnutls_transport_set_vec_push_function(*this, &vec_push_wrapper);
         gnutls_transport_set_pull_function(*this, &pull_wrapper);

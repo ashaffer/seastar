@@ -590,7 +590,6 @@ public:
             gtls_chk(gnutls_priority_set(*this, prio));
         }
 
-        printf("gnutls_server_name_set: %s\n", _hostname.data());
         gnutls_server_name_set(*this, GNUTLS_NAME_DNS, _hostname.data(), _hostname.size());
         gnutls_transport_set_ptr(*this, this);
         gnutls_transport_set_vec_push_function(*this, &vec_push_wrapper);

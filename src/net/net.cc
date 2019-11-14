@@ -345,30 +345,23 @@ future<> interface::dispatch_packet(packet p) {
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
 
-            forward_hash data;
-            l3.forward(data, p, sizeof(eth_hdr));
-            printf("hwrss-pre: 0x%x vs 0x%x\n", p.rss_hash().value(), toeplitz_hash(rss_key(), data));
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {
-                    printf("hwrss: 0x%x\n", hwrss.value());
                     return hwrss.value();
                 } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        printf("l3forward: 0x%x\n", toeplitz_hash(rss_key(), data));
                         return toeplitz_hash(rss_key(), data);
                     }
-                    printf("returning zero\n");
                     return 0u;
                 }
             });
 
             if (fw != engine().cpu_id()) {
-                printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
+                // printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
                 forward(fw, std::move(p));
             } else {
-                printf("no forward necessary: %u\n", (uint)engine().cpu_id());
                 auto h = ntoh(*eh);
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));

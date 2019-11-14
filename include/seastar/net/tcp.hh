@@ -589,11 +589,9 @@ private:
             _state = SYN_RECEIVED;
             _snd.syn_tx_time = clock_type::now();
             // Send <SYN,ACK> to remote
-            printf("sent syn\n");
             output();
         }
         void do_established() {
-            printf("established\n");
             _state = ESTABLISHED;
             update_rto(_snd.syn_tx_time);
             _connect_done.set_value();
@@ -857,7 +855,6 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
 
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
-    printf("tcbp->connect: %u (%u)\n", (uint)_tcbs.size(), (uint)engine().cpu_id());
     printConnid(id, _inet);
     tcbp->connect();
     return connection(tcbp);
@@ -868,16 +865,13 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
     auto th = p.get_header(off, tcp_hdr::len);
     if (th) {
         tcp_hdr *hdr = (tcp_hdr *)th;
-        printf("Adding ports: %u -> %u\n", (uint)hdr->src_port, (uint)hdr->dst_port);
         // src_port, dst_port in network byte order
         if (htons(hdr->src_port) < htons(hdr->dst_port)) {
-            printf("a\n");
             out_hash_data.push_back(uint8_t(th[0]));
             out_hash_data.push_back(uint8_t(th[1]));
             out_hash_data.push_back(uint8_t(th[2]));
             out_hash_data.push_back(uint8_t(th[3]));
         } else {
-            printf("b\n");
             out_hash_data.push_back(uint8_t(th[2]));
             out_hash_data.push_back(uint8_t(th[3]));
             out_hash_data.push_back(uint8_t(th[0]));
@@ -898,16 +892,13 @@ void printConnid (Connid &connid, Inet &inet) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
-    printf("received: %u\n", (uint)engine().cpu_id());
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
-        printf("no th\n");
         return;
     }
     // data_offset is correct even before ntoh()
     auto data_offset = uint8_t(th[12]) >> 4;
     if (size_t(data_offset * 4) < tcp_hdr::len) {
-        printf("incorrect offset\n");
         return;
     }
 
@@ -916,7 +907,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
         InetTraits::tcp_pseudo_header_checksum(csum, from, to, p.len());
         csum.sum(p);
         if (csum.get() != 0) {
-            printf("incorrect csum\n");
             return;
         }
     }
@@ -924,7 +914,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     auto id = connid{to, from, h.dst_port, h.src_port};
     printConnid(id, _inet);
     auto tcbi = _tcbs.find(id);
-    printf("Here: %u\n", (uint)_tcbs.size());
     for (auto it : _tcbs) {
         auto id = it.first;
         printf("\t");
@@ -943,14 +932,12 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // FIXME:
             //      if ACK off: <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
             //      if ACK on:  <SEQ=SEG.ACK><CTL=RST>
-            printf("no listener\n");
             return respond_with_reset(&h, id.local_ip, id.foreign_ip);
         } else {
             // 2) In LISTEN state
             // 2.1 first check for an RST
             if (h.f_rst) {
                 // An incoming RST should be ignored
-                printf("incoming rst\n");
                 return;
             }
             // 2.2 second check for an ACK
@@ -958,7 +945,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
                 // Any acknowledgment is bad if it arrives on a connection
                 // still in the LISTEN state.
                 // <SEQ=SEG.ACK><CTL=RST>
-                printf("sent ack to listener?\n");
                 return respond_with_reset(&h, id.local_ip, id.foreign_ip);
             }
             // 2.3 third check for a SYN
@@ -970,7 +956,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
                 // TODO: we need to remove the tcb and decrease the pending if
                 // it stays SYN_RECEIVED state forever.
                 listener->second->inc_pending();
-                printf("input_handle_listen_state\n");
                 return tcbp->input_handle_listen_state(&h, std::move(p));
             }
             // 2.4 fourth other text or control
@@ -981,13 +966,10 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     } else {
         tcbp = tcbi->second;
         tcbp->setReceivedAt(p.getReceivedAt());
-        printf("tcb found\n");
         if (tcbp->state() == tcp_state::SYN_SENT) {
-            printf("handle_syn_sent\n");
             // 3) In SYN_SENT State
             return tcbp->input_handle_syn_sent_state(&h, std::move(p));
         } else {
-            printf("handle_other\n");
             // 4) In other state, can be one of the following:
             // SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2
             // CLOSE_WAIT, CLOSING, LAST_ACK, TIME_WAIT
@@ -1198,7 +1180,6 @@ void tcp<InetTraits>::tcb::input_handle_listen_state(tcp_hdr* th, packet p) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
-    printf("received packet in syn_sent state\n");
     auto opt_len = th->data_offset * 4 - tcp_hdr::len;
     auto opt_start = reinterpret_cast<uint8_t*>(p.get_header(0, th->data_offset * 4)) + tcp_hdr::len;
     auto opt_end = opt_start + opt_len;
@@ -1827,7 +1808,6 @@ void tcp<InetTraits>::tcb::connect() {
     // Maximum segment size local can receive
     _rcv.mss = _option._local_mss = local_mss();
     _rcv.window = get_default_receive_window_size();
-    printf("do_syn_sent\n");
     do_syn_sent();
 }
 

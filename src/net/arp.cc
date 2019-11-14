@@ -53,7 +53,6 @@ compat::optional<l3_protocol::l3packet> arp::get_packet() {
 }
 
 bool arp::forward(forward_hash& out_hash_data, packet& p, size_t off) {
-    printf("arp forward\n");
     auto ah = p.get_header<arp_hdr>(off);
     auto i = _arp_for_protocol.find(ntoh(ah->ptype));
     if (i != _arp_for_protocol.end()) {

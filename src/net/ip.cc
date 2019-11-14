@@ -81,7 +81,7 @@ bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
     in_addr src, dst;
     src.s_addr = iph->src_ip.ip;
     dst.s_addr = iph->dst_ip.ip;
-    printf("ipv4::forward: %s -> %s\n", inet_ntoa(src), inet_ntoa(dst));
+    printf("ipv4::forward: %s -> %s\n", strdup(inet_ntoa(src)), strdup(inet_ntoa(dst)));
     if (htonl(iph->src_ip.ip) < htonl(iph->dst_ip.ip)) {
         printf("a\n");
         out_hash_data.push_back(iph->src_ip.ip);

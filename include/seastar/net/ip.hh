@@ -237,11 +237,11 @@ struct l4connid {
         }
 
         if (htons(local_port) < htons(foreign_port)) {
-            hash_data.push_back(htons(local_port));
             hash_data.push_back(htons(foreign_port));
+            hash_data.push_back(htons(local_port));
         } else {
-            hash_data.push_back(htons(foreign_port));
             hash_data.push_back(htons(local_port));
+            hash_data.push_back(htons(foreign_port));
         }
         return toeplitz_hash(rss_key, hash_data);
     }

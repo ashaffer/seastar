@@ -236,13 +236,13 @@ struct l4connid {
             hash_data.push_back(htonl(local_ip.ip));           
         }
 
-        if (htons(local_port) < htons(foreign_port)) {
+        // if (htons(local_port) < htons(foreign_port)) {
             hash_data.push_back(htons(foreign_port));
             hash_data.push_back(htons(local_port));
-        } else {
-            hash_data.push_back(htons(local_port));
-            hash_data.push_back(htons(foreign_port));
-        }
+        // } else {
+        //     hash_data.push_back(htons(local_port));
+        //     hash_data.push_back(htons(foreign_port));
+        // }
         return toeplitz_hash(rss_key, hash_data);
     }
 };

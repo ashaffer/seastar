@@ -868,14 +868,16 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
     auto th = p.get_header(off, tcp_hdr::len);
     if (th) {
         tcp_hdr *hdr = (tcp_hdr *)th;
-
+        printf("Adding ports: %u -> %u\n", (uint)hdr->src_port, (uint)hdr->dst_port);
         // src_port, dst_port in network byte order
         if (htons(hdr->src_port) < htons(hdr->dst_port)) {
+            printf("a\n");
             out_hash_data.push_back(uint8_t(th[0]));
             out_hash_data.push_back(uint8_t(th[1]));
             out_hash_data.push_back(uint8_t(th[2]));
             out_hash_data.push_back(uint8_t(th[3]));
         } else {
+            printf("b\n");
             out_hash_data.push_back(uint8_t(th[2]));
             out_hash_data.push_back(uint8_t(th[3]));
             out_hash_data.push_back(uint8_t(th[0]));

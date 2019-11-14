@@ -78,11 +78,16 @@ ipv4::ipv4(interface* netif)
 bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
 {
     auto iph = p.get_header<ip_hdr>(off);
-
+    in_addr src, dst;
+    src.s_addr = iph->src_ip.ip;
+    dst.s_addr = iph->dst_ip.ip;
+    printf("ipv4::forward: %s -> %s\n", inet_ntoa(src), inet_ntoa(dst));
     if (htonl(iph->src_ip.ip) < htonl(iph->dst_ip.ip)) {
+        printf("a\n");
         out_hash_data.push_back(iph->src_ip.ip);
         out_hash_data.push_back(iph->dst_ip.ip);
     } else {
+        printf("b\n");
         out_hash_data.push_back(iph->dst_ip.ip);
         out_hash_data.push_back(iph->src_ip.ip);
     }
@@ -91,6 +96,7 @@ bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
     auto l4 = _l4[h.ip_proto];
     if (l4) {
         if (h.mf() == false && h.offset() == 0) {
+            printf("forwarding to l4\n");
             // This IP datagram is atomic, forward according to tcp or udp connection hash
             l4->forward(out_hash_data, p, off + sizeof(ip_hdr));
         }

@@ -569,8 +569,11 @@ private:
             }
         }
         void signal_all_data_acked() {
+            this->closeState = 15;
             if (_snd._all_data_acked_promise && _snd.unsent_len == 0) {
+                this->closeState = 16;
                 _snd._all_data_acked_promise->set_value();
+                this->closeState = 17;
                 _snd._all_data_acked_promise = {};
             }
         }
@@ -598,19 +601,23 @@ private:
             _connect_done.set_value();
         }
         void do_reset() {
+            this->closeState = 19;
             _state = CLOSED;
             cleanup();
             if (_rcv._data_received_promise) {
+                this->closeState = 20;
                 printf("connection reset: _data_received_promise\n");
                 _rcv._data_received_promise->set_exception(tcp_reset_error());
                 _rcv._data_received_promise = compat::nullopt;
             }
             if (_snd._all_data_acked_promise) {
+                this->closeState = 21;                
                 printf("connection reset: _all_data_acked_promise\n");
                 _snd._all_data_acked_promise->set_exception(tcp_reset_error());
                 _snd._all_data_acked_promise = compat::nullopt;
             }
             if (_snd._send_available_promise) {
+                this->closeState = 22;                
                 printf("connection reset: _send_available_promise\n");
                 _snd._send_available_promise->set_exception(tcp_reset_error());
                 _snd._send_available_promise = compat::nullopt;
@@ -1783,10 +1790,14 @@ tcp<InetTraits>::tcb::abort_reader() {
 
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::wait_for_all_data_acked() {
+    this->closeState = 10;
     if (_snd.data.empty() && _snd.unsent_len == 0) {
+        this->closeState = 11;
         return make_ready_future<>();
     }
+    this->closeState = 12;
     _snd._all_data_acked_promise = promise<>();
+    this->closeState = 13;
     return _snd._all_data_acked_promise->get_future();
 }
 

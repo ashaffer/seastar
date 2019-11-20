@@ -400,6 +400,7 @@ private:
         std::chrono::high_resolution_clock::time_point _receivedAt;
 
         uint16_t _nr_full_seg_received = 0;
+        uint closeState;
         struct isn_secret {
             // 512 bits secretkey for ISN generating
             uint32_t key[16];
@@ -1857,25 +1858,33 @@ void tcp<InetTraits>::tcb::close() {
     if (in_state(CLOSED) || _snd.closed) {
         return;
     }
+
+    this.closeState = 0;
     // TODO: We should return a future to upper layer
     (void)wait_for_all_data_acked().then([this, zis = this->shared_from_this()] () mutable {
         _snd.closed = true;
+        this->closeState = 1;
         tcp_debug("close: unsent_len=%d\n", _snd.unsent_len);
         if (in_state(CLOSE_WAIT)) {
+            this->closeState = 2;
             tcp_debug("close: CLOSE_WAIT -> LAST_ACK\n");
             _state = LAST_ACK;
         } else if (in_state(ESTABLISHED)) {
+            this->closeState = 3;
             tcp_debug("close: ESTABLISHED -> FIN_WAIT_1\n");
             _state = FIN_WAIT_1;
         }
+        this->closeState = 4;
         // Send <FIN> to remote
         // Note: we call output_one to make sure a packet with FIN actually
         // sent out. If we only call output() and _packetq is not empty,
         // tcp::tcb::get_packet(), packet with FIN will not be generated.
         output_one();
+        this->closeState = 5;
         output();
-    }).handle_exception([] (auto ep) {
-        std::cerr << "tcp::tcb::close error1: " << ep << std::endl;
+        this->closeState = 6;
+    }).handle_exception([this] (auto ep) {
+        std::cerr << "tcp::tcb::close error1: " << ep << "(" << this->closeState << ")" std::endl;
         
         try {
             if (ep) {

@@ -1859,7 +1859,7 @@ void tcp<InetTraits>::tcb::close() {
         return;
     }
 
-    this.closeState = 0;
+    this->closeState = 0;
     // TODO: We should return a future to upper layer
     (void)wait_for_all_data_acked().then([this, zis = this->shared_from_this()] () mutable {
         _snd.closed = true;
@@ -1884,7 +1884,7 @@ void tcp<InetTraits>::tcb::close() {
         output();
         this->closeState = 6;
     }).handle_exception([this] (auto ep) {
-        std::cerr << "tcp::tcb::close error1: " << ep << "(" << this->closeState << ")" std::endl;
+        std::cerr << "tcp::tcb::close error1: " << ep << "(" << this->closeState << ")" << std::endl;
         
         try {
             if (ep) {

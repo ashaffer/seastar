@@ -1790,14 +1790,14 @@ tcp<InetTraits>::tcb::abort_reader() {
 
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::wait_for_all_data_acked() {
-    this->closeState = 10;
+    // this->closeState = 10;
     if (_snd.data.empty() && _snd.unsent_len == 0) {
         this->closeState = 11;
         return make_ready_future<>();
     }
-    this->closeState = 12;
+    // this->closeState = 12;
     _snd._all_data_acked_promise = promise<>();
-    this->closeState = 13;
+    // this->closeState = 13;
     return _snd._all_data_acked_promise->get_future();
 }
 
@@ -1870,11 +1870,11 @@ void tcp<InetTraits>::tcb::close() {
         return;
     }
 
-    this->closeState = 0;
+    // this->closeState = 0;
     // TODO: We should return a future to upper layer
     (void)wait_for_all_data_acked().then([this, zis = this->shared_from_this()] () mutable {
-        _snd.closed = true;
         this->closeState = 1;
+        _snd.closed = true;
         tcp_debug("close: unsent_len=%d\n", _snd.unsent_len);
         if (in_state(CLOSE_WAIT)) {
             this->closeState = 2;

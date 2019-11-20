@@ -400,7 +400,7 @@ private:
         std::chrono::high_resolution_clock::time_point _receivedAt;
 
         uint16_t _nr_full_seg_received = 0;
-        uint closeState;
+        uint closeState = -1;
         struct isn_secret {
             // 512 bits secretkey for ISN generating
             uint32_t key[16];
@@ -569,7 +569,7 @@ private:
             }
         }
         void signal_all_data_acked() {
-            this->closeState = 15;
+            // this->closeState = 15;
             if (_snd._all_data_acked_promise && _snd.unsent_len == 0) {
                 this->closeState = 16;
                 _snd._all_data_acked_promise->set_value();

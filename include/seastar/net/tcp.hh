@@ -1797,7 +1797,7 @@ future<> tcp<InetTraits>::tcb::wait_for_all_data_acked() {
     }
     // this->closeState = 12;
     _snd._all_data_acked_promise = promise<>();
-    // this->closeState = 13;
+    this->closeState = 13;
     return _snd._all_data_acked_promise->get_future();
 }
 
@@ -1896,7 +1896,7 @@ void tcp<InetTraits>::tcb::close() {
         this->closeState = 6;
     }).handle_exception([this] (auto ep) {
         std::cerr << "tcp::tcb::close error1: " << ep << "(" << this->closeState << ")" << std::endl;
-        
+        std::raise(SIGINT);
         try {
             if (ep) {
                 std::rethrow_exception(ep);

@@ -1896,7 +1896,7 @@ void tcp<InetTraits>::tcb::close() {
         this->closeState = 6;
     }).handle_exception([this] (auto ep) {
         std::cerr << "tcp::tcb::close error1: " << ep << "(" << this->closeState << ")" << std::endl;
-        std::raise(SIGINT);
+        raise(SIGINT);
         try {
             if (ep) {
                 std::rethrow_exception(ep);

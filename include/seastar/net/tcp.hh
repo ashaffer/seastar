@@ -1895,15 +1895,16 @@ void tcp<InetTraits>::tcb::close() {
         output();
         this->closeState = 6;
     }).handle_exception([this] (auto ep) {
-        std::cerr << "tcp::tcb::close error1: " << ep << "(" << this->closeState << ")" << std::endl;
-        asm volatile ("int3;");
+        // std::cerr << "tcp::tcb::close error1: " << ep << "(" << this->closeState << ")" << std::endl;
         
         try {
             if (ep) {
                 std::rethrow_exception(ep);
+            } else {
+                printf("tcp::tcb::close errror: null exception ptr (%u)\n", this->closeState);
             }
         } catch (const std::exception& e) {
-            printf("tcp::tcb::close error2: %s\n", e.what());
+            printf("tcp::tcb::close error2: %s (%u)\n", e.what(), this->closeState);
         }
     });
 }

@@ -290,9 +290,7 @@ public:
     }
     future<> set_system_trust() {
         return async([this] {
-            printf("set_system_trust\n");
             gtls_chk(gnutls_certificate_set_x509_system_trust(_creds));
-            printf("system trust set\n");
             _load_system_trust = false; // should only do once, for whatever reason
         });
     }

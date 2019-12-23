@@ -872,11 +872,10 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
 template <typename InetTraits>
 bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off) {
     auto th = p.get_header(off, tcp_hdr::len);
-    printf("src port: %u\n", hdr->src_port);
-    printf("dst port: %u\n", hdr->dst_port);
-
     if (th) {
         tcp_hdr *hdr = (tcp_hdr *)th;
+        printf("src port: %u\n", hdr->src_port);
+        printf("dst port: %u\n", hdr->dst_port);
         // src_port, dst_port in network byte order
         if (htons(hdr->src_port) < htons(hdr->dst_port)) {
             out_hash_data.push_back(uint8_t(th[0]));

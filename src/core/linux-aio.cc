@@ -154,7 +154,9 @@ int io_pgetevents(aio_context_t io_context, long min_nr, long nr, io_event* even
 }
 
 void setup_aio_context(size_t nr, linux_abi::aio_context_t* io_context) {
+    printf("setup aio...\n");
     auto r = io_setup(nr, io_context);
+    printf("aio setup\n");
     if (r < 0) {
         char buf[1024];
         char *msg = strerror_r(errno, buf, sizeof(buf));

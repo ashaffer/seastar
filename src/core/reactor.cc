@@ -896,45 +896,35 @@ reactor::reactor(unsigned id, reactor_backend_selector rbs, reactor_config cfg)
     , _io_context(0)
     , _reuseport(posix_reuseport_detect())
     , _thread_pool(std::make_unique<thread_pool>(this, seastar::format("syscall-{}", id))) {
-    printf("a\n");
     _task_queues.push_back(std::make_unique<task_queue>(0, "main", 1000));
     _task_queues.push_back(std::make_unique<task_queue>(1, "atexit", 1000));
-    printf("b\n");
     _at_destroy_tasks = _task_queues.back().get();
     g_need_preempt = &_preemption_monitor;
     seastar::thread_impl::init();
-    printf("c\n");
     _backend->start_tick();
     for (unsigned i = 0; i != max_aio; ++i) {
         _free_iocbs.push(&_iocb_pool[i]);
     }
-    printf("d\n");
+
     setup_aio_context(max_aio, &_io_context);
-    printf("dd\n");
 #ifdef HAVE_OSV
     _timer_thread.start();
-    printf("ddd\n");
 #else
     sigset_t mask;
     sigemptyset(&mask);
-    printf("dddd\n");
     sigaddset(&mask, alarm_signal());
-    printf("e\n");
     auto r = ::pthread_sigmask(SIG_BLOCK, &mask, NULL);
     assert(r == 0);
     sigemptyset(&mask);
-    printf("f\n");
     sigaddset(&mask, cpu_stall_detector::signal_number());
     r = ::pthread_sigmask(SIG_UNBLOCK, &mask, NULL);
     assert(r == 0);
-    printf("g\n");
 #endif
     memory::set_reclaim_hook([this] (std::function<void ()> reclaim_fn) {
         add_high_priority_task(make_task(default_scheduling_group(), [fn = std::move(reclaim_fn)] {
             fn();
         }));
     });
-    printf("h\n");
 }
 
 reactor::~reactor() {

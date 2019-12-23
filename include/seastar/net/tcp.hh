@@ -899,13 +899,16 @@ void printConnid (Connid &connid, Inet &inet) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
+    printf("received\n");
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
+        printf("a\n");
         return;
     }
     // data_offset is correct even before ntoh()
     auto data_offset = uint8_t(th[12]) >> 4;
     if (size_t(data_offset * 4) < tcp_hdr::len) {
+        printf("b\n");
         return;
     }
 
@@ -914,6 +917,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
         InetTraits::tcp_pseudo_header_checksum(csum, from, to, p.len());
         csum.sum(p);
         if (csum.get() != 0) {
+            printf("c\n");
             return;
         }
     }
@@ -926,6 +930,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     if (tcbi == _tcbs.end()) {
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
+            printf("d\n");
             // 1) In CLOSE state
             // 1.1 all data in the incoming segment is discarded.  An incoming
             // segment containing a RST is discarded. An incoming segment not
@@ -938,6 +943,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // 2) In LISTEN state
             // 2.1 first check for an RST
             if (h.f_rst) {
+                printf("e\n");
                 // An incoming RST should be ignored
                 return;
             }
@@ -965,6 +971,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             return;
         }
     } else {
+        printf("f\n");
         tcbp = tcbi->second;
         tcbp->setReceivedAt(p.getReceivedAt());
         if (tcbp->state() == tcp_state::SYN_SENT) {

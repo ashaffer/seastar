@@ -910,11 +910,14 @@ reactor::reactor(unsigned id, reactor_backend_selector rbs, reactor_config cfg)
     }
     printf("d\n");
     setup_aio_context(max_aio, &_io_context);
+    printf("dd\n");
 #ifdef HAVE_OSV
     _timer_thread.start();
+    printf("ddd\n");
 #else
     sigset_t mask;
     sigemptyset(&mask);
+    printf("dddd\n");
     sigaddset(&mask, alarm_signal());
     printf("e\n");
     auto r = ::pthread_sigmask(SIG_BLOCK, &mask, NULL);

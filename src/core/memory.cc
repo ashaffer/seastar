@@ -1194,8 +1194,6 @@ void free_large(void* ptr) {
 }
 
 size_t object_size(void* ptr) {
-    printf("object_size\n");
-    printf("object_cpu_id: %u\n", (uint)object_cpu_id(ptr));
     return cpu_pages::all_cpus[object_cpu_id(ptr)]->object_size(ptr);
 }
 
@@ -1532,7 +1530,6 @@ void* realloc(void* ptr, size_t size) {
     if (try_trigger_error_injector()) {
         return nullptr;
     }
-    printf("realloc: 0x%lx 0x%x\n", (uint64_t)ptr, (uint)size);
     auto old_size = ptr ? object_size(ptr) : 0;
     if (size == old_size) {
         return ptr;

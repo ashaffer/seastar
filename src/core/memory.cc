@@ -1530,7 +1530,7 @@ void* realloc(void* ptr, size_t size) {
     if (try_trigger_error_injector()) {
         return nullptr;
     }
-    printf("realloc: 0x%x\n", (uint)size);
+    printf("realloc: 0x%llx 0x%x\n", ptr, (uint)size);
     auto old_size = ptr ? object_size(ptr) : 0;
     if (size == old_size) {
         return ptr;

@@ -348,6 +348,7 @@ future<> interface::dispatch_packet(packet p) {
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {
+                    printf("hwrss: 0x%x\n", (uint)hwrss.value());
                     return hwrss.value();
                 } else {
                     forward_hash data;

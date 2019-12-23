@@ -861,7 +861,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
              (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_key())) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
-    printf("sending from %u\n", (uint)engine().cpu_id());
+    printf("sending from %u (0x%x)\n", (uint)engine().cpu_id(), id.hash(_inet._inet.netif()->rss_key()));
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
     tcbp->connect();

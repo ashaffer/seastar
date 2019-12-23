@@ -1194,6 +1194,8 @@ void free_large(void* ptr) {
 }
 
 size_t object_size(void* ptr) {
+    printf("object_size\n");
+    printf("object_cpu_id: %u\n", (uint)object_cpu_id(ptr));
     return cpu_pages::all_cpus[object_cpu_id(ptr)]->object_size(ptr);
 }
 

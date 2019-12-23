@@ -346,6 +346,8 @@ future<> interface::dispatch_packet(packet p) {
             l3_rx_stream& l3 = i->second;
             auto hwrss = p.rss_hash();
             printf("hwrss: 0x%x\n", (uint)hwrss.value());
+            forward_hash data;
+            l3.forward(data, p, sizeof(eth_hdr));
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();

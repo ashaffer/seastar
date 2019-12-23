@@ -344,11 +344,12 @@ future<> interface::dispatch_packet(packet p) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
+            auto hwrss = p.rss_hash();
+            printf("hwrss: 0x%x\n", (uint)hwrss.value());
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {
-                    printf("hwrss: 0x%x\n", (uint)hwrss.value());
                     return hwrss.value();
                 } else {
                     forward_hash data;

@@ -339,7 +339,7 @@ uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
 
 future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
-
+    printf("dispatch packet\n");
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
@@ -358,6 +358,7 @@ future<> interface::dispatch_packet(packet p) {
                 }
             });
 
+            printf("dispatch to: %u %u\n", (uint)fw, (uint)engine().cpu_id());
             if (fw != engine().cpu_id()) {
                 // printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
                 forward(fw, std::move(p));

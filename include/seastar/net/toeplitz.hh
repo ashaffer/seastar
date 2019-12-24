@@ -78,14 +78,12 @@ static constexpr uint8_t default_rsskey_40bytes[] = {
    0x25, 0x5b, 0x0e, 0xc2, 0x6d, 0x5a, 0x56, 0xda
 };
 
-static uint32_t startingHash = 0xFFFFFFFF;
-static bool fullHash = false;
 
 template<typename T>
 static inline uint32_t
-toeplitz_hash(rss_key_type key, const T& data)
+toeplitz_hash(rss_key_type key, const T& data, uint32_t hash = 0x0, bool full = true)
 {
-	uint32_t hash = startingHash, v;
+	uint32_t v;
 	u_int i, b;
 
 	/* XXXRW: Perhaps an assertion about key length vs. data length? */
@@ -102,7 +100,7 @@ toeplitz_hash(rss_key_type key, const T& data)
 		}
 	}
 
-	return fullHash
+	return full
 		? hash
 		: (((hash) & 0xFFFF) << 16) | (hash & 0xFFFF);
 }

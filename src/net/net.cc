@@ -355,12 +355,12 @@ future<> interface::dispatch_packet(packet p) {
                 //     return hwrss.value();
                 // } else {
                     forward_hash data;
-                    if (l3.forward(data, p, sizeof(eth_hdr))) {
+                    // if (l3.forward(data, p, sizeof(eth_hdr))) {
                         auto hash = toeplitz_hash(rss_key(), data);
                         printf("here: %u\n", hash2cpu(hash));
                         return hash;
-                    }
-                    return 0u;
+                    // }
+                    // return 0u;
                 // }
             });
 

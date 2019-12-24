@@ -294,7 +294,6 @@ public:
     unsigned forward_dst(unsigned src_cpuid, Func&& hashfn) {
         auto& qp = queue_for_cpu(src_cpuid);
         if (!qp._sw_reta) {
-            printf("no sw_reta, returning src: %u\n", (uint)engine().cpu_id());
             return src_cpuid;
         }
         auto hash = hashfn() >> _rss_table_bits;

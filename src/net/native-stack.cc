@@ -41,7 +41,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
 namespace seastar {
 
 namespace net {
@@ -66,6 +65,9 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
     std::vector<std::shared_ptr<device>> devices;
     device_configs dev_cfgs;
+
+    fullHash = opts["full-rss-hash"].as<bool>();
+    startingHash = opts["rss-seed"].as<uint32_t>();
 
     if ( deprecated_config_used) {
 #ifdef SEASTAR_HAVE_DPDK
@@ -377,6 +379,8 @@ boost::program_options::options_description nns_options() {
         ("net-config-file",
                 boost::program_options::value<std::string>()->default_value(""),
                 "net config file describing the NIC devices to use")
+        ("full-rss-hash", boost::program_options::value<bool>()->default_value(false), "Whether to return the full rss hash, or mirror the low order word")
+        ("rss-seed", boost::program_options::value<uint32_t>()->default_value(0xFFFFFFFF), "Initial value to begin hash with for RSS")
         ("tap-device",
                 boost::program_options::value<std::string>()->default_value("tap0"),
                 "tap device to connect to")

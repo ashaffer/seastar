@@ -341,35 +341,27 @@ uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
 
 future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
-    printf("dispatch packet\n");
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
-            auto hwrss = p.rss_hash();
-            forward_hash data;
-            l3.forward(data, p, sizeof(eth_hdr));
-            printf("hwrss: 0x%x vs 0x%x 0x%x\n", (uint)hwrss.value(), toeplitz_hash(rss_key(), data), toeplitz_hash_full(rss_key(), data));
 
-            auto fw = _dev->forward_dst(engine().cpu_id(), [this] () {
-                printf("asdfasdf\n");
-                // auto hwrss = p.rss_hash();
-                // if (hwrss) {
-                //     return hwrss.value();
-                // } else {
+            auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
+                auto hwrss = p.rss_hash();
+                if (hwrss) {
+                    return hwrss.value();
+                } else {
                     forward_hash data;
-                    // if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        auto hash = toeplitz_hash(rss_key(), data);
-                        printf("here: %u\n", hash2cpu(hash));
-                        return hash;
-                    // }
-                    // return 0u;
-                // }
+                    if (l3.forward(data, p, sizeof(eth_hdr))) {
+                        return toeplitz_hash(rss_key(), data);
+                    }
+                    return 0u;
+                }
             });
 
-            printf("dispatch to: %u %u\n", (uint)fw, (uint)engine().cpu_id());
+            // printf("dispatch to: %u %u\n", (uint)fw, (uint)engine().cpu_id());
             if (fw != engine().cpu_id()) {
-                printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
+                // printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
                 forward(fw, std::move(p));
             } else {
                 auto h = ntoh(*eh);

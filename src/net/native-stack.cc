@@ -66,8 +66,8 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     std::vector<std::shared_ptr<device>> devices;
     device_configs dev_cfgs;
 
-    fullHash = opts["full-rss-hash"].as<bool>();
-    startingHash = opts["rss-seed"].as<uint32_t>();
+    // fullHash = opts["full-rss-hash"].as<bool>();
+    // startingHash = opts["rss-seed"].as<uint32_t>();
 
     if ( deprecated_config_used) {
 #ifdef SEASTAR_HAVE_DPDK

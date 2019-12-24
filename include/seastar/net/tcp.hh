@@ -861,8 +861,8 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
              (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_key())) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
-    printf("sending from %u (0x%x)\n", (uint)engine().cpu_id(), id.hash(_inet._inet.netif()->rss_key()));
-    printConnid(id, _inet);
+    // printf("sending from %u (0x%x)\n", (uint)engine().cpu_id(), id.hash(_inet._inet.netif()->rss_key()));
+    // printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
     tcbp->connect();
@@ -874,9 +874,9 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
     auto th = p.get_header(off, tcp_hdr::len);
     if (th) {
         tcp_hdr *hdr = (tcp_hdr *)th;
-        printf("src port: %u\n", htons(hdr->src_port));
-        printf("dst port: %u\n", htons(hdr->dst_port));
-        // src_port, dst_port in network byte order
+        // printf("src port: %u\n", htons(hdr->src_port));
+        // printf("dst port: %u\n", htons(hdr->dst_port));
+        // // src_port, dst_port in network byte order
         if (htons(hdr->src_port) < htons(hdr->dst_port)) {
             out_hash_data.push_back(uint8_t(th[0]));
             out_hash_data.push_back(uint8_t(th[1]));

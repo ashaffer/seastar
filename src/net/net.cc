@@ -349,7 +349,7 @@ future<> interface::dispatch_packet(packet p) {
             l3.forward(data, p, sizeof(eth_hdr));
             printf("hwrss: 0x%x vs 0x%x 0x%x\n", (uint)hwrss.value(), toeplitz_hash(rss_key(), data), toeplitz_hash_full(rss_key(), data));
 
-            auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
+            auto fw = _dev->forward_dst(engine().cpu_id(), [this] () {
                 // auto hwrss = p.rss_hash();
                 // if (hwrss) {
                 //     return hwrss.value();

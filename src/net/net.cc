@@ -356,7 +356,9 @@ future<> interface::dispatch_packet(packet p) {
                 // } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        return toeplitz_hash(rss_key(), data);
+                        auto hash = toeplitz_hash(rss_key(), data);
+                        printf("here: %u\n", hash2cpu(hash));
+                        return hash;
                     }
                     return 0u;
                 // }

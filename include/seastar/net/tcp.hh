@@ -861,7 +861,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
              (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_key())) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
-    printf("sending from %u (0x%x)\n", (uint)engine().cpu_id(), id.hash(_inet._inet.netif()->rss_key()));
+    // printf("sending from %u (0x%x)\n", (uint)engine().cpu_id(), id.hash(_inet._inet.netif()->rss_key()));
     // printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
@@ -874,8 +874,8 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
     auto th = p.get_header(off, tcp_hdr::len);
     if (th) {
         tcp_hdr *hdr = (tcp_hdr *)th;
-        printf("src port: %u\n", htons(hdr->src_port));
-        printf("dst port: %u\n", htons(hdr->dst_port));
+        // printf("src port: %u\n", htons(hdr->src_port));
+        // printf("dst port: %u\n", htons(hdr->dst_port));
         // src_port, dst_port in network byte order
         if (htons(hdr->src_port) < htons(hdr->dst_port)) {
             out_hash_data.push_back(uint8_t(th[0]));
@@ -903,16 +903,13 @@ void printConnid (Connid &connid, Inet &inet) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
-    printf("received\n");
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
-        printf("a\n");
         return;
     }
     // data_offset is correct even before ntoh()
     auto data_offset = uint8_t(th[12]) >> 4;
     if (size_t(data_offset * 4) < tcp_hdr::len) {
-        printf("b\n");
         return;
     }
 
@@ -921,7 +918,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
         InetTraits::tcp_pseudo_header_checksum(csum, from, to, p.len());
         csum.sum(p);
         if (csum.get() != 0) {
-            printf("c\n");
             return;
         }
     }
@@ -934,7 +930,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     if (tcbi == _tcbs.end()) {
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
-            printf("d\n");
             // 1) In CLOSE state
             // 1.1 all data in the incoming segment is discarded.  An incoming
             // segment containing a RST is discarded. An incoming segment not
@@ -947,7 +942,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // 2) In LISTEN state
             // 2.1 first check for an RST
             if (h.f_rst) {
-                printf("e\n");
                 // An incoming RST should be ignored
                 return;
             }
@@ -975,7 +969,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             return;
         }
     } else {
-        printf("f\n");
         tcbp = tcbi->second;
         tcbp->setReceivedAt(p.getReceivedAt());
         if (tcbp->state() == tcp_state::SYN_SENT) {

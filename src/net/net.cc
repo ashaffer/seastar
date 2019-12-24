@@ -346,11 +346,6 @@ future<> interface::dispatch_packet(packet p) {
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
 
-            forward_hash data;
-            l3.forward(data, p, sizeof(eth_hdr));
-            auto hash = toeplitz_hash(rss_key(), data);
-            printf("Hashes: 0x%x, 0x%x\n", (uint)p.rss_hash().value(), (uint)hash);
-
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {
@@ -364,7 +359,6 @@ future<> interface::dispatch_packet(packet p) {
                 }
             });
 
-            printf("dispatch to: %u %u\n", (uint)fw, (uint)engine().cpu_id());
             if (fw != engine().cpu_id()) {
                 // printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
                 forward(fw, std::move(p));

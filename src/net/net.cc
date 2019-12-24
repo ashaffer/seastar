@@ -193,6 +193,7 @@ qp::~qp() {
 void qp::configure_proxies(const std::map<unsigned, float>& cpu_weights) {
     assert(!cpu_weights.empty());
     if ((cpu_weights.size() == 1 && cpu_weights.begin()->first == engine().cpu_id())) {
+        printf("returning before build_sw_reta\n");
         // special case queue sending to self only, to avoid requiring a hash value
         return;
     }
@@ -204,6 +205,7 @@ void qp::configure_proxies(const std::map<unsigned, float>& cpu_weights) {
         }
         return p;
     });
+    printf("build_sw_reta\n");
     build_sw_reta(cpu_weights);
 }
 
@@ -350,6 +352,7 @@ future<> interface::dispatch_packet(packet p) {
             printf("hwrss: 0x%x vs 0x%x 0x%x\n", (uint)hwrss.value(), toeplitz_hash(rss_key(), data), toeplitz_hash_full(rss_key(), data));
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [this] () {
+                printf("asdfasdf\n");
                 // auto hwrss = p.rss_hash();
                 // if (hwrss) {
                 //     return hwrss.value();

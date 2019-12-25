@@ -403,9 +403,9 @@ public:
         , _stats_plugin_name("network")
         , _stats_plugin_inst(std::string("port") + std::to_string(_port_idx))
         , _xstats(port_idx)
-        , fullHash(fullHash)
-        , initialHash(initialHash)
     {
+        this->fullHash = fullHash;
+        this->initialHash = initialHash;
         /* now initialise the port we will use */
         int ret = init_port_start();
         if (ret != 0) {

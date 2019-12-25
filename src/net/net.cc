@@ -361,7 +361,7 @@ future<> interface::dispatch_packet(packet p) {
                 } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        return toeplitz_hash(rss_key(), data, fullHash, initialHash);
+                        return toeplitz_hash(rss_key(), data, uses_full_hash(), initial_hash());
                     }
                     return 0u;
                 }

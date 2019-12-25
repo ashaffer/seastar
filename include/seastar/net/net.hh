@@ -266,8 +266,8 @@ protected:
     std::unordered_map<uint,uint> _qid2cpuid;
     size_t _rss_table_bits = 0;
 public:
-    virtual bool fullHash = false;
-    virtual uint32_t initialHash = 0xFFFFFFFF;
+    bool fullHash = false;
+    uint32_t initialHash = 0xFFFFFFFF;
 
     device() {
         _queues = std::make_unique<qp*[]>(smp::count);

@@ -858,7 +858,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
         src_port = _port_dist(_e);
         id = connid{src_ip, dst_ip, src_port, dst_port};
     } while (_inet._inet.netif()->hw_queues_count() > 1 &&
-             (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_key(), _inet._inet.netif()->fullHash, _inet._inet.netif()->initialHash)) != engine().cpu_id()
+             (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_key(), _inet._inet.netif()->uses_full_hash(), _inet._inet.netif()->initial_hash())) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
     // printf("sending from %u (0x%x)\n", (uint)engine().cpu_id(), id.hash(_inet._inet.netif()->rss_key()));

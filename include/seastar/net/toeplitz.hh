@@ -50,6 +50,12 @@ namespace seastar {
 
 using rss_key_type = compat::basic_string_view<uint8_t>;
 
+typedef struct {
+	rss_key_type key;
+	uint32_t initial;
+	bool full;
+} rss_config;
+
 // Mellanox Linux's driver key
 // static constexpr uint8_t default_rsskey_40bytes[] = {
 //     0xd1, 0x81, 0xc6, 0x2c, 0xf7, 0xf4, 0xdb, 0x5b,
@@ -81,9 +87,10 @@ static constexpr uint8_t default_rsskey_40bytes[] = {
 
 template<typename T>
 static inline uint32_t
-toeplitz_hash(rss_key_type key, const T& data, uint32_t hash = 0x0, bool full = true)
+toeplitz_hash(const rss_config& config, const T& data)
 {
-	uint32_t v;
+	uint32_t hash = config.initial, v;
+	auto key = config.key;
 	u_int i, b;
 
 	/* XXXRW: Perhaps an assertion about key length vs. data length? */
@@ -100,33 +107,9 @@ toeplitz_hash(rss_key_type key, const T& data, uint32_t hash = 0x0, bool full = 
 		}
 	}
 
-	return full
+	return config.full
 		? hash
 		: (((hash) & 0xFFFF) << 16) | (hash & 0xFFFF);
 }
-
-template<typename T>
-static inline uint32_t
-toeplitz_hash_full(rss_key_type key, const T& data)
-{
-	uint32_t hash = 0xFFFFFFFF, v;
-	u_int i, b;
-
-	/* XXXRW: Perhaps an assertion about key length vs. data length? */
-
-	v = (key[0]<<24) + (key[1]<<16) + (key[2] <<8) + key[3];
-	for (i = 0; i < data.size(); i++) {
-		for (b = 0; b < 8; b++) {
-			if (data[i] & (1<<(7-b)))
-				hash ^= v;
-			v <<= 1;
-			if ((i + 4) < key.size() &&
-			    (key[i+4] & (1<<(7-b))))
-				v |= 1;
-		}
-	}
-	return hash;
-}
-
 
 }

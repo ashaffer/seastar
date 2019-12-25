@@ -858,7 +858,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
         src_port = _port_dist(_e);
         id = connid{src_ip, dst_ip, src_port, dst_port};
     } while (_inet._inet.netif()->hw_queues_count() > 1 &&
-             (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_key(), _inet._inet.netif()->uses_full_hash(), _inet._inet.netif()->initial_hash())) != engine().cpu_id()
+             (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_conf())) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
     // printf("sending from %u (0x%x)\n", (uint)engine().cpu_id(), id.hash(_inet._inet.netif()->rss_key()));
@@ -898,7 +898,7 @@ void printConnid (Connid &connid, Inet &inet) {
     in_addr foreign;
     local.s_addr = htonl(connid.local_ip.ip);
     foreign.s_addr = htonl(connid.foreign_ip.ip);
-    printf("%s:%u -> %s:%u (0x%x)\n", strdup(inet_ntoa(local)), connid.local_port, strdup(inet_ntoa(foreign)), connid.foreign_port, connid.hash(inet._inet.netif()->rss_key()));
+    printf("%s:%u -> %s:%u (0x%x)\n", strdup(inet_ntoa(local)), connid.local_port, strdup(inet_ntoa(foreign)), connid.foreign_port, connid.hash(inet._inet.netif()->rss_conf()));
 }
 
 template <typename InetTraits>

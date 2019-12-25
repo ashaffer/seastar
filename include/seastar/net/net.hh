@@ -136,6 +136,7 @@ public:
     uint16_t hw_queues_count();
     uint16_t port_idx();
     
+    const rss_config& rss_conf() const;
     rss_key_type rss_key() const;
     bool uses_full_hash() const;
     uint32_t initial_hash() const;
@@ -265,11 +266,10 @@ protected:
     std::unique_ptr<qp*[]> _queues;
     std::unordered_map<uint,uint> _qid2cpuid;
     size_t _rss_table_bits = 0;
+    rss_config _rss_conf;
 public:
-    bool fullHash = false;
-    uint32_t initialHash = 0xFFFFFFFF;
-
     device() {
+        _rss_conf.key = default_rsskey_40bytes;
         _queues = std::make_unique<qp*[]>(smp::count);
     }
     virtual ~device() {};
@@ -287,9 +287,8 @@ public:
     virtual ethernet_address hw_address() = 0;
     virtual net::hw_features hw_features() = 0;
     virtual uint16_t port_idx() { return 0; }
-    virtual rss_key_type rss_key() const { return default_rsskey_40bytes; }
-    virtual bool uses_full_hash() const { return fullHash; }
-    virtual uint32_t initial_hash() const { return initialHash; }
+    virtual rss_key_type rss_key() const { return _rss_conf.key; }
+    virtual const rss_config& rss_conf() const { return _rss_conf; }
 
     virtual uint16_t hw_queues_count() { return 1; }
     virtual future<> link_ready() { return make_ready_future<>(); }

@@ -193,7 +193,6 @@ qp::~qp() {
 void qp::configure_proxies(const std::map<unsigned, float>& cpu_weights) {
     assert(!cpu_weights.empty());
     if ((cpu_weights.size() == 1 && cpu_weights.begin()->first == engine().cpu_id())) {
-        printf("returning before build_sw_reta\n");
         // special case queue sending to self only, to avoid requiring a hash value
         return;
     }
@@ -205,7 +204,6 @@ void qp::configure_proxies(const std::map<unsigned, float>& cpu_weights) {
         }
         return p;
     });
-    printf("build_sw_reta\n");
     build_sw_reta(cpu_weights);
 }
 
@@ -303,12 +301,8 @@ rss_key_type interface::rss_key() const {
     return _dev->rss_key();
 }
 
-bool interface::uses_full_hash() const {
-    return _dev->uses_full_hash();
-}
-
-uint32_t interface::initial_hash() const {
-    return _dev->initial_hash();
+const rss_config& interface::rss_conf() const {
+    return _dev->rss_conf();
 }
 
 uint16_t interface::port_idx () {
@@ -361,7 +355,7 @@ future<> interface::dispatch_packet(packet p) {
                 } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        return toeplitz_hash(rss_key(), data, uses_full_hash(), initial_hash());
+                        return toeplitz_hash(rss_conf(), data);
                     }
                     return 0u;
                 }

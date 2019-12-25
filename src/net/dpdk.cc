@@ -404,8 +404,8 @@ public:
         , _stats_plugin_inst(std::string("port") + std::to_string(_port_idx))
         , _xstats(port_idx)
     {
-        this->fullHash = fullHash;
-        this->initialHash = initialHash;
+        _rss_conf.full = fullHash;
+        _rss_conf.initial = initialHash;
         /* now initialise the port we will use */
         int ret = init_port_start();
         if (ret != 0) {

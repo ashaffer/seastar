@@ -226,7 +226,7 @@ struct l4connid {
                 && foreign_port == x.foreign_port;
     }
 
-    uint32_t hash(rss_key_type rss_key) {
+    uint32_t hash(rss_key_type rss_key, bool full = false, uint32_t initial = 0xFFFFFFFF) {
         forward_hash hash_data;
         if (local_ip.ip < foreign_ip.ip) {
             hash_data.push_back(htonl(local_ip.ip));
@@ -243,7 +243,7 @@ struct l4connid {
             hash_data.push_back(htons(foreign_port));
             hash_data.push_back(htons(local_port));
         }
-        return toeplitz_hash(rss_key, hash_data);
+        return toeplitz_hash(rss_key, hash_data, initial, full);
     }
 };
 

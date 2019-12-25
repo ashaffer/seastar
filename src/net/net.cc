@@ -303,6 +303,14 @@ rss_key_type interface::rss_key() const {
     return _dev->rss_key();
 }
 
+bool interface::uses_full_hash() const {
+    return _dev->uses_full_hash();
+}
+
+uint32_t interface::initial_hash() const {
+    return _dev->initial_hash();
+}
+
 uint16_t interface::port_idx () {
     return _dev->port_idx();
 }
@@ -353,7 +361,7 @@ future<> interface::dispatch_packet(packet p) {
                 } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        return toeplitz_hash(rss_key(), data);
+                        return toeplitz_hash(rss_key(), data, fullHash, initialHash);
                     }
                     return 0u;
                 }

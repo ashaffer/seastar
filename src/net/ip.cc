@@ -205,7 +205,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
                 auto forwarded = l4->forward(hash_data, ip_data, l4_offset);
                 if (forwarded) {
                     // cpu_id = _netif->hash2cpu(crc32_hash(hash_data));
-                    cpu_id = _netif->hash2cpu(toeplitz_hash(_netif->rss_key(), hash_data));
+                    cpu_id = _netif->hash2cpu(toeplitz_hash(_netif->rss_key(), hash_data, _netif->uses_full_hash(), _netif->initial_hash()));
                     // No need to forward if the dst cpu is the current cpu
                     if (cpu_id == engine().cpu_id()) {
                         l4->received(std::move(ip_data), h.src_ip, h.dst_ip);

@@ -66,15 +66,15 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     std::vector<std::shared_ptr<device>> devices;
     device_configs dev_cfgs;
 
-    // fullHash = opts["full-rss-hash"].as<bool>();
-    // startingHash = opts["rss-seed"].as<uint32_t>();
+    bool fullHash = opts["full-rss-hash"].as<bool>();
+    uint32_t startingHash = opts["rss-seed"].as<uint32_t>();
 
     if ( deprecated_config_used) {
 #ifdef SEASTAR_HAVE_DPDK
         if ( opts.count("dpdk-pmd")) {
              devices.push_back(create_dpdk_net_device(opts["dpdk-port-index"].as<unsigned>(), smp::count,
                 !(opts.count("lro") && opts["lro"].as<std::string>() == "off"),
-                !(opts.count("hw-fc") && opts["hw-fc"].as<std::string>() == "off")));
+                !(opts.count("hw-fc") && opts["hw-fc"].as<std::string>() == "off"), fullHash, initialHash));
        } else 
 #endif  
         devices.push_back(create_virtio_net_device(opts));
@@ -90,7 +90,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK
             if ( hw_config.port_index || !hw_config.pci_address.empty() || !hw_config.mac_address.empty()) {
-                auto dev = create_dpdk_net_device(hw_config, num_queues);
+                auto dev = create_dpdk_net_device(hw_config, num_queues, fullHash, initialHash);
                 std::shared_ptr<device> sdev(dev.release());
 	            devices.push_back(sdev);
 	        } else 

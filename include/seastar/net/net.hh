@@ -137,6 +137,8 @@ public:
     uint16_t port_idx();
     
     rss_key_type rss_key() const;
+    bool uses_full_hash() const;
+    uint32_t initial_hash() const;
     friend class l3_protocol;
 };
 
@@ -264,6 +266,9 @@ protected:
     std::unordered_map<uint,uint> _qid2cpuid;
     size_t _rss_table_bits = 0;
 public:
+    virtual bool fullHash = false;
+    virtual uint32_t initialHash = 0xFFFFFFFF;
+
     device() {
         _queues = std::make_unique<qp*[]>(smp::count);
     }
@@ -283,6 +288,9 @@ public:
     virtual net::hw_features hw_features() = 0;
     virtual uint16_t port_idx() { return 0; }
     virtual rss_key_type rss_key() const { return default_rsskey_40bytes; }
+    virtual bool uses_full_hash() const { return fullHash; }
+    virtual uint32_t initial_hash() const { return initialHash; }
+
     virtual uint16_t hw_queues_count() { return 1; }
     virtual future<> link_ready() { return make_ready_future<>(); }
     virtual std::unique_ptr<qp> init_local_queue(boost::program_options::variables_map opts, uint16_t qid) = 0;

@@ -404,8 +404,8 @@ public:
         , _stats_plugin_inst(std::string("port") + std::to_string(_port_idx))
         , _xstats(port_idx)
     {
-        // _rss_conf.full = fullHash;
-        // _rss_conf.initial = initialHash;
+        _rss_conf.full = fullHash;
+        _rss_conf.initial = initialHash;
         /* now initialise the port we will use */
         int ret = init_port_start();
         if (ret != 0) {
@@ -1425,9 +1425,10 @@ private:
 
 int dpdk_device::init_port_start()
 {
+    printf("a\n");
     assert(_port_idx < rte_eth_dev_count_avail());
     rte_eth_dev_info_get(_port_idx, &_dev_info);
-
+    printf("b\n");
     //
     // This is a workaround for a missing handling of a HW limitation in the
     // DPDK i40e driver. This and all related to _is_i40e_device code should be
@@ -1460,7 +1461,7 @@ int dpdk_device::init_port_start()
     } else if (sstring("rte_i40evf_pmd") == _dev_info.driver_name) {
         _dev_info.max_rx_queues = std::min(_dev_info.max_rx_queues, (uint16_t)16);
     }
-
+    printf("c\n");
     // Hardware offload capabilities
     // https://github.com/DPDK/dpdk/blob/v19.05/lib/librte_ethdev/rte_ethdev.h#L993-L1074
 
@@ -1508,6 +1509,7 @@ int dpdk_device::init_port_start()
         } else if (_dev_info.hash_key_size == 52) {
             _rss_key = rss_key_type(default_rsskey_52bytes, sizeof(default_rsskey_52bytes));
         } else if (_dev_info.hash_key_size != 0) {
+            printf("Port %d: We support only 40 or 52 bytes RSS hash keys, %d bytes key requested", _port_idx, _dev_info.hash_key_size);
             // WTF?!!
             rte_exit(EXIT_FAILURE,
                 "Port %d: We support only 40 or 52 bytes RSS hash keys, %d bytes key requested",

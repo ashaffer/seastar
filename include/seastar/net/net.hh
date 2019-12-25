@@ -137,7 +137,6 @@ public:
     uint16_t port_idx();
     
     const rss_config& rss_conf() const;
-    rss_key_type rss_key() const;
     bool uses_full_hash() const;
     uint32_t initial_hash() const;
     friend class l3_protocol;
@@ -269,9 +268,6 @@ protected:
     rss_config _rss_conf;
 public:
     device() {
-        printf("asdf\n");
-        _rss_conf.key = default_rsskey_40bytes;
-        printf("fdsa\n");
         _queues = std::make_unique<qp*[]>(smp::count);
     }
     virtual ~device() {};
@@ -289,7 +285,6 @@ public:
     virtual ethernet_address hw_address() = 0;
     virtual net::hw_features hw_features() = 0;
     virtual uint16_t port_idx() { return 0; }
-    virtual rss_key_type rss_key() const { return _rss_conf.key; }
     virtual const rss_config& rss_conf() const { return _rss_conf; }
 
     virtual uint16_t hw_queues_count() { return 1; }

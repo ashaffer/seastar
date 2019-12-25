@@ -297,10 +297,6 @@ uint16_t interface::hw_queues_count() {
     return _dev->hw_queues_count();
 }
 
-rss_key_type interface::rss_key() const {
-    return _dev->rss_key();
-}
-
 const rss_config& interface::rss_conf() const {
     return _dev->rss_conf();
 }

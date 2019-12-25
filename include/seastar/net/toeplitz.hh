@@ -48,10 +48,11 @@
 
 namespace seastar {
 
-using rss_key_type = compat::basic_string_view<uint8_t>;
+using rss_key_type = uint8_t *;
 
 typedef struct {
-	rss_key_type key;
+	uint8_t const *key;
+	uint32_t keySize;
 	uint32_t initial;
 	bool full;
 } rss_config;
@@ -101,7 +102,7 @@ toeplitz_hash(const rss_config& config, const T& data)
 			if (data[i] & (1<<(7-b)))
 				hash ^= v;
 			v <<= 1;
-			if ((i + 4) < key.size() &&
+			if ((i + 4) < config.keySize &&
 			    (key[i+4] & (1<<(7-b))))
 				v |= 1;
 		}

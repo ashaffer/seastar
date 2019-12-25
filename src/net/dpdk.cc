@@ -404,7 +404,6 @@ public:
         , _stats_plugin_inst(std::string("port") + std::to_string(_port_idx))
         , _xstats(port_idx)
     {
-        printf("dpdk_device\n");
         _rss_conf.full = fullHash;
         _rss_conf.initial = initialHash;
         /* now initialise the port we will use */
@@ -508,8 +507,6 @@ public:
     bool is_vmxnet3_device() const {
         return _is_vmxnet3_device;
     }
-
-    virtual rss_key_type rss_key() const override { return _rss_key; }
 };
 
 template <bool HugetlbfsMemBackend>
@@ -1505,9 +1502,13 @@ int dpdk_device::init_port_start()
     // available in order to make HW calculate RSS hash for us.
     if (smp::count > 1) {
         if (_dev_info.hash_key_size == 40) {            
-            _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
+            // _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
+            _rss_conf.key = default_rsskey_40bytes;
+            _rss_conf.keySize = sizeof(default_rsskey_40bytes);
         } else if (_dev_info.hash_key_size == 52) {
-            _rss_key = rss_key_type(default_rsskey_52bytes, sizeof(default_rsskey_52bytes));
+            // _rss_key = rss_key_type(default_rsskey_52bytes, sizeof(default_rsskey_52bytes));
+            _rss_conf.key = default_rsskey_52bytes;
+            _rss_conf.keySize = sizeof(default_rsskey_52bytes);
         } else if (_dev_info.hash_key_size != 0) {
             printf("Port %d: We support only 40 or 52 bytes RSS hash keys, %d bytes key requested", _port_idx, _dev_info.hash_key_size);
             // WTF?!!
@@ -1515,15 +1516,17 @@ int dpdk_device::init_port_start()
                 "Port %d: We support only 40 or 52 bytes RSS hash keys, %d bytes key requested",
                 _port_idx, _dev_info.hash_key_size);
         } else {
-            _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
+            // _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
             _dev_info.hash_key_size = 40;
+            _rss_conf.key = default_rsskey_40bytes;
+            _rss_conf.keySize = sizeof(default_rsskey_40bytes);
         }
 
         port_conf.rxmode.mq_mode = ETH_MQ_RX_RSS;
         /* enable all supported rss offloads */
         port_conf.rx_adv_conf.rss_conf.rss_hf = _dev_info.flow_type_rss_offloads;
         if (_dev_info.hash_key_size) {
-            port_conf.rx_adv_conf.rss_conf.rss_key = const_cast<uint8_t *>(_rss_key.data());
+            port_conf.rx_adv_conf.rss_conf.rss_key = const_cast<uint8_t *>(_rss_key);
             port_conf.rx_adv_conf.rss_conf.rss_key_len = _dev_info.hash_key_size;
         }
     } else {
@@ -2291,7 +2294,6 @@ std::unique_ptr<net::device> create_dpdk_net_device(
         printf("ports number: %d\n", rte_eth_dev_count_avail());
     }
 
-    printf("creating device...\n");
     return std::make_unique<dpdk::dpdk_device>(port_idx, num_queues, use_lro,
                                                enable_fc, fullHash, initialHash);
 }

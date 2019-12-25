@@ -269,7 +269,9 @@ protected:
     rss_config _rss_conf;
 public:
     device() {
+        printf("asdf\n");
         _rss_conf.key = default_rsskey_40bytes;
+        printf("fdsa\n");
         _queues = std::make_unique<qp*[]>(smp::count);
     }
     virtual ~device() {};

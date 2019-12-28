@@ -106,6 +106,10 @@ public:
     std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
         return _conn->getReceivedAt();
     }
+
+    bool isClosed () const override {
+        return _conn->isClosed();
+    }
 };
 
 template <typename Protocol>

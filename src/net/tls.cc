@@ -1082,6 +1082,11 @@ public:
     net::keepalive_params get_keepalive_parameters() const override {
         return _session->socket().get_keepalive_parameters();
     }
+
+    bool isClosed () const override {
+        return _session->socket().isClosed();
+    }
+    
     std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
         return _session->socket().getReceivedAt();
     }

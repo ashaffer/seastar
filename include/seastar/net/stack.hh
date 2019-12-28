@@ -44,6 +44,7 @@ public:
     virtual void set_keepalive_parameters(const keepalive_params&) = 0;
     virtual keepalive_params get_keepalive_parameters() const = 0;
     virtual std::chrono::high_resolution_clock::time_point getReceivedAt() const = 0;
+    virtual bool isClosed() const = 0;    
 };
 
 class socket_impl {

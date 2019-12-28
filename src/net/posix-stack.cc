@@ -156,6 +156,10 @@ public:
         return _ops::get_keepalive(_fd->get_file_desc());
     }
 
+    bool isClosed () const override {
+        return false;
+    }
+
     std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
         return std::chrono::high_resolution_clock::now();
     }
@@ -203,6 +207,10 @@ public:
     }
     virtual bool get_nodelay() const override {
         return true;
+    }
+
+    virtual bool isClosed () const override {
+        return false;
     }
 
     std::chrono::high_resolution_clock::time_point getReceivedAt () const override {

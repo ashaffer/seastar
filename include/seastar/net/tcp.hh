@@ -398,6 +398,7 @@ private:
         timer<lowres_clock> _retransmit;
         timer<lowres_clock> _persist;
         std::chrono::high_resolution_clock::time_point _receivedAt;
+        bool doCloseCalled = false;
 
         uint16_t _nr_full_seg_received = 0;
         uint closeState = -1;
@@ -604,6 +605,8 @@ private:
             this->closeState = 19;
             _state = CLOSED;
             cleanup();
+            printf("connection reset\n");
+
             if (_rcv._data_received_promise) {
                 this->closeState = 20;
                 printf("connection reset: _data_received_promise\n");
@@ -629,6 +632,7 @@ private:
             cleanup();
         }
         void do_closed() {
+            doCloseCalled = true;
             _state = CLOSED;
             cleanup();
         }
@@ -1846,7 +1850,7 @@ template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::send(packet p) {
     // We can not send after the connection is closed
     if (_snd.closed || in_state(CLOSED)) {
-        printf("connection reset: _snd.closed || in_state(CLOSED)\n");
+        printf("connection reset: _snd.closed || in_state(CLOSED): %u\n", doCloseCalled);
         if (_snd.closed) {
             printf("\tsnd_closed\n");
         }

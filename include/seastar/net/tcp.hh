@@ -1215,6 +1215,7 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
         // reset", drop the segment, enter CLOSED state, delete TCB, and
         // return.  Otherwise (no ACK) drop the segment and return.
         if (acceptable) {
+            printf("acceptable reset\n");
             return do_reset();
         } else {
             return;
@@ -1303,6 +1304,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // active OPEN case, enter the CLOSED state and delete the TCB,
             // and return.
             _connect_done.set_exception(tcp_refused_error());
+            printf("SYN_RECEIVED reset\n");
             return do_reset();
         }
         if (in_state(ESTABLISHED | FIN_WAIT_1 | FIN_WAIT_2 | CLOSE_WAIT)) {
@@ -1311,6 +1313,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // flushed.  Users should also receive an unsolicited general
             // "connection reset" signal.  Enter the CLOSED state, delete the
             // TCB, and return.
+            printf("ESTABLISHED RST reset\n");
             return do_reset();
         }
         if (in_state(CLOSING | LAST_ACK | TIME_WAIT)) {
@@ -1334,6 +1337,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         // receive an unsolicited general "connection reset" signal, enter
         // the CLOSED state, delete the TCB, and return.
         respond_with_reset(th);
+        printf("f_syn reset\n");
         return do_reset();
 
         // If the SYN is not in the window this step would not be reached

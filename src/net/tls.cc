@@ -850,6 +850,7 @@ public:
         }
         if (!_connected) {
             return handshake().then([this, p = std::move(p)]() mutable {
+                printf("post handshake\n");
                return put(std::move(p));
             });
         }

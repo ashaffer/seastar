@@ -103,7 +103,7 @@ class packet final {
         unsigned _headroom = internal_data_size; // in _data
         // FIXME: share _data/_frags space
         std::chrono::high_resolution_clock::time_point _receivedAt;
-        std::chrono::high_resolution_clock::time_point _transmittedAt;
+        std::function<void()> _onTransmit;
 
         fragment _frags[];
 
@@ -128,7 +128,7 @@ class packet final {
             n->_rss_hash = old->_rss_hash;
             std::copy(old->_frags, old->_frags + old->_nr_frags, n->_frags);
             n->_receivedAt = old->_receivedAt;
-            n->_transmittedAt = old->_transmittedAt;
+            n->_onTransmit = old->_onTransmit;
             old->copy_internal_fragment_to(n.get());
             return n;
         }
@@ -273,12 +273,12 @@ public:
 
     void reset() { _impl.reset(); }
 
-    void setTransmittedAt (std::chrono::high_resolution_clock::time_point transmittedAt) {
-        _impl->_transmittedAt = transmittedAt;
+    void onTransmit (std::function<void()> onTransmit) {
+        _impl->_onTransmit = onTransmit;
     }
 
-    std::chrono::high_resolution_clock::time_point getTransmittedAt () {
-        return _impl->_transmittedAt;
+    void notifyTransmitted () {
+        _impl->_onTransmit();
     }
 
     void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
@@ -348,12 +348,15 @@ packet::packet(packet&& x) noexcept
 inline
 packet::impl::impl(size_t nr_frags)
     : _len(0), _allocated_frags(nr_frags) {
+        _onTransmit = [] {};
 }
 
 inline
 packet::impl::impl(fragment frag, size_t nr_frags)
     : _len(frag.size), _allocated_frags(nr_frags) {
     assert(_allocated_frags > _nr_frags);
+    _onTransmit = [] {};
+
     if (frag.size <= internal_data_size) {
         _headroom -= frag.size;
         _frags[0] = { _data + _headroom, frag.size };

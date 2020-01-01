@@ -108,6 +108,7 @@ output_stream<CharType>::zero_copy_split_and_put(net::packet p) {
 
 template<typename CharType>
 future<> output_stream<CharType>::write(net::packet p) {
+    p.notifyTransmitted();
     static_assert(std::is_same<CharType, char>::value, "packet works on char");
 
     if (p.len() != 0) {

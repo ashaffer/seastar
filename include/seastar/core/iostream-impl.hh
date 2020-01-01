@@ -78,10 +78,11 @@ output_stream<CharType>::zero_copy_put(net::packet p) {
     if (_flushing) {
         // flush in progress, wait for it to end before continuing
         return _in_batch.value().get_future().then([this, p = std::move(p)] () mutable {
+            printf("zero copy put 1\n");
             return _fd.put(std::move(p));
         });
     } else {
-        p.notifyTransmitted();
+        printf("zero copy put 2\n");
         return _fd.put(std::move(p));
     }
 }
@@ -456,6 +457,7 @@ output_stream<CharType>::poll_flush() {
         _end = 0;
         f = _fd.put(std::move(_buf));
     } else if(_zc_bufs) {
+        printf("flush put\n");
         f = _fd.put(std::move(_zc_bufs));
     }
 

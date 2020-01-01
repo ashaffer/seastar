@@ -160,6 +160,10 @@ public:
         return false;
     }
 
+    uint32_t can_send () override {
+        return 0;
+    }
+
     std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
         return std::chrono::high_resolution_clock::now();
     }
@@ -211,6 +215,10 @@ public:
 
     virtual bool isClosed () const override {
         return false;
+    }
+
+    virtual uint32_t can_send () override {
+        return 0;
     }
 
     std::chrono::high_resolution_clock::time_point getReceivedAt () const override {

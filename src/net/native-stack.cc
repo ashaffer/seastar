@@ -107,6 +107,12 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         exit(-1);
     }
 
+    if (opts.count("hugepages")) {
+        printf("Using hugepages: %s\n", opts["hugepages"].as<std::string>().c_str());
+    } else {
+        printf("*NOT* using huge pages, cannot use zerocopy processing in the dpdk driver\n");
+    }
+
     auto sem = std::make_shared<semaphore>(0);
     uint jj = 0; 
     for (auto sdev : devices) {
@@ -121,7 +127,6 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                         cpu_weights[i] = 1;
                     }
                     cpu_weights[qid] = opts["hw-queue-weight"].as<float>();
-                    printf("configure proxies\n");
                     qp->configure_proxies(cpu_weights);
                     sdev->set_local_queue(std::move(qp), qid);
                 } else {

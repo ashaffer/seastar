@@ -110,6 +110,10 @@ public:
     bool isClosed () const override {
         return _conn->isClosed();
     }
+
+    uint32_t can_send () override {
+        return _conn->can_send();
+    }
 };
 
 template <typename Protocol>

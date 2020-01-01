@@ -202,6 +202,7 @@ public:
 
     virtual std::chrono::high_resolution_clock::time_point getReceivedAt();
     virtual bool isClosed();
+    virtual uint32_t can_send();
 };
 /// @}
 

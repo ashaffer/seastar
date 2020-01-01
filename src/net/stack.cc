@@ -105,6 +105,10 @@ bool connected_socket::isClosed () {
     return _csi->isClosed();
 }
 
+uint32_t connected_socket::can_send () {
+    return _csi->can_send();
+}
+
 bool connected_socket::get_nodelay() const {
     return _csi->get_nodelay();
 }

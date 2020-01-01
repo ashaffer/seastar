@@ -1086,7 +1086,11 @@ public:
     bool isClosed () const override {
         return _session->socket().isClosed();
     }
-    
+
+    uint32_t can_send () override {
+        return _session->socket().can_send();
+    }
+
     std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
         return _session->socket().getReceivedAt();
     }

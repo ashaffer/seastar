@@ -736,6 +736,10 @@ public:
             return !_tcb->in_state(tcp_state::CLOSED);
         }
 
+        uint32_t can_send () {
+            return _tcb->can_send();
+        }
+        
         void shutdown_connect();
         void close_read();
         void close_write();

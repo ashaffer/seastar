@@ -343,7 +343,6 @@ std::ostream& operator<<(std::ostream& os, const packet& p);
 inline
 packet::packet(packet&& x) noexcept
     : _impl(std::move(x._impl)) {
-        _impl._onTransmit = x._impl._onTransmit;
 }
 
 inline

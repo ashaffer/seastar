@@ -852,6 +852,10 @@ public:
         }
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
+        printf("aaa\n");
+        auto fn = p.getOnTransmit();
+        fn();
+        printf("aaa2\n");
         return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {});
     }
 

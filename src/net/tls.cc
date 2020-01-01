@@ -830,7 +830,6 @@ public:
                 if (off == size) {
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
-                onTransmitFn();
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
                     off += res;
@@ -844,6 +843,7 @@ public:
         });
     }
     future<> put(net::packet p) {
+        p.notifyTransmitted();
         if (_error || _shutdown) {
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
         }

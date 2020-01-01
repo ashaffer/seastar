@@ -830,6 +830,7 @@ public:
                 if (off == size) {
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
+                onTransmitFn();
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
                     off += res;
@@ -884,7 +885,6 @@ public:
             auto n = msg.size();
             auto p = std::move(msg).release();
             p.onTransmit(onTransmitFn);
-            onTransmitFn();
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {

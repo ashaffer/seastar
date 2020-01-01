@@ -1266,6 +1266,7 @@ private:
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
         if (_tx_burst.size() == 0) {
+            auto transmittedAt = std::chrono::high_resolution_clock::now();
             for (auto&& p : pb) {
                 // TODO: assert() in a fast path! Remove me ASAP!
                 assert(p.len());
@@ -1275,6 +1276,7 @@ private:
                     break;
                 }
 
+                p.setTransmittedAt(transmittedAt);
                 _tx_burst.push_back(buf->rte_mbuf_p());
             }
         }

@@ -103,6 +103,7 @@ class packet final {
         unsigned _headroom = internal_data_size; // in _data
         // FIXME: share _data/_frags space
         std::chrono::high_resolution_clock::time_point _receivedAt;
+        std::chrono::high_resolution_clock::time_point _transmittedAt;
 
         fragment _frags[];
 
@@ -127,6 +128,7 @@ class packet final {
             n->_rss_hash = old->_rss_hash;
             std::copy(old->_frags, old->_frags + old->_nr_frags, n->_frags);
             n->_receivedAt = old->_receivedAt;
+            n->_transmittedAt = old->_transmittedAt;
             old->copy_internal_fragment_to(n.get());
             return n;
         }
@@ -270,6 +272,14 @@ public:
     void linearize() { return linearize(0, len()); }
 
     void reset() { _impl.reset(); }
+
+    void setTransmittedAt (std::chrono::high_resolution_clock::time_point transmittedAt) {
+        _impl->_transmittedAt = transmittedAt;
+    }
+
+    std::chrono::high_resolution_clock::time_point getTransmittedAt () {
+        return _impl->_transmittedAt;
+    }
 
     void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
         _impl->_receivedAt = receivedAt;

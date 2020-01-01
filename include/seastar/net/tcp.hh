@@ -739,7 +739,7 @@ public:
         uint32_t can_send () {
             return _tcb->can_send();
         }
-        
+
         void shutdown_connect();
         void close_read();
         void close_write();
@@ -1872,6 +1872,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     _snd.unsent_len += len;
     _snd.unsent.push_back(std::move(p));
 
+    printf("tcb::send: %u\n", can_send());
     if (can_send() > 0) {
         output();
     }

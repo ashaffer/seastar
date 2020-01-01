@@ -1266,6 +1266,7 @@ private:
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
         if (_tx_burst.size() == 0) {
+            printf("tx_burst.size == 0\n");
             for (auto&& p : pb) {
                 // TODO: assert() in a fast path! Remove me ASAP!
                 assert(p.len());
@@ -1280,6 +1281,7 @@ private:
             }
         }
 
+        printf("rte_eth_tx_burst\n");
         uint16_t sent = rte_eth_tx_burst(_dev->port_idx(), _qid,
                                          _tx_burst.data() + _tx_burst_idx,
                                          _tx_burst.size() - _tx_burst_idx);

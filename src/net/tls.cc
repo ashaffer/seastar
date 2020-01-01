@@ -843,7 +843,6 @@ public:
         });
     }
     future<> put(net::packet p) {
-        p.notifyTransmitted();
         if (_error || _shutdown) {
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
         }

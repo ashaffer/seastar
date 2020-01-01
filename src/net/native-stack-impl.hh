@@ -200,6 +200,7 @@ public:
         : _conn(std::move(conn)) {}
     using data_sink_impl::put;
     virtual future<> put(packet p) override {
+        p.notifyTransmitted();
         return _conn->send(std::move(p));
     }
     virtual future<> close() override {

@@ -73,15 +73,18 @@ future<> output_stream<CharType>::write(scattered_message<CharType> msg) {
 template<typename CharType>
 future<>
 output_stream<CharType>::zero_copy_put(net::packet p) {
-    p.notifyTransmitted();
     // if flush is scheduled, disable it, so it will not try to write in parallel
     _flush = false;
     if (_flushing) {
         // flush in progress, wait for it to end before continuing
         return _in_batch.value().get_future().then([this, p = std::move(p)] () mutable {
+            printf("b\n");
+            p.notifyTransmitted();
             return _fd.put(std::move(p));
         });
     } else {
+        printf("a\n");
+        p.notifyTransmitted();
         return _fd.put(std::move(p));
     }
 }

@@ -847,10 +847,7 @@ public:
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
         }
         if (!_connected) {
-            auto start = std::chrono::high_resolution_clock::now();
-            return handshake().then([this, start, p = std::move(p)]() mutable {
-                auto end = std::chrono::high_resolution_clock::now();
-                uint n = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+            return handshake().then([this, p = std::move(p)]() mutable {
                return put(std::move(p));
             });
         }

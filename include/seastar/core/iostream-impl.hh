@@ -90,6 +90,7 @@ output_stream<CharType>::zero_copy_put(net::packet p) {
 template <typename CharType>
 future<>
 output_stream<CharType>::zero_copy_split_and_put(net::packet p) {
+    printf("zero copy split and put\n");
     return repeat([this, p = std::move(p)] () mutable {
         if (p.len() < _size) {
             if (p.len()) {

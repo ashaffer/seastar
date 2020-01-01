@@ -851,7 +851,6 @@ public:
             return handshake().then([this, start, p = std::move(p)]() mutable {
                 auto end = std::chrono::high_resolution_clock::now();
                 uint n = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-                printf("handshake: %u\n", n);
                return put(std::move(p));
             });
         }
@@ -888,6 +887,7 @@ public:
             auto n = msg.size();
             auto p = std::move(msg).release();
             p.onTransmit(onTransmitFn);
+            onTransmitFn();
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {

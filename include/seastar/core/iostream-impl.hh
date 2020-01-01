@@ -73,6 +73,7 @@ future<> output_stream<CharType>::write(scattered_message<CharType> msg) {
 template<typename CharType>
 future<>
 output_stream<CharType>::zero_copy_put(net::packet p) {
+    p.notifyTransmitted();
     // if flush is scheduled, disable it, so it will not try to write in parallel
     _flush = false;
     if (_flushing) {

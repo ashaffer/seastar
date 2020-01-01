@@ -870,6 +870,7 @@ public:
         return n;
     }
     ssize_t vec_push(const giovec_t * iov, int iovcnt) {
+        printf("ssl vec push\n");
         if (!_output_pending.available()) {
             gnutls_transport_set_errno(*this, EAGAIN);
             return -1;

@@ -34,7 +34,6 @@ public:
     vector_data_sink(vector_type& v) : _v(v) {}
 
     virtual future<> put(net::packet p) override {
-        printf("inside vector sink put\n");
         _v.push_back(std::move(p));
         return make_ready_future<>();
     }

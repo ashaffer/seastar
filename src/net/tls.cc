@@ -818,8 +818,9 @@ public:
 
     typedef net::fragment* frag_iter;
 
-    future<> do_put(frag_iter i, frag_iter e) {
+    future<> do_put(frag_iter i, frag_iter e, std::function<void()> onTransmit) {
         assert(_output_pending.available());
+        onTransmitFn = onTransmit;
         return do_for_each(i, e, [this](net::fragment& f) {
             auto ptr = f.base;
             auto size = f.size;
@@ -851,7 +852,7 @@ public:
         }
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
-        return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e)).finally([p = std::move(p)] {});
+        return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {});
     }
 
     ssize_t pull(void* dst, size_t len) {
@@ -870,7 +871,6 @@ public:
         return n;
     }
     ssize_t vec_push(const giovec_t * iov, int iovcnt) {
-        printf("ssl vec push\n");
         if (!_output_pending.available()) {
             gnutls_transport_set_errno(*this, EAGAIN);
             return -1;
@@ -881,7 +881,9 @@ public:
                 msg.append(sstring(reinterpret_cast<const char *>(iov[i].iov_base), iov[i].iov_len));
             }
             auto n = msg.size();
-            _output_pending = _out.put(std::move(msg).release());
+            auto p = std::move(msg).release();
+            p.onTransmit(onTransmitFn);
+            _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {
             gnutls_transport_set_errno(*this, EIO);
@@ -1019,6 +1021,7 @@ private:
     bool _error = false;
 
     future<> _output_pending;
+    std::function<void()> onTransmitFn;
     buf_type _input;
 
     // modify this to a unique_ptr to handle exceptions in our constructor.

@@ -277,6 +277,10 @@ public:
         _impl->_onTransmit = onTransmit;
     }
 
+    std::function<void()> getOnTransmit () {
+        return _impl->_onTransmit;
+    }
+
     void notifyTransmitted () {
         _impl->_onTransmit();
     }

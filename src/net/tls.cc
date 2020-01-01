@@ -883,8 +883,10 @@ public:
             }
             auto n = msg.size();
             auto p = std::move(msg).release();
-            printf("b\n");
             p.onTransmit(onTransmitFn);
+            printf("bb\n");
+            onTransmitFn();
+            printf("b\n");            
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {

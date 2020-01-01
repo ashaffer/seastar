@@ -74,7 +74,6 @@ public:
     }
     virtual future<> put(net::packet data) = 0;
     virtual future<> put(std::vector<temporary_buffer<char>> data) {
-        printf("put vector\n");
         net::packet p;
         p.reserve(data.size());
 
@@ -85,7 +84,6 @@ public:
         return put(std::move(p));
     }
     virtual future<> put(temporary_buffer<char> buf) {
-        printf("put temporary\n");
         return put(net::packet(net::fragment{buf.get_write(), buf.size()}, buf.release()));
     }
     virtual future<> flush() {
@@ -111,8 +109,6 @@ public:
         return _dsi->put(std::move(data));
     }
     future<> put(net::packet p) {
-        printf("data sink put\n");
-        p.notifyTransmitted();
         return _dsi->put(std::move(p));
     }
     future<> flush() {

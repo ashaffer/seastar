@@ -853,10 +853,6 @@ public:
         }
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
-        printf("aaa\n");
-        auto fn = p.getOnTransmit();
-        fn();
-        printf("aaa2\n");
         return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {});
     }
 
@@ -876,7 +872,6 @@ public:
         return n;
     }
     ssize_t vec_push(const giovec_t * iov, int iovcnt) {
-        printf("a\n");
         if (!_output_pending.available()) {
             gnutls_transport_set_errno(*this, EAGAIN);
             return -1;
@@ -889,9 +884,6 @@ public:
             auto n = msg.size();
             auto p = std::move(msg).release();
             p.onTransmit(onTransmitFn);
-            printf("bb\n");
-            onTransmitFn();
-            printf("b\n");            
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {

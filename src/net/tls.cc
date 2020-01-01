@@ -843,14 +843,11 @@ public:
         });
     }
     future<> put(net::packet p) {
-        printf("bb\n");
-        p.notifyTransmitted();
         if (_error || _shutdown) {
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
         }
         if (!_connected) {
             return handshake().then([this, p = std::move(p)]() mutable {
-                printf("post handshake\n");
                return put(std::move(p));
             });
         }
@@ -1131,8 +1128,6 @@ private:
     }
     using data_sink_impl::put;
     future<> put(net::packet p) override {
-        printf("aa\n");
-        p.notifyTransmitted();
         return _session->put(std::move(p));
     }
     future<> close() override {

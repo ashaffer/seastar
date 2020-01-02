@@ -2253,13 +2253,13 @@ void dpdk_device::set_rss_table()
 std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variables_map opts, uint16_t qid) {
 
     std::unique_ptr<qp> qp;
-    if (opts.count("hugepages")) {
+    // if (opts.count("hugepages")) {
         qp = std::make_unique<dpdk_qp<true>>(this, qid,
                                  _stats_plugin_name + "-" + _stats_plugin_inst);
-    } else {
-        qp = std::make_unique<dpdk_qp<false>>(this, qid,
-                                 _stats_plugin_name + "-" + _stats_plugin_inst);
-    }
+    // } else {
+    //     qp = std::make_unique<dpdk_qp<false>>(this, qid,
+    //                              _stats_plugin_name + "-" + _stats_plugin_inst);
+    // }
 
     // FIXME: future is discarded
     (void)smp::submit_to(_home_cpu, [this] () mutable {

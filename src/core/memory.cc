@@ -913,8 +913,11 @@ allocate_anonymous_memory(compat::optional<void*> where, size_t how_much) {
 
 mmap_area
 allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
+    printf("allocate\n");
     auto pos = fd.size();
+    printf("size: %u (%u + %u)\n", (uint)(pos + how_much), (uint)pos, (uint)how_much);
     fd.truncate(pos + how_much);
+    printf("truncate\n");
 
     auto ret = fd.map(
             how_much,

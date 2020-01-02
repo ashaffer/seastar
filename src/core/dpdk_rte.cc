@@ -76,7 +76,7 @@ void eal::init(cpuset cpus, boost::program_options::variables_map opts)
         args.push_back(string2vector("-m"));
         args.push_back(string2vector(size_MB_str.str()));
     } else if (!opts.count("dpdk-pmd")) {
-        // args.push_back(string2vector("--no-huge"));
+        args.push_back(string2vector("--no-huge"));
     }
 #ifdef HAVE_OSV
     args.push_back(string2vector("--no-shconf"));

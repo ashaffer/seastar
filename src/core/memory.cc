@@ -922,6 +922,7 @@ allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t h
             MAP_SHARED | MAP_POPULATE | (where ? MAP_FIXED : 0),
             pos,
             where.value_or(nullptr));
+    printf("ret: 0x%llx\n", (uint64_t)ret);
     return ret;
 }
 

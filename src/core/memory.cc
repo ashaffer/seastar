@@ -933,10 +933,15 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // the operation.
     auto bytes = nr_pages * page_size;
     auto old_mem = mem();
+    printf("5\n");
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
+    printf("6\n");
     std::memcpy(relocated_old_mem.get(), old_mem, bytes);
+    printf("7\n");
     alloc_sys_mem({old_mem}, bytes).release();
+    printf("8\n");
     std::memcpy(old_mem, relocated_old_mem.get(), bytes);
+    printf("9\n");
 }
 
 void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_mem) {

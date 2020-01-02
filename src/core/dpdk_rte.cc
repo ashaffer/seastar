@@ -84,12 +84,15 @@ void eal::init(cpuset cpus, boost::program_options::variables_map opts)
 
     std::vector<char*> cargs;
 
+    printf("DPDK Arguments:\n");
     for (auto&& a: args) {
         cargs.push_back(a.data());
+        printf("\t%s\n", a.data());
     }
     /* initialise the EAL for all */
     int ret = rte_eal_init(cargs.size(), cargs.data());
     if (ret < 0) {
+        printf("failed to initialize dpdk\n");
         rte_exit(EXIT_FAILURE, "Cannot init EAL\n");
     }
 

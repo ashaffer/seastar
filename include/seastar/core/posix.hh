@@ -151,7 +151,6 @@ public:
     }
     void truncate(size_t size) {
         auto ret = ::ftruncate(_fd, size);
-        printf("ret: %d, %d\n", (int)ret, (int)errno);
         throw_system_error_on(ret, "ftruncate");
     }
     int ioctl(int request) {

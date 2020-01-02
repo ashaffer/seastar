@@ -76,7 +76,7 @@ void eal::init(cpuset cpus, boost::program_options::variables_map opts)
         args.push_back(string2vector("-m"));
         args.push_back(string2vector(size_MB_str.str()));
     } else if (!opts.count("dpdk-pmd")) {
-        args.push_back(string2vector("--no-huge"));
+        // args.push_back(string2vector("--no-huge"));
     }
 #ifdef HAVE_OSV
     args.push_back(string2vector("--no-shconf"));
@@ -84,15 +84,12 @@ void eal::init(cpuset cpus, boost::program_options::variables_map opts)
 
     std::vector<char*> cargs;
 
-    printf("DPDK Arguments:\n");
     for (auto&& a: args) {
         cargs.push_back(a.data());
-        printf("\t%s\n", a.data());
     }
     /* initialise the EAL for all */
     int ret = rte_eal_init(cargs.size(), cargs.data());
     if (ret < 0) {
-        printf("failed to initialize dpdk\n");
         rte_exit(EXIT_FAILURE, "Cannot init EAL\n");
     }
 

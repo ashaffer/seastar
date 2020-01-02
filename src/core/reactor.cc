@@ -3740,7 +3740,6 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     smp::count = nr_cpus;
     _reactors.resize(nr_cpus);
     resource::configuration rc;
-    printf("a\n");
     if (configuration.count("memory")) {
         rc.total_memory = parse_memory_size(configuration["memory"].as<std::string>());
 #ifdef SEASTAR_HAVE_DPDK
@@ -3771,7 +3770,6 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     if (configuration.count("hugepages")) {
         hugepages_path = configuration["hugepages"].as<std::string>();
     }
-    printf("b\n");
     auto mlock = false;
     if (configuration.count("lock-memory")) {
         mlock = configuration["lock-memory"].as<bool>();
@@ -3798,9 +3796,8 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     if (thread_affinity) {
         smp::pin(allocations[0].cpu_id);
     }
-    printf("c\n");
+
     memory::configure(allocations[0].mem, mbind, hugepages_path);
-    printf("d\n");
 
     if (configuration.count("abort-on-seastar-bad-alloc")) {
         memory::enable_abort_on_allocation_failure();

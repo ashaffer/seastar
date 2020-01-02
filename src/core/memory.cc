@@ -913,11 +913,8 @@ allocate_anonymous_memory(compat::optional<void*> where, size_t how_much) {
 
 mmap_area
 allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
-    printf("allocate\n");
     auto pos = fd.size();
-    printf("size: %u (%u + %u)\n", (uint)(pos + how_much), (uint)pos, (uint)how_much);
     fd.truncate(pos + how_much);
-    printf("truncate\n");
 
     auto ret = fd.map(
             how_much,
@@ -925,7 +922,6 @@ allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t h
             MAP_SHARED | MAP_POPULATE | (where ? MAP_FIXED : 0),
             pos,
             where.value_or(nullptr));
-    printf("ret: 0x%lx\n", (uint64_t)ret.get());
     return ret;
 }
 
@@ -937,15 +933,10 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // the operation.
     auto bytes = nr_pages * page_size;
     auto old_mem = mem();
-    printf("5\n");
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
-    printf("6\n");
     std::memcpy(relocated_old_mem.get(), old_mem, bytes);
-    printf("7: 0x%x\n", (uint)bytes);
     alloc_sys_mem({old_mem}, bytes).release();
-    printf("8\n");
     std::memcpy(old_mem, relocated_old_mem.get(), bytes);
-    printf("9\n");
 }
 
 void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_mem) {
@@ -1341,15 +1332,11 @@ void configure(std::vector<resource::memory> m, bool mbind,
     if (hugetlbfs_path) {
         // std::function is copyable, but file_desc is not, so we must use
         // a shared_ptr to allow sys_alloc to be copied around
-        printf("1: %s\n", hugetlbfs_path->c_str());
         auto fdp = make_lw_shared<file_desc>(file_desc::temporary(*hugetlbfs_path));
-        printf("2\n");
         sys_alloc = [fdp] (optional<void*> where, size_t how_much) {
             return allocate_hugetlbfs_memory(*fdp, where, how_much);
         };
-        printf("3\n");
         cpu_mem.replace_memory_backing(sys_alloc);
-        printf("4\n");
     }
 
     cpu_mem.resize(total, sys_alloc);

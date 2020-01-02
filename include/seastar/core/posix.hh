@@ -306,9 +306,7 @@ public:
 
     mmap_area map(size_t size, unsigned prot, unsigned flags, size_t offset,
             void* addr = nullptr) {
-        printf("calling mmap: 0x%lx, 0x%x, 0x%x, 0x%x, 0x%x\n", (uint64_t)addr, (uint)size, (uint)prot, (uint)flags, (uint)offset);
         void *x = mmap(addr, size, prot, flags, _fd, offset);
-        printf("mmap called\n");
         if (x == MAP_FAILED) {
             printf("MMAP FAILED HERE: 0x%x 0x%x 0x%x 0x%x 0x%lx\n", (uint)size, (uint)prot, (uint)flags, (uint)offset, (uint64_t)addr);
         }

@@ -402,6 +402,7 @@ private:
 
         uint16_t _nr_full_seg_received = 0;
         uint closeState = -1;
+        uint resetState = -1;
         struct isn_secret {
             // 512 bits secretkey for ISN generating
             uint32_t key[16];
@@ -1222,6 +1223,7 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
         // reset", drop the segment, enter CLOSED state, delete TCB, and
         // return.  Otherwise (no ACK) drop the segment and return.
         if (acceptable) {
+            resetState = 1;
             return do_reset();
         } else {
             return;
@@ -1310,6 +1312,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // active OPEN case, enter the CLOSED state and delete the TCB,
             // and return.
             _connect_done.set_exception(tcp_refused_error());
+            resetState = 2;
             return do_reset();
         }
         if (in_state(ESTABLISHED | FIN_WAIT_1 | FIN_WAIT_2 | CLOSE_WAIT)) {
@@ -1318,6 +1321,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // flushed.  Users should also receive an unsolicited general
             // "connection reset" signal.  Enter the CLOSED state, delete the
             // TCB, and return.
+            resetState = 3;
             return do_reset();
         }
         if (in_state(CLOSING | LAST_ACK | TIME_WAIT)) {
@@ -1341,6 +1345,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         // receive an unsolicited general "connection reset" signal, enter
         // the CLOSED state, delete the TCB, and return.
         respond_with_reset(th);
+        resetState = 4;
         return do_reset();
 
         // If the SYN is not in the window this step would not be reached
@@ -1857,7 +1862,7 @@ template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::send(packet p) {
     // We can not send after the connection is closed
     if (_snd.closed || in_state(CLOSED)) {
-        printf("connection reset: _snd.closed || in_state(CLOSED): %u, %u\n", doCloseCalled, this->closeState);
+        printf("connection reset: _snd.closed || in_state(CLOSED): %u, %u, %u\n", doCloseCalled, this->closeState, this->resetState);
         if (_snd.closed) {
             printf("\tsnd_closed\n");
         }

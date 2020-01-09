@@ -1857,7 +1857,7 @@ template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::send(packet p) {
     // We can not send after the connection is closed
     if (_snd.closed || in_state(CLOSED)) {
-        printf("connection reset: _snd.closed || in_state(CLOSED): %u\n", doCloseCalled);
+        printf("connection reset: _snd.closed || in_state(CLOSED): %u, %u\n", doCloseCalled, this->closeState);
         if (_snd.closed) {
             printf("\tsnd_closed\n");
         }

@@ -401,6 +401,7 @@ private:
         bool doCloseCalled = false;
 
         uint16_t _nr_full_seg_received = 0;
+        uint closeCalled = -1;
         uint closeState = -1;
         uint resetState = -1;
         struct isn_secret {
@@ -1889,7 +1890,7 @@ void tcp<InetTraits>::tcb::close() {
     if (in_state(CLOSED) || _snd.closed) {
         return;
     }
-
+    this->closeCalled = 1;
     // this->closeState = 0;
     // TODO: We should return a future to upper layer
     (void)wait_for_all_data_acked().then([this, zis = this->shared_from_this()] () mutable {
@@ -1924,7 +1925,7 @@ void tcp<InetTraits>::tcb::close() {
                 printf("tcp::tcb::close errror: null exception ptr (%u)\n", this->closeState);
             }
         } catch (const std::exception& e) {
-            printf("tcp::tcb::close error2: %s (%u)\n", e.what(), this->closeState);
+            printf("tcp::tcb::close error2: %s (%u, %u, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState);
         }
     });
 }

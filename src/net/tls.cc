@@ -838,6 +838,12 @@ public:
                 if (!_connected) {
                     printf("Not connected: %u\n", _connected);
                 }
+
+                gnutls_protocol_t ver = gnutls_protocol_get_version(*this);
+
+                if (ver == GNUTLS_VERSION_UNKNOWN) {
+                    printf("Unknown version prior to write\n");
+                }
                 
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...

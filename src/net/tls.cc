@@ -611,6 +611,7 @@ public:
     }
 
     ~session() {
+        _destroyed = true;
         printf("session destroy: %u, %u, %u\n", _shutdown, _connected, _writing);
     }
 
@@ -848,6 +849,10 @@ public:
                     printf("Unknown version prior to write\n");
                 }
 
+                if (_destroyed == true) {
+                    printf("Writing to destroyed socket\n");
+                }
+
                 _writing = true;
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 _writing = false;
@@ -1044,6 +1049,7 @@ private:
     bool _connected = false;
     bool _error = false;
     bool _writing = false;
+    bool _destroyed = false;
 
     future<> _output_pending;
     std::function<void()> onTransmitFn;

@@ -830,6 +830,15 @@ public:
                 if (off == size) {
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
+
+                if (_error || _shutdown) {
+                    printf("Error or shutdown: %u, %u\n", _error, _shutdown);
+                }
+
+                if (!_connected) {
+                    printf("Not connected: %u\n", _connected);
+                }
+                
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
                     off += res;

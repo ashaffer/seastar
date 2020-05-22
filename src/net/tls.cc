@@ -80,6 +80,7 @@ static future<temporary_buffer<char>> read_fully(const sstring& name, const sstr
             return f.size().then([&f](uint64_t size) {
                 return f.dma_read_bulk<char>(0, size);
             }).finally([&f]() {
+                printf("read_fully close\n");
                 return f.close();
             });
         });
@@ -970,6 +971,7 @@ public:
                         std::bind(&session::wait_for_eof, this));
     }
     void close() {
+        printf("tls close\n");
         // only do once.
         if (!std::exchange(_shutdown, true)) {
             auto me = shared_from_this();
@@ -977,10 +979,12 @@ public:
             (void)with_timeout(timer<>::clock::now() + std::chrono::seconds(10), shutdown()).finally([this] {
                 _eof = true;
                 try {
+                    printf("tls in close\n");
                     (void)_in.close().handle_exception([](std::exception_ptr) {}); // should wake any waiters
                 } catch (...) {
                 }
                 try {
+                    printf("tls out close\n");
                     (void)_out.close().handle_exception([](std::exception_ptr) {});
                 } catch (...) {
                 }
@@ -1041,6 +1045,7 @@ struct session::session_ref {
         // through session_ref, and we need to initiate shutdown on "last owner",
         // since we cannot revive the session in destructor.
         if (_session && _session.use_count() == 1) {
+            printf("session_ref close\n");
             _session->close();
         }
     }
@@ -1064,9 +1069,11 @@ public:
     data_sink sink() override;
 
     void shutdown_input() override {
+        printf("shutdown_input close\n");
         _session->close();
     }
     void shutdown_output() override {
+        printf("shutdown_output close\n");
         _session->close();
     }
     void set_nodelay(bool nodelay) override {
@@ -1110,6 +1117,7 @@ private:
         return _session->get();
     }
     future<> close() override {
+        printf("source_impl session close\n");
         _session->close();
         return make_ready_future<>();
     }
@@ -1131,6 +1139,7 @@ private:
         return _session->put(std::move(p));
     }
     future<> close() override {
+        printf("sink_impl session close\n");
         _session->close();
         return make_ready_future<>();
     }

@@ -611,7 +611,7 @@ public:
     }
 
     ~session() {
-        printf("session destroy\n");
+        printf("session destroy: %u, %u, %u\n", _shutdown, _connected, _writing);
     }
 
     typedef temporary_buffer<char> buf_type;
@@ -848,7 +848,9 @@ public:
                     printf("Unknown version prior to write\n");
                 }
 
+                _writing = true;
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
+                _writing = false;
                 if (res > 0) { // don't really need to check, but...
                     off += res;
                 }
@@ -1041,7 +1043,7 @@ private:
     bool _shutdown = false;
     bool _connected = false;
     bool _error = false;
-    // bool _writing = false;
+    bool _writing = false;
 
     future<> _output_pending;
     std::function<void()> onTransmitFn;

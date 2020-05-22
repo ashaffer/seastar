@@ -540,6 +540,9 @@ shared_ptr<tls::server_credentials> tls::credentials_builder::build_server_crede
 
 namespace tls {
 
+static uint sessionCounter = 1;
+static std::unordered_map<uint, bool> destroyedSessions;
+
 /**
  * Session wraps gnutls session, and is the
  * actual conduit for an TLS/SSL data flow.
@@ -566,6 +569,7 @@ public:
                 gtls_chk(gnutls_init(&session, GNUTLS_NONBLOCK|uint32_t(t)));
                 return session;
             }(), &gnutls_deinit) {
+        _sessionId = sessionCounter++;
         gtls_chk(gnutls_set_default_priority(*this));
         gtls_chk(
                 gnutls_credentials_set(*this, GNUTLS_CRD_CERTIFICATE,
@@ -612,7 +616,8 @@ public:
 
     ~session() {
         _destroyed = true;
-        printf("session destroy: %u, %u, %u\n", _shutdown, _connected, _writing);
+        destroyedSessions[_sessionId] = true;
+        printf("session destroy: %u, %u, %u, %u\n", _sessionId, _shutdown, _connected, _writing);
     }
 
     typedef temporary_buffer<char> buf_type;
@@ -853,6 +858,10 @@ public:
                     printf("Writing to destroyed socket\n");
                 }
 
+                if (destroyedSessions.find(_sessionId) != destroyedSessions.end()) {
+                    printf("Found in destroyed session map before write! %u\n", _sessionId);
+                }
+
                 _writing = true;
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 _writing = false;
@@ -1050,6 +1059,7 @@ private:
     bool _error = false;
     bool _writing = false;
     bool _destroyed = false;
+    uint _sessionId = 0;
 
     future<> _output_pending;
     std::function<void()> onTransmitFn;

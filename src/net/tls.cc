@@ -610,7 +610,9 @@ public:
                     std::move(name)) {
     }
 
-    ~session() {}
+    ~session() {
+        printf("session destroy\n");
+    }
 
     typedef temporary_buffer<char> buf_type;
 
@@ -822,6 +824,7 @@ public:
     future<> do_put(frag_iter i, frag_iter e, std::function<void()> onTransmit) {
         assert(_output_pending.available());
         onTransmitFn = onTransmit;
+
         return do_for_each(i, e, [this](net::fragment& f) {
             auto ptr = f.base;
             auto size = f.size;
@@ -844,7 +847,7 @@ public:
                 if (ver == GNUTLS_VERSION_UNKNOWN) {
                     printf("Unknown version prior to write\n");
                 }
-                
+
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
                     off += res;
@@ -938,6 +941,9 @@ public:
         if (_error || !_connected) {
             return make_ready_future();
         }
+
+        _shutdown = true;
+        printf("gnutls_bye\n");
         auto res = gnutls_bye(*this, GNUTLS_SHUT_WR);
         if (res < 0) {
             switch (res) {
@@ -1035,6 +1041,7 @@ private:
     bool _shutdown = false;
     bool _connected = false;
     bool _error = false;
+    bool _writing = false;
 
     future<> _output_pending;
     std::function<void()> onTransmitFn;

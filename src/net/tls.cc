@@ -1041,7 +1041,7 @@ private:
     bool _shutdown = false;
     bool _connected = false;
     bool _error = false;
-    bool _writing = false;
+    // bool _writing = false;
 
     future<> _output_pending;
     std::function<void()> onTransmitFn;

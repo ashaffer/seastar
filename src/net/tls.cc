@@ -538,19 +538,7 @@ shared_ptr<tls::server_credentials> tls::credentials_builder::build_server_crede
     return creds;
 }
 
-bool is_pointer_valid(void *p) {
-    /* get the page size */
-    size_t page_size = sysconf(_SC_PAGESIZE);
-    /* find the address of the page that contains p */
-    void *base = (void *)((((size_t)p) / page_size) * page_size);
-    /* call msync, if it returns non-zero, return false */
-    return msync(base, page_size, MS_ASYNC) == 0;
-}
-
 namespace tls {
-
-static uint sessionCounter = 1;
-static std::unordered_map<uint, bool> destroyedSessions;
 
 /**
  * Session wraps gnutls session, and is the
@@ -578,7 +566,6 @@ public:
                 gtls_chk(gnutls_init(&session, GNUTLS_NONBLOCK|uint32_t(t)));
                 return session;
             }(), &gnutls_deinit) {
-        _sessionId = sessionCounter++;
         gtls_chk(gnutls_set_default_priority(*this));
         gtls_chk(
                 gnutls_credentials_set(*this, GNUTLS_CRD_CERTIFICATE,
@@ -623,11 +610,7 @@ public:
                     std::move(name)) {
     }
 
-    ~session() {
-        _destroyed = true;
-        destroyedSessions[_sessionId] = true;
-        printf("session destroy: %u, %u, %u, %u\n", _sessionId, _shutdown, _connected, _writing);
-    }
+    ~session() {}
 
     typedef temporary_buffer<char> buf_type;
 
@@ -692,13 +675,10 @@ public:
                return handshake();
             });
         }
-        _handshaking = true;
         // acquire both semaphores to sync both read & write
         return with_semaphore(_in_sem, 1, [this] {
             return with_semaphore(_out_sem, 1, [this] {
-                return do_handshake().then([this] () {
-                    _handshaking = false;
-                });
+                return do_handshake();
             });
         });
     }
@@ -842,7 +822,6 @@ public:
     future<> do_put(frag_iter i, frag_iter e, std::function<void()> onTransmit) {
         assert(_output_pending.available());
         onTransmitFn = onTransmit;
-
         return do_for_each(i, e, [this](net::fragment& f) {
             auto ptr = f.base;
             auto size = f.size;
@@ -851,37 +830,7 @@ public:
                 if (off == size) {
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
-
-                if (_error || _shutdown) {
-                    printf("Error or shutdown: %u, %u\n", _error, _shutdown);
-                }
-
-                if (!_connected) {
-                    printf("Not connected: %u\n", _connected);
-                }
-
-                gnutls_protocol_t ver = gnutls_protocol_get_version(*this);
-
-                if (ver == GNUTLS_VERSION_UNKNOWN) {
-                    printf("Unknown version prior to write\n");
-                }
-
-                if (_destroyed == true) {
-                    printf("Writing to destroyed socket\n");
-                }
-
-                if (destroyedSessions.find(_sessionId) != destroyedSessions.end()) {
-                    printf("Found in destroyed session map before write! %u\n", _sessionId);
-                }
-
-                bool valid = is_pointer_valid(ptr + off);
-                if (!valid) {
-                    printf("Invalid pointer detected: 0x%x, 0x%x, %u\n", (uint)off, (uint)size, _handshaking);
-                }
-
-                _writing = true;
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
-                _writing = false;
                 if (res > 0) { // don't really need to check, but...
                     off += res;
                 }
@@ -902,13 +851,6 @@ public:
                return put(std::move(p));
             });
         }
-
-        for (auto it : p.fragments()) {
-            if (!is_pointer_valid(it.base)) {
-                printf("Pointer invalid out here\n");
-            }
-        }
-
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
         return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {});
@@ -937,19 +879,10 @@ public:
         try {
             scattered_message<char> msg;
             for (int i = 0; i < iovcnt; ++i) {
-                if (!is_pointer_valid(iov[i].iov_base)) {
-                    printf("Original iov pointer is invalid\n");
-                }
                 msg.append(sstring(reinterpret_cast<const char *>(iov[i].iov_base), iov[i].iov_len));
             }
             auto n = msg.size();
             auto p = std::move(msg).release();
-            for (auto it : p.fragments()) {
-                if (!is_pointer_valid(it.base)) {
-                    printf("Pointer invalid all the way out here\n");
-                }
-            }
-
             p.onTransmit(onTransmitFn);
             _output_pending = _out.put(std::move(p));
             return n;
@@ -990,9 +923,6 @@ public:
         if (_error || !_connected) {
             return make_ready_future();
         }
-
-        _shutdown = true;
-        printf("gnutls_bye\n");
         auto res = gnutls_bye(*this, GNUTLS_SHUT_WR);
         if (res < 0) {
             switch (res) {
@@ -1090,10 +1020,6 @@ private:
     bool _shutdown = false;
     bool _connected = false;
     bool _error = false;
-    bool _writing = false;
-    bool _destroyed = false;
-    bool _handshaking = false;
-    uint _sessionId = 0;
 
     future<> _output_pending;
     std::function<void()> onTransmitFn;
@@ -1115,7 +1041,6 @@ struct session::session_ref {
         // through session_ref, and we need to initiate shutdown on "last owner",
         // since we cannot revive the session in destructor.
         if (_session && _session.use_count() == 1) {
-            printf("session_ref close\n");
             _session->close();
         }
     }

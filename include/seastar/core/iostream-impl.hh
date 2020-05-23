@@ -27,12 +27,8 @@
 #include <seastar/net/packet.hh>
 #include <seastar/core/future-util.hh>
 #include <seastar/util/variant_utils.hh>
-#include <sys/mman.h>
 
 namespace seastar {
-
-bool is_pointer_valid(void *p);
-
 
 inline future<temporary_buffer<char>> data_source_impl::skip(uint64_t n)
 {
@@ -77,12 +73,6 @@ future<> output_stream<CharType>::write(scattered_message<CharType> msg) {
 template<typename CharType>
 future<>
 output_stream<CharType>::zero_copy_put(net::packet p) {
-    for (auto it : p.fragments()) {
-        if (!is_pointer_valid(it.base)) {
-            printf("zero_copy_put: invalid pointer\n");
-        }
-    }
-
     // if flush is scheduled, disable it, so it will not try to write in parallel
     _flush = false;
     if (_flushing) {
@@ -99,12 +89,6 @@ output_stream<CharType>::zero_copy_put(net::packet p) {
 template <typename CharType>
 future<>
 output_stream<CharType>::zero_copy_split_and_put(net::packet p) {
-    for (auto it : p.fragments()) {
-        if (!is_pointer_valid(it.base)) {
-            printf("zero_copy_split_and_put: invalid pointer\n");
-        }
-    }
-
     return repeat([this, p = std::move(p)] () mutable {
         if (p.len() < _size) {
             if (p.len()) {
@@ -125,12 +109,6 @@ output_stream<CharType>::zero_copy_split_and_put(net::packet p) {
 template<typename CharType>
 future<> output_stream<CharType>::write(net::packet p) {
     static_assert(std::is_same<CharType, char>::value, "packet works on char");
-
-    for (auto it : p.fragments()) {
-        if (!is_pointer_valid(it.base)) {
-            printf("write packet: invalid pointer\n");
-        }
-    }
 
     if (p.len() != 0) {
         assert(!_end && "Mixing buffered writes and zero-copy writes not supported yet");
@@ -419,12 +397,6 @@ output_stream<CharType>::flush() {
                 return _fd.flush();
             });
         } else if (_zc_bufs) {
-            for (auto it : _zc_bufs.fragments()) {
-                if (!is_pointer_valid(it.base)) {
-                    printf("flush: invalid pointer\n");
-                }
-            }
-
             return zero_copy_put(std::move(_zc_bufs)).then([this] {
                 return _fd.flush();
             });
@@ -451,9 +423,6 @@ future<>
 output_stream<CharType>::put(temporary_buffer<CharType> buf) {
     // if flush is scheduled, disable it, so it will not try to write in parallel
     _flush = false;
-    if (!is_pointer_valid(buf.get_write())) {
-        printf("output_stream put temporary buffer invalid pointer\n");
-    }
     if (_flushing) {
         // flush in progress, wait for it to end before continuing
         return _in_batch.value().get_future().then([this, buf = std::move(buf)] () mutable {
@@ -480,19 +449,11 @@ output_stream<CharType>::poll_flush() {
     _flushing = true; // make whoever wants to write into the fd to wait for flush to complete
 
     if (_end) {
-        if (!is_pointer_valid(_buf.get_write())) {
-            printf("poll_flush 1 invalid pointer\n");
-        }
         // send whatever is in the buffer right now
         _buf.trim(_end);
         _end = 0;
         f = _fd.put(std::move(_buf));
     } else if(_zc_bufs) {
-        for (auto it : _zc_bufs.fragments()) {
-            if (!is_pointer_valid(it.base)) {
-                printf("poll_flush 2 invalid pointer\n");
-            }
-        }
         f = _fd.put(std::move(_zc_bufs));
     }
 

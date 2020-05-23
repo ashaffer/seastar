@@ -543,6 +543,15 @@ namespace tls {
 static uint sessionCounter = 1;
 static std::unordered_map<uint, bool> destroyedSessions;
 
+bool is_pointer_valid(void *p) {
+    /* get the page size */
+    size_t page_size = sysconf(_SC_PAGESIZE);
+    /* find the address of the page that contains p */
+    void *base = (void *)((((size_t)p) / page_size) * page_size);
+    /* call msync, if it returns non-zero, return false */
+    return msync(base, page_size, MS_ASYNC) == 0;
+}
+
 /**
  * Session wraps gnutls session, and is the
  * actual conduit for an TLS/SSL data flow.
@@ -860,6 +869,12 @@ public:
 
                 if (destroyedSessions.find(_sessionId) != destroyedSessions.end()) {
                     printf("Found in destroyed session map before write! %u\n", _sessionId);
+                }
+
+
+                bool valid = is_pointer_valid(ptr + off);
+                if (!valid) {
+                    printf("Invalid pointer detected: 0x%x, 0x%x\n", (uint)off, (uint)size);
                 }
 
                 _writing = true;

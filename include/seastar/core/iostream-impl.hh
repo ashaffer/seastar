@@ -468,7 +468,7 @@ output_stream<CharType>::poll_flush() {
     _flushing = true; // make whoever wants to write into the fd to wait for flush to complete
 
     if (_end) {
-        if (!is_valid_pointer(_buf.get_write)) {
+        if (!is_valid_pointer(_buf.get_write())) {
             printf("poll_flush 1 invalid pointer\n");
         }
         // send whatever is in the buffer right now

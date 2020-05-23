@@ -99,6 +99,12 @@ output_stream<CharType>::zero_copy_put(net::packet p) {
 template <typename CharType>
 future<>
 output_stream<CharType>::zero_copy_split_and_put(net::packet p) {
+    for (auto it : p.fragments()) {
+        if (!is_pointer_valid(it.base)) {
+            printf("zero_copy_split_and_put: invalid pointer\n");
+        }
+    }
+
     return repeat([this, p = std::move(p)] () mutable {
         if (p.len() < _size) {
             if (p.len()) {
@@ -119,6 +125,12 @@ output_stream<CharType>::zero_copy_split_and_put(net::packet p) {
 template<typename CharType>
 future<> output_stream<CharType>::write(net::packet p) {
     static_assert(std::is_same<CharType, char>::value, "packet works on char");
+
+    for (auto it : p.fragments()) {
+        if (!is_pointer_valid(it.base)) {
+            printf("write packet: invalid pointer\n");
+        }
+    }
 
     if (p.len() != 0) {
         assert(!_end && "Mixing buffered writes and zero-copy writes not supported yet");
@@ -407,6 +419,12 @@ output_stream<CharType>::flush() {
                 return _fd.flush();
             });
         } else if (_zc_bufs) {
+            for (auto it : _zc_bufs.fragments()) {
+                if (!is_pointer_valid(it.base)) {
+                    printf("flush: invalid pointer\n");
+                }
+            }
+
             return zero_copy_put(std::move(_zc_bufs)).then([this] {
                 return _fd.flush();
             });

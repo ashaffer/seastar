@@ -900,6 +900,13 @@ public:
                return put(std::move(p));
             });
         }
+
+        for (auto it : p.fragments()) {
+            if (!is_pointer_valid(it.base)) {
+                printf("Pointer invalid out here\n");
+            }
+        }
+        
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
         return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {});

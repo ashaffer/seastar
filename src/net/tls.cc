@@ -692,10 +692,13 @@ public:
                return handshake();
             });
         }
+        _handshaking = true;
         // acquire both semaphores to sync both read & write
         return with_semaphore(_in_sem, 1, [this] {
             return with_semaphore(_out_sem, 1, [this] {
-                return do_handshake();
+                return do_handshake().then([this] () {
+                    _handshaking = false;
+                });
             });
         });
     }
@@ -871,10 +874,9 @@ public:
                     printf("Found in destroyed session map before write! %u\n", _sessionId);
                 }
 
-
                 bool valid = is_pointer_valid(ptr + off);
                 if (!valid) {
-                    printf("Invalid pointer detected: 0x%x, 0x%x\n", (uint)off, (uint)size);
+                    printf("Invalid pointer detected: 0x%x, 0x%x, %u\n", (uint)off, (uint)size, _handshaking);
                 }
 
                 _writing = true;
@@ -1090,6 +1092,7 @@ private:
     bool _error = false;
     bool _writing = false;
     bool _destroyed = false;
+    bool _handshaking = false;
     uint _sessionId = 0;
 
     future<> _output_pending;

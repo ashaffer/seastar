@@ -27,6 +27,7 @@
 #include <seastar/net/packet.hh>
 #include <seastar/core/future-util.hh>
 #include <seastar/util/variant_utils.hh>
+#include <sys/mman.h>
 
 namespace seastar {
 
@@ -70,9 +71,24 @@ future<> output_stream<CharType>::write(scattered_message<CharType> msg) {
     return write(std::move(msg).release());
 }
 
+bool is_pointer_valid(void *p) {
+    /* get the page size */
+    size_t page_size = sysconf(_SC_PAGESIZE);
+    /* find the address of the page that contains p */
+    void *base = (void *)((((size_t)p) / page_size) * page_size);
+    /* call msync, if it returns non-zero, return false */
+    return msync(base, page_size, MS_ASYNC) == 0;
+}
+
 template<typename CharType>
 future<>
 output_stream<CharType>::zero_copy_put(net::packet p) {
+    for (auto it : p.fragments()) {
+        if (!is_pointer_valid(it.base)) {
+            printf("zero_copy_put: invalid pointer\n");
+        }
+    }
+
     // if flush is scheduled, disable it, so it will not try to write in parallel
     _flush = false;
     if (_flushing) {
@@ -423,6 +439,9 @@ future<>
 output_stream<CharType>::put(temporary_buffer<CharType> buf) {
     // if flush is scheduled, disable it, so it will not try to write in parallel
     _flush = false;
+    if (!is_pointer_valid(buf.get_write())) {
+        printf("output_stream put temporary buffer invalid pointer\n");
+    }
     if (_flushing) {
         // flush in progress, wait for it to end before continuing
         return _in_batch.value().get_future().then([this, buf = std::move(buf)] () mutable {
@@ -449,11 +468,19 @@ output_stream<CharType>::poll_flush() {
     _flushing = true; // make whoever wants to write into the fd to wait for flush to complete
 
     if (_end) {
+        if (!is_valid_pointer(_buf.get_write)) {
+            printf("poll_flush 1 invalid pointer\n");
+        }
         // send whatever is in the buffer right now
         _buf.trim(_end);
         _end = 0;
         f = _fd.put(std::move(_buf));
     } else if(_zc_bufs) {
+        for (auto it : _zc_bufs.fragments()) {
+            if (!is_valid_pointer(it.base)) {
+                printf("poll_flush 2 invalid pointer\n");
+            }
+        }
         f = _fd.put(std::move(_zc_bufs));
     }
 

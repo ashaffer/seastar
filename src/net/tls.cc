@@ -906,7 +906,7 @@ public:
                 printf("Pointer invalid out here\n");
             }
         }
-        
+
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
         return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {});
@@ -935,10 +935,19 @@ public:
         try {
             scattered_message<char> msg;
             for (int i = 0; i < iovcnt; ++i) {
+                if (!is_pointer_valid(iov[i].iov_base)) {
+                    printf("Original iov pointer is invalid\n");
+                }
                 msg.append(sstring(reinterpret_cast<const char *>(iov[i].iov_base), iov[i].iov_len));
             }
             auto n = msg.size();
             auto p = std::move(msg).release();
+            for (auto it : p.fragments()) {
+                if (!is_pointer_valid(it.base)) {
+                    printf("Pointer invalid all the way out here\n");
+                }
+            }
+
             p.onTransmit(onTransmitFn);
             _output_pending = _out.put(std::move(p));
             return n;

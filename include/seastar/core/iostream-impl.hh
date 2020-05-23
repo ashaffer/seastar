@@ -31,6 +31,16 @@
 
 namespace seastar {
 
+bool is_pointer_valid(void *p) {
+    /* get the page size */
+    size_t page_size = sysconf(_SC_PAGESIZE);
+    /* find the address of the page that contains p */
+    void *base = (void *)((((size_t)p) / page_size) * page_size);
+    /* call msync, if it returns non-zero, return false */
+    return msync(base, page_size, MS_ASYNC) == 0;
+}
+
+
 inline future<temporary_buffer<char>> data_source_impl::skip(uint64_t n)
 {
     return do_with(uint64_t(n), [this] (uint64_t& n) {
@@ -468,7 +478,7 @@ output_stream<CharType>::poll_flush() {
     _flushing = true; // make whoever wants to write into the fd to wait for flush to complete
 
     if (_end) {
-        if (!is_valid_pointer(_buf.get_write())) {
+        if (!is_pointer_valid(_buf.get_write())) {
             printf("poll_flush 1 invalid pointer\n");
         }
         // send whatever is in the buffer right now
@@ -477,7 +487,7 @@ output_stream<CharType>::poll_flush() {
         f = _fd.put(std::move(_buf));
     } else if(_zc_bufs) {
         for (auto it : _zc_bufs.fragments()) {
-            if (!is_valid_pointer(it.base)) {
+            if (!is_pointer_valid(it.base)) {
                 printf("poll_flush 2 invalid pointer\n");
             }
         }

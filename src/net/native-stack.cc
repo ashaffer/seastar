@@ -143,7 +143,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     }
 
     (void)sem->wait(smp::count * devices.size()).then([opts, devices, dev_cfgs] {
-        printf("Completed device init: awaiting %u devices to signal\n", devices.size());
+        printf("Completed device init: awaiting %u devices to signal\n", (uint)devices.size());
         auto sem = std::make_shared<semaphore>(0);
 
         for (auto sdev : devices) {

@@ -2190,9 +2190,9 @@ reactor::do_expire_lowres_timers() {
     if (_lowres_next_timeout == lowres_clock::time_point()) {
         return false;
     }
-    printf("do expire lowres timers: %u\n", engine().cpu_id());    
     auto now = lowres_clock::now();
     if (now >= _lowres_next_timeout) {
+        printf("do expire lowres timers: %u\n", engine().cpu_id());
         complete_timers(_lowres_timers, _expired_lowres_timers, [this] {
             if (!_lowres_timers.empty()) {
                 _lowres_next_timeout = _lowres_timers.get_next_timeout();

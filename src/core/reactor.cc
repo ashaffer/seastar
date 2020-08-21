@@ -2709,6 +2709,7 @@ int reactor::run() {
 
     printf("RUNNING REACTOR\n");
     while (true) {
+        printf("running some tasks\n");
         run_some_tasks();
         if (_stopped) {
             load_timer.cancel();

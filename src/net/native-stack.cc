@@ -122,13 +122,16 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
                 if (qid < sdev->hw_queues_count()) {
                     auto qp = sdev->init_local_queue(opts, qid);
+                    printf("initialized local queue\n");
                     std::map<unsigned, float> cpu_weights;
                     for (unsigned i = sdev->hw_queues_count() + qid % sdev->hw_queues_count(); i < smp::count; i+= sdev->hw_queues_count()) {
                         cpu_weights[i] = 1;
                     }
                     cpu_weights[qid] = opts["hw-queue-weight"].as<float>();
                     qp->configure_proxies(cpu_weights);
+                    printf("configured proxies\n");
                     sdev->set_local_queue(std::move(qp), qid);
+                    printf("set local queues\n");
                 } else {
                     auto master_qid = qid % sdev->hw_queues_count();
                     auto master_cpuid = sdev->qid2cpuid(master_qid);
@@ -142,6 +145,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         jj++;
     }
 
+    printf("Completed device init\n");
     (void)sem->wait(smp::count * devices.size()).then([opts, devices, dev_cfgs] {
         auto sem = std::make_shared<semaphore>(0);
 
@@ -152,6 +156,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         }
 
         (void)sem->wait(devices.size()).then([opts, devices, dev_cfgs] {
+            printf("All devices signaled\n");
             for (unsigned i = 0; i < smp::count; i++) {
                 (void)smp::submit_to(i, [opts, devices, dev_cfgs] {
                     create_native_stack(opts, devices, dev_cfgs);

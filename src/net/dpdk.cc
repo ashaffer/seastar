@@ -1635,7 +1635,7 @@ int dpdk_device::init_port_start()
     }
 
     //rte_eth_promiscuous_enable(port_num);
-    printf("done: \n");
+    printf("Port %u done: \n", _port_idx);
 
     return 0;
 }

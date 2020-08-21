@@ -128,6 +128,7 @@ public:
         printf("Insert timer: %lu %lu\n", timestamp, _next);
         printf("\t%ld\n", std::chrono::duration_cast<std::chrono::milliseconds>(timer.get_timeout().time_since_epoch()).count());
         if (timestamp < _next) {
+            printf("Setting next\n");
             _next = timestamp;
             return true;
         }
@@ -187,6 +188,7 @@ public:
 
         _last = timestamp;
         _next = max_timestamp;
+        printf("Next set to max\n");
 
         auto& list = _buckets[index];
         while (!list.empty()) {
@@ -203,6 +205,7 @@ public:
 
         if (_next == max_timestamp && _non_empty_buckets.any()) {
             for (auto& timer : _buckets[get_last_non_empty_bucket()]) {
+                printf("_next set to std::min\n");
                 _next = std::min(_next, get_timestamp(timer));
             }
         }

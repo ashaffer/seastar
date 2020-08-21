@@ -117,7 +117,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     uint jj = 0; 
     for (auto sdev : devices) {
         for (unsigned i = 0; i < smp::count; i++) {
-            (void)smp::submit_to(i, [opts, sdev, i] {
+            (void)smp::submit_to(i, [opts, sdev] {
                 auto qid = engine().cpu_id();
 
                 if (qid < sdev->hw_queues_count()) {
@@ -135,7 +135,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);
                 }
 
-            }).then([sem, i] {
+            }).then([sem] {
                 sem->signal();
             });
         }

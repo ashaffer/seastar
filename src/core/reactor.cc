@@ -2706,6 +2706,8 @@ int reactor::run() {
     std::function<bool()> pure_check_for_work = [this] () {
         return pure_poll_once() || have_more_tasks();
     };
+
+    printf("RUNNING REACTOR\n");
     while (true) {
         run_some_tasks();
         if (_stopped) {

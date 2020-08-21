@@ -1893,13 +1893,16 @@ void dpdk_device::check_port_link_status()
 
     std::cout << "\nChecking link status " << std::endl;
     auto t = new timer<>;
+    printf("Checking link status\n");
     t->set_callback([this, count, t] () mutable {
+        printf("Callback called\n");
         const int max_check_time = 90;  /* 9s (90 * 100ms) in total */
         struct rte_eth_link link;
         memset(&link, 0, sizeof(link));
         rte_eth_link_get_nowait(_port_idx, &link);
 
         if (link.link_status) {
+            print("Setting link status\n");
             std::cout <<
                 "done\nPort " << static_cast<unsigned>(_port_idx) <<
                 " Link Up - speed " << link.link_speed <<

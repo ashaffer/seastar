@@ -1954,6 +1954,7 @@ void reactor::del_timer(timer<steady_clock_type>* tmr) {
 void reactor::add_timer(timer<lowres_clock>* tmr) {
     if (queue_timer(tmr)) {
         _lowres_next_timeout = _lowres_timers.get_next_timeout();
+        printf("set lowres_next_timeout\n");
     }
 }
 

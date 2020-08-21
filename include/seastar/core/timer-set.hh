@@ -126,6 +126,7 @@ public:
         _buckets[index].push_back(timer);
         _non_empty_buckets[index] = true;
         printf("Insert timer: %lu %lu\n", timestamp, _next);
+        printf("\t%u\n", std::chrono::duration_cast<std::chrono::milliseconds>(timer.time_since_epoch()).count());
         if (timestamp < _next) {
             _next = timestamp;
             return true;

@@ -1902,7 +1902,7 @@ void dpdk_device::check_port_link_status()
         rte_eth_link_get_nowait(_port_idx, &link);
 
         if (link.link_status) {
-            print("Setting link status\n");
+            printf("Setting link status\n");
             std::cout <<
                 "done\nPort " << static_cast<unsigned>(_port_idx) <<
                 " Link Up - speed " << link.link_speed <<

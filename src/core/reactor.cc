@@ -2187,6 +2187,7 @@ reactor::flush_tcp_batches() {
 
 bool
 reactor::do_expire_lowres_timers() {
+    printf("do expire lowres timers\n");
     if (_lowres_next_timeout == lowres_clock::time_point()) {
         return false;
     }
@@ -2709,7 +2710,6 @@ int reactor::run() {
 
     printf("RUNNING REACTOR\n");
     while (true) {
-        printf("running some tasks\n");
         run_some_tasks();
         if (_stopped) {
             load_timer.cancel();

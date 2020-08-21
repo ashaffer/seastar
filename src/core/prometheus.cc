@@ -562,8 +562,8 @@ future<> write_text_representation(output_stream<char>& out, const config& ctx, 
         for (metric_family& metric_family : m) {
             auto name = ctx.prefix + "_" + metric_family.name();
             found = false;
-            metric_family.foreach_metric([&out, &ctx, &found, &name, &metric_family](auto value, auto value_info) mutable {
-                std::stringstream s;
+            std::stringstream s;
+            metric_family.foreach_metric([&s, &ctx, &found, &name, &metric_family](auto value, auto value_info) mutable {
                 if (!found) {
                     if (metric_family.metadata().d.str() != "") {
                         s << "# HELP " << name << " " <<  metric_family.metadata().d.str() << "\n";
@@ -598,10 +598,13 @@ future<> write_text_representation(output_stream<char>& out, const config& ctx, 
                     s << to_str(value);
                     s << "\n";
                 }
-                out.write(s.str()).get();
+
                 thread::maybe_yield();
             });
+            out.write(s.str());
         }
+
+        out.write("\r\n\r\n");
     });
 }
 

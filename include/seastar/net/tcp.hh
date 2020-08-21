@@ -855,6 +855,7 @@ future<> tcp<InetTraits>::poll_tcb(ipaddr to, lw_shared_ptr<tcb> tcb) {
 
 template <typename InetTraits>
 auto tcp<InetTraits>::listen(uint16_t port, size_t queue_length) -> listener {
+    printf("tcp listen\n");
     return listener(*this, port, queue_length);
 }
 

@@ -1624,7 +1624,7 @@ int dpdk_device::init_port_start()
 
     printf("Port %u init ... ", _port_idx);
     fflush(stdout);
-
+    printf("Before configure\n");
     /*
      * Standard DPDK port initialisation - config port, then set up
      * rx and tx rings.

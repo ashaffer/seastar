@@ -1933,7 +1933,9 @@ void reactor::enable_timer(steady_clock_type::time_point when)
 }
 
 void reactor::add_timer(timer<steady_clock_type>* tmr) {
+    printf("add timer\n");
     if (queue_timer(tmr)) {
+        printf("enable timer\n");
         enable_timer(_timers.get_next_timeout());
     }
 }

@@ -125,7 +125,7 @@ public:
 
         _buckets[index].push_back(timer);
         _non_empty_buckets[index] = true;
-        printf("Insert timer: %llu %llu\n", timestamp, _next);
+        printf("Insert timer: %lu %lu\n", timestamp, _next);
         if (timestamp < _next) {
             _next = timestamp;
             return true;

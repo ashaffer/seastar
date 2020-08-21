@@ -117,7 +117,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     uint jj = 0; 
     for (auto sdev : devices) {
         for (unsigned i = 0; i < smp::count; i++) {
-            (void)smp::submit_to(i, [opts, sdev] {
+            (void)smp::submit_to(i, [opts, sdev, i] {
                 auto qid = engine().cpu_id();
 
                 if (qid < sdev->hw_queues_count()) {
@@ -131,11 +131,13 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     qp->configure_proxies(cpu_weights);
                     printf("configured proxies\n");
                     sdev->set_local_queue(std::move(qp), qid);
-                    printf("set local queues\n");
+                    printf("set local queues: %u\n", i);
                 } else {
+                    printf("master_qid: %u\n", i);
                     auto master_qid = qid % sdev->hw_queues_count();
                     auto master_cpuid = sdev->qid2cpuid(master_qid);
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);
+                    printf("master qid: %u complete", i);
                 }
 
             }).then([sem, i] {

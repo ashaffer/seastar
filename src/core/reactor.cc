@@ -2187,10 +2187,10 @@ reactor::flush_tcp_batches() {
 
 bool
 reactor::do_expire_lowres_timers() {
-    printf("do expire lowres timers\n");
     if (_lowres_next_timeout == lowres_clock::time_point()) {
         return false;
     }
+    printf("do expire lowres timers: %u\n", engine().cpu_id());    
     auto now = lowres_clock::now();
     if (now >= _lowres_next_timeout) {
         complete_timers(_lowres_timers, _expired_lowres_timers, [this] {

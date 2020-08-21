@@ -1922,6 +1922,7 @@ void dpdk_device::check_port_link_status()
         t->cancel();
         delete t;
     });
+    printf("Arming periodic: %u\n", engne().cpu_id());
     t->arm_periodic(check_interval);
 }
 

@@ -1933,9 +1933,7 @@ void reactor::enable_timer(steady_clock_type::time_point when)
 }
 
 void reactor::add_timer(timer<steady_clock_type>* tmr) {
-    printf("add timer\n");
     if (queue_timer(tmr)) {
-        printf("enable timer\n");
         enable_timer(_timers.get_next_timeout());
     }
 }
@@ -1956,7 +1954,6 @@ void reactor::del_timer(timer<steady_clock_type>* tmr) {
 void reactor::add_timer(timer<lowres_clock>* tmr) {
     if (queue_timer(tmr)) {
         _lowres_next_timeout = _lowres_timers.get_next_timeout();
-        printf("set lowres_next_timeout\n");
     }
 }
 
@@ -2194,12 +2191,7 @@ reactor::do_expire_lowres_timers() {
         return false;
     }
     auto now = lowres_clock::now();
-    printf("expire: %ld, %ld\n", 
-        std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count(),
-        std::chrono::duration_cast<std::chrono::milliseconds>(_lowres_next_timeout.time_since_epoch()).count()
-    );
     if (now >= _lowres_next_timeout) {
-        printf("do expire lowres timers: %u\n", engine().cpu_id());
         complete_timers(_lowres_timers, _expired_lowres_timers, [this] {
             if (!_lowres_timers.empty()) {
                 _lowres_next_timeout = _lowres_timers.get_next_timeout();
@@ -2714,8 +2706,6 @@ int reactor::run() {
     std::function<bool()> pure_check_for_work = [this] () {
         return pure_poll_once() || have_more_tasks();
     };
-
-    printf("RUNNING REACTOR\n");
     while (true) {
         run_some_tasks();
         if (_stopped) {

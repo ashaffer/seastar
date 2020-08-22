@@ -2194,7 +2194,10 @@ reactor::do_expire_lowres_timers() {
         return false;
     }
     auto now = lowres_clock::now();
-    printf("expire: %ld\n", std::chrono::duration_cast<std::chrono::milliseconds>(_lowres_next_timeout.time_since_epoch()).count());
+    printf("expire: %ld, %ld\n", 
+        std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(_lowres_next_timeout.time_since_epoch()).count()
+    );
     if (now >= _lowres_next_timeout) {
         printf("do expire lowres timers: %u\n", engine().cpu_id());
         complete_timers(_lowres_timers, _expired_lowres_timers, [this] {

@@ -1424,6 +1424,7 @@ private:
 
 int dpdk_device::init_port_start()
 {
+    printf("Starting: %u (%u available)\n", (uint)_port_idx, (uint)rte_eth_dev_count_avail());
     assert(_port_idx < rte_eth_dev_count_avail());
     rte_eth_dev_info_get(_port_idx, &_dev_info);
 
@@ -2296,7 +2297,7 @@ std::unique_ptr<net::device> create_dpdk_net_device(
     if (rte_eth_dev_count_avail() == 0) {
         rte_exit(EXIT_FAILURE, "No Ethernet ports - bye\n");
     } else {
-        printf("ports number: %d\n", rte_eth_dev_count_avail());
+        printf("ports number: %d (%u)\n", rte_eth_dev_count_avail(), port_idx);
     }
 
     return std::make_unique<dpdk::dpdk_device>(port_idx, num_queues, use_lro,

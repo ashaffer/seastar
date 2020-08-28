@@ -92,7 +92,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK
             if ( hw_config.port_index || !hw_config.pci_address.empty() || !hw_config.mac_address.empty()) {
-                printf("create: %u\n", (uint)hw_config.port_index);
+                printf("create: %u\n", (uint)*(hw_config.port_index));
                 auto dev = create_dpdk_net_device(hw_config, num_queues, fullHash, initialHash);
                 std::shared_ptr<device> sdev(dev.release());
 	            devices.push_back(sdev);

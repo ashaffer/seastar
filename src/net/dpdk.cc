@@ -1567,6 +1567,11 @@ int dpdk_device::init_port_start()
 #endif
         printf("LRO is off\n");
 
+    if (_dev_info.rx_offload_capa & DEV_RX_OFFLOAD_TIMESTAMP) {
+        port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_TIMESTAMP;
+        printf("Timestamp offloading supported and enabled\n");
+    }
+
     // Check that all CSUM features are either all set all together or not set
     // all together. If this assumption breaks we need to rework the below logic
     // by splitting the csum offload feature bit into separate bits for IPv4,

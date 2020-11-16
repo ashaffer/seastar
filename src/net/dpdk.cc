@@ -1571,7 +1571,7 @@ int dpdk_device::init_port_start()
         port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_TIMESTAMP;
         printf("Timestamp offloading supported and enabled\n");
     } else {
-        printf("Timestamp offload not supported: 0x%llx\n", _dev_info.rx_offload_capa);
+        printf("Timestamp offload not supported: 0x%lx\n", _dev_info.rx_offload_capa);
     }
 
     // Check that all CSUM features are either all set all together or not set

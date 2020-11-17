@@ -103,6 +103,7 @@ class packet final {
         unsigned _headroom = internal_data_size; // in _data
         // FIXME: share _data/_frags space
         std::chrono::high_resolution_clock::time_point _receivedAt;
+        uint _pollDelay;
         std::function<void()> _onTransmit;
 
         fragment _frags[];
@@ -128,6 +129,7 @@ class packet final {
             n->_rss_hash = old->_rss_hash;
             std::copy(old->_frags, old->_frags + old->_nr_frags, n->_frags);
             n->_receivedAt = old->_receivedAt;
+            n->_pollDelay = old->_pollDelay;
             n->_onTransmit = old->_onTransmit;
             old->copy_internal_fragment_to(n.get());
             return n;
@@ -289,8 +291,16 @@ public:
         _impl->_receivedAt = receivedAt;
     }
 
+    void setPollDelay (uint pollDelay) {
+        _impl->_pollDelay = pollDelay;
+    }
+
     std::chrono::high_resolution_clock::time_point getReceivedAt () {
         return _impl->_receivedAt;
+    }
+
+    uint getPollDelay () {
+        return _impl->_pollDelay;
     }
 
     void reserve(int n_frags) {

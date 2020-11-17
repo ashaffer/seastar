@@ -101,6 +101,10 @@ std::chrono::high_resolution_clock::time_point connected_socket::getReceivedAt (
     return _csi->getReceivedAt();
 }
 
+uint connected_socket::getPollDelay () {
+    return _csi->getPollDelay();
+}
+
 bool connected_socket::isClosed () {
     return _csi->isClosed();
 }

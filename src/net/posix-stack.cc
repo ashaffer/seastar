@@ -168,6 +168,10 @@ public:
         return std::chrono::high_resolution_clock::now();
     }
 
+    uint getPollDelay () const override {
+        return 0;
+    }
+
     void set_keepalive_parameters(const keepalive_params& p) override {
         return _ops::set_keepalive_parameters(_fd->get_file_desc(), p);
     }
@@ -223,6 +227,10 @@ public:
 
     std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
         return std::chrono::high_resolution_clock::now();
+    }
+
+    uint getPollDelay () const override {
+        return 0;
     }
 
     void set_keepalive(bool keepalive) override {}

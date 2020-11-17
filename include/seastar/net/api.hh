@@ -201,6 +201,7 @@ public:
     void shutdown_input();
 
     virtual std::chrono::high_resolution_clock::time_point getReceivedAt();
+    virtual uint getPollDelay();
     virtual bool isClosed();
     virtual uint32_t can_send();
 };

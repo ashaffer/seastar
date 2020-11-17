@@ -268,6 +268,10 @@ public:
     std::chrono::high_resolution_clock::time_point getReceivedAt () {
         return _socket.getReceivedAt();
     }
+
+    uint getPollDelay () {
+        return _socket.getPollDelay();
+    }
 };
 
 sstring encode_handshake_key(sstring nonce);

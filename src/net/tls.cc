@@ -1099,6 +1099,10 @@ public:
     std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
         return _session->socket().getReceivedAt();
     }
+
+    uint getPollDelay () const override {
+        return _session->socket().getPollDelay();
+    }
 };
 
 

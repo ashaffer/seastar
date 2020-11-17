@@ -107,6 +107,10 @@ public:
         return _conn->getReceivedAt();
     }
 
+    uint getPollDelay () const override {
+        return _conn->getPollDelay();
+    }
+
     bool isClosed () const override {
         return _conn->isClosed();
     }
@@ -179,6 +183,7 @@ public:
         return _conn->wait_for_data().then([this] {
             _buf = _conn->read();
             _conn->setReceivedAt(_buf.getReceivedAt());
+            _conn->setPollDelay(_buf.getPollDelay());
             _cur_frag = 0;
             _eof = !_buf.len();
             return get();

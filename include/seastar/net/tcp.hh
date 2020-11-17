@@ -398,6 +398,7 @@ private:
         timer<lowres_clock> _retransmit;
         timer<lowres_clock> _persist;
         std::chrono::high_resolution_clock::time_point _receivedAt;
+        uint _pollDelay;
         bool doCloseCalled = false;
 
         uint16_t _nr_full_seg_received = 0;
@@ -450,6 +451,10 @@ private:
         }
         void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
             _receivedAt = receivedAt;
+        }
+
+        void setPollDelay (uint pollDelay) {
+            _pollDelay = pollDelay;
         }
         compat::optional<typename InetTraits::l4packet> get_packet();
         void output() {
@@ -691,6 +696,7 @@ public:
     class connection {
         lw_shared_ptr<tcb> _tcb;
         std::chrono::high_resolution_clock::time_point _receivedAt;
+        uint _pollDelay;
 
     public:
         explicit connection(lw_shared_ptr<tcb> tcbp) : _tcb(std::move(tcbp)) { _tcb->_conn = this; }
@@ -730,8 +736,16 @@ public:
             _receivedAt = receivedAt;
         }
 
+        void setPollDelay (uint pollDelay) {
+            _pollDelay = pollDelay;
+        }
+
         std::chrono::high_resolution_clock::time_point getReceivedAt () {
             return _receivedAt;
+        }
+
+        uint getPollDelay () {
+            return _pollDelay;
         }
 
         bool isClosed () {
@@ -985,6 +999,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     } else {
         tcbp = tcbi->second;
         tcbp->setReceivedAt(p.getReceivedAt());
+        tcbp->setPollDelay(p.getPollDelay());
         if (tcbp->state() == tcp_state::SYN_SENT) {
             // 3) In SYN_SENT State
             return tcbp->input_handle_syn_sent_state(&h, std::move(p));

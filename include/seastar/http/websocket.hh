@@ -104,6 +104,7 @@ public:
         return _stream.read_exactly(sizeof(uint16_t)).then([this](temporary_buffer<char>&& header) {
             if (!header)
                 throw websocket_exception(NORMAL_CLOSURE); //EOF
+
             fragment_header fragment_header(header);
             if (fragment_header.extended_header_size() > 0) {
                 // The frame has an extended header (bigger payload size and/or there is a masking key)
@@ -118,6 +119,7 @@ public:
                                         // Because empty frames are OK, an empty buffer does not necessarally means EOF.
                                         if (!payload && fragment_header.length > 0)
                                             throw websocket_exception(NORMAL_CLOSURE); //EOF
+
                                         return inbound_fragment<type>(fragment_header, payload);
                                     });
                         });
@@ -128,6 +130,7 @@ public:
                         // Because empty frames are OK, an empty buffer does not necessarally means EOF.
                         if (!payload && fragment_header.length > 0)
                             throw websocket_exception(NORMAL_CLOSURE); //EOF
+
                         return inbound_fragment<type>(fragment_header, payload);
                     });
         });

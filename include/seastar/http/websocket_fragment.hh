@@ -175,7 +175,7 @@ public:
      * @return true if fragment is valid, false otherwise
      */
     operator bool() {
-        return !((header.rsv1 || header.rsv23 || (header.opcode > 2 && header.opcode < 8)
+        return !((header.rsv23 || (header.opcode > 2 && header.opcode < 8)
                 || header.opcode > 10 || (header.opcode > 2 && (!header.fin || message.size() > 125))));
     }
 };

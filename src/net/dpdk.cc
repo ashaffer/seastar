@@ -2228,6 +2228,10 @@ bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
     uint16_t rx_count = rte_eth_rx_burst(_dev->port_idx(), _qid,
                                          buf, packet_read_size);
 
+    if (rx_count >= packet_read_size) {
+        printf("rx_count >= packet_read_size (%u, %u)\n", rx_count, packet_read_size);
+    }
+    
     /* Now process the NIC packets read */
     if (likely(rx_count > 0)) {
         process_packets(

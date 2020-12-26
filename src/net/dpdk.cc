@@ -205,7 +205,7 @@ static constexpr const char* pktmbuf_pool_name   = "dpdk_pktmbuf_pool";
 /*
  * When doing reads from the NIC queues, use this batch size
  */
-static constexpr uint8_t packet_read_size        = 32;
+static constexpr uint8_t packet_read_size        = 128;
 /******************************************************************************/
 
 struct port_stats {
@@ -2231,7 +2231,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
     if (rx_count >= packet_read_size) {
         printf("rx_count >= packet_read_size (%u, %u)\n", rx_count, packet_read_size);
     }
-    
+
     /* Now process the NIC packets read */
     if (likely(rx_count > 0)) {
         process_packets(

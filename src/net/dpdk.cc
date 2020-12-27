@@ -205,7 +205,7 @@ static constexpr const char* pktmbuf_pool_name   = "dpdk_pktmbuf_pool";
 /*
  * When doing reads from the NIC queues, use this batch size
  */
-static constexpr uint8_t packet_read_size        = 32;
+static constexpr uint8_t packet_read_size        = 128;
 /******************************************************************************/
 
 struct port_stats {

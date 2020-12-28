@@ -205,7 +205,7 @@ static constexpr const char* pktmbuf_pool_name   = "dpdk_pktmbuf_pool";
 /*
  * When doing reads from the NIC queues, use this batch size
  */
-static constexpr uint8_t packet_read_size        = 32;
+static constexpr uint8_t packet_read_size        = 128;
 /******************************************************************************/
 
 struct port_stats {
@@ -1499,6 +1499,8 @@ int dpdk_device::init_port_start()
 
     printf("Port %d: using %d %s\n", _port_idx, _num_queues,
            (_num_queues > 1) ? "queues" : "queue");
+
+    printf("Port %d: on NUMA socket %d\n", rte_eth_dev_socket_id(_port_idx));
 
     // Set RSS mode: enable RSS if seastar is configured with more than 1 CPU.
     // Even if port has a single queue we still want the RSS feature to be

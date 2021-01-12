@@ -3046,7 +3046,7 @@ bool smp_message_queue::pure_poll_tx() const {
 void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queue::work_item> item, bool ignoreLimits) {
     if (ignoreLimits) {
         (void)later().then([this, item = std::move(item)] () mutable {
-            printf("ignoreLimits\n");
+            printf("ignoreLimits: %u\n", (uint)t);
             _tx.a.pending_fifo.push_back(item.get());
             // no exceptions from this point
             item.release();

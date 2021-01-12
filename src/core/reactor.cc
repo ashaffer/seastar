@@ -3060,6 +3060,7 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
         auto& sem = smp_service_groups[ssg_id].clients[t];
         // FIXME: future is discarded
         (void)get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
+            printf("inside semaphore\n");
             _tx.a.pending_fifo.push_back(item.get());
             // no exceptions from this point
             item.release();

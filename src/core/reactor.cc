@@ -3045,7 +3045,6 @@ bool smp_message_queue::pure_poll_tx() const {
 
 void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queue::work_item> item, bool ignoreLimits) {
     if (ignoreLimits) {
-        printf("ignoreLimits: %u\n", (uint)t);
         _tx.a.pending_fifo.push_back(item.get());
         // no exceptions from this point
         item.release();
@@ -3053,15 +3052,12 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
         if (_tx.a.pending_fifo.size() >= batch_size) {
             move_pending();
         }
-        printf("end ignoreLimits\n");
     } else {
-        printf("useLimits\n");
         // matching signal() in process_completions()
         auto ssg_id = internal::smp_service_group_id(item->ssg);
         auto& sem = smp_service_groups[ssg_id].clients[t];
         // FIXME: future is discarded
         (void)get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
-            printf("inside semaphore\n");
             _tx.a.pending_fifo.push_back(item.get());
             // no exceptions from this point
             item.release();

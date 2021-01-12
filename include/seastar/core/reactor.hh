@@ -1033,8 +1033,8 @@ public:
     /// \return whatever \c func returns, as a future<> (if \c func does not return a future,
     ///         submit_to() will wrap it in a future<>).
     template <typename Func>
-    static futurize_t<std::result_of_t<Func()>> submit_to(unsigned t, Func&& func) {
-        return submit_to(t, default_smp_service_group(), std::forward<Func>(func));
+    static futurize_t<std::result_of_t<Func()>> submit_to(unsigned t, Func&& func, bool ignoreLimits = false) {
+        return submit_to(t, default_smp_service_group(), std::forward<Func>(func), ignoreLimits);
     }
     static bool poll_queues();
     static bool pure_poll_queues();

@@ -3044,15 +3044,15 @@ bool smp_message_queue::pure_poll_tx() const {
 }
 
 void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queue::work_item> item, bool ignoreLimits) {
-    if (ignoreLimits) {
-        _tx.a.pending_fifo.push_back(item.get());
-        // no exceptions from this point
-        item.release();
-        // u.release();
-        if (_tx.a.pending_fifo.size() >= batch_size) {
-            move_pending();
-        }        
-    } else {
+    // if (ignoreLimits) {
+    //     _tx.a.pending_fifo.push_back(item.get());
+    //     // no exceptions from this point
+    //     item.release();
+    //     // u.release();
+    //     if (_tx.a.pending_fifo.size() >= batch_size) {
+    //         move_pending();
+    //     }        
+    // } else {
         // matching signal() in process_completions()
         auto ssg_id = internal::smp_service_group_id(item->ssg);
         auto& sem = smp_service_groups[ssg_id].clients[t];
@@ -3066,7 +3066,7 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
                 move_pending();
             }
         });
-    }
+    // }
 }
 
 void smp_message_queue::respond(work_item* item) {

@@ -3051,9 +3051,9 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
             // no exceptions from this point
             item.release();
             // u.release();
-            if (_tx.a.pending_fifo.size() >= batch_size) {
-                move_pending();
-            }
+            // if (_tx.a.pending_fifo.size() >= batch_size) {
+            //     move_pending();
+            // }
             printf("end ignoreLimits\n");
         });
     } else {

@@ -3045,17 +3045,15 @@ bool smp_message_queue::pure_poll_tx() const {
 
 void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queue::work_item> item, bool ignoreLimits) {
     if (ignoreLimits) {
-        (void)later().then([this, t, item = std::move(item)] () mutable {
-            printf("ignoreLimits: %u\n", (uint)t);
-            _tx.a.pending_fifo.push_back(item.get());
-            // no exceptions from this point
-            item.release();
-            // u.release();
-            if (_tx.a.pending_fifo.size() >= batch_size) {
-                move_pending();
-            }
-            printf("end ignoreLimits\n");
-        });
+        printf("ignoreLimits: %u\n", (uint)t);
+        _tx.a.pending_fifo.push_back(item.get());
+        // no exceptions from this point
+        item.release();
+        // u.release();
+        if (_tx.a.pending_fifo.size() >= batch_size) {
+            move_pending();
+        }
+        printf("end ignoreLimits\n");
     } else {
         printf("useLimits\n");
         // matching signal() in process_completions()
@@ -3156,7 +3154,9 @@ size_t smp_message_queue::process_completions(shard_id t) {
     auto nr = process_queue<prefetch_cnt*2>(_completed, [t] (work_item* wi) {
         wi->complete();
         auto ssg_id = smp_service_group_id(wi->ssg);
-        smp_service_groups[ssg_id].clients[t].signal();
+        if (!wi->ignoreLimits) {
+            smp_service_groups[ssg_id].clients[t].signal();
+        }
         delete wi;
     });
     _current_queue_length -= nr;

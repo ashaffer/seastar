@@ -271,9 +271,10 @@ public:
         size_t _last_rcv_batch = 0;
     };
     struct work_item {
-        explicit work_item(smp_service_group ssg) : ssg(ssg) {}
+        explicit work_item(smp_service_group ssg, bool ignoreLimits = false) : ssg(ssg), ignoreLimits{ignoreLimits} {}
         smp_service_group ssg;
         scheduling_group sg = current_scheduling_group();
+        bool ignoreLimits = false;
         virtual ~work_item() {}
         virtual void process() = 0;
         virtual void complete() = 0;
@@ -288,7 +289,7 @@ public:
         compat::optional<value_type> _result;
         std::exception_ptr _ex; // if !_result
         typename futurator::promise_type _promise; // used on local side
-        async_work_item(smp_message_queue& queue, smp_service_group ssg, Func&& func) : work_item(ssg), _queue(queue), _func(std::move(func)) {}
+        async_work_item(smp_message_queue& queue, smp_service_group ssg, Func&& func, bool ignoreLimits = false) : work_item(ssg, ignoreLimits), _queue(queue), _func(std::move(func)) {}
         virtual void process() override {
             try {
               // Run _func asynchronously and set either _result or _ex.
@@ -333,7 +334,7 @@ public:
     ~smp_message_queue();
     template <typename Func>
     futurize_t<std::result_of_t<Func()>> submit(shard_id t, smp_service_group ssg, Func&& func, bool ignoreLimits = false) {
-        auto wi = std::make_unique<async_work_item<Func>>(*this, ssg, std::forward<Func>(func));
+        auto wi = std::make_unique<async_work_item<Func>>(*this, ssg, std::forward<Func>(func), ignoreLimits);
         auto fut = wi->get_future();
         submit_item(t, std::move(wi), ignoreLimits);
         return fut;

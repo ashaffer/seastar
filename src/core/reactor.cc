@@ -3043,20 +3043,30 @@ bool smp_message_queue::pure_poll_tx() const {
     return !const_cast<lf_queue&>(_completed).empty();
 }
 
-void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queue::work_item> item) {
+void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queue::work_item> item, bool ignoreLimits) {
   // matching signal() in process_completions()
-  auto ssg_id = internal::smp_service_group_id(item->ssg);
-  auto& sem = smp_service_groups[ssg_id].clients[t];
   // FIXME: future is discarded
-  (void)get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
-    _tx.a.pending_fifo.push_back(item.get());
-    // no exceptions from this point
-    item.release();
-    u.release();
-    if (_tx.a.pending_fifo.size() >= batch_size) {
-        move_pending();
+  // 
+    if (ignoreLimits) {
+        _tx.a.pending_fifo.push_back(item.get());
+        item.release();
+
+        if (_tx.a.pending_fifo.size() >= batch_size) {
+            move_pending();
+        }
+    } else {
+        auto ssg_id = internal::smp_service_group_id(item->ssg);
+        auto& sem = smp_service_groups[ssg_id].clients[t];
+        (void)get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
+            _tx.a.pending_fifo.push_back(item.get());
+            // no exceptions from this point
+            item.release();
+            u.release();
+            if (_tx.a.pending_fifo.size() >= batch_size) {
+                move_pending();
+            }
+        });
     }
-  });
 }
 
 void smp_message_queue::respond(work_item* item) {

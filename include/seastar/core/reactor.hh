@@ -234,6 +234,8 @@ struct smp_service_group_config {
 
 
 class smp_message_queue {
+public:
+
     static constexpr size_t queue_length = 128;
     static constexpr size_t batch_size = 16;
     static constexpr size_t prefetch_cnt = 2;
@@ -258,6 +260,7 @@ class smp_message_queue {
         size_t _last_cmpl_batch = 0;
         size_t _current_queue_length = 0;
     };
+
     // keep this between two structures with statistics
     // this makes sure that they have at least one cache line
     // between them, so hw prefetcher will not accidentally prefetch
@@ -329,10 +332,10 @@ public:
     smp_message_queue(reactor* from, reactor* to);
     ~smp_message_queue();
     template <typename Func>
-    futurize_t<std::result_of_t<Func()>> submit(shard_id t, smp_service_group ssg, Func&& func) {
+    futurize_t<std::result_of_t<Func()>> submit(shard_id t, smp_service_group ssg, Func&& func, bool ignoreLimits = false) {
         auto wi = std::make_unique<async_work_item<Func>>(*this, ssg, std::forward<Func>(func));
         auto fut = wi->get_future();
-        submit_item(t, std::move(wi));
+        submit_item(t, std::move(wi), ignoreLimits);
         return fut;
     }
     void start(unsigned cpuid);
@@ -341,9 +344,8 @@ public:
     size_t process_incoming();
     size_t process_completions(shard_id t);
     void stop();
-private:
     void work();
-    void submit_item(shard_id t, std::unique_ptr<work_item> wi);
+    void submit_item(shard_id t, std::unique_ptr<work_item> wi, bool ignoreLimits = false);
     void respond(work_item* wi);
     void move_pending();
     void flush_request_batch();
@@ -960,6 +962,7 @@ class smp {
     struct qs_deleter {
       void operator()(smp_message_queue** qs) const;
     };
+public:
     static std::unique_ptr<smp_message_queue*[], qs_deleter> _qs;
     static std::thread::id _tmain;
     static bool _using_dpdk;
@@ -968,7 +971,6 @@ class smp {
     using returns_future = is_future<std::result_of_t<Func()>>;
     template <typename Func>
     using returns_void = std::is_same<std::result_of_t<Func()>, void>;
-public:
     static boost::program_options::options_description get_options_description();
     static void register_network_stacks();
     static void configure(boost::program_options::variables_map vm, reactor_config cfg = {});
@@ -992,7 +994,7 @@ public:
     /// \return whatever \c func returns, as a future<> (if \c func does not return a future,
     ///         submit_to() will wrap it in a future<>).
     template <typename Func>
-    static futurize_t<std::result_of_t<Func()>> submit_to(unsigned t, smp_service_group ssg, Func&& func) {
+    static futurize_t<std::result_of_t<Func()>> submit_to(unsigned t, smp_service_group ssg, Func&& func, bool ignoreLimits = false) {
         using ret_type = std::result_of_t<Func()>;
         if (t == engine().cpu_id()) {
             try {
@@ -1013,7 +1015,7 @@ public:
                 return futurize<std::result_of_t<Func()>>::make_exception_future(std::current_exception());
             }
         } else {
-            return _qs[t][engine().cpu_id()].submit(t, ssg, std::forward<Func>(func));
+            return _qs[t][engine().cpu_id()].submit(t, ssg, std::forward<Func>(func), ignoreLimits);
         }
     }
     /// Runs a function on a remote core.

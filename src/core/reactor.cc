@@ -3062,18 +3062,18 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
         auto& sem = smp_service_groups[ssg_id].clients[t];
         // FIXME: future is discarded
         (void)get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
-            _pending.push(item.get());
-            _current_queue_length += 1;
-            _last_snt_batch = 1;
-            _sent += 1;
+            // _pending.push(item.get());
+            // _current_queue_length += 1;
+            // _last_snt_batch = 1;
+            // _sent += 1;
 
-            // _tx.a.pending_fifo.push_back(item.get());
+            _tx.a.pending_fifo.push_back(item.get());
             // no exceptions from this point
             item.release();
             u.release();
-            // if (_tx.a.pending_fifo.size() >= batch_size) {
-            //     move_pending();
-            // }
+            if (_tx.a.pending_fifo.size() >= batch_size) {
+                move_pending();
+            }
         });
     }
 }

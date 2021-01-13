@@ -3052,7 +3052,7 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
         _tx.a.pending_fifo.push_back(item.get());
         // no exceptions from this point
         item.release();
-        u.release();
+        // u.release();
         if (_tx.a.pending_fifo.size() >= batch_size) {
             move_pending();
         }

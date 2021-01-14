@@ -236,7 +236,7 @@ struct smp_service_group_config {
 class smp_message_queue {
 public:
 
-    static constexpr size_t queue_length = 1024;
+    static constexpr size_t queue_length = 4096;
     static constexpr size_t batch_size = 16;
     static constexpr size_t prefetch_cnt = 2;
     struct work_item;

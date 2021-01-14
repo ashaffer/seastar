@@ -3049,6 +3049,11 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
         _current_queue_length += 1;
         _last_snt_batch = 1;
         _sent += 1;
+
+        if (_current_queue_length > queue_length) {
+            printf("Queue length exceeded 1\n");
+        }
+
         // _tx.a.pending_fifo.push_back(item.get());
         // no exceptions from this point
         item.release();
@@ -3066,6 +3071,10 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
             _current_queue_length += 1;
             _last_snt_batch = 1;
             _sent += 1;
+
+            if (_current_queue_length > queue_length) {
+                printf("Queue length exceeded 2\n");
+            }
 
             // _tx.a.pending_fifo.push_back(item.get());
             // no exceptions from this point

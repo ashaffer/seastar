@@ -3058,6 +3058,7 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
     auto ssg_id = internal::smp_service_group_id(item->ssg);
     auto& sem = smp_service_groups[ssg_id].clients[t];
 
+    printf("Semaphore size: %u\n", (uint)sem.current());
     if (ignoreLimits && (_current_queue_length < (queue_length - sem.current() - 1))) {
         _pending.push(item.get());
         _current_queue_length += 1;

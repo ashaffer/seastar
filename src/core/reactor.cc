@@ -3051,7 +3051,7 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
         _sent += 1;
 
         if (_current_queue_length > queue_length) {
-            printf("Queue length exceeded 1: %u -> %u\n", (uint)engine().cpu_id(), (uint)t);
+            printf("Queue length exceeded 1 (%u): %u -> %u\n", (uint)_current_queue_length, (uint)engine().cpu_id(), (uint)t);
         }
 
         // _tx.a.pending_fifo.push_back(item.get());
@@ -3073,7 +3073,7 @@ void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queu
             _sent += 1;
 
             if (_current_queue_length > queue_length) {
-                printf("Queue length exceeded 2: %u -> %u\n", (uint)engine().cpu_id(), (uint)t);
+                printf("Queue length exceeded 2 (%u): %u -> %u\n", (uint)_current_queue_length, (uint)engine().cpu_id(), (uint)t);
             }
 
             // _tx.a.pending_fifo.push_back(item.get());

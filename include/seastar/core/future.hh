@@ -868,8 +868,6 @@ class SEASTAR_NODISCARD future : private internal::future_base, internal::warn_v
     future_state<T...> _state;
     static constexpr bool copy_noexcept = future_state<T...>::copy_noexcept;
 
-public:
-    uint ns;
 private:
     // This constructor creates a future that is not ready but has no
     // associated promise yet. The use case is to have a less flexible
@@ -897,7 +895,6 @@ private:
     }
     template <typename Func>
     void schedule(Func&& func) {
-        auto start = std::chrono::high_resolution_clock::now();
         if (_state.available() || !_promise) {
             if (__builtin_expect(!_state.available() && !_promise, false)) {
                 abandoned();
@@ -907,8 +904,6 @@ private:
             assert(_promise);
             detach_promise()->schedule(std::move(func));
         }
-
-        ns = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start).count();
     }
 
     [[gnu::always_inline]]

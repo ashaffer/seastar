@@ -749,6 +749,7 @@ public:
         }
 
         bool isClosed () {
+            printf("state: 0x%x\n", (uint)_tcb->_state);
             return !_tcb->in_state(tcp_state::CLOSED);
         }
 

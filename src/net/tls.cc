@@ -831,26 +831,26 @@ public:
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
 
-                try {
-                    auto res = gnutls_record_send(*this, ptr + off, size - off);
-                    if (res > 0) { // don't really need to check, but...
-                        off += res;
-                    }
-                    // what will we wait for? error or results...
-                    auto f = res < 0 ? handle_output_error(res) : wait_for_output();
-                    return f.then([] {
-                        return make_ready_future<stop_iteration>(stop_iteration::no);
-                    });
-                } catch (const std::exception& e) {
-                    printf("gnutls_record_send exception: %s\n", e.what());
-                    return make_ready_future<stop_iteration>(stop_iteration::yes);
+                auto res = gnutls_record_send(*this, ptr + off, size - off);
+                if (res > 0) { // don't really need to check, but...
+                    off += res;
                 }
 
+                if (res < 0) {
+                    printf("tls::do_put error: %d\n", (int)res);
+                }
+                
+                // what will we wait for? error or results...
+                auto f = res < 0 ? handle_output_error(res) : wait_for_output();
+                return f.then([] {
+                    return make_ready_future<stop_iteration>(stop_iteration::no);
+                });
             });
         });
     }
     future<> put(net::packet p) {
         if (_error || _shutdown) {
+            printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
         }
         if (!_connected) {

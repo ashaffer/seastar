@@ -1947,7 +1947,7 @@ void tcp<InetTraits>::tcb::close() {
             foreign.s_addr = htonl(_foreign_ip.ip);
             char *slocal = strdup(inet_ntoa(local));
             char *flocal = strdup(inet_ntoa(foreign));
-            printf("tcp::tcb::close error2: %s (%u, %u, %u, %s, %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, slocal, htons(_local_port), flocal, htons(_foreign_port));
+            printf("tcp::tcb::close error2: %s (%u, %u, %u, %s, %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, slocal, _local_port, flocal, _foreign_port);
             free(slocal);
             free(flocal);
 

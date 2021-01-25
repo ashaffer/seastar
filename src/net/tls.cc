@@ -820,6 +820,10 @@ public:
     typedef net::fragment* frag_iter;
 
     future<> do_put(frag_iter i, frag_iter e, std::function<void()> onTransmit) {
+        if (!_output_pending.available()) {
+            printf("tls::do_put _output_pending not available\n");
+        }
+
         assert(_output_pending.available());
         onTransmitFn = onTransmit;
         return do_for_each(i, e, [this](net::fragment& f) {
@@ -880,6 +884,7 @@ public:
     }
     ssize_t vec_push(const giovec_t * iov, int iovcnt) {
         if (!_output_pending.available()) {
+            printf("[tls] vec_push: _output_pending not available\n");
             gnutls_transport_set_errno(*this, EAGAIN);
             return -1;
         }
@@ -894,6 +899,7 @@ public:
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {
+            printf("[tls] exception in vec_push\n");
             gnutls_transport_set_errno(*this, EIO);
             _output_pending = make_exception_future<>(std::current_exception());
         }

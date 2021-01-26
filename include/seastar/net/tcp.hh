@@ -1916,7 +1916,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::tcb::close() {
-    if ((closedCalled > 0 && closeCalled < 100) || in_state(CLOSED) || _snd.closed) {
+    if ((this->closeCalled > 0 && this->closeCalled < 100) || in_state(CLOSED) || _snd.closed) {
         return;
     }
     this->closeCalled = 1;

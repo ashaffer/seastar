@@ -1827,7 +1827,7 @@ tcp<InetTraits>::tcb::abort_reader() {
 
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::wait_for_all_data_acked() {
-    if (closeState > 0) {
+    if (closeState > 0 && closeState < 100) {
         printf("[tcp] wait_for_all_data_acked: %u, %u, %u\n", closeState, (uint)_snd.data.empty(), _snd.unsent_len);
     }
 
@@ -1884,7 +1884,7 @@ future<> tcp<InetTraits>::tcb::wait_send_available() {
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::send(packet p) {
     // We can not send after the connection is closed
-    if (closeState > 0) {
+    if (closeState > 0 && closeState < 100) {
         printf("[tcp] send called after close called: %u\n", closeState);
     }
 

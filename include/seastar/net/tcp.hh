@@ -579,6 +579,9 @@ private:
         void signal_all_data_acked() {
             // this->closeState = 15;
             if (_snd._all_data_acked_promise && _snd.unsent_len == 0) {
+                if (this->closeState > 0 && this->closeState < 100) {
+                    printf("signal_all_data_acked: %u\n", this->closeState);
+                }
                 this->closeState = 16;
                 _snd._all_data_acked_promise->set_value();
                 this->closeState = 17;
@@ -1919,7 +1922,7 @@ void tcp<InetTraits>::tcb::close() {
     this->closeCalled = 1;
     // this->closeState = 0;
     // TODO: We should return a future to upper layer
-    
+    printf("[tcp] close(): %s (%u, %u, %u, %s, %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, slocal, _local_port, flocal, _foreign_port);    
     (void)wait_for_all_data_acked().then([this, zis = this->shared_from_this()] () mutable {
         this->closeState = 1;
         _snd.closed = true;

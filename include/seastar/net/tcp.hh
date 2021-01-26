@@ -615,19 +615,19 @@ private:
 
             if (_rcv._data_received_promise) {
                 this->closeState = 20;
-                printf("connection reset: _data_received_promise\n");
+                printf("[tcp] connection reset: _data_received_promise\n");
                 _rcv._data_received_promise->set_exception(tcp_reset_error());
                 _rcv._data_received_promise = compat::nullopt;
             }
             if (_snd._all_data_acked_promise) {
                 this->closeState = 21;                
-                printf("connection reset: _all_data_acked_promise\n");
+                printf("[tcp] connection reset: _all_data_acked_promise\n");
                 _snd._all_data_acked_promise->set_exception(tcp_reset_error());
                 _snd._all_data_acked_promise = compat::nullopt;
             }
             if (_snd._send_available_promise) {
                 this->closeState = 22;                
-                printf("connection reset: _send_available_promise\n");
+                printf("[tcp] connection reset: _send_available_promise\n");
                 _snd._send_available_promise->set_exception(tcp_reset_error());
                 _snd._send_available_promise = compat::nullopt;
             }
@@ -869,7 +869,7 @@ future<> tcp<InetTraits>::poll_tcb(ipaddr to, lw_shared_ptr<tcb> tcb) {
 
 template <typename InetTraits>
 auto tcp<InetTraits>::listen(uint16_t port, size_t queue_length) -> listener {
-    printf("tcp listen\n");
+    printf("[tcp] tcp listen\n");
     return listener(*this, port, queue_length);
 }
 
@@ -926,7 +926,7 @@ void printConnid (Connid &connid, Inet &inet) {
     in_addr foreign;
     local.s_addr = htonl(connid.local_ip.ip);
     foreign.s_addr = htonl(connid.foreign_ip.ip);
-    printf("%s:%u -> %s:%u (0x%x)\n", strdup(inet_ntoa(local)), connid.local_port, strdup(inet_ntoa(foreign)), connid.foreign_port, connid.hash(inet._inet.netif()->rss_conf()));
+    printf("[tcp] %s:%u -> %s:%u (0x%x)\n", strdup(inet_ntoa(local)), connid.local_port, strdup(inet_ntoa(foreign)), connid.foreign_port, connid.hash(inet._inet.netif()->rss_conf()));
 }
 
 template <typename InetTraits>
@@ -1827,6 +1827,10 @@ tcp<InetTraits>::tcb::abort_reader() {
 
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::wait_for_all_data_acked() {
+    if (closeState > 0) {
+        printf("[tcp] wait_for_all_data_acked: %u, %u, %u\n", closeState, (uint)_snd.data.empty(), _snd.unsent_len);
+    }
+
     // this->closeState = 10;
     if (_snd.data.empty() && _snd.unsent_len == 0) {
         this->closeState = 11;
@@ -1869,6 +1873,7 @@ packet tcp<InetTraits>::tcb::read() {
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::wait_send_available() {
     if (_snd.max_queue_space > _snd.current_queue_space) {
+        printf("[tcp] _send_max_queue_space > _snd.current_queue_space: %u, %u\n", (uint)_snd.max_queue_space, (uint)_snd.current_queue_space);
         return make_ready_future<>();
     }
     _snd._send_available_promise = promise<>();
@@ -1878,13 +1883,17 @@ future<> tcp<InetTraits>::tcb::wait_send_available() {
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::send(packet p) {
     // We can not send after the connection is closed
+    if (closeState > 0) {
+        printf("[tcp] send called after close called: %u\n", closeState);
+    }
+
     if (_snd.closed || in_state(CLOSED)) {
-        printf("connection reset: _snd.closed || in_state(CLOSED): %u, %u, %u\n", doCloseCalled, this->closeState, this->resetState);
+        printf("[tcp] connection reset: _snd.closed || in_state(CLOSED): %u, %u, %u\n", doCloseCalled, this->closeState, this->resetState);
         if (_snd.closed) {
-            printf("\tsnd_closed\n");
+            printf("[tcp]\tsnd_closed\n");
         }
         if (in_state(CLOSED)) {
-            printf("\tin_state(CLOSED)\n");
+            printf("[tcp]\tin_state(CLOSED)\n");
         }
         return make_exception_future<>(tcp_reset_error());
     }
@@ -1909,6 +1918,7 @@ void tcp<InetTraits>::tcb::close() {
     this->closeCalled = 1;
     // this->closeState = 0;
     // TODO: We should return a future to upper layer
+    
     (void)wait_for_all_data_acked().then([this, zis = this->shared_from_this()] () mutable {
         this->closeState = 1;
         _snd.closed = true;
@@ -1938,7 +1948,7 @@ void tcp<InetTraits>::tcb::close() {
             if (ep) {
                 std::rethrow_exception(ep);
             } else {
-                printf("tcp::tcb::close errror: null exception ptr (%u)\n", this->closeState);
+                printf("[tcp] tcb::close errror: null exception ptr (%u)\n", this->closeState);
             }
         } catch (const std::exception& e) {
             in_addr local;
@@ -1947,7 +1957,7 @@ void tcp<InetTraits>::tcb::close() {
             foreign.s_addr = htonl(_foreign_ip.ip);
             char *slocal = strdup(inet_ntoa(local));
             char *flocal = strdup(inet_ntoa(foreign));
-            printf("tcp::tcb::close error2: %s (%u, %u, %u, %s, %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, slocal, _local_port, flocal, _foreign_port);
+            printf("[tcp] tcb::close error2: %s (%u, %u, %u, %s, %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, slocal, _local_port, flocal, _foreign_port);
             free(slocal);
             free(flocal);
 

@@ -1922,15 +1922,15 @@ void tcp<InetTraits>::tcb::close() {
     this->closeCalled = 1;
     // this->closeState = 0;
     // TODO: We should return a future to upper layer
-    in_addr local;
-    in_addr foreign;
-    local.s_addr = htonl(_local_ip.ip);
-    foreign.s_addr = htonl(_foreign_ip.ip);
-    char *slocal = strdup(inet_ntoa(local));
-    char *flocal = strdup(inet_ntoa(foreign));
-    printf("[tcp] close(): %u, %u, %u, %s, %u, %s, %u\n", this->closeCalled, this->closeState, this->resetState, slocal, _local_port, flocal, _foreign_port);
-    free(slocal);
-    free(flocal);
+    // in_addr local;
+    // in_addr foreign;
+    // local.s_addr = htonl(_local_ip.ip);
+    // foreign.s_addr = htonl(_foreign_ip.ip);
+    // char *slocal = strdup(inet_ntoa(local));
+    // char *flocal = strdup(inet_ntoa(foreign));
+    // printf("[tcp] close(): %u, %u, %u, %s, %u, %s, %u\n", this->closeCalled, this->closeState, this->resetState, slocal, _local_port, flocal, _foreign_port);
+    // free(slocal);
+    // free(flocal);
 
     (void)wait_for_all_data_acked().then([this, zis = this->shared_from_this()] () mutable {
         this->closeState = 1;

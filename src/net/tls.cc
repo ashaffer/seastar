@@ -853,18 +853,24 @@ public:
         });
     }
     future<> put(net::packet p) {
-        if (_error || _shutdown) {
-            printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
-            return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
+        try {
+            if (_error || _shutdown) {
+                printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
+                return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
+            }
+            if (!_connected) {
+                return handshake().then([this, p = std::move(p)]() mutable {
+                   return put(std::move(p));
+                });
+            }
+            auto i = p.fragments().begin();
+            auto e = p.fragments().end();
+            return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {});
+        } catch (std::exception& e) {
+            printf("[tls] exception in put(): %s\n", e.what());
+            throw e;
+            return seastar::make_ready_future<>();
         }
-        if (!_connected) {
-            return handshake().then([this, p = std::move(p)]() mutable {
-               return put(std::move(p));
-            });
-        }
-        auto i = p.fragments().begin();
-        auto e = p.fragments().end();
-        return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {});
     }
 
     ssize_t pull(void* dst, size_t len) {
@@ -913,10 +919,12 @@ public:
     future<>
     handle_error(int res) {
         _error = true;
+        printf("handle_error %d\n", res);
         return make_exception_future(std::system_error(res, glts_errorc));
     }
     future<>
     handle_output_error(int res) {
+        printf("handle_output_error: %d\n", res);
         _error = true;
         // #453
         // defensively wait for output before generating the error.

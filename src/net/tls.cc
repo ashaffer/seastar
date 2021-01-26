@@ -936,6 +936,7 @@ public:
         if (_error || !_connected) {
             return make_ready_future();
         }
+        printf("[tls] writing bye\n");
         auto res = gnutls_bye(*this, GNUTLS_SHUT_WR);
         if (res < 0) {
             switch (res) {
@@ -955,12 +956,14 @@ public:
     future<> wait_for_eof() {
         // read records until we get an eof alert
         // since this call could time out, we must not ac
+        printf("[tls] wait_for_eof called\n");
         return with_semaphore(_in_sem, 1, [this] {
             if (_error || !_connected) {
                 return make_ready_future();
             }
             return repeat([this] {
                 if (eof()) {
+                    printf("[tls] received eof\n");
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
                 return do_get().then([](auto buf) {

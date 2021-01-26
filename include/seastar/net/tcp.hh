@@ -1873,9 +1873,10 @@ packet tcp<InetTraits>::tcb::read() {
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::wait_send_available() {
     if (_snd.max_queue_space > _snd.current_queue_space) {
-        printf("[tcp] _send_max_queue_space > _snd.current_queue_space: %u, %u\n", (uint)_snd.max_queue_space, (uint)_snd.current_queue_space);
         return make_ready_future<>();
     }
+
+    printf("[tcp] _send_max_queue_space <= _snd.current_queue_space: %u, %u\n", (uint)_snd.current_queue_space, (uint)_snd.max_queue_space);
     _snd._send_available_promise = promise<>();
     return _snd._send_available_promise->get_future();
 }

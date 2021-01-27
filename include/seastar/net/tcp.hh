@@ -1894,9 +1894,9 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
         printf("[tcp] send called after close called: %u\n", closeState);
     }
 
-    void *array[10];
+    void *array[25];
     size_t sz;
-    sz = backtrace(array, 10);
+    sz = backtrace(array, 25);
     backtrace_symbols_fd(array, sz, STDOUT_FILENO);
 
     if (_snd.closed || in_state(CLOSED)) {

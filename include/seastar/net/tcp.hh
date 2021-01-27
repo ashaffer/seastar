@@ -1892,12 +1892,11 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     // We can not send after the connection is closed
     if (closeState > 0 && closeState < 100) {
         printf("[tcp] send called after close called: %u\n", closeState);
+        // void *array[25];
+        // size_t sz;
+        // sz = backtrace(array, 25);
+        // backtrace_symbols_fd(array, sz, STDOUT_FILENO);
     }
-
-    void *array[25];
-    size_t sz;
-    sz = backtrace(array, 25);
-    backtrace_symbols_fd(array, sz, STDOUT_FILENO);
 
     if (_snd.closed || in_state(CLOSED)) {
         printf("[tcp] connection reset: _snd.closed || in_state(CLOSED): %u, %u, %u\n", doCloseCalled, this->closeState, this->resetState);

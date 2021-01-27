@@ -624,6 +624,7 @@ public:
         return s;
     }
     future<> do_handshake() {
+        printf("do_handshake\n");
         if (_connected) {
             return make_ready_future<>();
         }
@@ -669,6 +670,7 @@ public:
         }
     }
     future<> handshake() {
+        printf("handshake\n");
         // maybe load system certificates before handshake, in case we
         // have not done so yet...
         if (_creds->_impl->need_load_system_trust()) {
@@ -747,6 +749,7 @@ public:
     }
 
     future<temporary_buffer<char>> get() {
+        printf("get\n");
         if (_error) {
             return make_exception_future<temporary_buffer<char>>(std::system_error(EINVAL, std::system_category()));
         }
@@ -804,6 +807,7 @@ public:
             }
             buf.trim(n);
             if (n == 0) {
+                printf("[tls] _eof\n");
                 _eof = true;
                 _eofState = 1;
             }
@@ -863,6 +867,7 @@ public:
     }
     future<> put(net::packet p) {
         try {
+            printf("put: %u, %u\n", (uint)_eof, _eofState);
             if (_error || _shutdown) {
                 printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
                 return make_exception_future<>(std::system_error(EINVAL, std::system_category()));

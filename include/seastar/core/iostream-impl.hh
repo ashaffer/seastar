@@ -108,26 +108,32 @@ output_stream<CharType>::zero_copy_split_and_put(net::packet p) {
 
 template<typename CharType>
 future<> output_stream<CharType>::write(net::packet p) {
+    try {
     static_assert(std::is_same<CharType, char>::value, "packet works on char");
 
     if (p.len() != 0) {
-        assert(!_end && "Mixing buffered writes and zero-copy writes not supported yet");
+            assert(!_end && "Mixing buffered writes and zero-copy writes not supported yet");
 
-        if (_zc_bufs) {
-            _zc_bufs.append(std::move(p));
-        } else {
-            _zc_bufs = std::move(p);
-        }
-
-        if (_zc_bufs.len() >= _size) {
-            if (_trim_to_size) {
-                return zero_copy_split_and_put(std::move(_zc_bufs));
+            if (_zc_bufs) {
+                _zc_bufs.append(std::move(p));
             } else {
-                return zero_copy_put(std::move(_zc_bufs));
+                _zc_bufs = std::move(p);
+            }
+
+            if (_zc_bufs.len() >= _size) {
+                if (_trim_to_size) {
+                    return zero_copy_split_and_put(std::move(_zc_bufs));
+                } else {
+                    return zero_copy_put(std::move(_zc_bufs));
+                }
             }
         }
+        return make_ready_future<>();
+    } catch (std::exception& e) {
+        printf("[output_stream] caught exception: %s\n", e.what());
+        throw e;
+        return make_ready_future<>();
     }
-    return make_ready_future<>();
 }
 
 template<typename CharType>
@@ -403,6 +409,7 @@ output_stream<CharType>::flush() {
         }
     } else {
         if (_ex) {
+            printf("flush caught exception\n");
             // flush is a good time to deliver outstanding errors
             return make_exception_future<>(std::move(_ex));
         } else {
@@ -464,6 +471,7 @@ output_stream<CharType>::poll_flush() {
         try {
             f.get();
         } catch (...) {
+            printf("poll_flush caught exception\n");
             _ex = std::current_exception();
         }
         // if flush() was called while flushing flush once more
@@ -483,6 +491,7 @@ output_stream<CharType>::close() {
     }).then([this] {
         // report final exception as close error
         if (_ex) {
+            printf("close caught exception\n");
             std::rethrow_exception(_ex);
         }
     }).finally([this] {

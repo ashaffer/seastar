@@ -868,6 +868,12 @@ public:
             if (!_connected) {
                 return handshake().then([this, p = std::move(p)]() mutable {
                    return put(std::move(p));
+                }).handle_exception([] (std::exception_ptr ep) {
+                    try {
+                        std::rethrow_exception(ep);
+                    } catch (std::exception& e) {
+                        printf("[tls] !_connected: %s\n", e.what());
+                    }
                 });
             }
             auto i = p.fragments().begin();
@@ -1171,7 +1177,13 @@ private:
     }
     using data_sink_impl::put;
     future<> put(net::packet p) override {
-        return _session->put(std::move(p));
+        return _session->put(std::move(p)).handle_exception([] (std::exception_ptr ep) {
+            try {
+                std::rethrow_exception(ep);
+            } catch (std::exception& e) { 
+                printf("[tls data_sink_impl] exception: %s\n", e.what());
+            }
+        });
     }
     future<> close() override {
         _session->close();

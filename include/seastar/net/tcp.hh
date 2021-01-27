@@ -1908,7 +1908,12 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     _snd.unsent.push_back(std::move(p));
 
     if (can_send() > 0) {
-        output();
+        try {
+            output();
+        } catch (std::exception& e) {
+            printf("[tcp] output threw: %s\n", e.what());
+            throw e;
+        }
     }
 
     return wait_send_available();

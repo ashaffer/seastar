@@ -925,10 +925,10 @@ public:
             return -1;
         }
 
-        if (_eofState == 2) {
+        if (_shutdownCb == true) {
             printf("[tls] vec_push called in _eofState 2\n");
         }
-        
+
         try {
             scattered_message<char> msg;
             for (int i = 0; i < iovcnt; ++i) {
@@ -1034,6 +1034,8 @@ public:
             (void)with_timeout(timer<>::clock::now() + std::chrono::seconds(10), shutdown()).finally([this] {
                 _eof = true;
                 _eofState = 2;
+                _shutdownCb = true;
+
                 try {
                     (void)_in.close().handle_exception([](std::exception_ptr) {}); // should wake any waiters
                 } catch (...) {
@@ -1082,6 +1084,7 @@ private:
     uint _eofState = 0;
     uint _connState = 0;
     uint _eagainCount = 0;
+    bool _shutdownCb = false;
     future<> _output_pending;
     std::function<void()> onTransmitFn;
     buf_type _input;

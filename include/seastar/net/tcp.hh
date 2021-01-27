@@ -40,6 +40,7 @@
 #include <random>
 #include <stdexcept>
 #include <system_error>
+#include <execinfo.h>
 
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
 #include <cryptopp/md5.h>
@@ -1239,6 +1240,7 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
 
     // 3.2 second check the RST bit
     if (th->f_rst) {
+        printf("[tcp] received an RST\n");
         // If the ACK was acceptable then signal the user "error: connection
         // reset", drop the segment, enter CLOSED state, delete TCB, and
         // return.  Otherwise (no ACK) drop the segment and return.
@@ -1321,6 +1323,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.2 second check the RST bit
     if (th->f_rst) {
+        printf("[tcp] received an RST 2\n");
         if (in_state(SYN_RECEIVED)) {
             // If this connection was initiated with a passive OPEN (i.e.,
             // came from the LISTEN state), then return this connection to
@@ -1890,6 +1893,11 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     if (closeState > 0 && closeState < 100) {
         printf("[tcp] send called after close called: %u\n", closeState);
     }
+
+    void *array[10];
+    size_t sz;
+    sz = backtrace(array, 10);
+    backtrace_symbols_fd(array, sz, STDOUT_FILENO);
 
     if (_snd.closed || in_state(CLOSED)) {
         printf("[tcp] connection reset: _snd.closed || in_state(CLOSED): %u, %u, %u\n", doCloseCalled, this->closeState, this->resetState);

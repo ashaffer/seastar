@@ -1323,7 +1323,16 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.2 second check the RST bit
     if (th->f_rst) {
-        printf("[tcp] received an RST 2\n");
+        in_addr local;
+        in_addr foreign;
+        local.s_addr = htonl(_local_ip.ip);
+        foreign.s_addr = htonl(_foreign_ip.ip);
+        char *slocal = strdup(inet_ntoa(local));
+        char *flocal = strdup(inet_ntoa(foreign));
+        printf("[tcp] received an RST 2: %s, %u, %s, %u\n", slocal, _local_port, flocal, _foreign_port);
+        free(slocal);
+        free(flocal);
+
         if (in_state(SYN_RECEIVED)) {
             // If this connection was initiated with a passive OPEN (i.e.,
             // came from the LISTEN state), then return this connection to

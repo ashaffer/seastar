@@ -850,6 +850,14 @@ public:
                     return make_ready_future<stop_iteration>(stop_iteration::no);
                 });
             });
+        }).then_wrapped([] (future<> f) {
+            try {
+                f.get();
+            } catch (std::exception& e) {
+                printf("[tls] then_wrapped caught_exception: %s\n", e.what());
+            }
+
+            return f;
         });
     }
     future<> put(net::packet p) {
@@ -865,7 +873,15 @@ public:
             }
             auto i = p.fragments().begin();
             auto e = p.fragments().end();
-            return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {});
+            return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).then_wrapped([] (future<> f) {
+                try {
+                    f.get();
+                } catch (std::exception& e) {
+                    printf("[tls] put exception: %s\n", e.what());
+                }
+
+                return f;
+            });
         } catch (std::exception& e) {
             printf("[tls] exception in put(): %s\n", e.what());
             throw e;

@@ -186,7 +186,6 @@ public:
             _conn->setPollDelay(_buf.getPollDelay());
             _cur_frag = 0;
             _eof = !_buf.len();
-            printf("_eof = %u, %u\n", (uint)_eof, (uint)_buf.len());
             return get();
         });
     }

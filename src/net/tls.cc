@@ -624,11 +624,11 @@ public:
         return s;
     }
     future<> do_handshake() {
-        printf("do_handshake\n");
         if (_connected) {
             return make_ready_future<>();
         }
         try {
+            _connState = 2;
             auto res = gnutls_handshake(*this);
             if (res < 0) {
                 switch (res) {
@@ -636,25 +636,34 @@ public:
                     // #453 always wait for output first.
                     // If none is pending, it should be a no-op
                 {
+                    ++_eagainCount;
                     int dir = gnutls_record_get_direction(*this);
+                    _connState = 3;
                     return wait_for_output().then([this, dir] {
+                        _connState = 4;
                         // we actually E_AGAIN:ed in a write. Don't
                         // wait for input.
                         if (dir == 1) {
+                            printf("[tls] gnutls_e_again in a write\n");
                             return do_handshake();
                         }
+                        _connState = 5;
                         return wait_for_input().then([this] {
+                            _connState = 6;
                             return do_handshake();
                         });
                     });
                 }
                 case GNUTLS_E_NO_CERTIFICATE_FOUND:
+                    printf("[tls] gnutls_e_no_certificate_found\n");
                     return make_exception_future<>(verification_error("No certificate was found"));
 #if GNUTLS_VERSION_NUMBER >= 0x030406
                 case GNUTLS_E_CERTIFICATE_ERROR:
+                    printf("[tls] gnutls_e_certificate_error\n");
                     verify(); // should throw. otherwise, fallthrough
 #endif
                 default:
+                    printf("[tls] handshake error: %d\n", res);
                     return make_exception_future<>(std::system_error(res, glts_errorc));
                 }
             }
@@ -670,7 +679,7 @@ public:
         }
     }
     future<> handshake() {
-        printf("handshake\n");
+        _connState = 1;
         // maybe load system certificates before handshake, in case we
         // have not done so yet...
         if (_creds->_impl->need_load_system_trust()) {
@@ -698,6 +707,9 @@ public:
         }
         return _in.get().then([this](buf_type buf) {
             _eof |= buf.empty();
+            if (_eof == true) {
+                _eofState = 3;
+            }
            _input = std::move(buf);
         }).handle_exception([this](auto ep) {
            _error = true;
@@ -749,7 +761,6 @@ public:
     }
 
     future<temporary_buffer<char>> get() {
-        printf("get\n");
         if (_error) {
             return make_exception_future<temporary_buffer<char>>(std::system_error(EINVAL, std::system_category()));
         }
@@ -807,7 +818,6 @@ public:
             }
             buf.trim(n);
             if (n == 0) {
-                printf("[tls] _eof\n");
                 _eof = true;
                 _eofState = 1;
             }
@@ -866,38 +876,31 @@ public:
         });
     }
     future<> put(net::packet p) {
-        try {
-            printf("put: %u, %u\n", (uint)_eof, _eofState);
-            if (_error || _shutdown) {
-                printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
-                return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
-            }
-            if (!_connected) {
-                return handshake().then([this, p = std::move(p)]() mutable {
-                   return put(std::move(p));
-                }).handle_exception([this] (std::exception_ptr ep) {
-                    try {
-                        std::rethrow_exception(ep);
-                    } catch (std::exception& e) {
-                        printf("[tls] !_connected: %s, %u, %u, %u, %u, %u, %u\n", e.what(), (uint)_connected, (uint)_hasConnected, (uint)_error, (uint)_shutdown, (uint)_eof, _eofState);
-                    }
-                });
-            }
-            auto i = p.fragments().begin();
-            auto e = p.fragments().end();
-            return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).handle_exception([] (std::exception_ptr ep) {
+        if (_error || _shutdown) {
+            printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
+            return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
+        }
+        if (!_connected) {
+            return handshake().then([this, p = std::move(p)]() mutable {
+               return put(std::move(p));
+            }).handle_exception([this] (std::exception_ptr ep) {
                 try {
                     std::rethrow_exception(ep);
                 } catch (std::exception& e) {
-                    printf("[tls] put exception: %s\n", e.what());
-                    throw e;
+                    printf("[tls] !_connected: %s, %u, %u, %u, %u, %u, %u, %u, %u\n", e.what(), (uint)_connected, (uint)_hasConnected, (uint)_error, (uint)_shutdown, (uint)_eof, _eofState, _connState, _eagainCount);
                 }
             });
-        } catch (std::exception& e) {
-            printf("[tls] exception in put(): %s\n", e.what());
-            throw e;
-            return seastar::make_ready_future<>();
         }
+        auto i = p.fragments().begin();
+        auto e = p.fragments().end();
+        return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).handle_exception([] (std::exception_ptr ep) {
+            try {
+                std::rethrow_exception(ep);
+            } catch (std::exception& e) {
+                printf("[tls] put exception: %s\n", e.what());
+                throw e;
+            }
+        });
     }
 
     ssize_t pull(void* dst, size_t len) {
@@ -971,7 +974,7 @@ public:
         if (_error || !_connected) {
             return make_ready_future();
         }
-        printf("[tls] writing bye\n");
+
         auto res = gnutls_bye(*this, GNUTLS_SHUT_WR);
         if (res < 0) {
             switch (res) {
@@ -991,14 +994,12 @@ public:
     future<> wait_for_eof() {
         // read records until we get an eof alert
         // since this call could time out, we must not ac
-        printf("[tls] wait_for_eof called\n");
         return with_semaphore(_in_sem, 1, [this] {
             if (_error || !_connected) {
                 return make_ready_future();
             }
             return repeat([this] {
                 if (eof()) {
-                    printf("[tls] received eof\n");
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
                 return do_get().then([](auto buf) {
@@ -1026,7 +1027,6 @@ public:
             auto me = shared_from_this();
             // running in background. try to bye-handshake us nicely, but after 10s we forcefully close.
             (void)with_timeout(timer<>::clock::now() + std::chrono::seconds(10), shutdown()).finally([this] {
-                printf("[tls] closing tcp sockets...\n");
                 _eof = true;
                 _eofState = 2;
                 try {
@@ -1075,7 +1075,8 @@ private:
     bool _error = false;
     bool _hasConnected = false;
     uint _eofState = 0;
-
+    uint _connState = 0;
+    uint _eagainCount = 0;
     future<> _output_pending;
     std::function<void()> onTransmitFn;
     buf_type _input;

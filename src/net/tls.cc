@@ -805,6 +805,7 @@ public:
             buf.trim(n);
             if (n == 0) {
                 _eof = true;
+                _eofState = 1;
             }
 
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
@@ -873,7 +874,7 @@ public:
                     try {
                         std::rethrow_exception(ep);
                     } catch (std::exception& e) {
-                        printf("[tls] !_connected: %s, %u, %u, %u, %u, %u\n", e.what(), (uint)_connected, (uint)_hasConnected, (uint)_error, (uint)_shutdown, (uint)_eof);
+                        printf("[tls] !_connected: %s, %u, %u, %u, %u, %u, %u\n", e.what(), (uint)_connected, (uint)_hasConnected, (uint)_error, (uint)_shutdown, (uint)_eof, _eofState);
                     }
                 });
             }
@@ -1022,6 +1023,7 @@ public:
             (void)with_timeout(timer<>::clock::now() + std::chrono::seconds(10), shutdown()).finally([this] {
                 printf("[tls] closing tcp sockets...\n");
                 _eof = true;
+                _eofState = 2;
                 try {
                     (void)_in.close().handle_exception([](std::exception_ptr) {}); // should wake any waiters
                 } catch (...) {
@@ -1067,6 +1069,7 @@ private:
     bool _connected = false;
     bool _error = false;
     bool _hasConnected = false;
+    uint _eofState = 0;
 
     future<> _output_pending;
     std::function<void()> onTransmitFn;

@@ -79,9 +79,23 @@ output_stream<CharType>::zero_copy_put(net::packet p) {
         // flush in progress, wait for it to end before continuing
         return _in_batch.value().get_future().then([this, p = std::move(p)] () mutable {
             return _fd.put(std::move(p));
+        }).handle_exception([] (std::exception_ptr ep) {
+            try {
+                std::rethrow_exception(ep);
+            } catch (std::exception& e) {
+                printf("[output_stream] zero_copy_put 1: %s\n", e.what());
+                throw e;
+            }
         });
     } else {
-        return _fd.put(std::move(p));
+        return _fd.put(std::move(p)).handle_exception([] (std::exception_ptr ep) {
+            try {
+                std::rethrow_exception(ep);
+            } catch (std::exception& e) {
+                printf("[output_stream] zero_copy_put 2: %s\n", e.what());
+                throw e;
+            }
+        });
     }
 }
 
@@ -103,7 +117,14 @@ output_stream<CharType>::zero_copy_split_and_put(net::packet p) {
         return zero_copy_put(std::move(chunk)).then([] {
             return stop_iteration::no;
         });
-    });
+    }).handle_exception([] (std::exception_ptr ep) {
+            try {
+                std::rethrow_exception(ep);
+            } catch (std::exception& e) {
+                printf("[output_stream] zero_copy_split_and_put: %s\n", e.what());
+                throw e;
+            }
+        });
 }
 
 template<typename CharType>

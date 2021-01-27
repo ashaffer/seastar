@@ -661,6 +661,7 @@ public:
                 verify();
             }
             _connected = true;
+            _hasConnected = true;
             // make sure we reset output_pending
             return wait_for_output();
         } catch (...) {
@@ -872,7 +873,7 @@ public:
                     try {
                         std::rethrow_exception(ep);
                     } catch (std::exception& e) {
-                        printf("[tls] !_connected: %s\n", e.what());
+                        printf("[tls] !_connected: %s, %u, %u, %u, %u, %u\n", e.what(), (uint)_connected, (uint)_hasConnected, (uint)_error, (uint)_shutdown, (uint)_eof);
                     }
                 });
             }
@@ -1065,6 +1066,7 @@ private:
     bool _shutdown = false;
     bool _connected = false;
     bool _error = false;
+    bool _hasConnected = false;
 
     future<> _output_pending;
     std::function<void()> onTransmitFn;

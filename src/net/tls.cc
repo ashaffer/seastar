@@ -869,7 +869,7 @@ public:
             if (!_connected) {
                 return handshake().then([this, p = std::move(p)]() mutable {
                    return put(std::move(p));
-                }).handle_exception([] (std::exception_ptr ep) {
+                }).handle_exception([this] (std::exception_ptr ep) {
                     try {
                         std::rethrow_exception(ep);
                     } catch (std::exception& e) {

@@ -924,6 +924,11 @@ public:
             gnutls_transport_set_errno(*this, EAGAIN);
             return -1;
         }
+
+        if (_eofState == 2) {
+            printf("[tls] vec_push called in _eofState 2\n");
+        }
+        
         try {
             scattered_message<char> msg;
             for (int i = 0; i < iovcnt; ++i) {

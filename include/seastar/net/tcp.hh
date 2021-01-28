@@ -1047,11 +1047,11 @@ tcp<InetTraits>::tcb::tcb(tcp& t, connid id)
     , _foreign_ip(id.foreign_ip)
     , _local_port(id.local_port)
     , _foreign_port(id.foreign_port)
-    , _createdAt(std::chrono::high_resolution_clock::now())
     , _delayed_ack([this] { _nr_full_seg_received = 0; output(); })
     , _retransmit([this] { retransmit(); })
     , _persist([this] { persist(); }) {
         _receivedAt = std::chrono::high_resolution_clock::now();
+        _createdAt = std::chrono::high_resolution_clock::now();
 }
 
 template <typename InetTraits>

@@ -408,6 +408,7 @@ private:
         uint resetState = -1;
         std::chrono::high_resolution_clock::time_point _lastSend;
         std::chrono::high_resolution_clock::time_point _lastRecv;
+        std::chrono::high_resolution_clock::time_point _createdAt;
 
         struct isn_secret {
             // 512 bits secretkey for ISN generating
@@ -1046,6 +1047,7 @@ tcp<InetTraits>::tcb::tcb(tcp& t, connid id)
     , _foreign_ip(id.foreign_ip)
     , _local_port(id.local_port)
     , _foreign_port(id.foreign_port)
+    , _createdAt(std::chrono::high_resolution_clock::now())
     , _delayed_ack([this] { _nr_full_seg_received = 0; output(); })
     , _retransmit([this] { retransmit(); })
     , _persist([this] { persist(); }) {
@@ -1335,6 +1337,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         auto now = std::chrono::high_resolution_clock::now();
         uint sinceSend = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSend).count();
         uint sinceRecv = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastRecv).count();
+        uint sinceCreate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _createdAt).count();
 
         if (in_state(SYN_RECEIVED)) {
             // If this connection was initiated with a passive OPEN (i.e.,
@@ -1346,7 +1349,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // on the retransmission queue should be removed.  And in the
             // active OPEN case, enter the CLOSED state and delete the TCB,
             // and return.
-            printf("[tcp] received an RST 2 (1): %s, %u, %s, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv);
+            printf("[tcp] received an RST 2 (1): %s, %u, %s, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate);
             free(slocal);
             free(flocal);
 
@@ -1355,7 +1358,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             return do_reset();
         }
         if (in_state(ESTABLISHED | FIN_WAIT_1 | FIN_WAIT_2 | CLOSE_WAIT)) {
-            printf("[tcp] received an RST 2 (2): %s, %u, %s, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv);
+            printf("[tcp] received an RST 2 (2): %s, %u, %s, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate);
             free(slocal);
             free(flocal);
             // If the RST bit is set then, any outstanding RECEIVEs and SEND
@@ -1367,7 +1370,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             return do_reset();
         }
         if (in_state(CLOSING | LAST_ACK | TIME_WAIT)) {
-            printf("[tcp] received an RST 2 (3): %s, %u, %s, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv);
+            printf("[tcp] received an RST 2 (3): %s, %u, %s, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate);
             free(slocal);
             free(flocal);
 

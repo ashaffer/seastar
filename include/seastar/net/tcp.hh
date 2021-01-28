@@ -1329,9 +1329,6 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         foreign.s_addr = htonl(_foreign_ip.ip);
         char *slocal = strdup(inet_ntoa(local));
         char *flocal = strdup(inet_ntoa(foreign));
-        printf("[tcp] received an RST 2: %s, %u, %s, %u\n", slocal, _local_port, flocal, _foreign_port);
-        free(slocal);
-        free(flocal);
 
         if (in_state(SYN_RECEIVED)) {
             // If this connection was initiated with a passive OPEN (i.e.,
@@ -1343,11 +1340,18 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // on the retransmission queue should be removed.  And in the
             // active OPEN case, enter the CLOSED state and delete the TCB,
             // and return.
+            printf("[tcp] received an RST 2 (1): %s, %u, %s, %u\n", slocal, _local_port, flocal, _foreign_port);
+            free(slocal);
+            free(flocal);
+
             _connect_done.set_exception(tcp_refused_error());
             resetState = 2;
             return do_reset();
         }
         if (in_state(ESTABLISHED | FIN_WAIT_1 | FIN_WAIT_2 | CLOSE_WAIT)) {
+            printf("[tcp] received an RST 2 (2): %s, %u, %s, %u\n", slocal, _local_port, flocal, _foreign_port);
+            free(slocal);
+            free(flocal);
             // If the RST bit is set then, any outstanding RECEIVEs and SEND
             // should receive "reset" responses.  All segment queues should be
             // flushed.  Users should also receive an unsolicited general
@@ -1357,6 +1361,10 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             return do_reset();
         }
         if (in_state(CLOSING | LAST_ACK | TIME_WAIT)) {
+            printf("[tcp] received an RST 2 (3): %s, %u, %s, %u\n", slocal, _local_port, flocal, _foreign_port);
+            free(slocal);
+            free(flocal);
+
             // If the RST bit is set then, enter the CLOSED state, delete the
             // TCB, and return.
             return do_closed();

@@ -406,6 +406,7 @@ private:
         uint closeCalled = -1;
         uint closeState = -1;
         uint resetState = -1;
+        std::chrono::high_resolution_clock::time_point _penultimateSend;
         std::chrono::high_resolution_clock::time_point _lastSend;
         std::chrono::high_resolution_clock::time_point _lastRecv;
         std::chrono::high_resolution_clock::time_point _createdAt;
@@ -1245,7 +1246,22 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
 
     // 3.2 second check the RST bit
     if (th->f_rst) {
-        printf("[tcp] received an RST\n");
+        in_addr local;
+        in_addr foreign;
+        local.s_addr = htonl(_local_ip.ip);
+        foreign.s_addr = htonl(_foreign_ip.ip);
+        char *slocal = strdup(inet_ntoa(local));
+        char *flocal = strdup(inet_ntoa(foreign));
+        auto now = std::chrono::high_resolution_clock::now();
+        uint sincePenultimate = std::chrono::duration_cast<std::chrono::microseconds>(now - _penultimateSend).count();
+        uint sinceSend = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSend).count();
+        uint sinceRecv = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastRecv).count();
+        uint sinceCreate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _createdAt).count();
+
+        printf("[tcp] received an RST: %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
+        free(slocal);
+        free(flocal);
+
         // If the ACK was acceptable then signal the user "error: connection
         // reset", drop the segment, enter CLOSED state, delete TCB, and
         // return.  Otherwise (no ACK) drop the segment and return.
@@ -1335,6 +1351,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         char *slocal = strdup(inet_ntoa(local));
         char *flocal = strdup(inet_ntoa(foreign));
         auto now = std::chrono::high_resolution_clock::now();
+        uint sincePenultimate = std::chrono::duration_cast<std::chrono::microseconds>(now - _penultimateSend).count();        
         uint sinceSend = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSend).count();
         uint sinceRecv = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastRecv).count();
         uint sinceCreate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _createdAt).count();
@@ -1349,7 +1366,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // on the retransmission queue should be removed.  And in the
             // active OPEN case, enter the CLOSED state and delete the TCB,
             // and return.
-            printf("[tcp] received an RST 2 (1): %s, %u, %s, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate);
+            printf("[tcp] received an RST 2 (1): %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
             free(slocal);
             free(flocal);
 
@@ -1358,7 +1375,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             return do_reset();
         }
         if (in_state(ESTABLISHED | FIN_WAIT_1 | FIN_WAIT_2 | CLOSE_WAIT)) {
-            printf("[tcp] received an RST 2 (2): %s, %u, %s, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate);
+            printf("[tcp] received an RST 2 (2): %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
             free(slocal);
             free(flocal);
             // If the RST bit is set then, any outstanding RECEIVEs and SEND
@@ -1370,7 +1387,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             return do_reset();
         }
         if (in_state(CLOSING | LAST_ACK | TIME_WAIT)) {
-            printf("[tcp] received an RST 2 (3): %s, %u, %s, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate);
+            printf("[tcp] received an RST 2 (3): %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
             free(slocal);
             free(flocal);
 
@@ -1944,6 +1961,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     _snd.current_queue_space += len;
     _snd.unsent_len += len;
     _snd.unsent.push_back(std::move(p));
+    _penultimateSend = _lastSend;
     _lastSend = std::chrono::high_resolution_clock::now();
 
     if (can_send() > 0) {

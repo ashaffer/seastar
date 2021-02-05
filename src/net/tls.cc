@@ -930,6 +930,7 @@ public:
         }
 
         try {
+            onTransmitFn();
             scattered_message<char> msg;
             for (int i = 0; i < iovcnt; ++i) {
                 msg.append(sstring(reinterpret_cast<const char *>(iov[i].iov_base), iov[i].iov_len));

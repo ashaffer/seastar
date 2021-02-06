@@ -279,7 +279,7 @@ public:
         _impl->_onTransmit = onTransmit;
     }
 
-    std::function<void()> getOnTransmit () {
+    std::function<void(int)> getOnTransmit () {
         return _impl->_onTransmit;
     }
 

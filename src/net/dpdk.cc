@@ -1253,8 +1253,8 @@ public:
             });
         } else {
             // "Copy"-send
-            printf("copy send\n");
             return _send(pb, [&](packet&& p) {
+                p.notifyTransmitted(6);
                 return tx_buf::from_packet_copy(std::move(p), *this);
             });
         }

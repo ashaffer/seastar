@@ -1855,7 +1855,6 @@ void tcp<InetTraits>::tcb::output_one(bool data_retransmit) {
     // Payload size of this segment is 1. Queueing anything bigger when _snd.window == 0 is bug
     // and violation of RFC
     assert((_snd.window > 0) || ((_snd.window == 0) && (len <= 1)));
-    p.notifyTransmitted(5);
     queue_packet(std::move(p));
 }
 

@@ -272,6 +272,7 @@ interface::interface(std::shared_ptr<device> dev)
                     eh->eth_proto = uint16_t(l3pv.proto_num);
                     *eh = hton(*eh);
                     p = std::move(l3pv.p);
+                    p->notifyTransmitted(5);
                     return p;
                 }
             }

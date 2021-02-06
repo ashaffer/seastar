@@ -104,7 +104,7 @@ class packet final {
         // FIXME: share _data/_frags space
         std::chrono::high_resolution_clock::time_point _receivedAt;
         uint _pollDelay;
-        std::function<void()> _onTransmit;
+        std::function<void(int)> _onTransmit;
 
         fragment _frags[];
 
@@ -275,7 +275,7 @@ public:
 
     void reset() { _impl.reset(); }
 
-    void onTransmit (std::function<void()> onTransmit) {
+    void onTransmit (std::function<void(int)> onTransmit) {
         _impl->_onTransmit = onTransmit;
     }
 
@@ -283,8 +283,8 @@ public:
         return _impl->_onTransmit;
     }
 
-    void notifyTransmitted () {
-        _impl->_onTransmit();
+    void notifyTransmitted (int n) {
+        _impl->_onTransmit(n);
     }
 
     void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
@@ -362,14 +362,14 @@ packet::packet(packet&& x) noexcept
 inline
 packet::impl::impl(size_t nr_frags)
     : _len(0), _allocated_frags(nr_frags) {
-        _onTransmit = [] {};
+        _onTransmit = [] (int n) {};
 }
 
 inline
 packet::impl::impl(fragment frag, size_t nr_frags)
     : _len(frag.size), _allocated_frags(nr_frags) {
     assert(_allocated_frags > _nr_frags);
-    _onTransmit = [] {};
+    _onTransmit = [] (int n) {};
 
     if (frag.size <= internal_data_size) {
         _headroom -= frag.size;

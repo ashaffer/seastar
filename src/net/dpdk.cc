@@ -1253,6 +1253,7 @@ public:
             });
         } else {
             // "Copy"-send
+            printf("copy send\n");
             return _send(pb, [&](packet&& p) {
                 return tx_buf::from_packet_copy(std::move(p), *this);
             });
@@ -1275,7 +1276,7 @@ private:
                     break;
                 }
 
-                p.notifyTransmitted();
+                p.notifyTransmitted(3);
                 _tx_burst.push_back(buf->rte_mbuf_p());
             }
         }
@@ -1300,6 +1301,8 @@ private:
         if (_tx_burst_idx == _tx_burst.size()) {
             _tx_burst_idx = 0;
             _tx_burst.clear();
+        } else {
+            printf("Failed to transmit all packets\n");
         }
 
         return sent;

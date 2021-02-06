@@ -590,7 +590,7 @@ public:
             gtls_chk(gnutls_priority_set(*this, prio));
         }
 
-        onTransmitFn = []{};
+        onTransmitFn = [] (int n) {};
         gnutls_server_name_set(*this, GNUTLS_NAME_DNS, _hostname.data(), _hostname.size());
         gnutls_transport_set_ptr(*this, this);
         gnutls_transport_set_vec_push_function(*this, &vec_push_wrapper);
@@ -835,7 +835,7 @@ public:
 
     typedef net::fragment* frag_iter;
 
-    future<> do_put(frag_iter i, frag_iter e, std::function<void()> onTransmit) {
+    future<> do_put(frag_iter i, frag_iter e, std::function<void(int)> onTransmit) {
         if (!_output_pending.available()) {
             printf("tls::do_put _output_pending not available\n");
         }
@@ -851,7 +851,7 @@ public:
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
 
-                onTransmitFn();
+                onTransmitFn(0);
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
                     off += res;
@@ -931,7 +931,6 @@ public:
         }
 
         try {
-            onTransmitFn();
             scattered_message<char> msg;
             for (int i = 0; i < iovcnt; ++i) {
                 msg.append(sstring(reinterpret_cast<const char *>(iov[i].iov_base), iov[i].iov_len));
@@ -939,6 +938,7 @@ public:
             auto n = msg.size();
             auto p = std::move(msg).release();
             p.onTransmit(onTransmitFn);
+            p.notifyTransmitted(1);
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {
@@ -1088,7 +1088,7 @@ private:
     uint _eagainCount = 0;
     bool _shutdownCb = false;
     future<> _output_pending;
-    std::function<void()> onTransmitFn;
+    std::function<void(int)> onTransmitFn;
     buf_type _input;
 
     // modify this to a unique_ptr to handle exceptions in our constructor.

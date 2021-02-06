@@ -1254,7 +1254,6 @@ public:
         } else {
             // "Copy"-send
             return _send(pb, [&](packet&& p) {
-                p.notifyTransmitted(6);
                 return tx_buf::from_packet_copy(std::move(p), *this);
             });
         }

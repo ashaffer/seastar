@@ -1268,14 +1268,14 @@ private:
         if (_tx_burst.size() == 0) {
             for (auto&& p : pb) {
                 // TODO: assert() in a fast path! Remove me ASAP!
-                assert(p.len());
+                // assert(p.len());
 
                 tx_buf* buf = packet_to_tx_buf_p(std::move(p));
                 if (!buf) {
                     break;
                 }
 
-                p.notifyTransmitted(3);
+                // p.notifyTransmitted(3);
                 _tx_burst.push_back(buf->rte_mbuf_p());
             }
         }
@@ -1300,9 +1300,10 @@ private:
         if (_tx_burst_idx == _tx_burst.size()) {
             _tx_burst_idx = 0;
             _tx_burst.clear();
-        } else {
-            printf("Failed to transmit all packets\n");
-        }
+        } 
+        // else {
+        //     printf("Failed to transmit all packets\n");
+        // }
 
         return sent;
     }

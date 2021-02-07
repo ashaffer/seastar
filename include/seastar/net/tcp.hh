@@ -1771,7 +1771,7 @@ void tcp<InetTraits>::tcb::output_one(bool data_retransmit) {
         clear_delayed_ack();
     }
     h.f_urg = false;
-    h.f_psh = false;
+    h.f_psh = true;
 
     tcp_seq seq;
     if (data_retransmit) {

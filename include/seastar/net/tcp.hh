@@ -486,12 +486,12 @@ private:
         }
 
         void output_immediately() {
-            _inet.get_l2_dst_address(_foreign_ip).then([this] (ethernet_address dst) {
+            _tcp._inet.get_l2_dst_address(_foreign_ip).then([this] (ethernet_address dst) {
                 // compat::optional<typename InetTraits::l4packet> l4p;
                 auto l4p = this->get_packet();
                 if (l4p) {
                     l4p.value().e_dst = dst;
-                    _inet.decorate(l4p);
+                    _tcp._inet.decorate(l4p.value());
                 }
             });
         }
@@ -698,7 +698,9 @@ private:
         void init_from_options(tcp_hdr* th, uint8_t* opt_start, uint8_t* opt_end);
         friend class connection;
     };
+public:
     inet_type& _inet;
+private:
     std::unordered_map<connid, lw_shared_ptr<tcb>, connid_hash> _tcbs;
     std::unordered_map<uint16_t, listener*> _listening;
     std::random_device _rd;

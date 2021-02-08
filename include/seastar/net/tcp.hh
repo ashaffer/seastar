@@ -493,6 +493,22 @@ private:
                     l4p.value().e_dst = dst;
                     _tcp._inet.decorate(l4p.value());
                 }
+            }).then_wrapped([this] (auto&& f) {
+                try {
+                    f.get();
+                } catch(arp_queue_full_error& ex) {
+                    printf("caught arp queue full error\n");
+                    // retry later
+                    _poll_active = false;
+                    this->start_retransmit_timer();
+                } catch(arp_timeout_error& ex) {
+                    printf("caught arp timeout error\n");
+                    if (this->in_state(SYN_SENT)) {
+                        _connect_done.set_exception(ex);
+                        this->cleanup();
+                    }
+                    // in other states connection should time out
+                }
             });
         }
         future<> connect_done() {

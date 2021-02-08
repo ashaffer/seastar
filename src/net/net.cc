@@ -101,6 +101,11 @@ bool qp::poll_tx() {
     return false;
 }
 
+void qp::send_immediate(packet p) {
+    _tx_packetq.push_back(std::move(p));
+    _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
+}
+
 qp::qp(bool register_copy_stats,
        const std::string stats_plugin_name, uint8_t qid, uint8_t port_idx)
         : _tx_poller(reactor::poller::simple([this] { return poll_tx(); }))
@@ -266,11 +271,7 @@ interface::interface(std::shared_ptr<device> dev)
                     idx = 0;
                 if (l3p) {
                     auto l3pv = std::move(l3p.value());
-                    auto eh = l3pv.p.prepend_header<eth_hdr>();
-                    eh->dst_mac = l3pv.to;
-                    eh->src_mac = _hw_address;
-                    eh->eth_proto = uint16_t(l3pv.proto_num);
-                    *eh = hton(*eh);
+                    decorate(l3pv);
                     p = std::move(l3pv.p);
                     return p;
                 }
@@ -278,6 +279,12 @@ interface::interface(std::shared_ptr<device> dev)
             return p;
         });
 }
+
+void interface::send(l3_protocol::l3packet l3pv) {
+    decorate(l3pv);
+    _dev->local_queue().send_immediate(std::move(l3pv.p));
+}
+
 
 subscription<packet, ethernet_address>
 interface::register_l3(eth_protocol_num proto_num,

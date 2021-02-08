@@ -195,6 +195,7 @@ public:
 public:
     ipv4_l4(ipv4& inet) : _inet(inet) {}
     void register_packet_provider(ipv4_traits::packet_provider_type func);
+    void decorate(ipv4_traits::l4packet& l4p);
     future<ethernet_address> get_l2_dst_address(ipv4_address to);
     const ipv4& inet() const {
         return _inet;
@@ -469,6 +470,7 @@ public:
     void set_packet_filter(ip_packet_filter *);
     ip_packet_filter * packet_filter() const;
     void send(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst);
+    void send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst);
     tcp<ipv4_traits>& get_tcp() { return *_tcp._tcp; }
     ipv4_udp& get_udp() { return _udp; }
     void register_l4(proto_type id, ip_protocol* handler);
@@ -486,13 +488,20 @@ public:
 template <ip_protocol_num ProtoNum>
 inline
 void ipv4_l4<ProtoNum>::register_packet_provider(ipv4_traits::packet_provider_type func) {
-    _inet.register_packet_provider([func = std::move(func)] {
+    _inet.register_packet_provider([this, func = std::move(func)] {
         auto l4p = func();
         if (l4p) {
-            l4p.value().proto_num = ProtoNum;
+            decorate(l4p.value());
+            // l4p.value().proto_num = ProtoNum;
         }
         return l4p;
     });
+}
+
+template <ip_protocol_num ProtoNum>
+inline
+void ipv4_l4<ProtoNum>::decorate(ipv4_traits::l4packet& l4p) {
+    l4p.proto_num = ProtoNum;
 }
 
 template <ip_protocol_num ProtoNum>

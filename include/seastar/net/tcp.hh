@@ -484,6 +484,17 @@ private:
                 });
             }
         }
+
+        void output_immediately() {
+            _inet.get_l2_dst_address(_foreign_ip).then([this] (ethernet_address dst) {
+                // compat::optional<typename InetTraits::l4packet> l4p;
+                auto l4p = this->get_packet();
+                if (l4p) {
+                    l4p.value().e_dst = dst;
+                    _inet.decorate(l4p);
+                }
+            });
+        }
         future<> connect_done() {
             return _connect_done.get_future();
         }

@@ -308,6 +308,63 @@ void ipv4::send(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, p
     }
 }
 
+void ipv4::send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst) {
+    auto needs_frag = this->needs_frag(p, proto_num, hw_features());
+
+    auto send_pkt = [this, to, proto_num, needs_frag, e_dst, from] (packet& pkt, uint16_t remaining, uint16_t offset) mutable  {
+        auto iph = pkt.prepend_header<ip_hdr>();
+        iph->ihl = sizeof(*iph) / 4;
+        iph->ver = 4;
+        iph->dscp = 0;
+        iph->ecn = 0;
+        iph->len = pkt.len();
+        // FIXME: a proper id
+        iph->id = 0;
+        if (needs_frag) {
+            uint16_t mf = remaining > 0;
+            // The fragment offset is measured in units of 8 octets (64 bits)
+            auto off = offset / 8;
+            iph->frag = (mf << uint8_t(ip_hdr::frag_bits::mf)) | off;
+        } else {
+            iph->frag = 0;
+        }
+        iph->ttl = 64;
+        iph->ip_proto = (uint8_t)proto_num;
+        iph->csum = 0;
+        iph->src_ip = from;
+        iph->dst_ip = to;
+        *iph = hton(*iph);
+
+        if (hw_features().tx_csum_ip_offload) {
+            iph->csum = 0;
+            pkt.offload_info_ref().needs_ip_csum = true;
+        } else {
+            checksummer csum;
+            csum.sum(reinterpret_cast<char*>(iph), sizeof(*iph));
+            iph->csum = csum.get();
+        }
+
+        _netif->send(l3_protocol::l3packet{eth_protocol_num::ipv4, e_dst, std::move(pkt)});
+    };
+
+    if (needs_frag) {
+        uint16_t offset = 0;
+        uint16_t remaining = p.len();
+        auto mtu = hw_features().mtu;
+
+        while (remaining) {
+            auto can_send = std::min(uint16_t(mtu - net::ipv4_hdr_len_min), remaining);
+            remaining -= can_send;
+            auto pkt = p.share(offset, can_send);
+            send_pkt(pkt, remaining, offset);
+            offset += can_send;
+        }
+    } else {
+        // The whole packet can be send in one shot
+        send_pkt(p, 0, 0);
+    }
+}
+
 compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
     // _packetq will be mostly empty here unless it hold remnants of previously
     // fragmented packet

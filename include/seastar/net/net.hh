@@ -102,6 +102,7 @@ public:
     subscription<packet, ethernet_address> receive(
             std::function<future<> (packet, ethernet_address)> rx_fn,
             std::function<bool (forward_hash&, packet&, size_t)> forward);
+
 private:
     friend class interface;
 };
@@ -135,6 +136,18 @@ public:
     }
     uint16_t hw_queues_count();
     uint16_t port_idx();
+
+    inline
+    void decorate(l3_protocol::l3packet& l3pv) {
+        auto eh = l3pv.p.prepend_header<eth_hdr>();
+        eh->dst_mac = l3pv.to;
+        eh->src_mac = _hw_address;
+        eh->eth_proto = uint16_t(l3pv.proto_num);
+        *eh = hton(*eh);
+    }
+
+    void send (l3_protocol::l3packet l3pv);
+
     
     const rss_config& rss_conf() const;
     bool uses_full_hash() const;
@@ -257,6 +270,7 @@ public:
         _pkt_providers.push_back(std::move(func));
     }
     bool poll_tx();
+    void send_immediate(packet p);
     friend class device;
 };
 

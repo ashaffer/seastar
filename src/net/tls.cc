@@ -590,7 +590,7 @@ public:
             gtls_chk(gnutls_priority_set(*this, prio));
         }
 
-        onTransmitFn = [] (int n) {};
+        onTransmitFn = [] (std::chrono::time_point<std::chrono::high_resolution_clock>) {};
         gnutls_server_name_set(*this, GNUTLS_NAME_DNS, _hostname.data(), _hostname.size());
         gnutls_transport_set_ptr(*this, this);
         gnutls_transport_set_vec_push_function(*this, &vec_push_wrapper);
@@ -835,7 +835,7 @@ public:
 
     typedef net::fragment* frag_iter;
 
-    future<> do_put(frag_iter i, frag_iter e, std::function<void(int)> onTransmit) {
+    future<> do_put(frag_iter i, frag_iter e, std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>)> onTransmit) {
         if (!_output_pending.available()) {
             printf("tls::do_put _output_pending not available\n");
         }
@@ -1088,7 +1088,7 @@ private:
     uint _eagainCount = 0;
     bool _shutdownCb = false;
     future<> _output_pending;
-    std::function<void(int)> onTransmitFn;
+    std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>)> onTransmitFn;
     buf_type _input;
 
     // modify this to a unique_ptr to handle exceptions in our constructor.

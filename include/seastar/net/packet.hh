@@ -80,6 +80,7 @@ class packet final {
     // enough for lots of headers, not quite two cache lines:
     static constexpr size_t internal_data_size = 128 - 16;
     static constexpr size_t default_nr_frags = 4;
+    using PerfTime = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
     struct pseudo_vector {
         fragment* _start;
@@ -104,7 +105,7 @@ class packet final {
         // FIXME: share _data/_frags space
         std::chrono::high_resolution_clock::time_point _receivedAt;
         uint _pollDelay;
-        std::function<void(int)> _onTransmit;
+        std::function<void(PerfTime)> _onTransmit;
 
         fragment _frags[];
 
@@ -275,16 +276,16 @@ public:
 
     void reset() { _impl.reset(); }
 
-    void onTransmit (std::function<void(int)> onTransmit) {
+    void onTransmit (std::function<void(PerfTime)> onTransmit) {
         _impl->_onTransmit = onTransmit;
     }
 
-    std::function<void(int)> getOnTransmit () {
+    std::function<void(PerfTime)> getOnTransmit () {
         return _impl->_onTransmit;
     }
 
-    void notifyTransmitted (int n) {
-        _impl->_onTransmit(n);
+    void notifyTransmitted (PerfTime ts) {
+        _impl->_onTransmit(ts);
     }
 
     void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
@@ -362,14 +363,14 @@ packet::packet(packet&& x) noexcept
 inline
 packet::impl::impl(size_t nr_frags)
     : _len(0), _allocated_frags(nr_frags) {
-        _onTransmit = [] (int n) {};
+        _onTransmit = [] (PerfTime) {};
 }
 
 inline
 packet::impl::impl(fragment frag, size_t nr_frags)
     : _len(frag.size), _allocated_frags(nr_frags) {
     assert(_allocated_frags > _nr_frags);
-    _onTransmit = [] (int n) {};
+    _onTransmit = [] (PerfTime) {};
 
     if (frag.size <= internal_data_size) {
         _headroom -= frag.size;

@@ -1995,8 +1995,8 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
 
     if (can_send() > 0) {
         try {
-            output_immediately();
-            // output();
+            // output_immediately();
+            output();
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());
             throw e;

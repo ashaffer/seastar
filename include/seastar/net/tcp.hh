@@ -1998,16 +1998,16 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     auto len = p.len();
     _snd.current_queue_space += len;
     _snd.unsent_len += len;
-    _snd.unsent.push_back(std::move(p));
+    // _snd.unsent.push_back(std::move(p));
     _penultimateSend = _lastSend;
     _lastSend = std::chrono::high_resolution_clock::now();
 
     if (can_send() > 0) {
 
         try {
-            // _snd.unsent_len -= len;
-            // output_immediately(std::move(p));
-            output();
+            _snd.unsent_len -= len;
+            output_immediately(std::move(p));
+            // output();
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());
             throw e;

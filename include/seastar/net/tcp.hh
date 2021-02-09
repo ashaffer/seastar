@@ -2006,11 +2006,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
         _snd.unsent_len -= len;
 
         try {
-            auto start = std::chrono::high_resolution_clock::now();
             output_immediately(std::move(p));
-            auto end = std::chrono::high_resolution_clock::now();
-            uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-            printf("output_immediately: %u\n", delta);
             // output();
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());

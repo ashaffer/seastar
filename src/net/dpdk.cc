@@ -1273,6 +1273,11 @@ private:
                 // assert(p.len());
 
                 p.notifyTransmitted(ts);
+                uint sz = 0;
+                for (uint i = 0; i < p.nr_frags(); i++) {
+                    sz += p.frag(i).size;
+                }
+                printf("Transmitting: %u bytes\n", sz);
                 tx_buf* buf = packet_to_tx_buf_p(std::move(p));
                 if (!buf) {
                     break;

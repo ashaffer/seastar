@@ -443,6 +443,8 @@ private:
         void input_handle_syn_sent_state(tcp_hdr* th, packet p);
         void input_handle_other_state(tcp_hdr* th, packet p);
         void output_one(bool data_retransmit = false);
+        void decorate(packet& p, bool data_retransmit);
+
         future<> wait_for_data();
         void abort_reader();
         future<> wait_for_all_data_acked();
@@ -485,14 +487,17 @@ private:
             }
         }
 
-        void output_immediately() {
-            _tcp._inet.get_l2_dst_address(_foreign_ip).then([this] (ethernet_address dst) {
-                // compat::optional<typename InetTraits::l4packet> l4p;
-                auto l4p = this->get_packet();
-                if (l4p) {
-                    l4p.value().e_dst = dst;
-                    _tcp._inet.decorate(l4p.value());
-                }
+        void output_immediately(packet p) {
+            decorate(p, false);
+
+            _tcp._inet.get_l2_dst_address(_foreign_ip).then([this, p = std::move(p)] (ethernet_address dst) mutable {
+                _tcp._inet.send_immediate(
+                    _local_ip, 
+                    _foreign_ip, 
+                    _tcp._inet.get_proto_num(), 
+                    std::move(p), 
+                    dst
+                );
             }).then_wrapped([this] (auto&& f) {
                 try {
                     f.get();
@@ -1776,12 +1781,7 @@ packet tcp<InetTraits>::tcb::get_transmit_packet() {
 }
 
 template <typename InetTraits>
-void tcp<InetTraits>::tcb::output_one(bool data_retransmit) {
-    if (in_state(CLOSED)) {
-        return;
-    }
-
-    packet p = data_retransmit ? _snd.data.front().p.share() : get_transmit_packet();
+void tcp<InetTraits>::tcb::decorate(packet& p, bool data_retransmit) {
     packet clone = p.share();  // early clone to prevent share() from calling packet::unuse_internal_data() on header.
     uint16_t len = p.len();
     bool syn_on = syn_needs_on();
@@ -1879,11 +1879,20 @@ void tcp<InetTraits>::tcb::output_one(bool data_retransmit) {
         }
     }
 
-
     // if advertised TCP receive window is 0 we may only transmit zero window probing segment.
     // Payload size of this segment is 1. Queueing anything bigger when _snd.window == 0 is bug
     // and violation of RFC
-    assert((_snd.window > 0) || ((_snd.window == 0) && (len <= 1)));
+    // assert((_snd.window > 0) || ((_snd.window == 0) && (len <= 1)));
+}
+
+template <typename InetTraits>
+void tcp<InetTraits>::tcb::output_one(bool data_retransmit) {
+    if (in_state(CLOSED)) {
+        return;
+    }
+
+    packet p = data_retransmit ? _snd.data.front().p.share() : get_transmit_packet();
+    decorate(p, data_retransmit);
     queue_packet(std::move(p));
 }
 
@@ -1986,17 +1995,17 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
         return make_exception_future<>(tcp_reset_error());
     }
 
-    auto len = p.len();
-    _snd.current_queue_space += len;
-    _snd.unsent_len += len;
-    _snd.unsent.push_back(std::move(p));
+    // auto len = p.len();
+    // _snd.current_queue_space += len;
+    // _snd.unsent_len += len;
+    // _snd.unsent.push_back(std::move(p));
     _penultimateSend = _lastSend;
     _lastSend = std::chrono::high_resolution_clock::now();
 
     if (can_send() > 0) {
         try {
-            // output_immediately();
-            output();
+            output_immediately(std::move(p));
+            // output();
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());
             throw e;

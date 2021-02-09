@@ -1782,7 +1782,11 @@ packet tcp<InetTraits>::tcb::get_transmit_packet() {
 
 template <typename InetTraits>
 void tcp<InetTraits>::tcb::decorate(packet& p, bool data_retransmit) {
+    auto start = std::chrono::high_resolution_clock::now();
     packet clone = p.share();  // early clone to prevent share() from calling packet::unuse_internal_data() on header.
+    auto end = std::chrono::high_resolution_clock::now();
+    uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    printf("decorate share: %u\n", delta);
     uint16_t len = p.len();
     bool syn_on = syn_needs_on();
     bool ack_on = ack_needs_on();

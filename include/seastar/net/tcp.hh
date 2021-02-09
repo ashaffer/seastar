@@ -1997,14 +1997,16 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
         return make_exception_future<>(tcp_reset_error());
     }
 
-    // auto len = p.len();
-    // _snd.current_queue_space += len;
-    // _snd.unsent_len += len;
+    auto len = p.len();
+    _snd.current_queue_space += len;
+    _snd.unsent_len += len;
     // _snd.unsent.push_back(std::move(p));
     _penultimateSend = _lastSend;
     _lastSend = std::chrono::high_resolution_clock::now();
 
     if (can_send() > 0) {
+        _snd.unsent_len -= len;
+
         try {
             output_immediately(std::move(p));
             // output();
@@ -2012,6 +2014,8 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
             printf("[tcp] output threw: %s\n", e.what());
             throw e;
         }
+    } else {
+        _snd.unsent.push_back(std::move(p));
     }
 
     return wait_send_available();

@@ -1273,11 +1273,7 @@ private:
                 // assert(p.len());
 
                 p.notifyTransmitted(ts);
-                auto start = std::chrono::high_resolution_clock::now();
                 tx_buf* buf = packet_to_tx_buf_p(std::move(p));
-                auto end = std::chrono::high_resolution_clock::now();
-                uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-                printf("dpdk copy: %u\n", delta);
                 if (!buf) {
                     break;
                 }

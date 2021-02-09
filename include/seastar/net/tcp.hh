@@ -1782,15 +1782,7 @@ packet tcp<InetTraits>::tcb::get_transmit_packet() {
 
 template <typename InetTraits>
 void tcp<InetTraits>::tcb::decorate(packet& p, bool data_retransmit) {
-    auto start = std::chrono::high_resolution_clock::now();
-    auto end2 = std::chrono::high_resolution_clock::now();
-
     packet clone = p.share();  // early clone to prevent share() from calling packet::unuse_internal_data() on header.
-    auto end = std::chrono::high_resolution_clock::now();
-    uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-    uint delta2 = std::chrono::duration_cast<std::chrono::nanoseconds>(end2 - start).count();
-
-    printf("decorate share: %u, %u\n", delta, delta2);
     uint16_t len = p.len();
     bool syn_on = syn_needs_on();
     bool ack_on = ack_needs_on();
@@ -2014,7 +2006,11 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
         _snd.unsent_len -= len;
 
         try {
+            auto start = std::chrono::high_resolution_clock::now();
             output_immediately(std::move(p));
+            auto end = std::chrono::high_resolution_clock::now();
+            uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+            printf("output_immediately: %u\n", delta);
             // output();
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());

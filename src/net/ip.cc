@@ -309,6 +309,7 @@ void ipv4::send(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, p
 }
 
 void ipv4::send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst) {
+    printf("ip send_immediate: %u\n", (uint)p.len());
     auto needs_frag = this->needs_frag(p, proto_num, hw_features());
 
     auto send_pkt = [this, to, proto_num, needs_frag, e_dst, from] (packet& pkt, uint16_t remaining, uint16_t offset) mutable  {

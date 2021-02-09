@@ -489,8 +489,10 @@ private:
 
         void output_immediately(packet p) {
             decorate(p, false);
+            printf("output_immediately: %u\n", (uint)p.len());
 
             _tcp._inet.get_l2_dst_address(_foreign_ip).then([this, p = std::move(p)] (ethernet_address dst) mutable {
+                printf("got l2 dst address: %u\n", (uint)p.len());
                 _tcp._inet.send_immediate(
                     _local_ip, 
                     _foreign_ip, 

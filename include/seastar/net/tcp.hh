@@ -1998,7 +1998,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     auto len = p.len();
     _snd.current_queue_space += len;
     _snd.unsent_len += len;
-    // _snd.unsent.push_back(std::move(p));
+    _snd.unsent.push_back(std::move(p));
     _penultimateSend = _lastSend;
     _lastSend = std::chrono::high_resolution_clock::now();
 

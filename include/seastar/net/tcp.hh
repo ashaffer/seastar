@@ -1998,7 +1998,6 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     auto len = p.len();
     _penultimateSend = _lastSend;
     _lastSend = std::chrono::high_resolution_clock::now();    
-    p.notifyTransmitted(_lastSend);
     _snd.current_queue_space += len;
     _snd.unsent_len += len;
     _snd.unsent.push_back(std::move(p));
@@ -2007,7 +2006,9 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
         try {
             // _snd.unsent_len -= len;
             // output_immediately(std::move(p));
+            p.notifyTransmitted(std::chrono::high_resolution_clock::now());
             output();
+            p.notifyTransmitted(std::chrono::high_resolution_clock::now());
             _tcp._inet.flush();
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());

@@ -899,7 +899,6 @@ public:
         }
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
-        p.notifyTransmitted(std::chrono::high_resolution_clock::now());
         if (_out_sem.current() == 0) {
             printf("out_sem_reason: %d\n", out_sem_reason);
         }

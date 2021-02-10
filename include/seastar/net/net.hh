@@ -147,7 +147,9 @@ public:
     }
 
     void send(l3_protocol::l3packet l3pv);
-    void flush();
+    inline void flush() {
+        _dev->local_queue().poll_tx();
+    }
 
     
     const rss_config& rss_conf() const;

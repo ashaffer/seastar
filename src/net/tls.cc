@@ -877,6 +877,8 @@ public:
         });
     }
     future<> put(net::packet p) {
+        p.notifyTransmitted(std::chrono::high_resolution_clock::now());
+        
         if (_error || _shutdown) {
             printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
@@ -938,7 +940,7 @@ public:
             auto n = msg.size();
             auto p = std::move(msg).release();
             p.onTransmit(onTransmitFn);
-            p.notifyTransmitted(std::chrono::high_resolution_clock::now());
+            // p.notifyTransmitted(std::chrono::high_resolution_clock::now());
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {

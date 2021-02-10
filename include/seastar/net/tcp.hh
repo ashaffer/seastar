@@ -2005,7 +2005,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     if (can_send() > 0) {
 
         try {
-            _snd.unsent_len -= len;
+            // _snd.unsent_len -= len;
             // output_immediately(std::move(p));
             output();
         } catch (std::exception& e) {

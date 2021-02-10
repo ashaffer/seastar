@@ -147,10 +147,7 @@ public:
     }
 
     void send(l3_protocol::l3packet l3pv);
-    inline void flush() {
-        _dev->local_queue().poll_tx();
-    }
-
+    inline void flush();
     
     const rss_config& rss_conf() const;
     bool uses_full_hash() const;

@@ -904,14 +904,15 @@ public:
             printf("out_sem_reason: %d\n", out_sem_reason);
         }
 
-        return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).handle_exception([] (std::exception_ptr ep) {
-            try {
-                std::rethrow_exception(ep);
-            } catch (std::exception& e) {
-                printf("[tls] put exception: %s\n", e.what());
-                throw e;
-            }
-        });
+        return do_put(i, e, p.getOnTransmit());
+        // return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).handle_exception([] (std::exception_ptr ep) {
+        //     try {
+        //         std::rethrow_exception(ep);
+        //     } catch (std::exception& e) {
+        //         printf("[tls] put exception: %s\n", e.what());
+        //         throw e;
+        //     }
+        // });
     }
 
     ssize_t pull(void* dst, size_t len) {

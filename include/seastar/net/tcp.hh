@@ -2003,7 +2003,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     _lastSend = std::chrono::high_resolution_clock::now();
 
     if (can_send() > 0) {
-
+        printf("output\n");
         try {
             // _snd.unsent_len -= len;
             // output_immediately(std::move(p));

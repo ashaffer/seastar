@@ -851,7 +851,7 @@ public:
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
 
-                // onTransmitFn(0);
+                onTransmitFn(std::chrono::high_resolution_clock::now());
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
                     off += res;

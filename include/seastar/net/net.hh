@@ -147,7 +147,7 @@ public:
     }
 
     void send(l3_protocol::l3packet l3pv);
-    inline void flush();
+    void flush();
     
     const rss_config& rss_conf() const;
     bool uses_full_hash() const;

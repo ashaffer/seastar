@@ -285,7 +285,7 @@ void interface::send(l3_protocol::l3packet l3pv) {
     _dev->local_queue().send_immediate(std::move(l3pv.p));
 }
 
-inline void interface::flush() {
+void interface::flush() {
     _dev->local_queue().poll_tx();
 }
 

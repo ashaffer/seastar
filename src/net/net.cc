@@ -285,11 +285,6 @@ void interface::send(l3_protocol::l3packet l3pv) {
     _dev->local_queue().send_immediate(std::move(l3pv.p));
 }
 
-void interface::flush() {
-    _dev->local_queue().poll_tx();
-}
-
-
 subscription<packet, ethernet_address>
 interface::register_l3(eth_protocol_num proto_num,
         std::function<future<> (packet p, ethernet_address from)> next,

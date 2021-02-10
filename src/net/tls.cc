@@ -836,12 +836,15 @@ public:
     typedef net::fragment* frag_iter;
 
     future<> do_put(frag_iter i, frag_iter e, std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>)> onTransmit) {
+        onTransmit(std::chrono::high_resolution_clock::now());
+        
         if (!_output_pending.available()) {
             printf("tls::do_put _output_pending not available\n");
         }
 
         assert(_output_pending.available());
         onTransmitFn = onTransmit;
+
         return do_for_each(i, e, [this](net::fragment& f) {
             auto ptr = f.base;
             auto size = f.size;
@@ -851,7 +854,6 @@ public:
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
 
-                onTransmitFn(std::chrono::high_resolution_clock::now());
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
                     off += res;
@@ -877,8 +879,7 @@ public:
         });
     }
     future<> put(net::packet p) {
-        p.notifyTransmitted(std::chrono::high_resolution_clock::now());
-        
+
         if (_error || _shutdown) {
             printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
@@ -896,6 +897,7 @@ public:
         }
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
+        p.notifyTransmitted(std::chrono::high_resolution_clock::now());        
         return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).handle_exception([] (std::exception_ptr ep) {
             try {
                 std::rethrow_exception(ep);

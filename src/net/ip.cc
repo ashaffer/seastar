@@ -348,7 +348,6 @@ void ipv4::send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num pr
     };
 
     if (needs_frag) {
-        printf("needs frag\n");
         uint16_t offset = 0;
         uint16_t remaining = p.len();
         auto mtu = hw_features().mtu;

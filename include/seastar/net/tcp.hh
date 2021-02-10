@@ -1996,11 +1996,12 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     }
 
     auto len = p.len();
+    _penultimateSend = _lastSend;
+    _lastSend = std::chrono::high_resolution_clock::now();    
+    p.notifyTransmitted(_lastSend);
     _snd.current_queue_space += len;
     _snd.unsent_len += len;
     _snd.unsent.push_back(std::move(p));
-    _penultimateSend = _lastSend;
-    _lastSend = std::chrono::high_resolution_clock::now();
 
     if (can_send() > 0) {
         try {
@@ -2186,7 +2187,6 @@ void tcp<InetTraits>::tcb::persist() {
 
 template <typename InetTraits>
 void tcp<InetTraits>::tcb::retransmit() {
-    printf("retransmit\n");
     auto output_update_rto = [this] {
         output();
         // According to RFC6298, Update RTO <- RTO * 2 to perform binary exponential back-off

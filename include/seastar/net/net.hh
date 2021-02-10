@@ -146,7 +146,8 @@ public:
         *eh = hton(*eh);
     }
 
-    void send (l3_protocol::l3packet l3pv);
+    void send(l3_protocol::l3packet l3pv);
+    void flush();
 
     
     const rss_config& rss_conf() const;

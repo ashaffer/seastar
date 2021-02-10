@@ -204,6 +204,8 @@ public:
     inline     
     void send_immediate(Args&&... args);
 
+    inline void flush();
+
     future<ethernet_address> get_l2_dst_address(ipv4_address to);
     const ipv4& inet() const {
         return _inet;
@@ -479,6 +481,9 @@ public:
     ip_packet_filter * packet_filter() const;
     void send(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst);
     void send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst);
+    inline void flush() {
+        _netif->flush();
+    }
     tcp<ipv4_traits>& get_tcp() { return *_tcp._tcp; }
     ipv4_udp& get_udp() { return _udp; }
     void register_l4(proto_type id, ip_protocol* handler);
@@ -563,6 +568,11 @@ void ipv4_l4<ProtoNum>::send_immediate(Args&&... args) {
     return _inet.send_immediate(std::forward<Args>(args)...);
 }
 
+template <ip_protocol_num ProtoNum>
+inline 
+void ipv4_l4<ProtoNum>::flush() {
+    return _inet.flush();
 }
 
+}
 }

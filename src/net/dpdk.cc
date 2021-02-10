@@ -1273,6 +1273,7 @@ private:
                 // assert(p.len());
 
                 p.notifyTransmitted(ts);
+                printf("tranmsitted\n");
                 tx_buf* buf = packet_to_tx_buf_p(std::move(p));
                 if (!buf) {
                     break;

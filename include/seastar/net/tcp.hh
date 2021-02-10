@@ -2008,9 +2008,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
             // _snd.unsent_len -= len;
             // output_immediately(std::move(p));
             output();
-            printf("pre flush\n");
             _tcp._inet.flush();
-            printf("post flush\n");
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());
             throw e;

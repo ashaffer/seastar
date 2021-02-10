@@ -690,6 +690,7 @@ public:
         // acquire both semaphores to sync both read & write
         return with_semaphore(_in_sem, 1, [this] {
             return with_semaphore(_out_sem, 1, [this] {
+                out_sem_reason = 4;
                 return do_handshake();
             });
         });
@@ -836,8 +837,9 @@ public:
     typedef net::fragment* frag_iter;
 
     future<> do_put(frag_iter i, frag_iter e, std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>)> onTransmit) {
+        out_sem_reason = 1;
         onTransmit(std::chrono::high_resolution_clock::now());
-        
+
         if (!_output_pending.available()) {
             printf("tls::do_put _output_pending not available\n");
         }
@@ -897,7 +899,11 @@ public:
         }
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
-        p.notifyTransmitted(std::chrono::high_resolution_clock::now());        
+        p.notifyTransmitted(std::chrono::high_resolution_clock::now());
+        if (_out_sem.current() == 0) {
+            printf("out_sem_reason: %d\n", out_sem_reason);
+        }
+
         return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).handle_exception([] (std::exception_ptr ep) {
             try {
                 std::rethrow_exception(ep);
@@ -1003,6 +1009,7 @@ public:
         return wait_for_output();
     }
     future<> wait_for_eof() {
+        out_sem_reason = 2;
         // read records until we get an eof alert
         // since this call could time out, we must not ac
         return with_semaphore(_in_sem, 1, [this] {
@@ -1054,7 +1061,9 @@ public:
                 // handshake aqcuire, because in worst case, we get here while a reader is attempting
                 // re-handshake.
                 return _in_sem.wait().then([this] {
-                    return _out_sem.wait();
+                    return _out_sem.wait().then([this] () {
+                        out_sem_reason = 3;
+                    });
                 });
             }).then_wrapped([me = std::move(me)](future<> f) { // must keep object alive until here.
                 f.ignore_ready_future();
@@ -1081,6 +1090,7 @@ private:
     data_sink _out;
 
     semaphore _in_sem, _out_sem;
+    int out_sem_reason = 0;
 
     bool _eof = false;
     bool _shutdown = false;

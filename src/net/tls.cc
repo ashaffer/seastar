@@ -838,7 +838,7 @@ public:
 
     future<> do_put(frag_iter i, frag_iter e, std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>)> onTransmit) {
         out_sem_reason = 1;
-        onTransmit(std::chrono::high_resolution_clock::now());
+        // onTransmit(std::chrono::high_resolution_clock::now());
 
         if (!_output_pending.available()) {
             printf("tls::do_put _output_pending not available\n");

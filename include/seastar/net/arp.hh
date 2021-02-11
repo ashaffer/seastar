@@ -214,8 +214,15 @@ future<ethernet_address>
 arp_for<L3>::lookup(const l3addr& paddr) {
     auto i = _table.find(paddr);
     if (i != _table.end()) {
+        later().then([] () {
+            printf("arp ready\n");
+        });
         return make_ready_future<ethernet_address>(i->second);
     }
+
+    later().then([] () {
+        printf("arp lookup\n");
+    });
     auto j = _in_progress.find(paddr);
     auto first_request = j == _in_progress.end();
     auto& res = first_request ? _in_progress[paddr] : j->second;

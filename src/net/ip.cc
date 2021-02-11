@@ -368,9 +368,11 @@ void ipv4::send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num pr
 compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
     // _packetq will be mostly empty here unless it hold remnants of previously
     // fragmented packet
-    auto start = std::chrono::high_resolution_clock::now();
     bool sent = false;
+    uint delta = 0;
+
     if (_packetq.empty()) {
+        auto start = std::chrono::high_resolution_clock::now();
         uint ppSz = (uint)_pkt_providers.size();
         for (size_t i = 0; i < ppSz; i++) {
             auto l4p = _pkt_providers[_pkt_provider_idx++]();
@@ -384,9 +386,11 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
                 break;
             }
         }
+
+        auto end = std::chrono::high_resolution_clock::now();
+        delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
 
     compat::optional<l3_protocol::l3packet> p;
     if (!_packetq.empty()) {
@@ -394,7 +398,6 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
         _packetq.pop_front();
     }
 
-    uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     if (delta > 4000) {
         printf("ip long delta: %u, %u, %u\n", delta, (uint)_pkt_providers.size(), (uint)sent);
     }

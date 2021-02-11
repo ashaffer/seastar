@@ -86,7 +86,6 @@ bool qp::poll_tx() {
                 auto p = pr();
                 if (p) {
                     work++;
-                    printf("pushing packet\n");
                     _tx_packetq.push_back(std::move(p.value()));
                     if (_tx_packetq.size() == 128) {
                         break;
@@ -95,7 +94,7 @@ bool qp::poll_tx() {
             }
         } while (work && _tx_packetq.size() < 128);
         auto end = std::chrono::high_resolution_clock::now();
-        if (work > 0) {
+        if (!_tx_packetq.empty()) {
             printf("work queue: %u\n", (uint)std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
         }
     } else {

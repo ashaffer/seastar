@@ -368,6 +368,7 @@ void ipv4::send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num pr
 compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
     // _packetq will be mostly empty here unless it hold remnants of previously
     // fragmented packet
+    auto start = std::chrono::high_resolution_clock::now();    
     if (_packetq.empty()) {
         for (size_t i = 0; i < _pkt_providers.size(); i++) {
             auto l4p = _pkt_providers[_pkt_provider_idx++]();
@@ -386,6 +387,12 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
     if (!_packetq.empty()) {
         p = std::move(_packetq.front());
         _packetq.pop_front();
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    if (delta > 4000) {
+        printf("ip long delta: %u\n", delta);
     }
 
     return p;

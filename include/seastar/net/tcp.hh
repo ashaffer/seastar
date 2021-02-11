@@ -2008,11 +2008,9 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
             // _snd.unsent_len -= len;
             // output_immediately(std::move(p));
             output();
-            notifyTransmitted(std::chrono::high_resolution_clock::now(), 4);
-            _tcp._inet.flush();
-            later().then([] () {
-                printf("post flush\n");
-            });
+            auto ts = std::chrono::high_resolution_clock::now();
+            notifyTransmitted(ts, 4);
+            _tcp._inet.flush(ts);
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());
             throw e;

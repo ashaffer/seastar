@@ -204,7 +204,7 @@ public:
     inline     
     void send_immediate(Args&&... args);
 
-    inline void flush();
+    inline void flush(std::chrono::high_resolution_clock::time_point ts);
 
     future<ethernet_address> get_l2_dst_address(ipv4_address to);
     const ipv4& inet() const {
@@ -481,8 +481,12 @@ public:
     ip_packet_filter * packet_filter() const;
     void send(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst);
     void send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst);
-    inline void flush() {
-        _netif->flush();
+    inline void flush(std::chrono::high_resolution_clock::time_point ts) {
+        uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - ts).count();
+        later().then([delta] () {
+            printf("ipv4 flush: %u\n", delta);
+        });
+        _netif->flush(ts);
     }
     tcp<ipv4_traits>& get_tcp() { return *_tcp._tcp; }
     ipv4_udp& get_udp() { return _udp; }
@@ -570,7 +574,12 @@ void ipv4_l4<ProtoNum>::send_immediate(Args&&... args) {
 
 template <ip_protocol_num ProtoNum>
 inline 
-void ipv4_l4<ProtoNum>::flush() {
+void ipv4_l4<ProtoNum>::flush(std::chrono::high_resolution_clock::time_point ts) {
+    uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - ts).count();
+    later().then([delta] () {
+        printf("ipv4_l4 flush: %u\n", delta);
+    });
+
     _inet.flush();
 }
 

@@ -288,7 +288,12 @@ void interface::send(l3_protocol::l3packet l3pv) {
     _dev->local_queue().send_immediate(std::move(l3pv.p));
 }
 
-void interface::flush() {
+void interface::flush(std::chrono::high_resolution_clock::time_point ts) {
+    uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - ts).count();
+    later().then([delta] () {
+        printf("interface flush: %u\n", delta);
+    });
+
     _dev->local_queue().poll_tx();
 }
 

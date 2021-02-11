@@ -269,7 +269,7 @@ public:
     void register_packet_provider(packet_provider_type func) {
         _pkt_providers.push_back(std::move(func));
     }
-    bool poll_tx();
+    bool poll_tx(std::chrono::high_resolution_clock::time_point ts, bool flush);
     void send_immediate(packet p);
     friend class device;
 };

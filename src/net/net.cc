@@ -75,8 +75,15 @@ ipv4_addr::ipv4_addr(const ::in_addr& in, uint16_t p)
 namespace net {
 
 inline
-bool qp::poll_tx() {
+bool qp::poll_tx(std::chrono::high_resolution_clock::time_point ts, bool flush) {
     auto start = std::chrono::high_resolution_clock::now();
+    if (flush) {
+        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(start - ts).count();
+        later().then([delta] () {
+            printf("poll tx: %u\n", delta);
+        });
+    }
+
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;
@@ -111,7 +118,7 @@ void qp::send_immediate(packet p) {
 
 qp::qp(bool register_copy_stats,
        const std::string stats_plugin_name, uint8_t qid, uint8_t port_idx)
-        : _tx_poller(reactor::poller::simple([this] { return poll_tx(); }))
+        : _tx_poller(reactor::poller::simple([this] { return poll_tx(std::chrono::high_resolution_clock::now(), false); }))
         , _stats_plugin_name(stats_plugin_name)
         , _queue_name(std::string("queue") + std::string("_") + std::to_string(port_idx) + std::string("_") + std::to_string(qid))
 {
@@ -294,7 +301,7 @@ void interface::flush(std::chrono::high_resolution_clock::time_point ts) {
         printf("interface flush: %u\n", delta);
     });
 
-    _dev->local_queue().poll_tx();
+    _dev->local_queue().poll_tx(ts, true);
 }
 
 subscription<packet, ethernet_address>

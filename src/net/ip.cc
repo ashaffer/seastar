@@ -370,9 +370,10 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
     // fragmented packet
     auto start = std::chrono::high_resolution_clock::now();    
     if (_packetq.empty()) {
-        for (size_t i = 0; i < _pkt_providers.size(); i++) {
+        uint ppSz = (uint)_pkt_providers.size();
+        for (size_t i = 0; i < ppSz; i++) {
             auto l4p = _pkt_providers[_pkt_provider_idx++]();
-            if (_pkt_provider_idx == _pkt_providers.size()) {
+            if (_pkt_provider_idx == ppSz) {
                 _pkt_provider_idx = 0;
             }
             if (l4p) {
@@ -392,7 +393,7 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
     auto end = std::chrono::high_resolution_clock::now();
     uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     if (delta > 4000) {
-        printf("ip long delta: %u\n", delta);
+        printf("ip long delta: %u, %u\n", delta, (uint)_pkt_providers.size());
     }
 
     return p;

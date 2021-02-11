@@ -580,7 +580,7 @@ void ipv4_l4<ProtoNum>::flush(std::chrono::high_resolution_clock::time_point ts)
         printf("ipv4_l4 flush: %u\n", delta);
     });
 
-    _inet.flush();
+    _inet.flush(ts);
 }
 
 }

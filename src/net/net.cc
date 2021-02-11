@@ -76,8 +76,6 @@ namespace net {
 
 inline
 bool qp::poll_tx() {
-    auto start = std::chrono::high_resolution_clock::now();
-    uint startingSize = (uint)_tx_packetq.size();
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;
@@ -95,20 +93,11 @@ bool qp::poll_tx() {
                 }
             }
         } while (work && _tx_packetq.size() < 128);
-    } else {
-        printf("packet queue full: %u\n", (uint)_tx_packetq.size());
     }
-    uint endingSize = (uint)_tx_packetq.size();
-    auto end = std::chrono::high_resolution_clock::now();
-    uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
     if (!_tx_packetq.empty()) {
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
         return true;
-    }
-
-    if (delta > 4000) {
-        printf("long delta: %u, %u, %u\n", delta, startingSize, endingSize);
     }
 
     return false;

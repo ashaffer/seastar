@@ -272,8 +272,12 @@ public:
         return _socket.getReceivedAt();
     }
 
-    uint getPollDelay () {
+    uint getPollDelay() {
         return _socket.getPollDelay();
+    }
+
+    void ignore_semaphore() {
+        _socket.ignore_semaphore();
     }
 };
 

@@ -787,8 +787,12 @@ public:
             return _receivedAt;
         }
 
-        uint getPollDelay () {
+        uint getPollDelay() {
             return _pollDelay;
+        }
+
+        void ignore_semaphore() {
+            // noop
         }
 
         bool isClosed () {

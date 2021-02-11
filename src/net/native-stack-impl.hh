@@ -107,11 +107,15 @@ public:
         return _conn->getReceivedAt();
     }
 
-    uint getPollDelay () const override {
+    uint getPollDelay() const override {
         return _conn->getPollDelay();
     }
 
-    bool isClosed () const override {
+    void ignore_semaphore() override {
+        // noop
+    }
+
+    bool isClosed() const override {
         return _conn->isClosed();
     }
 

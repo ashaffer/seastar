@@ -172,6 +172,10 @@ public:
         return 0;
     }
 
+    void ignore_semaphore () override {
+        // noop
+    }
+
     void set_keepalive_parameters(const keepalive_params& p) override {
         return _ops::set_keepalive_parameters(_fd->get_file_desc(), p);
     }
@@ -231,6 +235,10 @@ public:
 
     uint getPollDelay () const override {
         return 0;
+    }
+
+    void ignore_semaphore() override {
+        // noop
     }
 
     void set_keepalive(bool keepalive) override {}

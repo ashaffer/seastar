@@ -299,9 +299,9 @@ void interface::send(l3_protocol::l3packet l3pv) {
 void interface::flush(std::chrono::high_resolution_clock::time_point ts) {
     auto end = std::chrono::high_resolution_clock::now();
     auto *qp = _dev->local_queue_ptr();
+    auto end2 = std::chrono::high_resolution_clock::now();    
     qp->poll_tx();
     printf("net flush: %u\n", (uint)std::chrono::duration_cast<std::chrono::nanoseconds>(end - ts).count());    
-    auto end2 = std::chrono::high_resolution_clock::now();
     printf("net flush2: %u\n", (uint)std::chrono::duration_cast<std::chrono::nanoseconds>(end2 - ts).count());
     // _dev->local_queue().poll_tx();
 }

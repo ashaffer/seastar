@@ -882,7 +882,6 @@ public:
         });
     }
     future<> put(net::packet p) {
-
         if (_error || _shutdown) {
             printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
@@ -905,9 +904,9 @@ public:
         }
 
         p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
-        if (_ignore_semaphore) {
-            return do_put(i, e, p.getOnTransmit());
-        } else {
+        // if (_ignore_semaphore) {
+        //     return do_put(i, e, p.getOnTransmit());
+        // } else {
             return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).handle_exception([] (std::exception_ptr ep) {
                 try {
                     std::rethrow_exception(ep);
@@ -916,7 +915,7 @@ public:
                     throw e;
                 }
             });
-        }
+        // }
     }
 
     void ignore_semaphore () {

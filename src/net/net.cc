@@ -86,7 +86,7 @@ bool qp::poll_tx() {
                 auto p = pr();
                 if (p) {
                     work++;
-                    p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
+                    p.value().notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
                     _tx_packetq.push_back(std::move(p.value()));
                     if (_tx_packetq.size() == 128) {
                         break;

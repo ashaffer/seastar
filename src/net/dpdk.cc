@@ -1266,13 +1266,13 @@ private:
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
         if (_tx_burst.size() == 0) {
-            // auto ts = std::chrono::high_resolution_clock::now();
+            auto ts = std::chrono::high_resolution_clock::now();
 
             for (auto&& p : pb) {
                 // TODO: assert() in a fast path! Remove me ASAP!
                 // assert(p.len());
 
-                // p.notifyTransmitted(ts, 2);
+                p.notifyTransmitted(ts, 2);
                 tx_buf* buf = packet_to_tx_buf_p(std::move(p));
                 if (!buf) {
                     break;

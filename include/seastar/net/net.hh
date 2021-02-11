@@ -285,8 +285,10 @@ public:
         _queues = std::make_unique<qp*[]>(smp::count);
     }
     virtual ~device() {};
-    qp& queue_for_cpu(unsigned cpu) { return *_queues[cpu]; }
-    qp& local_queue() { return queue_for_cpu(engine().cpu_id()); }
+    inline qp& queue_for_cpu(unsigned cpu) { return *_queues[cpu]; }
+    inline qp *queue_ptr_for_cpu(unsigned cpu) { return _queues[cpu]; }
+    inline qp *local_queue_ptr() { return queue_ptr_for_cpu(engine().cpu_id()); }
+    inline qp& local_queue() { return queue_for_cpu(engine().cpu_id()); }
 
     uint qid2cpuid(uint qid) { 
         return qid;

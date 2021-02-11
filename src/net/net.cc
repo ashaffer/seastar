@@ -92,6 +92,8 @@ bool qp::poll_tx() {
                 }
             }
         } while (work && _tx_packetq.size() < 128);
+    } else {
+        printf("packet queue full: %u\n", (uint)_tx_packetq.size());
     }
     if (!_tx_packetq.empty()) {
         for (auto&& p : _tx_packetq) {

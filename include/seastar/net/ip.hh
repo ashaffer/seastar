@@ -483,7 +483,7 @@ public:
     void send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst);
     inline void flush(std::chrono::high_resolution_clock::time_point ts) {
         auto end = std::chrono::high_resolution_clock::now();
-        _netif->flush(ts);
+        _netif->flush(end);
         printf("ipv4 flush: %u\n", (uint)std::chrono::duration_cast<std::chrono::nanoseconds>(end - ts).count());        
     }
     tcp<ipv4_traits>& get_tcp() { return *_tcp._tcp; }
@@ -574,7 +574,7 @@ template <ip_protocol_num ProtoNum>
 inline 
 void ipv4_l4<ProtoNum>::flush(std::chrono::high_resolution_clock::time_point ts) {
     auto end = std::chrono::high_resolution_clock::now();
-    _inet.flush(ts);
+    _inet.flush(end);
     printf("ipv4_l4 flush: %u\n", (uint)std::chrono::duration_cast<std::chrono::nanoseconds>(end - ts).count());
 }
 

@@ -908,7 +908,7 @@ tcp<InetTraits>::tcp(inet_type& inet)
         auto end = std::chrono::high_resolution_clock::now();
         uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
         if (delta > 4000) {
-            printf("tcp long delta: %u, %u, %u\n", delta, startingSize, endingSize);
+            printf("tcp long delta: %u\n", delta);
         }
 
         return l4p;

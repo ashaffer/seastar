@@ -457,6 +457,15 @@ with_semaphore(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, Func
     });
 }
 
+template <typename ExceptionFactory, typename Func, typename Clock = typename timer<>::clock>
+inline
+futurize_t<std::result_of_t<Func()>>
+with_semaphore_sync(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, Func&& func) {
+    return get_units(sem, units).then_sync([func = std::forward<Func>(func)] (auto units) mutable {
+        return futurize_apply(std::forward<Func>(func)).finally([units = std::move(units)] {});
+    });
+}
+
 /// \brief Runs a function protected by a semaphore with time bound on wait
 ///
 /// If possible, acquires a \ref semaphore, runs a function, and releases

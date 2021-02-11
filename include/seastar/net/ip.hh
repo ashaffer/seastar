@@ -204,7 +204,7 @@ public:
     inline     
     void send_immediate(Args&&... args);
 
-    inline void flush(std::chrono::high_resolution_clock::time_point ts);
+    inline void flush();
 
     future<ethernet_address> get_l2_dst_address(ipv4_address to);
     const ipv4& inet() const {

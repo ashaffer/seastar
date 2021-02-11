@@ -887,6 +887,7 @@ tcp<InetTraits>::tcp(inet_type& inet)
         compat::optional<typename InetTraits::l4packet> l4p;
         auto c = _poll_tcbs.size();
         if (!_packetq.empty() && (!(tcb_polled % 128) || c == 0)) {
+            printf("tcp packetq\n");
             l4p = std::move(_packetq.front());
             _packetq.pop_front();
             _queue_space.signal(l4p.value().p.len());

@@ -79,6 +79,7 @@ bool qp::poll_tx() {
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;
+        auto start = std::chrono::high_resolution_clock::now();
         do {
             work = 0;
             for (auto&& pr : _pkt_providers) {

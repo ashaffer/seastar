@@ -903,6 +903,10 @@ public:
             printf("out_sem_reason: %d\n", out_sem_reason);
         }
 
+        if (p.nr_frags() > 1) {
+            printf("frags > 1: %u\n", (uint)p.nr_frags());
+        }
+        
         if (_ignore_semaphore) {
             return do_put(i, e, p.getOnTransmit());
         } else {

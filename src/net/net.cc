@@ -86,6 +86,7 @@ bool qp::poll_tx() {
                 auto p = pr();
                 if (p) {
                     work++;
+                    printf("pushing packet\n");
                     _tx_packetq.push_back(std::move(p.value()));
                     if (_tx_packetq.size() == 128) {
                         break;

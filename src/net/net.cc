@@ -95,7 +95,7 @@ bool qp::poll_tx() {
     }
     if (!_tx_packetq.empty()) {
         for (auto&& p : _tx_packetq) {
-            p.notifyTransmitted(std::chrono::high_resolution_clock::now());
+            p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
         }
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
         return true;

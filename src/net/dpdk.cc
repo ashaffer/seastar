@@ -1272,7 +1272,7 @@ private:
                 // TODO: assert() in a fast path! Remove me ASAP!
                 // assert(p.len());
 
-                p.notifyTransmitted(ts);
+                p.notifyTransmitted(ts, 2);
                 tx_buf* buf = packet_to_tx_buf_p(std::move(p));
                 if (!buf) {
                     break;

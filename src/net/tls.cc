@@ -590,7 +590,7 @@ public:
             gtls_chk(gnutls_priority_set(*this, prio));
         }
 
-        onTransmitFn = [] (std::chrono::time_point<std::chrono::high_resolution_clock>) {};
+        onTransmitFn = [] (std::chrono::time_point<std::chrono::high_resolution_clock>, int) {};
         gnutls_server_name_set(*this, GNUTLS_NAME_DNS, _hostname.data(), _hostname.size());
         gnutls_transport_set_ptr(*this, this);
         gnutls_transport_set_vec_push_function(*this, &vec_push_wrapper);
@@ -836,7 +836,7 @@ public:
 
     typedef net::fragment* frag_iter;
 
-    future<> do_put(frag_iter i, frag_iter e, std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>)> onTransmit) {
+    future<> do_put(frag_iter i, frag_iter e, std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>, int)> onTransmit) {
         out_sem_reason = 1;
         // onTransmit(std::chrono::high_resolution_clock::now());
 
@@ -1110,7 +1110,7 @@ private:
     uint _eagainCount = 0;
     bool _shutdownCb = false;
     future<> _output_pending;
-    std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>)> onTransmitFn;
+    std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>, int)> onTransmitFn;
     buf_type _input;
 
     // modify this to a unique_ptr to handle exceptions in our constructor.

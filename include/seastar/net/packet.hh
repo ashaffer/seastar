@@ -105,7 +105,7 @@ class packet final {
         // FIXME: share _data/_frags space
         std::chrono::high_resolution_clock::time_point _receivedAt;
         uint _pollDelay;
-        std::function<void(PerfTime)> _onTransmit;
+        std::function<void(PerfTime, int)> _onTransmit;
 
         fragment _frags[];
 
@@ -276,16 +276,17 @@ public:
 
     void reset() { _impl.reset(); }
 
-    void onTransmit (std::function<void(PerfTime)> onTransmit) {
+    void onTransmit (std::function<void(PerfTime, int)> onTransmit) {
         _impl->_onTransmit = onTransmit;
     }
 
-    std::function<void(PerfTime)> getOnTransmit () {
+    std::function<void(PerfTime, int)> getOnTransmit () {
         return _impl->_onTransmit;
     }
 
-    void notifyTransmitted (PerfTime ts) {
-        _impl->_onTransmit(ts);
+    inline
+    void notifyTransmitted (PerfTime ts, int i) {
+        _impl->_onTransmit(ts, i);
     }
 
     void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
@@ -363,14 +364,14 @@ packet::packet(packet&& x) noexcept
 inline
 packet::impl::impl(size_t nr_frags)
     : _len(0), _allocated_frags(nr_frags) {
-        _onTransmit = [] (PerfTime) {};
+        _onTransmit = [] (PerfTime, int) {};
 }
 
 inline
 packet::impl::impl(fragment frag, size_t nr_frags)
     : _len(frag.size), _allocated_frags(nr_frags) {
     assert(_allocated_frags > _nr_frags);
-    _onTransmit = [] (PerfTime) {};
+    _onTransmit = [] (PerfTime, int) {};
 
     if (frag.size <= internal_data_size) {
         _headroom -= frag.size;

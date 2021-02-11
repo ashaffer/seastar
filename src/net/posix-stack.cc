@@ -168,11 +168,11 @@ public:
         return std::chrono::high_resolution_clock::now();
     }
 
-    uint getPollDelay () const override {
+    uint getPollDelay() const override {
         return 0;
     }
 
-    void ignore_semaphore () override {
+    void ignore_semaphore() override {
         // noop
     }
 

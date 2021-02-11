@@ -105,6 +105,10 @@ uint connected_socket::getPollDelay () {
     return _csi->getPollDelay();
 }
 
+void connected_socket::ignore_semaphore() {
+    // noop
+}
+
 bool connected_socket::isClosed () {
     return _csi->isClosed();
 }

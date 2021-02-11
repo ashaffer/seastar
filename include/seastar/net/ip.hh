@@ -571,7 +571,7 @@ void ipv4_l4<ProtoNum>::send_immediate(Args&&... args) {
 template <ip_protocol_num ProtoNum>
 inline 
 void ipv4_l4<ProtoNum>::flush() {
-    _inet.flush(end);
+    _inet.flush();
 }
 
 }

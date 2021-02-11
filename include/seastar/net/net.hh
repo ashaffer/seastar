@@ -147,7 +147,7 @@ public:
     }
 
     void send(l3_protocol::l3packet l3pv);
-    void flush(std::chrono::high_resolution_clock::time_point ts);
+    void flush();
     
     const rss_config& rss_conf() const;
     bool uses_full_hash() const;

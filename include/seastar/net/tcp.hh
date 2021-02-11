@@ -2009,7 +2009,6 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
             output();
             auto ts = std::chrono::high_resolution_clock::now();            
             notifyTransmitted(ts, 0);
-            ts = std::chrono::high_resolution_clock::now();            
             _tcp._inet.flush(ts);
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());

@@ -296,14 +296,8 @@ void interface::send(l3_protocol::l3packet l3pv) {
     _dev->local_queue().send_immediate(std::move(l3pv.p));
 }
 
-void interface::flush(std::chrono::high_resolution_clock::time_point ts) {
-    auto end = std::chrono::high_resolution_clock::now();
-    auto& qp = _dev->local_queue();
-    auto end2 = std::chrono::high_resolution_clock::now();    
-    qp.poll_tx();
-    printf("net flush: %u\n", (uint)std::chrono::duration_cast<std::chrono::nanoseconds>(end - ts).count());    
-    printf("net flush2: %u\n", (uint)std::chrono::duration_cast<std::chrono::nanoseconds>(end2 - ts).count());
-    // _dev->local_queue().poll_tx();
+void interface::flush() {
+    _dev->local_queue().poll_tx();
 }
 
 subscription<packet, ethernet_address>

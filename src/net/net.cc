@@ -78,7 +78,7 @@ inline
 bool qp::poll_tx(std::chrono::high_resolution_clock::time_point ts, bool flush) {
     auto start = std::chrono::high_resolution_clock::now();
     if (flush) {
-        uint delta = std::chrono::duration_cast<std::chrono::microseconds>(start - ts).count();
+        uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(start - ts).count();
         later().then([delta] () {
             printf("poll tx: %u\n", delta);
         });

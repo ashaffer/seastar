@@ -202,9 +202,7 @@ public:
 
     virtual std::chrono::high_resolution_clock::time_point getReceivedAt();
     virtual uint getPollDelay();
-    virtual void ignore_semaphore() {
-        
-    }
+    virtual void ignore_semaphore();
     virtual bool isClosed();
     virtual uint32_t can_send();
 };

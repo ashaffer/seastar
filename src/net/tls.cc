@@ -903,15 +903,22 @@ public:
             printf("out_sem_reason: %d\n", out_sem_reason);
         }
 
-        return do_put(i, e, p.getOnTransmit());
-        // return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).handle_exception([] (std::exception_ptr ep) {
-        //     try {
-        //         std::rethrow_exception(ep);
-        //     } catch (std::exception& e) {
-        //         printf("[tls] put exception: %s\n", e.what());
-        //         throw e;
-        //     }
-        // });
+        if (_ignore_semaphore) {
+            return do_put(i, e, p.getOnTransmit());
+        } else {
+            return with_semaphore(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).handle_exception([] (std::exception_ptr ep) {
+                try {
+                    std::rethrow_exception(ep);
+                } catch (std::exception& e) {
+                    printf("[tls] put exception: %s\n", e.what());
+                    throw e;
+                }
+            });
+        }
+    }
+
+    void ignore_semaphore () {
+        _ignore_semaphore = true;
     }
 
     ssize_t pull(void* dst, size_t len) {
@@ -1090,6 +1097,7 @@ private:
     data_sink _out;
 
     semaphore _in_sem, _out_sem;
+    bool _ignore_semaphore = false;
     int out_sem_reason = 0;
 
     bool _eof = false;
@@ -1182,6 +1190,10 @@ public:
 
     uint getPollDelay () const override {
         return _session->socket().getPollDelay();
+    }
+
+    void ignore_semaphore () override {
+        return _session->ignore_semaphore();
     }
 };
 

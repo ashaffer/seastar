@@ -47,6 +47,9 @@ public:
     virtual uint getPollDelay() const = 0;
     virtual bool isClosed() const = 0;
     virtual uint32_t can_send() = 0;
+    virtual void ignore_semaphore() {
+        
+    }
 };
 
 class socket_impl {

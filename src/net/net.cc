@@ -79,6 +79,7 @@ bool qp::poll_tx() {
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;
+        auto start = std::chrono::high_resolution_clock::now();
         do {
             work = 0;
             for (auto&& pr : _pkt_providers) {
@@ -92,6 +93,10 @@ bool qp::poll_tx() {
                 }
             }
         } while (work && _tx_packetq.size() < 128);
+        auto end = std::chrono::high_resolution_clock::now();
+        if (work > 0) {
+            printf("work queue: %u\n", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+        }
     } else {
         printf("packet queue full: %u\n", (uint)_tx_packetq.size());
     }

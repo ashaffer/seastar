@@ -374,8 +374,11 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
 
     if (_packetq.empty()) {
         for (size_t i = 0; i < ppSz; i++) {
-            auto start = std::chrono::high_resolution_clock::now();
-            auto l4p = _pkt_providers[_pkt_provider_idx++]();
+            uint idx = _pkt_providers_idx++;
+            auto start = std::chrono::high_resolution_clock::now();            
+            auto&& pr = _pkt_providers[idx];
+            auto l4p = pr();
+            // auto l4p = _pkt_providers[_pkt_provider_idx++]();
             auto end = std::chrono::high_resolution_clock::now();
             delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 

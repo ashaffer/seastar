@@ -100,7 +100,7 @@ bool qp::poll_tx() {
     }
     uint endingSize = (uint)_tx_packetq.size();
     auto end = std::chrono::high_resolution_clock::now();
-    uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()
+    uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
     if (!_tx_packetq.empty()) {
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));

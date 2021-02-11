@@ -299,7 +299,7 @@ void interface::send(l3_protocol::l3packet l3pv) {
 void interface::flush(std::chrono::high_resolution_clock::time_point ts) {
     auto cpu = seastar::engine().cpu_id();    
     auto end = std::chrono::high_resolution_clock::now();
-    auto *qp = __dev.local_queue_ptr();
+    auto *qp = _dev.local_queue_ptr();
     qp->poll_tx();
     printf("net flush: %u\n", (uint)std::chrono::duration_cast<std::chrono::nanoseconds>(end - ts).count());    
     auto end2 = std::chrono::high_resolution_clock::now();

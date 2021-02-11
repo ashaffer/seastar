@@ -837,7 +837,7 @@ public:
     typedef net::fragment* frag_iter;
 
     future<> do_put(frag_iter i, frag_iter e, std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>, int)> onTransmit) {
-        onTransmit(std::chrono::high_resolution_clock::now(), 1);
+        // onTransmit(std::chrono::high_resolution_clock::now(), 1);
         out_sem_reason = 1;
         // onTransmit(std::chrono::high_resolution_clock::now());
 
@@ -956,7 +956,7 @@ public:
             auto n = msg.size();
             auto p = std::move(msg).release();
             p.onTransmit(onTransmitFn);
-            // p.notifyTransmitted(std::chrono::high_resolution_clock::now());
+            p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {

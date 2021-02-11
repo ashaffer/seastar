@@ -1077,6 +1077,23 @@ public:
 #endif
     }
 
+    template <typename Func, typename Result = futurize_t<std::result_of_t<Func(T&&...)>>>
+    GCC6_CONCEPT( requires ::seastar::CanApply<Func, T...> )
+    Result
+    then_sync(Func&& func) noexcept {
+        if (available()) {
+            using futurator = futurize<std::result_of_t<Func(T&&...)>>;
+
+            if (failed()) {
+                return futurator::make_exception_future(get_available_state().get_exception());
+            } else {
+                return futurator::apply(std::forward<Func>(func), get_available_state().get_value());
+            }
+        } else {
+            return then(std::forward<Func>(func));
+        }
+    }
+
 private:
 
     template <typename Func, typename Result = futurize_t<std::result_of_t<Func(T&&...)>>>

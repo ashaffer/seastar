@@ -2010,6 +2010,9 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
             output();
             notifyTransmitted(std::chrono::high_resolution_clock::now(), 4);
             _tcp._inet.flush();
+            later().then([] () {
+                printf("post flush\n");
+            });
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());
             throw e;

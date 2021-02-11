@@ -86,6 +86,7 @@ bool qp::poll_tx() {
                 auto p = pr();
                 if (p) {
                     work++;
+                    p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
                     _tx_packetq.push_back(std::move(p.value()));
                     if (_tx_packetq.size() == 128) {
                         break;
@@ -102,7 +103,7 @@ bool qp::poll_tx() {
     }
     if (!_tx_packetq.empty()) {
         for (auto&& p : _tx_packetq) {
-            p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
+            p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 2);
         }
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
         return true;

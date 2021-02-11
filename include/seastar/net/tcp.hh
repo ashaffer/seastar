@@ -1978,14 +1978,9 @@ future<> tcp<InetTraits>::tcb::wait_send_available() {
 
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::send(packet p) {
-    // p.notifyTransmitted(2);
     // We can not send after the connection is closed
     if (closeState > 0 && closeState < 100) {
         printf("[tcp] send called after close called: %u\n", closeState);
-        // void *array[25];
-        // size_t sz;
-        // sz = backtrace(array, 25);
-        // backtrace_symbols_fd(array, sz, STDOUT_FILENO);
     }
 
     if (_snd.closed || in_state(CLOSED)) {

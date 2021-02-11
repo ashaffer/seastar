@@ -137,14 +137,14 @@ const int ipv4_udp::default_queue_size = 1024;
 ipv4_udp::ipv4_udp(ipv4& inet)
     : _inet(inet)
 {
-    // _inet.register_packet_provider([this] {
-    //     compat::optional<ipv4_traits::l4packet> l4p;
-    //     if (!_packetq.empty()) {
-    //         l4p = std::move(_packetq.front());
-    //         _packetq.pop_front();
-    //     }
-    //     return l4p;
-    // });
+    _inet.register_packet_provider([this] {
+        compat::optional<ipv4_traits::l4packet> l4p;
+        if (!_packetq.empty()) {
+            l4p = std::move(_packetq.front());
+            _packetq.pop_front();
+        }
+        return l4p;
+    });
 }
 
 bool ipv4_udp::forward(forward_hash& out_hash_data, packet& p, size_t off)

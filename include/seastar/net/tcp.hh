@@ -883,11 +883,9 @@ tcp<InetTraits>::tcp(inet_type& inet)
     });
 
     _inet.register_packet_provider([this, tcb_polled = 0u] () mutable {
-        auto start = std::chrono::high_resolution_clock::now();
         compat::optional<typename InetTraits::l4packet> l4p;
         auto c = _poll_tcbs.size();
         if (!_packetq.empty() && (!(tcb_polled % 128) || c == 0)) {
-            printf("tcp packetq\n");
             l4p = std::move(_packetq.front());
             _packetq.pop_front();
             _queue_space.signal(l4p.value().p.len());
@@ -904,14 +902,6 @@ tcp<InetTraits>::tcp(inet_type& inet)
                     break;
                 }
             }
-        }
-
-        auto end = std::chrono::high_resolution_clock::now();
-        uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-        if (delta > 2000) {
-            seastar::later().then([delta] () {
-                printf("tcp long delta: %u\n", delta);
-            });
         }
 
         return l4p;

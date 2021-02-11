@@ -376,8 +376,9 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
         for (size_t i = 0; i < ppSz; i++) {
             uint idx = _pkt_provider_idx++;
             auto&& pr = _pkt_providers[idx];
-            auto start = std::chrono::high_resolution_clock::now();            
             auto l4p = pr();
+            auto start = std::chrono::high_resolution_clock::now();
+
             // auto l4p = _pkt_providers[_pkt_provider_idx++]();
             auto end = std::chrono::high_resolution_clock::now();
             delta = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();

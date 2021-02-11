@@ -278,6 +278,7 @@ interface::interface(std::shared_ptr<device> dev)
     , _hw_features(_dev->hw_features()) {
     dev->local_queue().register_packet_provider([this, idx = 0u] () mutable {
             compat::optional<packet> p;
+            printf("interface: %u\n", (uint)_pkt_providers.size());
             for (size_t i = 0; i < _pkt_providers.size(); i++) {
                 auto l3p = _pkt_providers[idx++]();
                 if (idx == _pkt_providers.size())

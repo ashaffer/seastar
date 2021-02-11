@@ -889,7 +889,9 @@ tcp<InetTraits>::tcp(inet_type& inet)
             l4p = std::move(_packetq.front());
             _packetq.pop_front();
             _queue_space.signal(l4p.value().p.len());
+            printf("tcp packetq\n");
         } else {
+            printf("tcp: %u\n", (uint)c);
             while (c--) {
                 tcb_polled++;
                 lw_shared_ptr<tcb> tcb;

@@ -369,7 +369,6 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
     // _packetq will be mostly empty here unless it hold remnants of previously
     // fragmented packet
     if (_packetq.empty()) {
-        printf("ip: %u\n", (uint)_pkt_providers.size());
         for (size_t i = 0; i < _pkt_providers.size(); i++) {
             auto l4p = _pkt_providers[_pkt_provider_idx++]();
             if (_pkt_provider_idx == _pkt_providers.size()) {

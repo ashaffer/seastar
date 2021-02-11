@@ -46,6 +46,7 @@ arp::arp(interface* netif) : _netif(netif), _proto(netif, eth_protocol_num::arp,
 compat::optional<l3_protocol::l3packet> arp::get_packet() {
     compat::optional<l3_protocol::l3packet> p;
     if (!_packetq.empty()) {
+        printf("transmit arp packet\n");
         p = std::move(_packetq.front());
         _packetq.pop_front();
     }

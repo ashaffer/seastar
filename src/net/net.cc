@@ -103,6 +103,12 @@ bool qp::poll_tx(std::chrono::high_resolution_clock::time_point ts, bool flush) 
         } while (work && _tx_packetq.size() < 128);
     }
 
+    if (flush) {
+        later().then([] () {
+            printf("post packet process\n");
+        });
+    }
+
     if (!_tx_packetq.empty()) {
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
         return true;

@@ -258,6 +258,8 @@ subscription<packet, ethernet_address> l3_protocol::receive(
     return _netif->register_l3(_proto_num, std::move(rx_fn), std::move(forward));
 };
 
+std::vector<interface *> interface::registry;
+
 interface::interface(std::shared_ptr<device> dev)
     : _dev(dev)
     , _rx(_dev->receive([this] (packet p) { 
@@ -279,6 +281,14 @@ interface::interface(std::shared_ptr<device> dev)
             }
             return p;
         });
+
+    registry.push_back(this);
+}
+
+void interface::flush_all () {
+    for (auto iface : registry) {
+        iface->flush();
+    }
 }
 
 void interface::send(l3_protocol::l3packet l3pv) {

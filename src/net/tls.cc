@@ -837,13 +837,7 @@ public:
     typedef net::fragment* frag_iter;
 
     future<> do_put(frag_iter i, frag_iter e, std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>, int)> onTransmit) {
-        onTransmit(std::chrono::high_resolution_clock::now(), 1);
         out_sem_reason = 1;
-        // onTransmit(std::chrono::high_resolution_clock::now());
-
-        if (!_output_pending.available()) {
-            printf("tls::do_put _output_pending not available\n");
-        }
 
         assert(_output_pending.available());
         onTransmitFn = onTransmit;
@@ -861,26 +855,16 @@ public:
                 if (res > 0) { // don't really need to check, but...
                     off += res;
                 }
-
-                if (res < 0) {
-                    printf("tls::do_put error: %d\n", (int)res);
-                }
-                
+               
                 // what will we wait for? error or results...
                 auto f = res < 0 ? handle_output_error(res) : wait_for_output();
                 return f.then([] {
                     return make_ready_future<stop_iteration>(stop_iteration::no);
                 });
             });
-        }).handle_exception([] (std::exception_ptr ep) {
-            try {
-                std::rethrow_exception(ep);
-            } catch (std::exception& e) {
-                printf("[tls] then_wrapped caught_exception: %s\n", e.what());
-                throw e;
-            }
         });
     }
+    
     future<> put(net::packet p) {
         if (_error || _shutdown) {
             printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
@@ -899,22 +883,16 @@ public:
         }
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
-        if (_out_sem.current() == 0) {
-            printf("out_sem_reason: %d\n", out_sem_reason);
-        }
 
         p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
         if (_ignore_semaphore) {
             return do_put(i, e, p.getOnTransmit());
         } else {
-            return with_semaphore_sync(_out_sem, 1, std::bind(&session::do_put, this, i, e, p.getOnTransmit())).finally([p = std::move(p)] {}).handle_exception([] (std::exception_ptr ep) {
-                try {
-                    std::rethrow_exception(ep);
-                } catch (std::exception& e) {
-                    printf("[tls] put exception: %s\n", e.what());
-                    throw e;
-                }
-            });
+            return with_semaphore_sync(
+                _out_sem, 
+                1, 
+                std::bind(&session::do_put, this, i, e, p.getOnTransmit())
+            ).finally([p = std::move(p)] {});
         }
     }
 
@@ -956,7 +934,7 @@ public:
             auto n = msg.size();
             auto p = std::move(msg).release();
             p.onTransmit(onTransmitFn);
-            // p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
+            p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {

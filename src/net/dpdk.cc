@@ -1301,7 +1301,14 @@ private:
         if (_tx_burst_idx == _tx_burst.size()) {
             _tx_burst_idx = 0;
             _tx_burst.clear();
-        } 
+        } else {
+            uint tbSz = (uint)_tx_burst.size();
+            uint pbSz = (uint)pb.size();
+            uint tbi = (uint)_tx_burst_idx;
+            later().then([tbi, tbSz, sent, pbSz, nr_frags, bytes] () {
+                printf("Failed to transmit all packets: %u, %u, %u, %u, %u, %u\n", tbi, tbSz, (uint)sent, pbSz, (uint)nr_frags, (uint)bytes);
+            });
+        }
         // else {
         //     printf("Failed to transmit all packets\n");
         // }
@@ -1432,6 +1439,20 @@ int dpdk_device::init_port_start()
     printf("Starting: %u (%u available)\n", (uint)_port_idx, (uint)rte_eth_dev_count_avail());
     assert(_port_idx < rte_eth_dev_count_avail());
     rte_eth_dev_info_get(_port_idx, &_dev_info);
+
+    // struct rte_eth_burst_mode tx_mode;
+    // if (rte_eth_tx_burst_mode_get(_port_idx, 0, &tx_mode) == 0) {
+    //     printf("TX Burst mode (%u): %s\n", _port_idx, tx_mode.info);
+    // } else {
+    //     printf("TX Burst modes not supported\n");
+    // }
+
+    // struct rte_eth_burst_mode rx_mode;
+    // if (rte_eth_rx_burst_mode_get(_port_idx, 0, &rx_mode) == 0) {
+    //     printf("RX Burst mode (%u): %s\n", _port_idx, rx_mode.info);
+    // } else {
+    //     printf("RX Burst modes not supported\n");
+    // }
 
     //
     // This is a workaround for a missing handling of a HW limitation in the
@@ -1639,7 +1660,7 @@ int dpdk_device::init_port_start()
 
     printf("Port %u init ... ", _port_idx);
     fflush(stdout);
-    printf("Before configure\n");
+    
     /*
      * Standard DPDK port initialisation - config port, then set up
      * rx and tx rings.

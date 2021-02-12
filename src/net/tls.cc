@@ -864,7 +864,7 @@ public:
             });
         });
     }
-    
+
     future<> put(net::packet p) {
         if (_error || _shutdown) {
             printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
@@ -884,7 +884,7 @@ public:
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
 
-        p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
+        // p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
         if (_ignore_semaphore) {
             return do_put(i, e, p.getOnTransmit());
         } else {
@@ -922,10 +922,6 @@ public:
             return -1;
         }
 
-        if (_shutdownCb == true) {
-            printf("[tls] vec_push called in _eofState 2\n");
-        }
-
         try {
             scattered_message<char> msg;
             for (int i = 0; i < iovcnt; ++i) {
@@ -934,7 +930,7 @@ public:
             auto n = msg.size();
             auto p = std::move(msg).release();
             p.onTransmit(onTransmitFn);
-            p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
+            p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {

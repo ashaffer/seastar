@@ -837,7 +837,7 @@ public:
     typedef net::fragment* frag_iter;
 
     future<> do_put(frag_iter i, frag_iter e, std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>, int)> onTransmit) {
-        // onTransmit(std::chrono::high_resolution_clock::now(), 1);
+        onTransmit(std::chrono::high_resolution_clock::now(), 1);
         out_sem_reason = 1;
         // onTransmit(std::chrono::high_resolution_clock::now());
 

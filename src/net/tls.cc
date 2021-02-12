@@ -956,7 +956,7 @@ public:
             auto n = msg.size();
             auto p = std::move(msg).release();
             p.onTransmit(onTransmitFn);
-            p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
+            // p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {

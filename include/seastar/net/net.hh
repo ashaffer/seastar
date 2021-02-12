@@ -147,7 +147,7 @@ public:
     }
 
     void send(l3_protocol::l3packet l3pv);
-    void flush(std::chrono::high_resolution_clock::time_point ts);
+    void flush();
     
     const rss_config& rss_conf() const;
     bool uses_full_hash() const;
@@ -269,7 +269,7 @@ public:
     void register_packet_provider(packet_provider_type func) {
         _pkt_providers.push_back(std::move(func));
     }
-    bool poll_tx(std::chrono::high_resolution_clock::time_point ts, bool flush);
+    bool poll_tx();
     void send_immediate(packet p);
     friend class device;
 };

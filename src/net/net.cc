@@ -75,15 +75,7 @@ ipv4_addr::ipv4_addr(const ::in_addr& in, uint16_t p)
 namespace net {
 
 inline
-bool qp::poll_tx(std::chrono::high_resolution_clock::time_point ts, bool flush) {
-    auto start = std::chrono::high_resolution_clock::now();
-    if (flush) {
-        uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(start - ts).count();
-        later().then([delta] () {
-            printf("poll tx: %u\n", delta);
-        });
-    }
-
+bool qp::poll_tx() {
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;
@@ -93,7 +85,6 @@ bool qp::poll_tx(std::chrono::high_resolution_clock::time_point ts, bool flush) 
                 auto p = pr();
                 if (p) {
                     work++;
-                    p.value().notifyTransmitted(start, 5);
                     _tx_packetq.push_back(std::move(p.value()));
                     if (_tx_packetq.size() == 128) {
                         break;
@@ -101,12 +92,6 @@ bool qp::poll_tx(std::chrono::high_resolution_clock::time_point ts, bool flush) 
                 }
             }
         } while (work && _tx_packetq.size() < 128);
-    }
-
-    if (flush) {
-        later().then([] () {
-            printf("post packet process\n");
-        });
     }
 
     if (!_tx_packetq.empty()) {
@@ -124,7 +109,7 @@ void qp::send_immediate(packet p) {
 
 qp::qp(bool register_copy_stats,
        const std::string stats_plugin_name, uint8_t qid, uint8_t port_idx)
-        : _tx_poller(reactor::poller::simple([this] { return poll_tx(std::chrono::high_resolution_clock::now(), false); }))
+        : _tx_poller(reactor::poller::simple([this] { return poll_tx(); }))
         , _stats_plugin_name(stats_plugin_name)
         , _queue_name(std::string("queue") + std::string("_") + std::to_string(port_idx) + std::string("_") + std::to_string(qid))
 {
@@ -301,13 +286,8 @@ void interface::send(l3_protocol::l3packet l3pv) {
     _dev->local_queue().send_immediate(std::move(l3pv.p));
 }
 
-void interface::flush(std::chrono::high_resolution_clock::time_point ts) {
-    uint delta = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - ts).count();
-    later().then([delta] () {
-        printf("interface flush: %u\n", delta);
-    });
-
-    _dev->local_queue().poll_tx(ts, true);
+void interface::flush() {
+    _dev->local_queue().poll_tx();
 }
 
 subscription<packet, ethernet_address>

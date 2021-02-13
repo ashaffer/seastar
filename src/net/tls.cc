@@ -693,6 +693,15 @@ public:
                 out_sem_reason = 4;
                 return do_handshake();
             });
+        }).then([] () {
+            char *desc;
+
+            /* get a description of the session connection, protocol,
+             * cipher/key exchange */
+            desc = gnutls_session_get_desc(_session);
+            if (desc != NULL) {
+                    printf("- Session: %s\n", desc);
+            }
         });
     }
 

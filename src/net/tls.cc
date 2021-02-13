@@ -698,7 +698,7 @@ public:
 
             /* get a description of the session connection, protocol,
              * cipher/key exchange */
-            desc = gnutls_session_get_desc(_session);
+            desc = gnutls_session_get_desc(_session.get());
             if (desc != NULL) {
                     printf("- Session: %s\n", desc);
             }

@@ -2009,14 +2009,14 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
             // output_immediately(std::move(p));
             output();
             notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
-            _tcp._inet.flush();
+            // _tcp._inet.flush();
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());
             throw e;
         }
-    } else {
-        printf("snd unsent\n");
-        _snd.unsent.push_back(std::move(p));
+    // } else {
+    //     printf("snd unsent\n");
+    //     _snd.unsent.push_back(std::move(p));
     }
 
     return wait_send_available();

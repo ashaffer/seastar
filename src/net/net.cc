@@ -285,6 +285,10 @@ interface::interface(std::shared_ptr<device> dev)
     registry.push_back(this);
 }
 
+interface::~interface() {
+    registry.erase(std::remove(registry.begin(), registry.end(), this), registry.end());   
+}
+
 void interface::flush_all () {
     for (auto iface : registry) {
         iface->flush();

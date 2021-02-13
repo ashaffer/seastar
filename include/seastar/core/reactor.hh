@@ -980,6 +980,9 @@ public:
     static void arrive_at_event_loop_end();
     static void join_all();
     static bool main_thread() { return std::this_thread::get_id() == _tmain; }
+    static void request_preemption (uint cpu) {
+        _reactors[cpu]->request_preemption();
+    }
 
     /// Runs a function on a remote core.
     ///
@@ -995,7 +998,7 @@ public:
     /// \return whatever \c func returns, as a future<> (if \c func does not return a future,
     ///         submit_to() will wrap it in a future<>).
     template <typename Func>
-    static futurize_t<std::result_of_t<Func()>> submit_to(unsigned t, smp_service_group ssg, Func&& func, bool ignoreLimits = false) {
+    static futurize_t<std::result_of_t<Func()>> submit_to(unsigned t, smp_service_group ssg, Func&& func, bool ignoreLimits = false, bool preempt = false) {
         using ret_type = std::result_of_t<Func()>;
         if (t == engine().cpu_id()) {
             try {
@@ -1016,7 +1019,11 @@ public:
                 return futurize<std::result_of_t<Func()>>::make_exception_future(std::current_exception());
             }
         } else {
-            return _qs[t][engine().cpu_id()].submit(t, ssg, std::forward<Func>(func), ignoreLimits);
+            auto f = _qs[t][engine().cpu_id()].submit(t, ssg, std::forward<Func>(func), ignoreLimits);
+            if (preempt) {
+                _reactors[t]->request_preemption();
+            }
+            return std::move(f);
         }
     }
     /// Runs a function on a remote core.
@@ -1034,8 +1041,8 @@ public:
     /// \return whatever \c func returns, as a future<> (if \c func does not return a future,
     ///         submit_to() will wrap it in a future<>).
     template <typename Func>
-    static futurize_t<std::result_of_t<Func()>> submit_to(unsigned t, Func&& func, bool ignoreLimits = false) {
-        return submit_to(t, default_smp_service_group(), std::forward<Func>(func), ignoreLimits);
+    static futurize_t<std::result_of_t<Func()>> submit_to(unsigned t, Func&& func, bool ignoreLimits = false, bool preempt = false) {
+        return submit_to(t, default_smp_service_group(), std::forward<Func>(func), ignoreLimits, preempt);
     }
     static bool poll_queues();
     static bool pure_poll_queues();

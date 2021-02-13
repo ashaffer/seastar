@@ -693,7 +693,7 @@ public:
                 out_sem_reason = 4;
                 return do_handshake();
             });
-        }).then([] () {
+        }).then([this] () {
             char *desc;
 
             /* get a description of the session connection, protocol,

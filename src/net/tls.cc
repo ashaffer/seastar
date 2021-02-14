@@ -693,17 +693,17 @@ public:
                 out_sem_reason = 4;
                 return do_handshake();
             });
-        });
-        // .then([this] () {
-        //     char *desc;
+        })
+        .then([this] () {
+            char *desc;
 
-        //     /* get a description of the session connection, protocol,
-        //      * cipher/key exchange */
-        //     desc = gnutls_session_get_desc(_session.get());
-        //     if (desc != NULL) {
-        //             printf("- Session: %s\n", desc);
-        //     }
-        // });
+            /* get a description of the session connection, protocol,
+             * cipher/key exchange */
+            desc = gnutls_session_get_desc(_session.get());
+            if (desc != NULL) {
+                    printf("- Session: %s\n", desc);
+            }
+        });
     }
 
     size_t in_avail() const {

@@ -282,6 +282,7 @@ interface::interface(std::shared_ptr<device> dev)
             return p;
         });
 
+    printf("Here: %u, %u\n", (uint)seastar::engine().cpu_id(), (uint)registry.size());
     registry.push_back(this);
 }
 

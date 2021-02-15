@@ -339,6 +339,27 @@ public:
         });
         return ret;
     }
+
+    void print_hex () {
+        printf("packet (%u):", len());
+        for (uint i = 0; i < nr_frags(); i++) {
+            auto frag = fragment_array()[i];
+            for (uint j = 0; j < frag.size; j++) {
+                printf(" 0x%x", (uint)frag.base[j]);
+            }
+        }
+        printf("\n");
+    }
+
+    void print_text () {
+        printf("packet (%u):", len());
+        for (uint i = 0; i < nr_frags(); i++) {
+            auto frag = fragment_array()[i];
+            printf("%.*s", (int)frag.size, frag.base);
+        }
+        printf("\n");
+    }
+
     explicit operator bool() {
         return bool(_impl);
     }

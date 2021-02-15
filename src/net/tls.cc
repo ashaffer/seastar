@@ -566,6 +566,7 @@ public:
                 gtls_chk(gnutls_init(&session, GNUTLS_NONBLOCK|uint32_t(t)));
                 return session;
             }(), &gnutls_deinit) {
+        socketId = ++numSockets;
         gtls_chk(gnutls_set_default_priority(*this));
         gtls_chk(
                 gnutls_credentials_set(*this, GNUTLS_CRD_CERTIFICATE,
@@ -894,6 +895,8 @@ public:
         }
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
+        printf("TLS Socket (put): %u\n", socketId);
+        p.print_text();
 
         // p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
         if (_ignore_semaphore) {
@@ -938,8 +941,12 @@ public:
             for (int i = 0; i < iovcnt; ++i) {
                 msg.append(sstring(reinterpret_cast<const char *>(iov[i].iov_base), iov[i].iov_len));
             }
+
+
             auto n = msg.size();
             auto p = std::move(msg).release();
+            printf("TLS Socket (vec_push): %u\n", socketId);
+            p.print_hex();
             p.onTransmit(onTransmitFn);
             p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
             _output_pending = _out.put(std::move(p));
@@ -1079,6 +1086,8 @@ private:
     std::unique_ptr<net::connected_socket_impl> _sock;
     shared_ptr<tls::certificate_credentials> _creds;
     const sstring _hostname;
+    static uint numSockets;
+    uint socketId;
     data_source _in;
     data_sink _out;
 
@@ -1102,6 +1111,8 @@ private:
     // modify this to a unique_ptr to handle exceptions in our constructor.
     std::unique_ptr<std::remove_pointer_t<gnutls_session_t>, void(*)(gnutls_session_t)> _session;
 };
+
+uint session::numSockets = 0;
 
 struct session::session_ref {
     session_ref() = default;

@@ -362,6 +362,7 @@ public:
     }
 
     virtual std::vector<std::vector<std::string>> getLocalIps () = 0;
+    virtual void flush_all () = 0;
 };
 
 }

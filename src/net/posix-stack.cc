@@ -633,6 +633,10 @@ std::vector<std::vector<std::string>> posix_network_stack::getLocalIps () {
     return result;
 }
 
+void posix_network_stack::flush_all () {
+    // noop
+}
+
 ::seastar::socket posix_network_stack::socket(socket_address sa) {
     // assert(sa == socket_address());
     return ::seastar::socket(std::make_unique<posix_socket_impl>(_allocator));

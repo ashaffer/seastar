@@ -154,8 +154,6 @@ public:
     bool uses_full_hash() const;
     uint32_t initial_hash() const;
     friend class l3_protocol;
-    static std::vector<interface *> registry;
-    static void flush_all();
 };
 
 struct qp_stats_good {

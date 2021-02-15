@@ -177,6 +177,7 @@ private:
     ipv4 *default_device;
     std::unordered_map<inet_address, ipv4*> _inet_map;
     std::unordered_map<ipv4*, std::string> _devname_map;
+    std::vector<interface *> ifaces;
     bool _dhcp = false;
     promise<> _config;
     timer<> _timer;
@@ -205,7 +206,8 @@ public:
             ii.second->learn(l2, l3);
         }
     }
-    virtual std::vector<std::vector<std::string>> getLocalIps() override;    
+    virtual std::vector<std::vector<std::string>> getLocalIps() override;
+    virtual void flush_all() override;
     friend class native_server_socket_impl<tcp4>;
 };
 
@@ -229,6 +231,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
 
     for (auto&& device_config : dev_cfgs) {
         interface *iface = new interface{std::move(devices[i])};
+        ifaces.push_back(iface);
         ipv4 *inet = new ipv4{iface};
         auto& ip_config = device_config.second.ip_cfg;
 
@@ -255,6 +258,12 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
         }
 
         ++i;
+    }
+}
+
+void native_network_stack::flush_all () {
+    for (auto iface : ifaces) {
+        iface->flush();
     }
 }
 

@@ -895,8 +895,8 @@ public:
         }
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
-        printf("TLS Socket (put): %u\n", socketId);
-        p.print_text();
+        // printf("TLS Socket (put): %u\n", socketId);
+        // p.print_text();
 
         // p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
         if (_ignore_semaphore) {
@@ -945,8 +945,8 @@ public:
 
             auto n = msg.size();
             auto p = std::move(msg).release();
-            printf("TLS Socket (vec_push): %u\n", socketId);
-            p.print_hex();
+            // printf("TLS Socket (vec_push): %u\n", socketId);
+            // p.print_hex();
             p.onTransmit(onTransmitFn);
             p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
             _output_pending = _out.put(std::move(p));

@@ -108,7 +108,6 @@ public:
     }
 
     void set_alpn_string(const std::string& str) override {
-        printf("alpn1\n");
         
     }
 

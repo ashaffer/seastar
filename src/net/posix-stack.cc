@@ -173,7 +173,7 @@ public:
     }
 
     void set_alpn_string(const std::string& str) override {
-        printf("alpn3\n");
+
     }    
 
     void ignore_semaphore() override {
@@ -242,7 +242,7 @@ public:
     }
     
     void set_alpn_string(const std::string& str) override {
-        printf("alpn4\n");
+
     }
 
 

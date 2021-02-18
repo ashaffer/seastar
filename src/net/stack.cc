@@ -106,8 +106,7 @@ uint connected_socket::getPollDelay () {
 }
 
 void connected_socket::set_alpn_string(const std::string& str) {
-    printf("alpn5\n");
-
+    _csi->set_alpn_string(str);
 }
 
 void connected_socket::ignore_semaphore() {

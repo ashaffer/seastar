@@ -791,6 +791,11 @@ public:
             return _pollDelay;
         }
 
+        void set_alpn_string(const std::string& str) {
+            printf("alpn2\n");
+            
+        }
+
         void ignore_semaphore() {
             // noop
         }

@@ -615,6 +615,19 @@ public:
 
     typedef temporary_buffer<char> buf_type;
 
+    void set_alpn_string(const std::string& str) {
+        gnutls_datum_t proto;
+        proto.data = (unsigned char *)str.c_str();
+        proto.size = str.size();
+        printf("set alpn: %s\n", str.c_str());
+        gnutls_alpn_set_protocols(
+            *this,
+            &proto,
+            1,
+            0
+        );
+    }
+
     sstring cert_status_to_string(gnutls_certificate_type_t type, unsigned int status) {
         gnutls_datum_t out;
         gtls_chk(
@@ -694,6 +707,13 @@ public:
                 out_sem_reason = 4;
                 return do_handshake();
             });
+        }).then([this] () {
+            gnutls_datum_t proto;
+            int res = gnutls_alpn_get_selected_protocol(*this, &proto);
+            if (res != 0) {
+                printf("Get ALPN erorr: %d\n", res);
+            }
+            printf("TLS Selected ALPN: %.*s\n", (uint)proto.size, (char *)proto.data);
         });
         // .then([this] () {
         //     char *desc;
@@ -1189,8 +1209,17 @@ public:
         return _session->socket().getPollDelay();
     }
 
+    // gnutls_session_t gnutls_session() {
+    //     return (gnutls_session_t)_session.get();
+    // }
+
     void ignore_semaphore () override {
         return _session->ignore_semaphore();
+    }
+
+    void set_alpn_string (const std::string& str) override {
+        printf("SET ALPN STRING\n");
+        return _session->set_alpn_string(str);
     }
 };
 

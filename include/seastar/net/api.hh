@@ -32,6 +32,7 @@
 #include <seastar/core/iostream.hh>
 #include <seastar/util/std-compat.hh>
 #include "../core/internal/api-level.hh"
+#include <gnutls/gnutls.h>
 #include <sys/types.h>
 
 namespace seastar {
@@ -201,8 +202,10 @@ public:
     void shutdown_input();
 
     virtual std::chrono::high_resolution_clock::time_point getReceivedAt();
+    // virtual gnutls_session_t *gnutls_session();
     virtual uint getPollDelay();
     virtual void ignore_semaphore();
+    virtual void set_alpn_string(const std::string& str);
     virtual bool isClosed();
     virtual uint32_t can_send();
 };

@@ -107,6 +107,11 @@ public:
         return _conn->getReceivedAt();
     }
 
+    void set_alpn_string(const std::string& str) override {
+        printf("alpn1\n");
+        
+    }
+
     uint getPollDelay() const override {
         return _conn->getPollDelay();
     }

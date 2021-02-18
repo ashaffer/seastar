@@ -105,6 +105,11 @@ uint connected_socket::getPollDelay () {
     return _csi->getPollDelay();
 }
 
+void connected_socket::set_alpn_string(const std::string& str) {
+    printf("alpn5\n");
+
+}
+
 void connected_socket::ignore_semaphore() {
     return _csi->ignore_semaphore();
 }

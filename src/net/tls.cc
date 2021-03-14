@@ -707,12 +707,6 @@ public:
                 out_sem_reason = 4;
                 return do_handshake();
             });
-        }).then([this] () {
-            gnutls_datum_t proto;
-            int res = gnutls_alpn_get_selected_protocol(*this, &proto);
-            if (res != 0) {
-                printf("Get ALPN erorr: %d\n", res);
-            }
         });
         // .then([this] () {
         //     char *desc;

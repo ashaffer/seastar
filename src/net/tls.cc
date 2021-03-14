@@ -619,7 +619,7 @@ public:
         gnutls_datum_t proto;
         proto.data = (unsigned char *)str.c_str();
         proto.size = str.size();
-        printf("set alpn: %s\n", str.c_str());
+
         gnutls_alpn_set_protocols(
             *this,
             &proto,
@@ -713,7 +713,6 @@ public:
             if (res != 0) {
                 printf("Get ALPN erorr: %d\n", res);
             }
-            printf("TLS Selected ALPN: %.*s\n", (uint)proto.size, (char *)proto.data);
         });
         // .then([this] () {
         //     char *desc;
@@ -1218,7 +1217,6 @@ public:
     }
 
     void set_alpn_string (const std::string& str) override {
-        printf("SET ALPN STRING\n");
         return _session->set_alpn_string(str);
     }
 };

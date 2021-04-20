@@ -1809,7 +1809,7 @@ void tcp<InetTraits>::tcb::decorate(packet& p, bool data_retransmit) {
         clear_delayed_ack();
     }
     h.f_urg = false;
-    h.f_psh = true;
+    h.f_psh = false;
 
     tcp_seq seq;
     if (data_retransmit) {

@@ -983,6 +983,8 @@ void printConnid (Connid &connid, Inet &inet) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
+    printf("received: %u\n", p.len());
+    
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
         return;

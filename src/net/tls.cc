@@ -903,6 +903,7 @@ public:
                     std::rethrow_exception(ep);
                 } catch (std::exception& e) {
                     printf("[tls] !_connected: %s, %u, %u, %u, %u, %u, %u, %u, %u\n", e.what(), (uint)_connected, (uint)_hasConnected, (uint)_error, (uint)_shutdown, (uint)_eof, _eofState, _connState, _eagainCount);
+                    std::rethrow_exception(e);
                 }
             });
         }

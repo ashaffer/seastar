@@ -689,6 +689,7 @@ public:
             // make sure we reset output_pending
             return wait_for_output();
         } catch (...) {
+            printf("[tls] throwing handshake exception\n");
             return make_exception_future<>(std::current_exception());
         }
     }

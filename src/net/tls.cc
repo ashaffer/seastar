@@ -740,6 +740,7 @@ public:
            _input = std::move(buf);
         }).handle_exception([this](auto ep) {
            _error = true;
+           printf("[tls] wait_for_input exception: %u\n", _connState);
            return make_exception_future(ep);
         });
     }

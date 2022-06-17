@@ -502,12 +502,10 @@ private:
                 try {
                     f.get();
                 } catch(arp_queue_full_error& ex) {
-                    printf("caught arp queue full error\n");
                     // retry later
                     _poll_active = false;
                     this->start_retransmit_timer();
                 } catch(arp_timeout_error& ex) {
-                    printf("caught arp timeout error\n");
                     if (this->in_state(SYN_SENT)) {
                         _connect_done.set_exception(ex);
                         this->cleanup();
@@ -617,9 +615,9 @@ private:
         void signal_all_data_acked() {
             // this->closeState = 15;
             if (_snd._all_data_acked_promise && _snd.unsent_len == 0) {
-                if (this->closeState > 0 && this->closeState < 100) {
-                    printf("signal_all_data_acked: %u\n", this->closeState);
-                }
+                // if (this->closeState > 0 && this->closeState < 100) {
+                //     printf("signal_all_data_acked: %u\n", this->closeState);
+                // }
                 this->closeState = 16;
                 _snd._all_data_acked_promise->set_value();
                 this->closeState = 17;
@@ -656,19 +654,19 @@ private:
 
             if (_rcv._data_received_promise) {
                 this->closeState = 20;
-                printf("[tcp] connection reset: _data_received_promise\n");
+                // printf("[tcp] connection reset: _data_received_promise\n");
                 _rcv._data_received_promise->set_exception(tcp_reset_error());
                 _rcv._data_received_promise = compat::nullopt;
             }
             if (_snd._all_data_acked_promise) {
                 this->closeState = 21;                
-                printf("[tcp] connection reset: _all_data_acked_promise\n");
+                // printf("[tcp] connection reset: _all_data_acked_promise\n");
                 _snd._all_data_acked_promise->set_exception(tcp_reset_error());
                 _snd._all_data_acked_promise = compat::nullopt;
             }
             if (_snd._send_available_promise) {
                 this->closeState = 22;                
-                printf("[tcp] connection reset: _send_available_promise\n");
+                // printf("[tcp] connection reset: _send_available_promise\n");
                 _snd._send_available_promise->set_exception(tcp_reset_error());
                 _snd._send_available_promise = compat::nullopt;
             }
@@ -921,7 +919,7 @@ future<> tcp<InetTraits>::poll_tcb(ipaddr to, lw_shared_ptr<tcb> tcb) {
 
 template <typename InetTraits>
 auto tcp<InetTraits>::listen(uint16_t port, size_t queue_length) -> listener {
-    printf("[tcp] tcp listen\n");
+    // printf("[tcp] tcp listen\n");
     return listener(*this, port, queue_length);
 }
 
@@ -1289,21 +1287,21 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
 
     // 3.2 second check the RST bit
     if (th->f_rst) {
-        in_addr local;
-        in_addr foreign;
-        local.s_addr = htonl(_local_ip.ip);
-        foreign.s_addr = htonl(_foreign_ip.ip);
-        char *slocal = strdup(inet_ntoa(local));
-        char *flocal = strdup(inet_ntoa(foreign));
-        auto now = std::chrono::high_resolution_clock::now();
-        uint sincePenultimate = std::chrono::duration_cast<std::chrono::microseconds>(now - _penultimateSend).count();
-        uint sinceSend = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSend).count();
-        uint sinceRecv = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastRecv).count();
-        uint sinceCreate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _createdAt).count();
+        // in_addr local;
+        // in_addr foreign;
+        // local.s_addr = htonl(_local_ip.ip);
+        // foreign.s_addr = htonl(_foreign_ip.ip);
+        // char *slocal = strdup(inet_ntoa(local));
+        // char *flocal = strdup(inet_ntoa(foreign));
+        // auto now = std::chrono::high_resolution_clock::now();
+        // uint sincePenultimate = std::chrono::duration_cast<std::chrono::microseconds>(now - _penultimateSend).count();
+        // uint sinceSend = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSend).count();
+        // uint sinceRecv = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastRecv).count();
+        // uint sinceCreate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _createdAt).count();
 
-        printf("[tcp] received an RST: %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
-        free(slocal);
-        free(flocal);
+        // printf("[tcp] received an RST: %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
+        // free(slocal);
+        // free(flocal);
 
         // If the ACK was acceptable then signal the user "error: connection
         // reset", drop the segment, enter CLOSED state, delete TCB, and
@@ -1387,17 +1385,17 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.2 second check the RST bit
     if (th->f_rst) {
-        in_addr local;
-        in_addr foreign;
-        local.s_addr = htonl(_local_ip.ip);
-        foreign.s_addr = htonl(_foreign_ip.ip);
-        char *slocal = strdup(inet_ntoa(local));
-        char *flocal = strdup(inet_ntoa(foreign));
-        auto now = std::chrono::high_resolution_clock::now();
-        uint sincePenultimate = std::chrono::duration_cast<std::chrono::microseconds>(now - _penultimateSend).count();        
-        uint sinceSend = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSend).count();
-        uint sinceRecv = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastRecv).count();
-        uint sinceCreate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _createdAt).count();
+        // in_addr local;
+        // in_addr foreign;
+        // local.s_addr = htonl(_local_ip.ip);
+        // foreign.s_addr = htonl(_foreign_ip.ip);
+        // char *slocal = strdup(inet_ntoa(local));
+        // char *flocal = strdup(inet_ntoa(foreign));
+        // auto now = std::chrono::high_resolution_clock::now();
+        // uint sincePenultimate = std::chrono::duration_cast<std::chrono::microseconds>(now - _penultimateSend).count();
+        // uint sinceSend = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSend).count();
+        // uint sinceRecv = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastRecv).count();
+        // uint sinceCreate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _createdAt).count();
 
         if (in_state(SYN_RECEIVED)) {
             // If this connection was initiated with a passive OPEN (i.e.,
@@ -1409,18 +1407,18 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             // on the retransmission queue should be removed.  And in the
             // active OPEN case, enter the CLOSED state and delete the TCB,
             // and return.
-            printf("[tcp] received an RST 2 (1): %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
-            free(slocal);
-            free(flocal);
+            // printf("[tcp] received an RST 2 (1): %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
+            // free(slocal);
+            // free(flocal);
 
             _connect_done.set_exception(tcp_refused_error());
             resetState = 2;
             return do_reset();
         }
         if (in_state(ESTABLISHED | FIN_WAIT_1 | FIN_WAIT_2 | CLOSE_WAIT)) {
-            printf("[tcp] received an RST 2 (2): %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
-            free(slocal);
-            free(flocal);
+            // printf("[tcp] received an RST 2 (2): %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
+            // free(slocal);
+            // free(flocal);
             // If the RST bit is set then, any outstanding RECEIVEs and SEND
             // should receive "reset" responses.  All segment queues should be
             // flushed.  Users should also receive an unsolicited general
@@ -1430,17 +1428,17 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             return do_reset();
         }
         if (in_state(CLOSING | LAST_ACK | TIME_WAIT)) {
-            printf("[tcp] received an RST 2 (3): %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
-            free(slocal);
-            free(flocal);
+            // printf("[tcp] received an RST 2 (3): %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
+            // free(slocal);
+            // free(flocal);
 
             // If the RST bit is set then, enter the CLOSED state, delete the
             // TCB, and return.
             return do_closed();
         }
 
-        free(slocal);
-        free(flocal);
+        // free(slocal);
+        // free(flocal);
     }
 
     // 4.3 third check security and precedence
@@ -1926,9 +1924,9 @@ tcp<InetTraits>::tcb::abort_reader() {
 
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::wait_for_all_data_acked() {
-    if (closeState > 0 && closeState < 100) {
-        printf("[tcp] wait_for_all_data_acked: %u, %u, %u\n", closeState, (uint)_snd.data.empty(), _snd.unsent_len);
-    }
+    // if (closeState > 0 && closeState < 100) {
+    //     printf("[tcp] wait_for_all_data_acked: %u, %u, %u\n", closeState, (uint)_snd.data.empty(), _snd.unsent_len);
+    // }
 
     // this->closeState = 10;
     if (_snd.data.empty() && _snd.unsent_len == 0) {
@@ -1989,13 +1987,13 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     }
 
     if (_snd.closed || in_state(CLOSED)) {
-        printf("[tcp] connection reset: _snd.closed || in_state(CLOSED): %u, %u, %u\n", doCloseCalled, this->closeState, this->resetState);
-        if (_snd.closed) {
-            printf("[tcp]\tsnd_closed\n");
-        }
-        if (in_state(CLOSED)) {
-            printf("[tcp]\tin_state(CLOSED)\n");
-        }
+        // printf("[tcp] connection reset: _snd.closed || in_state(CLOSED): %u, %u, %u\n", doCloseCalled, this->closeState, this->resetState);
+        // if (_snd.closed) {
+        //     printf("[tcp]\tsnd_closed\n");
+        // }
+        // if (in_state(CLOSED)) {
+        //     printf("[tcp]\tin_state(CLOSED)\n");
+        // }
         return make_exception_future<>(tcp_reset_error());
     }
 
@@ -2082,7 +2080,7 @@ void tcp<InetTraits>::tcb::close() {
             foreign.s_addr = htonl(_foreign_ip.ip);
             char *slocal = strdup(inet_ntoa(local));
             char *flocal = strdup(inet_ntoa(foreign));
-            printf("[tcp] tcb::close error2: %s (%u, %u, %u, %s, %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, slocal, _local_port, flocal, _foreign_port);
+            // printf("[tcp] tcb::close error2: %s (%u, %u, %u, %s,s %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, slocal, _local_port, flocal, _foreign_port);
             free(slocal);
             free(flocal);
 

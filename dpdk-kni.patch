@@ -1,15 +1,34 @@
 diff --git a/kernel/linux/kni/compat.h b/kernel/linux/kni/compat.h
-index d515b27669..5f65640d5e 100644
+index 562d8bf94..dbecacf90 100644
 --- a/kernel/linux/kni/compat.h
 +++ b/kernel/linux/kni/compat.h
-@@ -131,7 +131,9 @@
- #define HAVE_IOVA_TO_KVA_MAPPING_SUPPORT
+@@ -121,3 +121,8 @@
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+ #define HAVE_SIGNAL_FUNCTIONS_OWN_HEADER
  #endif
- 
--#if KERNEL_VERSION(5, 6, 0) <= LINUX_VERSION_CODE
-+#if KERNEL_VERSION(5, 6, 0) <= LINUX_VERSION_CODE || \
-+	(defined(RHEL_RELEASE_CODE) && \
-+	 RHEL_RELEASE_VERSION(8, 3) <= RHEL_RELEASE_CODE)
- #define HAVE_TX_TIMEOUT_TXQUEUE
- #endif
++
++#if KERNEL_VERSION(5, 6, 0) <= LINUX_VERSION_CODE
++#define HAVE_TX_TIMEOUT_TXQUEUE
++#endif
++
+diff --git a/kernel/linux/kni/kni_net.c b/kernel/linux/kni/kni_net.c
+index ad8365877..427479cdb 100644
+--- a/kernel/linux/kni/kni_net.c
++++ b/kernel/linux/kni/kni_net.c
+@@ -581,8 +581,15 @@ kni_net_rx(struct kni_dev *kni)
+ /*
+  * Deal with a transmit timeout.
+  */
++
++#ifdef HAVE_TX_TIMEOUT_TXQUEUE
+ static void
+-kni_net_tx_timeout(struct net_device *dev)
++kni_net_tx_timeout(struct net_device *dev, unsigned int txqueue)
++#else
++ static void
++ kni_net_tx_timeout(struct net_device *dev)
++#endif
++ {
+ {
+ 	struct kni_dev *kni = netdev_priv(dev);
  

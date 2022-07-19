@@ -1536,7 +1536,7 @@ int dpdk_device::init_port_start()
         printf("Failed to get rss hash conf on %u: %u\n", port_id, diag);
     } else {
         printf("RSS key:\n");
-        for (i = 0; i < _eth_dev.hash_key_size; i++)
+        for (i = 0; i < __dev_info.hash_key_size; i++)
             printf("%02X", rss_key[i]);
         printf("\n");
     }

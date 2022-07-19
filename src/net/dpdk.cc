@@ -1533,9 +1533,11 @@ int dpdk_device::init_port_start()
     if (smp::count > 1) {
         if (_dev_info.hash_key_size == 40) {            
             // _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
+            printf("Using 40 byte rss hash key\n");
             _rss_conf.key = default_rsskey_40bytes;
             _rss_conf.keySize = sizeof(default_rsskey_40bytes);
         } else if (_dev_info.hash_key_size == 52) {
+            printf("Using 52 byte rss hash key\n");
             // _rss_key = rss_key_type(default_rsskey_52bytes, sizeof(default_rsskey_52bytes));
             _rss_conf.key = default_rsskey_52bytes;
             _rss_conf.keySize = sizeof(default_rsskey_52bytes);
@@ -1546,6 +1548,7 @@ int dpdk_device::init_port_start()
                 "Port %d: We support only 40 or 52 bytes RSS hash keys, %d bytes key requested",
                 _port_idx, _dev_info.hash_key_size);
         } else {
+            printf("Using default rss hash key (40 bytes)\n");
             // _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
             _dev_info.hash_key_size = 40;
             _rss_conf.key = default_rsskey_40bytes;

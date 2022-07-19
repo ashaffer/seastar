@@ -1528,7 +1528,7 @@ int dpdk_device::init_port_start()
     printf("Port %d: on NUMA socket %d\n", _port_idx, rte_eth_dev_socket_id(_port_idx));
 
     struct rte_eth_rss_conf rss_conf = {0};
-    uint8_t rss_key[64] = {0};
+    uint8_t rss_key[40] = {0};
     rss_conf.rss_key = rss_key;
     rss_conf.rss_key_len = 40;
     int diag = rte_eth_dev_rss_hash_conf_get(_port_idx, &rss_conf);

@@ -1007,6 +1007,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     lw_shared_ptr<tcb> tcbp;
 
     if (tcbi == _tcbs.end()) {
+        printf("tcbi end\n");
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
             // 1) In CLOSE state
@@ -1048,6 +1049,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             return;
         }
     } else {
+        printf("else case\n");
         tcbp = tcbi->second;
         tcbp->setReceivedAt(p.getReceivedAt());
         tcbp->setPollDelay(p.getPollDelay());

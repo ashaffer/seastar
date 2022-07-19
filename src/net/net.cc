@@ -366,6 +366,8 @@ future<> interface::dispatch_packet(packet p) {
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
                         printf("hash2: 0x%x\n", toeplitz_hash(rss_conf(), data));
                         return toeplitz_hash(rss_conf(), data);
+                    } else {
+                        printf("hit else case\n");
                     }
                     return 0u;
                 }

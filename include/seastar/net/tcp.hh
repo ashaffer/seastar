@@ -1002,6 +1002,11 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     }
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
+    printf("TCBs:\n");
+    for (auto it : _tcbs) {
+        printConnid(it->first, _inet);
+    }
+    printf("\n");
     printConnid(id, _inet);
     auto tcbi = _tcbs.find(id);
 

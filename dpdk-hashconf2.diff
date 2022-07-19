@@ -44,11 +44,16 @@ index fd480f428..766d069f2 100644
  {
  	return ena_dev->adaptive_coalescing;
 diff --git a/drivers/net/ena/ena_ethdev.c b/drivers/net/ena/ena_ethdev.c
-index fdec8194f..169f1af26 100644
+index fdec8194f..d648e7d37 100644
 --- a/drivers/net/ena/ena_ethdev.c
 +++ b/drivers/net/ena/ena_ethdev.c
-@@ -252,6 +252,8 @@ static int ena_xstats_get_by_id(struct rte_eth_dev *dev,
+@@ -250,8 +250,13 @@ static int ena_xstats_get_by_id(struct rte_eth_dev *dev,
+ 				const uint64_t *ids,
+ 				uint64_t *values,
  				unsigned int n);
++static void ena_reorder_rss_hash_key(uint8_t *reordered_key,
++		     uint8_t *key,
++		     size_t key_size);
  static int ena_rss_hash_conf_get(struct rte_eth_dev *dev,
  			  struct rte_eth_rss_conf *rss_conf);
 +static int ena_get_rss_hash_key(struct ena_com_dev *ena_dev, uint8_t *rss_key);
@@ -56,10 +61,23 @@ index fdec8194f..169f1af26 100644
  
  static const struct eth_dev_ops ena_dev_ops = {
  	.dev_configure        = ena_dev_configure,
-@@ -2718,6 +2720,29 @@ static struct ena_aenq_handlers aenq_handlers = {
+@@ -2718,6 +2723,42 @@ static struct ena_aenq_handlers aenq_handlers = {
  	.unimplemented_handler = unimplemented_aenq_handler
  };
  
++/* ENA HW interprets the RSS key in reverse bytes order. Because of that, the
++ * key must be processed upon interaction with ena_com layer.
++ */
++static void ena_reorder_rss_hash_key(uint8_t *reordered_key,
++				     uint8_t *key,
++				     size_t key_size)
++{
++	size_t i, rev_i;
++
++	for (i = 0, rev_i = key_size - 1; i < key_size; ++i, --rev_i)
++		reordered_key[i] = key[rev_i];
++}
++
 +static int ena_get_rss_hash_key(struct ena_com_dev *ena_dev, uint8_t *rss_key)
 +{
 +	uint8_t hw_rss_key[ENA_HASH_KEY_SIZE];
@@ -86,7 +104,7 @@ index fdec8194f..169f1af26 100644
  static int ena_rss_hash_conf_get(struct rte_eth_dev *dev,
  			  struct rte_eth_rss_conf *rss_conf)
  {
-@@ -2729,10 +2754,10 @@ static int ena_rss_hash_conf_get(struct rte_eth_dev *dev,
+@@ -2729,10 +2770,10 @@ static int ena_rss_hash_conf_get(struct rte_eth_dev *dev,
  	uint16_t admin_hf;
  	static bool warn_once;
  

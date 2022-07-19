@@ -1,8 +1,17 @@
 diff --git a/drivers/net/ena/ena_ethdev.c b/drivers/net/ena/ena_ethdev.c
-index 3eb38165c..e8110e994 100644
+index 3eb38165c..fdec8194f 100644
 --- a/drivers/net/ena/ena_ethdev.c
 +++ b/drivers/net/ena/ena_ethdev.c
-@@ -270,6 +270,7 @@ static const struct eth_dev_ops ena_dev_ops = {
+@@ -250,6 +250,8 @@ static int ena_xstats_get_by_id(struct rte_eth_dev *dev,
+ 				const uint64_t *ids,
+ 				uint64_t *values,
+ 				unsigned int n);
++static int ena_rss_hash_conf_get(struct rte_eth_dev *dev,
++			  struct rte_eth_rss_conf *rss_conf);
+ 
+ static const struct eth_dev_ops ena_dev_ops = {
+ 	.dev_configure        = ena_dev_configure,
+@@ -270,6 +272,7 @@ static const struct eth_dev_ops ena_dev_ops = {
  	.dev_reset            = ena_dev_reset,
  	.reta_update          = ena_rss_reta_update,
  	.reta_query           = ena_rss_reta_query,
@@ -10,7 +19,7 @@ index 3eb38165c..e8110e994 100644
  };
  
  #define NUMA_NO_NODE	SOCKET_ID_ANY
-@@ -2714,3 +2715,62 @@ static struct ena_aenq_handlers aenq_handlers = {
+@@ -2714,3 +2717,62 @@ static struct ena_aenq_handlers aenq_handlers = {
  	},
  	.unimplemented_handler = unimplemented_aenq_handler
  };
@@ -73,16 +82,3 @@ index 3eb38165c..e8110e994 100644
 +	rss_conf->rss_hf = rss_hf;
 +	return 0;
 +}
-diff --git a/drivers/net/ena/ena_ethdev.h b/drivers/net/ena/ena_ethdev.h
-index 221760c62..1feec63e6 100644
---- a/drivers/net/ena/ena_ethdev.h
-+++ b/drivers/net/ena/ena_ethdev.h
-@@ -226,4 +226,8 @@ struct ena_adapter {
- 	bool wd_state;
- };
- 
-+int ena_rss_hash_conf_get(struct rte_eth_dev *dev,
-+			  struct rte_eth_rss_conf *rss_conf);
-+
-+
- #endif /* _ENA_ETHDEV_H_ */

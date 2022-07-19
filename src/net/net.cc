@@ -373,6 +373,7 @@ future<> interface::dispatch_packet(packet p) {
                 }
             });
 
+            printf("test\n");
             if (fw != engine().cpu_id()) {
                 printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
                 forward(fw, std::move(p));

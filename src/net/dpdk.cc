@@ -1530,7 +1530,7 @@ int dpdk_device::init_port_start()
     struct rte_eth_rss_conf rss_conf = {0};
     uint8_t rss_key[64] = {0};
     rss_conf.rss_key = rss_key;
-    rss_conf.rss_key_len = _dev_info.hash_key_size;
+    rss_conf.rss_key_len = 40;
     int diag = rte_eth_dev_rss_hash_conf_get(_port_idx, &rss_conf);
     if (diag != 0) {
         switch (diag) {

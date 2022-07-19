@@ -981,6 +981,7 @@ void printConnid (Connid &connid, Inet &inet) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
+    printf("TCP received\n");
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
         return;
@@ -1265,6 +1266,7 @@ void tcp<InetTraits>::tcb::input_handle_listen_state(tcp_hdr* th, packet p) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
+    printf("TCP input_handle_syn_sent_state\n");
     auto opt_len = th->data_offset * 4 - tcp_hdr::len;
     auto opt_start = reinterpret_cast<uint8_t*>(p.get_header(0, th->data_offset * 4)) + tcp_hdr::len;
     auto opt_end = opt_start + opt_len;
@@ -1287,6 +1289,7 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
 
     // 3.2 second check the RST bit
     if (th->f_rst) {
+        printf("received RST\n");
         // in_addr local;
         // in_addr foreign;
         // local.s_addr = htonl(_local_ip.ip);
@@ -1352,6 +1355,7 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
+    printf("TCP input_handle_other_state\n");
     p.trim_front(th->data_offset * 4);
     bool do_output = false;
     bool do_output_data = false;
@@ -1385,6 +1389,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.2 second check the RST bit
     if (th->f_rst) {
+        printf("received RST\n");
         // in_addr local;
         // in_addr foreign;
         // local.s_addr = htonl(_local_ip.ip);

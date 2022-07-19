@@ -943,6 +943,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
     // printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
+    printf("inserting tcbs: %u\n", engine().cpu_id());
     tcbp->connect();
     return connection(tcbp);
 }
@@ -1013,7 +1014,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     lw_shared_ptr<tcb> tcbp;
 
     if (tcbi == _tcbs.end()) {
-        printf("tcbi end\n");
+        printf("tcbi end: %u\n", engine().cpu_id());
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
             // 1) In CLOSE state

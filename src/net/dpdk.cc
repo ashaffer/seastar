@@ -1533,11 +1533,12 @@ int dpdk_device::init_port_start()
     rss_conf.rss_key_len = _dev_info.hash_key_size;
     int diag = rte_eth_dev_rss_hash_conf_get(_port_idx, &rss_conf);
     if (diag != 0) {
-        printf("Failed to get rss hash conf on %u: %u\n", port_id, diag);
+        printf("Failed to get rss hash conf on %u: %u\n", _port_idx, diag);
     } else {
         printf("RSS key:\n");
-        for (i = 0; i < __dev_info.hash_key_size; i++)
+        for (uint i = 0; i < _dev_info.hash_key_size; i++) {
             printf("%02X", rss_key[i]);
+        }
         printf("\n");
     }
     // Set RSS mode: enable RSS if seastar is configured with more than 1 CPU.

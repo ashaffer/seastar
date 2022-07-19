@@ -316,6 +316,7 @@ public:
             return src_cpuid;
         }
         auto hash = hashfn() >> _rss_table_bits;
+        printf("forward_dst: 0x%x (%u)\n", hash, _rss_table_bits);
         auto& reta = *qp._sw_reta;
         return reta[hash % reta.size()];
     }

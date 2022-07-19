@@ -1533,7 +1533,17 @@ int dpdk_device::init_port_start()
     rss_conf.rss_key_len = _dev_info.hash_key_size;
     int diag = rte_eth_dev_rss_hash_conf_get(_port_idx, &rss_conf);
     if (diag != 0) {
-        printf("Failed to get rss hash conf on %u: %u\n", _port_idx, diag);
+        switch (diag) {
+        case -ENODEV:
+            printf("port index %d invalid\n", _port_idx);
+            break;
+        case -ENOTSUP:
+            printf("operation not supported by device\n");
+            break;
+        default:
+            printf("operation failed - diag=%d\n", diag);
+            break;
+        }
     } else {
         printf("RSS key:\n");
         for (uint i = 0; i < _dev_info.hash_key_size; i++) {

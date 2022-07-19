@@ -1,0 +1,103 @@
+diff --git a/drivers/net/ena/base/ena_com.c b/drivers/net/ena/base/ena_com.c
+index b688067f7..0fe196bb6 100644
+--- a/drivers/net/ena/base/ena_com.c
++++ b/drivers/net/ena/base/ena_com.c
+@@ -3089,3 +3089,16 @@ int ena_com_config_dev_mode(struct ena_com_dev *ena_dev,
+ 
+ 	return 0;
+ }
++
++int ena_com_get_hash_key(struct ena_com_dev *ena_dev, u8 *key)
++{
++	struct ena_admin_feature_rss_flow_hash_control *hash_key =
++		ena_dev->rss.hash_key;
++
++	if (key)
++		memcpy(key, hash_key->key,
++		       (size_t)(hash_key->key_parts) * sizeof(hash_key->key[0]));
++
++	return 0;
++}
++
+diff --git a/drivers/net/ena/base/ena_com.h b/drivers/net/ena/base/ena_com.h
+index fd480f428..766d069f2 100644
+--- a/drivers/net/ena/base/ena_com.h
++++ b/drivers/net/ena/base/ena_com.h
+@@ -1023,6 +1023,19 @@ int ena_com_config_dev_mode(struct ena_com_dev *ena_dev,
+ 			    struct ena_admin_feature_llq_desc *llq_features,
+ 			    struct ena_llq_configurations *llq_default_config);
+ 
++/* ena_com_get_hash_key - Retrieve the hash key
++ * @ena_dev: ENA communication layer struct
++ * @key: hash key
++ *
++ * Retrieve the hash key.
++ *
++ * @note: If the caller called ena_com_fill_hash_key but didn't flush
++ * it to the device, the new configuration will be lost.
++ *
++ * @return: 0 on Success and negative value otherwise.
++ */
++int ena_com_get_hash_key(struct ena_com_dev *ena_dev, u8 *key);
++
+ static inline bool ena_com_get_adaptive_moderation_enabled(struct ena_com_dev *ena_dev)
+ {
+ 	return ena_dev->adaptive_coalescing;
+diff --git a/drivers/net/ena/ena_ethdev.c b/drivers/net/ena/ena_ethdev.c
+index fdec8194f..169f1af26 100644
+--- a/drivers/net/ena/ena_ethdev.c
++++ b/drivers/net/ena/ena_ethdev.c
+@@ -252,6 +252,8 @@ static int ena_xstats_get_by_id(struct rte_eth_dev *dev,
+ 				unsigned int n);
+ static int ena_rss_hash_conf_get(struct rte_eth_dev *dev,
+ 			  struct rte_eth_rss_conf *rss_conf);
++static int ena_get_rss_hash_key(struct ena_com_dev *ena_dev, uint8_t *rss_key);
++
+ 
+ static const struct eth_dev_ops ena_dev_ops = {
+ 	.dev_configure        = ena_dev_configure,
+@@ -2718,6 +2720,29 @@ static struct ena_aenq_handlers aenq_handlers = {
+ 	.unimplemented_handler = unimplemented_aenq_handler
+ };
+ 
++static int ena_get_rss_hash_key(struct ena_com_dev *ena_dev, uint8_t *rss_key)
++{
++	uint8_t hw_rss_key[ENA_HASH_KEY_SIZE];
++	int rc;
++
++	/* The default RSS hash key cannot be retrieved from the HW. Unless it's
++	 * explicitly set, this operation shouldn't be supported.
++	 */
++	if (ena_dev->rss.hash_key == NULL) {
++		PMD_DRV_LOG(WARNING,
++			"Retrieving default RSS hash key is not supported\n");
++		return -ENOTSUP;
++	}
++
++	rc = ena_com_get_hash_key(ena_dev, hw_rss_key);
++	if (rc != 0)
++		return rc;
++
++	ena_reorder_rss_hash_key(rss_key, hw_rss_key, ENA_HASH_KEY_SIZE);
++
++	return 0;
++}
++
+ static int ena_rss_hash_conf_get(struct rte_eth_dev *dev,
+ 			  struct rte_eth_rss_conf *rss_conf)
+ {
+@@ -2729,10 +2754,10 @@ static int ena_rss_hash_conf_get(struct rte_eth_dev *dev,
+ 	uint16_t admin_hf;
+ 	static bool warn_once;
+ 
+-	if (!(dev->data->dev_conf.rxmode.offloads & RTE_ETH_RX_OFFLOAD_RSS_HASH)) {
+-		PMD_DRV_LOG(ERR, "RSS was not configured for the PMD\n");
+-		return -ENOTSUP;
+-	}
++	// if (!(dev->data->dev_conf.rxmode.offloads & RTE_ETH_RX_OFFLOAD_RSS_HASH)) {
++	// 	PMD_DRV_LOG(ERR, "RSS was not configured for the PMD\n");
++	// 	return -ENOTSUP;
++	// }
+ 
+ 	if (rss_conf->rss_key != NULL) {
+ 		rc = ena_get_rss_hash_key(ena_dev, rss_conf->rss_key);

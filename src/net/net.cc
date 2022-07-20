@@ -221,13 +221,12 @@ void qp::build_sw_reta(const std::map<unsigned, float>& cpu_weights) {
     float accum = 0;
     unsigned idx = 0;
     std::array<uint8_t, 128> reta;
-    printf("Building sw reta (%u):\n", engine().cpu_id());
+
     for (auto&& entry : cpu_weights) {
         auto cpu = entry.first;
         auto weight = entry.second;
         accum += weight;
         while (idx < (accum / total_weight * reta.size() - 0.5)) {
-            printf("\t%u: %u\n", idx, cpu);
             reta[idx++] = cpu;
         }
     }
@@ -352,7 +351,6 @@ uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
 
 future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
-    printf("Dispatching received packet\n");
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
@@ -361,26 +359,19 @@ future<> interface::dispatch_packet(packet p) {
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {
-                    printf("hash: 0x%x\n", hwrss.value());
                     return hwrss.value();
                 } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        printf("hash2: 0x%x\n", toeplitz_hash(rss_conf(), data));
                         return toeplitz_hash(rss_conf(), data);
-                    } else {
-                        printf("hit else case\n");
                     }
                     return 0u;
                 }
             });
 
-            printf("fwd to: %u (%u)\n", fw, engine().cpu_id());
             if (fw != engine().cpu_id()) {
-                printf("Hit incorrect CPU: %u -> %u (%u)\n", engine().cpu_id(), fw, _dev->port_idx());
                 forward(fw, std::move(p));
             } else {
-                printf("Hit correct CPU\n");
                 auto h = ntoh(*eh);
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));

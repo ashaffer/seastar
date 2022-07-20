@@ -1004,6 +1004,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     }
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
+    printConnid(id, _inet);
     printf("TCBs:\n");
     for (auto it : _tcbs) {
         printConnid(it.first, _inet);

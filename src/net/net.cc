@@ -221,11 +221,13 @@ void qp::build_sw_reta(const std::map<unsigned, float>& cpu_weights) {
     float accum = 0;
     unsigned idx = 0;
     std::array<uint8_t, 128> reta;
+    printf("Building sw reta:\n");
     for (auto&& entry : cpu_weights) {
         auto cpu = entry.first;
         auto weight = entry.second;
         accum += weight;
         while (idx < (accum / total_weight * reta.size() - 0.5)) {
+            printf("\t%u: %u\n", idx, cpu);
             reta[idx++] = cpu;
         }
     }

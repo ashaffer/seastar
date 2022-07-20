@@ -237,7 +237,7 @@ struct l4connid {
                 && foreign_port == x.foreign_port;
     }
 
-    uint32_t hash(rss_config &rss_conf) {
+    uint32_t hash(const rss_config &rss_conf) {
         forward_hash hash_data;
         hash_data.push_back(hton(foreign_ip.ip));
         hash_data.push_back(hton(local_ip.ip));

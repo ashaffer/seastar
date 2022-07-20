@@ -1531,26 +1531,7 @@ int dpdk_device::init_port_start()
     uint8_t rss_key[40] = {0};
     rss_conf.rss_key = rss_key;
     rss_conf.rss_key_len = 40;
-    int diag = rte_eth_dev_rss_hash_conf_get(_port_idx, &rss_conf);
-    if (diag != 0) {
-        switch (diag) {
-        case -ENODEV:
-            printf("port index %d invalid\n", _port_idx);
-            break;
-        case -ENOTSUP:
-            printf("operation not supported by device\n");
-            break;
-        default:
-            printf("operation failed - diag=%d\n", diag);
-            break;
-        }
-    } else {
-        printf("RSS key:\n");
-        for (uint i = 0; i < _dev_info.hash_key_size; i++) {
-            printf("%02X", rss_key[i]);
-        }
-        printf("\n");
-    }
+
     // Set RSS mode: enable RSS if seastar is configured with more than 1 CPU.
     // Even if port has a single queue we still want the RSS feature to be
     // available in order to make HW calculate RSS hash for us.

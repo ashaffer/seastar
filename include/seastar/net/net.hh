@@ -316,8 +316,8 @@ public:
             return src_cpuid;
         }
         auto hash = hashfn() >> _rss_table_bits;
-        printf("forward_dst: 0x%x (%u)\n", hash, (uint)_rss_table_bits);
         auto& reta = *qp._sw_reta;
+        printf("forward_dst: 0x%x, %u, %u (%u)\n", hash, hash % reta.size(), reta[hash % reta.size()], (uint)_rss_table_bits);
         return reta[hash % reta.size()];
     }
     virtual unsigned hash2cpu(uint32_t hash) {

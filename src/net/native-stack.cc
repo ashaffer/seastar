@@ -121,7 +121,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     printf("Creating device queues (%u)\n", engine().cpu_id());
     for (auto sdev : devices) {
         for (unsigned i = 0; i < smp::count; i++) {
-            printf("Submitting %u on %u\n", sdev->port_idx(), engine().cpu_id());
+            printf("Submitting %u on %u\n", sdev->port_idx(), i);
             (void)smp::submit_to(i, [opts, sdev] {
                 auto qid = engine().cpu_id();
 

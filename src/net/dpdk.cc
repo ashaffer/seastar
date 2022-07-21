@@ -2322,7 +2322,7 @@ std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variab
                                  _stats_plugin_name + "-" + _stats_plugin_inst);
     }
 
-    printf("init queue submitting... %u (%u)\n", port_idx(), engine().cpu_id());
+    printf("init queue submitting... %u (%u, %u)\n", port_idx(), engine().cpu_id(), _home_cpu);
     // FIXME: future is discarded
     (void)smp::submit_to(_home_cpu, [this] () mutable {
         printf("init queue submit callback %u (%u)\n", port_idx(), engine().cpu_id());

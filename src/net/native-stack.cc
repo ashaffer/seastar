@@ -148,7 +148,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         auto sem = std::make_shared<semaphore>(0);
         uint i = 0;
         for (auto sdev : devices) {
-            (void)sdev->link_ready().then([sem, i] {
+            (void)sdev->link_ready().then([sem] {
                 sem->signal();
             });
             ++i;

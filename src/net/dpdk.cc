@@ -2398,8 +2398,9 @@ std::unique_ptr<net::device> create_dpdk_net_device(
                                     const hw_config& hw_cfg, uint16_t num_queues, bool fullHash, uint32_t initialHash)
 {
     if (hw_cfg.mac_address != "") {
-        uint portIdx = get_port_index_by_mac(hw_cfg.mac_address);
-        return create_dpdk_net_device(portIdx, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash);
+        uint port_idx = get_port_index_by_mac(hw_cfg.mac_address);
+        printf("Creating dpdk device for %s on port %u\n", hw_cfg.mac_address.c_str(), port_idx);
+        return create_dpdk_net_device(port_idx, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash);
     } else {
         return create_dpdk_net_device(*hw_cfg.port_index, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash);
     }

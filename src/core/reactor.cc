@@ -549,6 +549,7 @@ template <typename Clock>
 inline
 void timer<Clock>::arm(time_point until, compat::optional<duration> period) {
     arm_state(until, period);
+    printf("Adding timer\n");
     engine().add_timer(this);
 }
 
@@ -1927,6 +1928,7 @@ void reactor::enable_timer(steady_clock_type::time_point when)
     using ns = std::chrono::nanoseconds;
     WITH_LOCK(_timer_mutex) {
         _timer_due = std::chrono::duration_cast<ns>(when.time_since_epoch()).count();
+        printf("Enable timer else case\n");
         _timer_cond.wake_one();
     }
 #endif

@@ -123,6 +123,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         for (unsigned i = 0; i < smp::count; i++) {
             printf("Submitting %u on %u\n", sdev->port_idx(), i);
             (void)smp::submit_to(i, [opts, sdev] {
+                printf("Inside callback %u on %u\n", sdev->port_idx(), engine().cpu_id());
                 auto qid = engine().cpu_id();
 
                 if (qid < sdev->hw_queues_count()) {

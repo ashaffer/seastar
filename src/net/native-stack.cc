@@ -142,6 +142,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);
                 }
 
+                printf("Completed callback %u on %u\n", sdev->port_idx(), engine().cpu_id());
             }).then([sem, sdev, z = i] {
                 printf("Signaled %u on %u\n", sdev->port_idx(), z);
                 sem->signal();

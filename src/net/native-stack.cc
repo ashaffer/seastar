@@ -120,6 +120,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     uint jj = 0; 
     for (auto sdev : devices) {
         for (unsigned i = 0; i < smp::count; i++) {
+            printf("Submitting %u on %u\n", sdev->port_idx(), engine().cpu_id());
             (void)smp::submit_to(i, [opts, sdev] {
                 auto qid = engine().cpu_id();
 
@@ -138,7 +139,8 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);
                 }
 
-            }).then([sem] {
+            }).then([sem, sdev] {
+                printf("Signaled %u on %u\n", sdev->port_idx(), engine().cpu_id());
                 sem->signal();
             });
         }

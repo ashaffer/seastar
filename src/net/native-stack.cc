@@ -92,7 +92,6 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             auto& hw_config = device_config.second.hw_cfg;   
 #ifdef SEASTAR_HAVE_DPDK
             if ( hw_config.port_index || !hw_config.pci_address.empty() || !hw_config.mac_address.empty()) {
-                printf("create: %u\n", (uint)*(hw_config.port_index));
                 auto dev = create_dpdk_net_device(hw_config, num_queues, fullHash, initialHash);
                 std::shared_ptr<device> sdev(dev.release());
 	            devices.push_back(sdev);
@@ -118,12 +117,9 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
     auto sem = std::make_shared<semaphore>(0);
     uint jj = 0;
-    printf("Creating device queues (%u)\n", engine().cpu_id());
     for (auto sdev : devices) {
         for (unsigned i = 0; i < smp::count; i++) {
-            printf("Submitting %u on %u\n", sdev->port_idx(), i);
             (void)smp::submit_to(i, [opts, sdev] {
-                printf("Inside callback %u on %u\n", sdev->port_idx(), engine().cpu_id());
                 auto qid = engine().cpu_id();
 
                 if (qid < sdev->hw_queues_count()) {
@@ -136,29 +132,23 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     qp->configure_proxies(cpu_weights);
                     sdev->set_local_queue(std::move(qp), qid);
                 } else {
-                    printf("Hitting else branch: %u\n", (uint)sdev->hw_queues_count());
                     auto master_qid = qid % sdev->hw_queues_count();
                     auto master_cpuid = sdev->qid2cpuid(master_qid);
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);
                 }
-
-                printf("Completed callback %u on %u\n", sdev->port_idx(), engine().cpu_id());
-            }).then([sem, sdev, z = i] {
-                printf("Signaled %u on %u\n", sdev->port_idx(), z);
+            }).then([sem, sdev] {
                 sem->signal();
             });
         }
         jj++;
     }
 
-    printf("Completed loop\n");
     (void)sem->wait(smp::count * devices.size()).then([opts, devices, dev_cfgs] {
         printf("Completed device init: awaiting %u devices to signal\n", (uint)devices.size());
         auto sem = std::make_shared<semaphore>(0);
         uint i = 0;
         for (auto sdev : devices) {
             (void)sdev->link_ready().then([sem, i] {
-                printf("Signaling: %u\n", i);
                 sem->signal();
             });
             ++i;

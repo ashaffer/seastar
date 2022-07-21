@@ -1726,17 +1726,13 @@ void dpdk_device::init_port_fini()
     // Changing FC requires HW reset, so set it before the port is initialized.
     set_hw_flow_control();
 
-    printf("pre rte_eth_dev_start %u (%u)\n", port_idx(), engine().cpu_id());
     if (rte_eth_dev_start(_port_idx) < 0) {
         rte_exit(EXIT_FAILURE, "Cannot start port %d\n", _port_idx);
     }
 
-    printf("post rte_eth_dev_start %u (%u)\n", port_idx(), engine().cpu_id());
-
     /* need to defer initialize xstats since NIC specific xstat entries
        show up only after port initization */
     _xstats.start();
-    printf("post _xstats.start %u (%u)\n", port_idx(), engine().cpu_id());
 
     _stats_collector.set_callback([&] {
         rte_eth_stats rte_stats = {};
@@ -2316,7 +2312,6 @@ void dpdk_device::set_rss_table()
 
 std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variables_map opts, uint16_t qid) {
 
-    printf("Init local queue %u (%u)\n", port_idx(), engine().cpu_id());
     std::unique_ptr<qp> qp;
     if (opts.count("hugepages")) {
         qp = std::make_unique<dpdk_qp<true>>(this, qid,
@@ -2326,10 +2321,8 @@ std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variab
                                  _stats_plugin_name + "-" + _stats_plugin_inst);
     }
 
-    printf("init queue submitting... %u (%u, %u)\n", port_idx(), engine().cpu_id(), _home_cpu);
     // FIXME: future is discarded
     (void)smp::submit_to(_home_cpu, [this] () mutable {
-        printf("init queue submit callback %u (%u)\n", port_idx(), engine().cpu_id());
         if (++_queues_ready == _num_queues) {
             init_port_fini();
         }
@@ -2398,9 +2391,8 @@ std::unique_ptr<net::device> create_dpdk_net_device(
                                     const hw_config& hw_cfg, uint16_t num_queues, bool fullHash, uint32_t initialHash)
 {
     if (hw_cfg.mac_address != "") {
-        uint port_idx = get_port_index_by_mac(hw_cfg.mac_address);
-        printf("Creating dpdk device for %s on port %u\n", hw_cfg.mac_address.c_str(), port_idx);
-        return create_dpdk_net_device(port_idx, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash);
+        uint portIdx = get_port_index_by_mac(hw_cfg.mac_address);
+        return create_dpdk_net_device(portIdx, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash);
     } else {
         return create_dpdk_net_device(*hw_cfg.port_index, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash);
     }

@@ -2312,6 +2312,7 @@ void dpdk_device::set_rss_table()
 
 std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variables_map opts, uint16_t qid) {
 
+    printf("Init local queue %u (%u)\n", port_idx(), engine().cpu_id());
     std::unique_ptr<qp> qp;
     if (opts.count("hugepages")) {
         qp = std::make_unique<dpdk_qp<true>>(this, qid,
@@ -2323,6 +2324,7 @@ std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variab
 
     // FIXME: future is discarded
     (void)smp::submit_to(_home_cpu, [this] () mutable {
+        printf("init queue submit callback %u (%u)\n", port_idx(), engine().cpu_id());
         if (++_queues_ready == _num_queues) {
             init_port_fini();
         }

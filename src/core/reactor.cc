@@ -4036,6 +4036,7 @@ void report_failed_future(const std::exception_ptr& eptr) noexcept {
             printf("Caught char const: %s\n", msg);
         } catch (const std::exception& e) {
             printf("Exceptional future: %s\n", e.what());
+            print_with_backtrace("Exceptional future");
         }
     }
 

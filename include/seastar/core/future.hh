@@ -362,12 +362,11 @@ struct future_state :  public future_state_base, private internal::uninitialized
     }
     std::tuple<T...> get() && {
         assert(_u.st != state::future);
-        printf("pre exception_min\n");
         if (_u.st >= state::exception_min) {
             // Move ex out so future::~future() knows we've handled it
+            printf("throwing exception min\n");
             std::rethrow_exception(std::move(*this).get_exception());
         }
-        printf("post exception min\n");
         return std::move(this->uninitialized_get());
     }
     std::tuple<T...> get() const& {

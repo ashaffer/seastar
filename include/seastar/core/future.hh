@@ -984,7 +984,7 @@ public:
             do_wait();
         }
         if (shouldLog) printf("pre get_available_state().get()\n");
-        auto retval = std::move(get_available_state().get(true));
+        auto retval = std::move(get_available_state().get(shouldLog));
         if (shouldLog) printf("post get_available_state().get()\n");
         return std::move(retval);
     }

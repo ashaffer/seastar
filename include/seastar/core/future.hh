@@ -980,7 +980,11 @@ public:
             do_wait();
         }
         if (shouldLog) printf("post available\n");
-        return get_available_state().get();
+        auto&& avail_state = get_available_state();
+        if (shouldLog) printf("post get_available_state\n");
+        auto &&retval = avail_state.get();
+        if (shouldLog) printf(" post avail_state.get\n");
+        return retval;
     }
 
     [[gnu::always_inline]]

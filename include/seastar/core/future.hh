@@ -360,15 +360,19 @@ struct future_state :  public future_state_base, private internal::uninitialized
         assert(_u.st == state::result);
         return this->uninitialized_get();
     }
-    std::tuple<T...> get() && {
+    std::tuple<T...> get(bool shouldLog = false) && {
         assert(_u.st != state::future);
+        if (shouldLog) printf("inside future_state get\n");
         if (_u.st >= state::exception_min) {
             // Move ex out so future::~future() knows we've handled it
             printf("throwing exception min\n");
             // std::cout << boost::stacktrace::stacktrace();
             std::rethrow_exception(std::move(*this).get_exception());
         }
-        return std::move(this->uninitialized_get());
+        if (shouldLog) printf("pre uninitialized get\n");
+        auto v =  std::move(this->uninitialized_get());
+        if (shouldLog) printf("post uninitialized get\n");
+        return std::move(v);
     }
     std::tuple<T...> get() const& {
         assert(_u.st != state::future);
@@ -979,12 +983,10 @@ public:
         if (!_state.available()) {
             do_wait();
         }
-        if (shouldLog) printf("post available\n");
-        auto&& avail_state = get_available_state();
-        if (shouldLog) printf("post get_available_state\n");
-        auto &&retval = avail_state.get();
-        if (shouldLog) printf(" post avail_state.get\n");
-        return retval;
+        if (shouldLog) printf("pre get_available_state().get()\n");
+        auto retval = std::move(get_available_state().get(true));
+        if (shouldLog) printf("post get_available_state().get()\n");
+        return std::move(retval);
     }
 
     [[gnu::always_inline]]

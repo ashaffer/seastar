@@ -362,10 +362,12 @@ struct future_state :  public future_state_base, private internal::uninitialized
     }
     std::tuple<T...> get() && {
         assert(_u.st != state::future);
+        printf("pre exception_min\n");
         if (_u.st >= state::exception_min) {
             // Move ex out so future::~future() knows we've handled it
             std::rethrow_exception(std::move(*this).get_exception());
         }
+        printf("post exception min\n");
         return std::move(this->uninitialized_get());
     }
     std::tuple<T...> get() const& {
@@ -909,7 +911,9 @@ private:
     [[gnu::always_inline]]
     future_state<T...> get_available_state() noexcept {
         if (_promise) {
+            printf("pre detach promise\n");
             detach_promise();
+            printf("post detach promise\n");
         }
         return std::move(_state);
     }

@@ -36,6 +36,8 @@
 #include <seastar/util/attribute-compat.hh>
 #include <seastar/util/gcc6-concepts.hh>
 #include <seastar/util/noncopyable_function.hh>
+#include <boost/stacktrace.hpp>
+#include <iostream>
 
 namespace seastar {
 
@@ -365,6 +367,7 @@ struct future_state :  public future_state_base, private internal::uninitialized
         if (_u.st >= state::exception_min) {
             // Move ex out so future::~future() knows we've handled it
             printf("throwing exception min\n");
+            std::cout << boost::stacktrace::stacktrace();
             std::rethrow_exception(std::move(*this).get_exception());
         }
         return std::move(this->uninitialized_get());
@@ -973,10 +976,12 @@ public:
     /// then it need not be available; instead, the thread will
     /// be paused until the future becomes available.
     [[gnu::always_inline]]
-    std::tuple<T...> get() {
+    std::tuple<T...> get(bool shouldLog = false) {
+        if (shouldLog) printf("pre available\n");
         if (!_state.available()) {
             do_wait();
         }
+        if (shouldLog) printf("post available\n");
         return get_available_state().get();
     }
 

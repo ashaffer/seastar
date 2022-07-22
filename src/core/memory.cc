@@ -1641,8 +1641,8 @@ static inline
 void* throw_if_null(void* ptr) {
     if (!ptr) {
         printf("Throwing on null pointer\n");
-        printf("\tfree: %u\n", (uint)seastar::memory::stats().free_memory());
-        printf("\ttotal: %u\n", (uint)seastar::memory::stats().total_memory());
+        printf("\t     free: %u\n", (uint)seastar::memory::stats().free_memory());
+        printf("\t    total: %u\n", (uint)seastar::memory::stats().total_memory());
         printf("\tallocated: %u\n", (uint)seastar::memory::stats().allocated_memory());
 
         throw std::bad_alloc();

@@ -148,7 +148,8 @@ public:
         if (_future.failed()) {
             printf("await_resume2: failed\n");
         }
-        return _future.get0();
+        auto v = _future.get0();
+        return std::move(v);
     }
 };
 

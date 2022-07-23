@@ -443,7 +443,7 @@ protected:
     future_state_base* _state;
 
     std::unique_ptr<task> _task;
-    bool is_coro = false;
+    bool _is_coro = false;
 
     promise_base(const promise_base&) = delete;
     promise_base(future_state_base* state) noexcept : _state(state) {}
@@ -522,6 +522,10 @@ public:
         }
     }
 
+    bool is_coro () {
+        return _is_coro;
+    }
+
     template <typename... A>
     void set_value(A&&... a) {
         if (auto *s = get_state()) {
@@ -532,7 +536,7 @@ public:
 
 #if SEASTAR_COROUTINES_TS
     void set_coroutine(future_state<T...>& state, task& coroutine) noexcept {
-        is_coro = true;
+        _is_coro = true;
         _state = &state;
         _task = std::unique_ptr<task>(&coroutine);
 
@@ -619,7 +623,7 @@ public:
     /// Forwards the exception argument to the future and makes it
     /// available.  May be called either before or after \c get_future().
     void set_exception(std::exception_ptr&& ex) noexcept {
-        if (is_coro) {
+        if (internal::promise_base_with_type<T...>::is_coro()) {
             printf("set_exception on coro\n");
         }
         internal::promise_base::set_exception(std::move(ex));

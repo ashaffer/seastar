@@ -273,7 +273,6 @@ struct future_state_base {
         state st;
         std::exception_ptr ex;
     } _u;
-
     future_state_base() noexcept { }
     future_state_base(state st) noexcept : _u(st) { }
     future_state_base(std::exception_ptr&& ex) noexcept : _u(std::move(ex)) { }
@@ -534,6 +533,7 @@ public:
     void set_coroutine(future_state<T...>& state, task& coroutine) noexcept {
         _state = &state;
         _task = std::unique_ptr<task>(&coroutine);
+        printf("set_coroutine\n");
     }
 #endif
 private:

@@ -463,9 +463,11 @@ protected:
 
     void set_exception(std::exception_ptr&& ex) noexcept {
         if (_state) {
+            printf("set_exception make_ready\n");
             _state->set_exception(std::move(ex));
             make_ready<urgent::no>();
         } else {
+            printf("set_exception report failed\n");
             // We get here if promise::get_future is called and the
             // returned future is destroyed without creating a
             // continuation.

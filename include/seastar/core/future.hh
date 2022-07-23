@@ -366,7 +366,7 @@ struct future_state :  public future_state_base, private internal::uninitialized
             // Move ex out so future::~future() knows we've handled it
             std::rethrow_exception(std::move(*this).get_exception());
         }
-        return this->uninitialized_get();
+        return std::move(this->uninitialized_get());
     }
     std::tuple<T...> get() const& {
         assert(_u.st != state::future);
@@ -976,7 +976,7 @@ public:
         if (!_state.available()) {
             do_wait();
         }
-        return get_available_state().get();
+        return std::move(get_available_state().get());
     }
 
     [[gnu::always_inline]]

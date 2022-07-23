@@ -533,7 +533,14 @@ public:
     void set_coroutine(future_state<T...>& state, task& coroutine) noexcept {
         _state = &state;
         _task = std::unique_ptr<task>(&coroutine);
-        printf("set_coroutine\n");
+
+        if (_state->failed()) {
+            printf("set coroutine on failed\n");
+        } else if (_state->available()) {
+            printf("set coroutine on available\n");
+        } else {
+            printf("set coroutine\n");
+        }
     }
 #endif
 private:

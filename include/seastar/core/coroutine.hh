@@ -149,6 +149,11 @@ public:
             printf("await_resume2: failed\n");
         }
         auto v = _future.get0();
+
+        if (_future.failed()) {
+            printf("await_resume2: post get0\n");
+        }
+
         return std::move(v);
     }
 };

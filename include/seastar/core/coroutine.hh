@@ -118,7 +118,12 @@ public:
         _future.set_coroutine(hndl.promise());
     }
 
-    std::tuple<T...> await_resume() { return _future.get(); }
+    std::tuple<T...> await_resume() {
+        if (_future.failed()) {
+            printf("await_resume1: failed\n");
+        }
+        return _future.get();
+    }
 };
 
 template<typename T>
@@ -139,7 +144,12 @@ public:
         _future.set_coroutine(hndl.promise());
     }
 
-    T await_resume() { return _future.get0(); }
+    T await_resume() {
+        if (_future.failed()) {
+            printf("await_resume2: failed\n");
+        }
+        return _future.get0();
+    }
 };
 
 template<>
@@ -160,7 +170,12 @@ public:
         _future.set_coroutine(hndl.promise());
     }
 
-    void await_resume() { _future.get(); }
+    void await_resume() {
+        if (_future.failed()) {
+            printf("await_resume3: failed\n");
+        }
+        _future.get();
+    }
 };
 
 }

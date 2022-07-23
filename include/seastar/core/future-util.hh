@@ -1197,6 +1197,7 @@ future<T...> with_timeout(std::chrono::time_point<Clock, Duration> timeout, futu
     (void)f.then_wrapped([pr = std::move(pr), timer = std::move(timer)] (auto&& f) mutable {
         if (timer.cancel()) {
             f.forward_to(std::move(*pr));
+            f.ignore_ready_future();
         } else {
             f.ignore_ready_future();
         }

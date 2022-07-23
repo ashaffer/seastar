@@ -300,6 +300,7 @@ public:
     }
     std::exception_ptr get_exception() && noexcept {
         assert(_u.st >= state::exception_min);
+        printf("taking exception\n");
         // Move ex out so future::~future() knows we've handled it
         return _u.take_exception();
     }
@@ -363,6 +364,7 @@ struct future_state :  public future_state_base, private internal::uninitialized
         assert(_u.st != state::future);
         if (_u.st >= state::exception_min) {
             // Move ex out so future::~future() knows we've handled it
+            printf("about to rethrow\n");
             std::rethrow_exception(std::move(*this).get_exception());
         }
         return std::move(this->uninitialized_get());

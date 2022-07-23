@@ -365,7 +365,9 @@ struct future_state :  public future_state_base, private internal::uninitialized
         if (_u.st >= state::exception_min) {
             // Move ex out so future::~future() knows we've handled it
             printf("about to rethrow\n");
-            std::rethrow_exception(std::move(*this).get_exception());
+            auto eptr = std::move(*this).get_exception();
+            printf("failed: %u\n", failed());
+            std::rethrow_exception(eptr);
         }
         return std::move(this->uninitialized_get());
     }

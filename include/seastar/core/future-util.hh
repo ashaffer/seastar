@@ -1190,24 +1190,18 @@ future<T...> with_timeout(std::chrono::time_point<Clock, Duration> timeout, futu
     auto pr = std::make_unique<promise<T...>>();
     auto result = pr->get_future();
     timer<Clock> timer([&pr = *pr] {
-        printf("pre set_exception\n");
         pr.set_exception(std::make_exception_ptr(ExceptionFactory::timeout()));
-        printf("post set_exception\n");
     });
     timer.arm(timeout);
     // Future is returned indirectly.
     (void)f.then_wrapped([pr = std::move(pr), timer = std::move(timer)] (auto&& f) mutable {
         if (timer.cancel()) {
-            printf("pre forward\n");
             f.forward_to(std::move(*pr));
         } else {
-            printf("pre ignore\n");
             f.ignore_ready_future();
         }
     });
-    return result.finally([] () {
-        printf("with_timeout finally\n");
-    });
+    return result;
 }
 
 namespace internal {

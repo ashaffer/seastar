@@ -273,6 +273,7 @@ struct future_state_base {
         state st;
         std::exception_ptr ex;
     } _u;
+
     future_state_base() noexcept { }
     future_state_base(state st) noexcept : _u(st) { }
     future_state_base(std::exception_ptr&& ex) noexcept : _u(std::move(ex)) { }
@@ -284,8 +285,6 @@ protected:
     ~future_state_base() noexcept {
         if (failed()) {
             report_failed_future(_u.take_exception());
-            printf("Destructor backtrace:\n");
-            printf(current_backtrace());
         }
     }
 
@@ -302,7 +301,6 @@ public:
     }
     std::exception_ptr get_exception() && noexcept {
         assert(_u.st >= state::exception_min);
-        printf("taking exception\n");
         // Move ex out so future::~future() knows we've handled it
         return _u.take_exception();
     }
@@ -366,10 +364,7 @@ struct future_state :  public future_state_base, private internal::uninitialized
         assert(_u.st != state::future);
         if (_u.st >= state::exception_min) {
             // Move ex out so future::~future() knows we've handled it
-            printf("about to rethrow\n");
-            auto eptr = std::move(*this).get_exception();
-            printf("failed: %u\n", failed());
-            std::rethrow_exception(eptr);
+            std::rethrow_exception(std::move(*this).get_exception());
         }
         return std::move(this->uninitialized_get());
     }
@@ -449,7 +444,6 @@ protected:
     future_state_base* _state;
 
     std::unique_ptr<task> _task;
-    bool _is_coro = false;
 
     promise_base(const promise_base&) = delete;
     promise_base(future_state_base* state) noexcept : _state(state) {}
@@ -469,11 +463,9 @@ protected:
 
     void set_exception(std::exception_ptr&& ex) noexcept {
         if (_state) {
-            printf("set_exception make_ready\n");
             _state->set_exception(std::move(ex));
             make_ready<urgent::no>();
         } else {
-            printf("set_exception report failed\n");
             // We get here if promise::get_future is called and the
             // returned future is destroyed without creating a
             // continuation.
@@ -530,10 +522,6 @@ public:
         }
     }
 
-    bool is_coro () {
-        return _is_coro;
-    }
-
     template <typename... A>
     void set_value(A&&... a) {
         if (auto *s = get_state()) {
@@ -544,17 +532,8 @@ public:
 
 #if SEASTAR_COROUTINES_TS
     void set_coroutine(future_state<T...>& state, task& coroutine) noexcept {
-        _is_coro = true;
         _state = &state;
         _task = std::unique_ptr<task>(&coroutine);
-
-        if (_state->failed()) {
-            printf("set coroutine on failed\n");
-        } else if (_state->available()) {
-            printf("set coroutine on available\n");
-        } else {
-            printf("set coroutine\n");
-        }
     }
 #endif
 private:
@@ -631,9 +610,6 @@ public:
     /// Forwards the exception argument to the future and makes it
     /// available.  May be called either before or after \c get_future().
     void set_exception(std::exception_ptr&& ex) noexcept {
-        if (internal::promise_base_with_type<T...>::is_coro()) {
-            printf("set_exception on coro\n");
-        }
         internal::promise_base::set_exception(std::move(ex));
     }
 
@@ -933,9 +909,7 @@ private:
     [[gnu::always_inline]]
     future_state<T...> get_available_state() noexcept {
         if (_promise) {
-            printf("pre detach promise\n");
             detach_promise();
-            printf("post detach promise\n");
         }
         return std::move(_state);
     }
@@ -1000,7 +974,7 @@ public:
         if (!_state.available()) {
             do_wait();
         }
-        return std::move(get_available_state().get());
+        return get_available_state().get();
     }
 
     [[gnu::always_inline]]

@@ -284,6 +284,8 @@ protected:
     ~future_state_base() noexcept {
         if (failed()) {
             report_failed_future(_u.take_exception());
+            printf("Destructor backtrace:\n");
+            printf(current_backtrace());
         }
     }
 

@@ -46,6 +46,7 @@ public:
             _promise.set_value(std::forward<U>(value)...);
         }
         void unhandled_exception() noexcept {
+            printf("unhandled_exception 1\n");
             _promise.set_exception(std::current_exception());
         }
 
@@ -77,6 +78,7 @@ public:
             _promise.set_value();
         }
         void unhandled_exception() noexcept {
+            printf("unhandled_exception 2\n");
             _promise.set_exception(std::current_exception());
         }
 

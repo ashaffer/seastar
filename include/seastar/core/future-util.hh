@@ -1205,7 +1205,9 @@ future<T...> with_timeout(std::chrono::time_point<Clock, Duration> timeout, futu
             f.ignore_ready_future();
         }
     });
-    return result;
+    return result.finally([] () {
+        printf("with_timeout finally\n");
+    });
 }
 
 namespace internal {

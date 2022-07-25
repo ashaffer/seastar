@@ -354,7 +354,7 @@ resources allocate(configuration c) {
         throw std::runtime_error("insufficient processing units");
     }
     auto mem_per_proc = align_down<size_t>(mem / procs, 2 << 20);
-    printf("Allocating %u bytes across %u cpus, for %u bytes/cpu\n", (uint)mem, (uint)available_procs, (uint)mem_per_proc);
+    printf("Allocating %u, %u bytes across %u cpus, for %u bytes/cpu\n", (uint)mem, (uint)available_memory, (uint)available_procs, (uint)mem_per_proc);
 
     resources ret;
     std::unordered_map<hwloc_obj_t, size_t> topo_used_mem;

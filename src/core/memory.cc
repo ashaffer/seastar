@@ -1640,7 +1640,7 @@ int malloc_trim(size_t pad) {
 static inline
 void* throw_if_null(void* ptr) {
     if (!ptr) {
-        printf("Throwing on null pointer\n");
+        printf("Throwing on null pointer: %u\n", seastar::engine().cpu_id());
         printf("\t     free: %u\n", (uint)seastar::memory::stats().free_memory());
         printf("\t    total: %u\n", (uint)seastar::memory::stats().total_memory());
         printf("\tallocated: %u\n", (uint)seastar::memory::stats().allocated_memory());

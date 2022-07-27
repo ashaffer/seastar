@@ -913,18 +913,15 @@ allocate_anonymous_memory(compat::optional<void*> where, size_t how_much) {
 
 mmap_area
 allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
-    printf("a\n");
     auto pos = fd.size();
-    printf("a2: %u, %u\n", (uint)pos, (uint)how_much);
     fd.truncate(pos + how_much);
-    printf("b\n");
+
     auto ret = fd.map(
             how_much,
             PROT_READ | PROT_WRITE,
             MAP_SHARED | MAP_POPULATE | (where ? MAP_FIXED : 0),
             pos,
             where.value_or(nullptr));
-    printf("c\n");
     return ret;
 }
 
@@ -935,15 +932,10 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // place, map hugetlbfs in place, and copy it back, without modifying it during
     // the operation.
     auto bytes = nr_pages * page_size;
-    printf("2.2.4\n");
     auto old_mem = mem();
-    printf("2.2.5\n");
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
-    printf("2.2.6\n");
     std::memcpy(relocated_old_mem.get(), old_mem, bytes);
-    printf("2.2.7\n");
     alloc_sys_mem({old_mem}, bytes).release();
-    printf("2.2.8\n");
     std::memcpy(old_mem, relocated_old_mem.get(), bytes);
 }
 
@@ -1336,34 +1328,28 @@ void configure(std::vector<resource::memory> m, bool mbind,
     for (auto&& x : m) {
         total += x.bytes;
     }
-    printf("2.1: %u\n", (uint)page_size);
     allocate_system_memory_fn sys_alloc = allocate_anonymous_memory;
     if (hugetlbfs_path) {
-        printf("2.2\n");
         // std::function is copyable, but file_desc is not, so we must use
         // a shared_ptr to allow sys_alloc to be copied around
         auto fdp = make_lw_shared<file_desc>(file_desc::temporary(*hugetlbfs_path));
-        printf("2.2.1\n");
         sys_alloc = [fdp] (optional<void*> where, size_t how_much) {
             return allocate_hugetlbfs_memory(*fdp, where, how_much);
         };
-        printf("2.2.2\n");
         cpu_mem.replace_memory_backing(sys_alloc);
     }
-    printf("2.3: %lu\n", total);
+
     cpu_mem.resize(total, sys_alloc);
     size_t pos = 0;
-    printf("2.4: %u\n", (uint)m.size());
     for (auto&& x : m) {
 #ifdef SEASTAR_HAVE_NUMA
         unsigned long nodemask = 1UL << x.nodeid;
         if (mbind) {
-            printf("pre-mbind: %u\n", (uint)x.bytes);
             auto r = ::mbind(cpu_mem.mem() + pos, x.bytes,
                             MPOL_PREFERRED,
                             &nodemask, std::numeric_limits<unsigned long>::digits,
                             MPOL_MF_MOVE);
-            printf("post-mbind\n");
+
             if (r == -1) {
                 char err[1000] = {};
                 strerror_r(errno, err, sizeof(err));

@@ -3462,13 +3462,10 @@ void smp::allocate_reactor(unsigned id, reactor_backend_selector rbs, reactor_co
     // we cannot just write "local_engin = new reactor" since reactor's constructor
     // uses local_engine
     void *buf;
-    printf("pre-memalign\n");
     int r = posix_memalign(&buf, cache_line_size, sizeof(reactor));
     assert(r == 0);
-    printf("pre new reactor\n");
     local_engine = reinterpret_cast<reactor*>(buf);
     new (buf) reactor(id, std::move(rbs), cfg);
-    printf("pre reset\n");
     reactor_holder.reset(local_engine);
 }
 
@@ -3806,7 +3803,6 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     if (mlock) {
         auto r = mlockall(MCL_CURRENT | MCL_FUTURE);
         if (r) {
-            printf("mlockall failed: %s (%u)\n", strerror(errno), (uint)r);
             // Don't hard fail for now, it's hard to get the configuration right
             fmt::print("warning: failed to mlockall: {}\n", strerror(errno));
         }
@@ -3897,35 +3893,26 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         auto allocation = allocations[i];
         create_thread([configuration, &disk_config, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
           try {
-            printf("Inside thread: %u\n", i);
             auto thread_name = seastar::format("reactor-{}", i);
             pthread_setname_np(pthread_self(), thread_name.c_str());
-            printf("1\n");
             if (thread_affinity) {
                 smp::pin(allocation.cpu_id);
             }
-            printf("2\n");
             memory::configure(allocation.mem, mbind, hugepages_path);
-            printf("3\n");
             memory::set_heap_profiling_enabled(heapprof_enabled);
-            printf("4\n");
             sigset_t mask;
             sigfillset(&mask);
             for (auto sig : { SIGSEGV }) {
                 sigdelset(&mask, sig);
             }
-            printf("5\n");
             auto r = ::pthread_sigmask(SIG_BLOCK, &mask, NULL);
             throw_pthread_error(r);
             init_default_smp_service_group();
-            printf("6\n");
             allocate_reactor(i, backend_selector, reactor_cfg);
             _reactors[i] = &engine();
-            printf("7\n");
             for (auto& dev_id : disk_config.device_ids()) {
                 alloc_io_queue(i, dev_id);
             }
-            printf("Reactors registered: %u\n", i);
             reactors_registered.wait();
             smp_queues_constructed.wait();
             start_all_queues();
@@ -3965,7 +3952,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         }
     }
 #endif
-    printf("Reactors registered - final\n");
+
     reactors_registered.wait();
     smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};
     for(unsigned i = 0; i < smp::count; i++) {

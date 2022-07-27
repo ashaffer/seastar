@@ -3803,6 +3803,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     if (mlock) {
         auto r = mlockall(MCL_CURRENT | MCL_FUTURE);
         if (r) {
+            printf("mlockall failed: %s (%u)\n", strerror(errno), (uint)r);
             // Don't hard fail for now, it's hard to get the configuration right
             fmt::print("warning: failed to mlockall: {}\n", strerror(errno));
         }
@@ -3818,26 +3819,20 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     }
 
     auto resources = resource::allocate(rc);
-    printf("Allocation complete\n");
     std::vector<resource::cpu> allocations = std::move(resources.cpus);
     if (thread_affinity) {
         smp::pin(allocations[0].cpu_id);
     }
 
-    printf("1\n");
     memory::configure(allocations[0].mem, mbind, hugepages_path);
-    printf("1.1\n");
 
     if (configuration.count("abort-on-seastar-bad-alloc")) {
-        printf("1.2\n");
         memory::enable_abort_on_allocation_failure();
-        printf("1.3\n");
     }
 
     bool heapprof_enabled = configuration.count("heapprof");
-    printf("1.4\n");
     memory::set_heap_profiling_enabled(heapprof_enabled);
-    printf("2\n");
+
 #ifdef SEASTAR_HAVE_DPDK
     if (smp::_using_dpdk) {
         dpdk::eal::cpuset cpus;
@@ -3848,13 +3843,13 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         dpdk::eal::init(cpus, configuration);
     }
 #endif
-    printf("3\n");
+
     // Better to put it into the smp class, but at smp construction time
     // correct smp::count is not known.
     static boost::barrier reactors_registered(smp::count);
     static boost::barrier smp_queues_constructed(smp::count);
     static boost::barrier inited(smp::count);
-    printf("4\n");
+
     auto ioq_topology = std::move(resources.ioq_topology);
 
     std::unordered_map<dev_t, std::vector<io_queue*>> all_io_queues;
@@ -3863,7 +3858,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         auto io_info = ioq_topology.at(id);
         all_io_queues.emplace(id, io_info.coordinators.size());
     }
-    printf("5\n");
+
     auto alloc_io_queue = [&ioq_topology, &all_io_queues, &disk_config] (unsigned shard, dev_t id) {
         auto io_info = ioq_topology.at(id);
         auto cid = io_info.shard_to_coordinator[shard];
@@ -3888,12 +3883,13 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         }
         engine()._io_queues.emplace(dev_id, all_io_queues[dev_id][queue_idx]);
     };
-    printf("6\n");
+
     _all_event_loops_done.emplace(smp::count);
 
     auto backend_selector = configuration["reactor-backend"].as<reactor_backend_selector>();
 
     unsigned i;
+
     for (i = 1; i < smp::count; i++) {
         auto allocation = allocations[i];
         create_thread([configuration, &disk_config, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
@@ -3934,23 +3930,19 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         });
     }
 
-    printf("7\n");
     init_default_smp_service_group();
-    printf("7.1\n");
     try {
         allocate_reactor(0, backend_selector, reactor_cfg);
-        printf("7.2\n");
     } catch (const std::exception& e) {
-        printf("7.3\n");
         seastar_logger.error(e.what());
         _exit(1);
     }
-    printf("7.4\n");
+
     _reactors[0] = &engine();
     for (auto& dev_id : disk_config.device_ids()) {
         alloc_io_queue(0, dev_id);
     }
-    printf("7.5\n");
+
 #ifdef SEASTAR_HAVE_DPDK
     if (_using_dpdk) {
         auto it = _thread_loops.begin();
@@ -3961,36 +3953,26 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         }
     }
 #endif
-    printf("7.6\n");
+
     reactors_registered.wait();
-    printf("7.6.1\n");
     smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};
-    printf("7.6.2\n");
     for(unsigned i = 0; i < smp::count; i++) {
         smp::_qs[i] = reinterpret_cast<smp_message_queue*>(operator new[] (sizeof(smp_message_queue) * smp::count));
-        printf("7.6.3\n");
         for (unsigned j = 0; j < smp::count; ++j) {
             new (&smp::_qs[i][j]) smp_message_queue(_reactors[j], _reactors[i]);
         }
-        printf("7.6.4\n");
     }
-    printf("7.7\n");
     alien::smp::_qs = alien::smp::create_qs(_reactors);
     smp_queues_constructed.wait();
-    printf("7.8\n");
     start_all_queues();
-    printf("7.9\n");
     for (auto& dev_id : disk_config.device_ids()) {
         assign_io_queue(0, dev_id);
     }
-    printf("8\n");
     inited.wait();
 
     engine().configure(configuration);
-    printf("9\n");
     // The raw `new` is necessary because of the private constructor of `lowres_clock_impl`.
     engine()._lowres_clock_impl = std::unique_ptr<lowres_clock_impl>(new lowres_clock_impl);
-    printf("10\n");
 }
 
 bool smp::poll_queues() {

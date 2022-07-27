@@ -1328,8 +1328,10 @@ void configure(std::vector<resource::memory> m, bool mbind,
     for (auto&& x : m) {
         total += x.bytes;
     }
+    printf("2.1\n");
     allocate_system_memory_fn sys_alloc = allocate_anonymous_memory;
     if (hugetlbfs_path) {
+        printf("2.2\n");
         // std::function is copyable, but file_desc is not, so we must use
         // a shared_ptr to allow sys_alloc to be copied around
         auto fdp = make_lw_shared<file_desc>(file_desc::temporary(*hugetlbfs_path));
@@ -1341,6 +1343,7 @@ void configure(std::vector<resource::memory> m, bool mbind,
 
     cpu_mem.resize(total, sys_alloc);
     size_t pos = 0;
+    printf("2.3: %u\n", (uint)m.size());
     for (auto&& x : m) {
 #ifdef SEASTAR_HAVE_NUMA
         unsigned long nodemask = 1UL << x.nodeid;

@@ -915,6 +915,7 @@ mmap_area
 allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
     printf("a\n");
     auto pos = fd.size();
+    printf("a2\n");
     fd.truncate(pos + how_much);
     printf("b\n");
     auto ret = fd.map(

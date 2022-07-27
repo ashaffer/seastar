@@ -1328,7 +1328,7 @@ void configure(std::vector<resource::memory> m, bool mbind,
     for (auto&& x : m) {
         total += x.bytes;
     }
-    printf("2.1\n");
+    printf("2.1: %u\n", (uint)page_size);
     allocate_system_memory_fn sys_alloc = allocate_anonymous_memory;
     if (hugetlbfs_path) {
         printf("2.2\n");

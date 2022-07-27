@@ -3462,10 +3462,13 @@ void smp::allocate_reactor(unsigned id, reactor_backend_selector rbs, reactor_co
     // we cannot just write "local_engin = new reactor" since reactor's constructor
     // uses local_engine
     void *buf;
+    printf("pre-memalign\n");
     int r = posix_memalign(&buf, cache_line_size, sizeof(reactor));
     assert(r == 0);
+    printf("pre new reactor\n");
     local_engine = reinterpret_cast<reactor*>(buf);
     new (buf) reactor(id, std::move(rbs), cfg);
+    printf("pre reset\n");
     reactor_holder.reset(local_engine);
 }
 

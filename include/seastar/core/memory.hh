@@ -54,8 +54,7 @@ namespace memory {
 
 /// \cond internal
 // Modify seastar to use 1G page size so we can use transparent hugepages
-#define SEASTAR_OVERRIDE_ALLOCATE_PAGE_SIZE 1073741824
-
+#define SEASTAR_OVERRIDE_ALLOCATOR_PAGE_SIZE 1073741824
 #ifdef SEASTAR_OVERRIDE_ALLOCATOR_PAGE_SIZE
 #define SEASTAR_INTERNAL_ALLOCATOR_PAGE_SIZE (SEASTAR_OVERRIDE_ALLOCATOR_PAGE_SIZE)
 #else

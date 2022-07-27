@@ -3818,11 +3818,13 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     }
 
     auto resources = resource::allocate(rc);
+    printf("Allocation complete\n");
     std::vector<resource::cpu> allocations = std::move(resources.cpus);
     if (thread_affinity) {
         smp::pin(allocations[0].cpu_id);
     }
 
+    printf("1\n");
     memory::configure(allocations[0].mem, mbind, hugepages_path);
 
     if (configuration.count("abort-on-seastar-bad-alloc")) {
@@ -3831,7 +3833,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
 
     bool heapprof_enabled = configuration.count("heapprof");
     memory::set_heap_profiling_enabled(heapprof_enabled);
-
+    printf("2\n");
 #ifdef SEASTAR_HAVE_DPDK
     if (smp::_using_dpdk) {
         dpdk::eal::cpuset cpus;
@@ -3842,7 +3844,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         dpdk::eal::init(cpus, configuration);
     }
 #endif
-
+    printf("3\n");
     // Better to put it into the smp class, but at smp construction time
     // correct smp::count is not known.
     static boost::barrier reactors_registered(smp::count);
@@ -3888,7 +3890,6 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     auto backend_selector = configuration["reactor-backend"].as<reactor_backend_selector>();
 
     unsigned i;
-
     for (i = 1; i < smp::count; i++) {
         auto allocation = allocations[i];
         create_thread([configuration, &disk_config, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {

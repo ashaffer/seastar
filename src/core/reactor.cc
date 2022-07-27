@@ -3953,7 +3953,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         }
     }
 #endif
-
+    printf("Reactors registered\n");
     reactors_registered.wait();
     smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};
     for(unsigned i = 0; i < smp::count; i++) {

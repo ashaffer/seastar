@@ -3826,12 +3826,16 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
 
     printf("1\n");
     memory::configure(allocations[0].mem, mbind, hugepages_path);
+    printf("1.1\n");
 
     if (configuration.count("abort-on-seastar-bad-alloc")) {
+        printf("1.2\n");
         memory::enable_abort_on_allocation_failure();
+        printf("1.3\n");
     }
 
     bool heapprof_enabled = configuration.count("heapprof");
+    printf("1.4\n");
     memory::set_heap_profiling_enabled(heapprof_enabled);
     printf("2\n");
 #ifdef SEASTAR_HAVE_DPDK
@@ -3932,18 +3936,21 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
 
     printf("7\n");
     init_default_smp_service_group();
+    printf("7.1\n");
     try {
         allocate_reactor(0, backend_selector, reactor_cfg);
+        printf("7.2\n");
     } catch (const std::exception& e) {
+        printf("7.3\n");
         seastar_logger.error(e.what());
         _exit(1);
     }
-
+    printf("7.4\n");
     _reactors[0] = &engine();
     for (auto& dev_id : disk_config.device_ids()) {
         alloc_io_queue(0, dev_id);
     }
-
+    printf("7.5\n");
 #ifdef SEASTAR_HAVE_DPDK
     if (_using_dpdk) {
         auto it = _thread_loops.begin();
@@ -3954,7 +3961,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         }
     }
 #endif
-
+    printf("7.6\n");
     reactors_registered.wait();
     smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};
     for(unsigned i = 0; i < smp::count; i++) {
@@ -3963,9 +3970,12 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
             new (&smp::_qs[i][j]) smp_message_queue(_reactors[j], _reactors[i]);
         }
     }
+    printf("7.7\n");
     alien::smp::_qs = alien::smp::create_qs(_reactors);
     smp_queues_constructed.wait();
+    printf("7.8\n");
     start_all_queues();
+    printf("7.9\n");
     for (auto& dev_id : disk_config.device_ids()) {
         assign_io_queue(0, dev_id);
     }

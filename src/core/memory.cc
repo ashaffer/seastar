@@ -980,7 +980,7 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
 
 void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) {
     new_size = align_down(new_size, huge_page_size);
-    printf("resize: %lu (%lu, %lu)\n", nr_pages, page_size, new_size);
+    printf("resize: %u (%lu, %lu)\n", nr_pages, page_size, new_size);
     while (nr_pages * page_size < new_size) {
         // don't reallocate all at once, since there might not
         // be enough free memory available to relocate the pages array

@@ -3850,7 +3850,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     static boost::barrier reactors_registered(smp::count);
     static boost::barrier smp_queues_constructed(smp::count);
     static boost::barrier inited(smp::count);
-
+    printf("4\n");
     auto ioq_topology = std::move(resources.ioq_topology);
 
     std::unordered_map<dev_t, std::vector<io_queue*>> all_io_queues;
@@ -3859,7 +3859,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         auto io_info = ioq_topology.at(id);
         all_io_queues.emplace(id, io_info.coordinators.size());
     }
-
+    printf("5\n");
     auto alloc_io_queue = [&ioq_topology, &all_io_queues, &disk_config] (unsigned shard, dev_t id) {
         auto io_info = ioq_topology.at(id);
         auto cid = io_info.shard_to_coordinator[shard];
@@ -3884,7 +3884,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         }
         engine()._io_queues.emplace(dev_id, all_io_queues[dev_id][queue_idx]);
     };
-
+    printf("6\n");
     _all_event_loops_done.emplace(smp::count);
 
     auto backend_selector = configuration["reactor-backend"].as<reactor_backend_selector>();
@@ -3930,6 +3930,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         });
     }
 
+    printf("7\n");
     init_default_smp_service_group();
     try {
         allocate_reactor(0, backend_selector, reactor_cfg);
@@ -3968,11 +3969,14 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     for (auto& dev_id : disk_config.device_ids()) {
         assign_io_queue(0, dev_id);
     }
+    printf("8\n");
     inited.wait();
 
     engine().configure(configuration);
+    printf("9\n");
     // The raw `new` is necessary because of the private constructor of `lowres_clock_impl`.
     engine()._lowres_clock_impl = std::unique_ptr<lowres_clock_impl>(new lowres_clock_impl);
+    printf("10\n");
 }
 
 bool smp::poll_queues() {

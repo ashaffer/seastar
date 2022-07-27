@@ -32,8 +32,8 @@ file_desc::temporary(sstring directory) {
     std::vector<char> templat(directory.c_str(), directory.c_str() + directory.size() + 1);
     int fd = ::mkstemp(templat.data());
     throw_system_error_on(fd == -1);
-    // int r = ::unlink(templat.data());
-    // throw_system_error_on(r == -1); // leaks created file, but what can we do?
+    int r = ::unlink(templat.data());
+    throw_system_error_on(r == -1); // leaks created file, but what can we do?
     return file_desc(fd);
 }
 

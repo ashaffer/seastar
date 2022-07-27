@@ -3894,6 +3894,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         auto allocation = allocations[i];
         create_thread([configuration, &disk_config, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
           try {
+            printf("Inside thread: %u\n", i);
             auto thread_name = seastar::format("reactor-{}", i);
             pthread_setname_np(pthread_self(), thread_name.c_str());
             if (thread_affinity) {

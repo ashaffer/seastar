@@ -3897,21 +3897,28 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
             printf("Inside thread: %u\n", i);
             auto thread_name = seastar::format("reactor-{}", i);
             pthread_setname_np(pthread_self(), thread_name.c_str());
+            printf("1\n");
             if (thread_affinity) {
                 smp::pin(allocation.cpu_id);
             }
+            printf("2\n");
             memory::configure(allocation.mem, mbind, hugepages_path);
+            printf("3\n");
             memory::set_heap_profiling_enabled(heapprof_enabled);
+            printf("4\n");
             sigset_t mask;
             sigfillset(&mask);
             for (auto sig : { SIGSEGV }) {
                 sigdelset(&mask, sig);
             }
+            printf("5\n");
             auto r = ::pthread_sigmask(SIG_BLOCK, &mask, NULL);
             throw_pthread_error(r);
             init_default_smp_service_group();
+            printf("6\n");
             allocate_reactor(i, backend_selector, reactor_cfg);
             _reactors[i] = &engine();
+            printf("7\n");
             for (auto& dev_id : disk_config.device_ids()) {
                 alloc_io_queue(i, dev_id);
             }

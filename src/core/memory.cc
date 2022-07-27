@@ -932,10 +932,15 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // place, map hugetlbfs in place, and copy it back, without modifying it during
     // the operation.
     auto bytes = nr_pages * page_size;
+    printf("2.2.4\n");
     auto old_mem = mem();
+    printf("2.2.5\n");
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
+    printf("2.2.6\n");
     std::memcpy(relocated_old_mem.get(), old_mem, bytes);
+    printf("2.2.7\n");
     alloc_sys_mem({old_mem}, bytes).release();
+    printf("2.2.8\n");
     std::memcpy(old_mem, relocated_old_mem.get(), bytes);
 }
 
@@ -1335,9 +1340,11 @@ void configure(std::vector<resource::memory> m, bool mbind,
         // std::function is copyable, but file_desc is not, so we must use
         // a shared_ptr to allow sys_alloc to be copied around
         auto fdp = make_lw_shared<file_desc>(file_desc::temporary(*hugetlbfs_path));
+        printf("2.2.1\n");
         sys_alloc = [fdp] (optional<void*> where, size_t how_much) {
             return allocate_hugetlbfs_memory(*fdp, where, how_much);
         };
+        printf("2.2.2\n");
         cpu_mem.replace_memory_backing(sys_alloc);
     }
     printf("2.3: %lu\n", total);

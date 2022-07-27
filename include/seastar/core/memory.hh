@@ -53,6 +53,7 @@ namespace seastar {
 namespace memory {
 
 /// \cond internal
+
 #ifdef SEASTAR_OVERRIDE_ALLOCATOR_PAGE_SIZE
 #define SEASTAR_INTERNAL_ALLOCATOR_PAGE_SIZE (SEASTAR_OVERRIDE_ALLOCATOR_PAGE_SIZE)
 #else

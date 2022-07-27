@@ -3914,6 +3914,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
             for (auto& dev_id : disk_config.device_ids()) {
                 alloc_io_queue(i, dev_id);
             }
+            printf("Reactors registered: %u\n", i);
             reactors_registered.wait();
             smp_queues_constructed.wait();
             start_all_queues();
@@ -3953,7 +3954,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         }
     }
 #endif
-    printf("Reactors registered\n");
+    printf("Reactors registered - final\n");
     reactors_registered.wait();
     smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};
     for(unsigned i = 0; i < smp::count; i++) {

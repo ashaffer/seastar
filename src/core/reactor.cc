@@ -3963,12 +3963,16 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
 #endif
     printf("7.6\n");
     reactors_registered.wait();
+    printf("7.6.1\n");
     smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};
+    printf("7.6.2\n");
     for(unsigned i = 0; i < smp::count; i++) {
         smp::_qs[i] = reinterpret_cast<smp_message_queue*>(operator new[] (sizeof(smp_message_queue) * smp::count));
+        printf("7.6.3\n");
         for (unsigned j = 0; j < smp::count; ++j) {
             new (&smp::_qs[i][j]) smp_message_queue(_reactors[j], _reactors[i]);
         }
+        printf("7.6.4\n");
     }
     printf("7.7\n");
     alien::smp::_qs = alien::smp::create_qs(_reactors);

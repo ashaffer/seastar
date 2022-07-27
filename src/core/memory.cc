@@ -1340,10 +1340,10 @@ void configure(std::vector<resource::memory> m, bool mbind,
         };
         cpu_mem.replace_memory_backing(sys_alloc);
     }
-
+    printf("2.3: %lu\n", total);
     cpu_mem.resize(total, sys_alloc);
     size_t pos = 0;
-    printf("2.3: %u\n", (uint)m.size());
+    printf("2.4: %u\n", (uint)m.size());
     for (auto&& x : m) {
 #ifdef SEASTAR_HAVE_NUMA
         unsigned long nodemask = 1UL << x.nodeid;

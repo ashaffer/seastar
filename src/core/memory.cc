@@ -980,12 +980,10 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
 
 void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) {
     new_size = align_down(new_size, huge_page_size);
-    printf("resize: %u (%lu, %lu)\n", nr_pages, page_size, new_size);
     while (nr_pages * page_size < new_size) {
         // don't reallocate all at once, since there might not
         // be enough free memory available to relocate the pages array
         auto tmp_size = std::min(new_size, 4 * nr_pages * page_size);
-        printf("doing resize: %u\n", (uint)new_size);
         do_resize(tmp_size, alloc_memory);
     }
 }
@@ -1350,11 +1348,12 @@ void configure(std::vector<resource::memory> m, bool mbind,
 #ifdef SEASTAR_HAVE_NUMA
         unsigned long nodemask = 1UL << x.nodeid;
         if (mbind) {
+            printf("pre-mbind: %u\n", (uint)x.bytes);
             auto r = ::mbind(cpu_mem.mem() + pos, x.bytes,
                             MPOL_PREFERRED,
                             &nodemask, std::numeric_limits<unsigned long>::digits,
                             MPOL_MF_MOVE);
-
+            printf("post-mbind\n");
             if (r == -1) {
                 char err[1000] = {};
                 strerror_r(errno, err, sizeof(err));

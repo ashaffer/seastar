@@ -976,7 +976,11 @@ void printConnid (Connid &connid, Inet &inet) {
     in_addr foreign;
     local.s_addr = htonl(connid.local_ip.ip);
     foreign.s_addr = htonl(connid.foreign_ip.ip);
-    printf("[tcp] %s:%u -> %s:%u (0x%x)\n", strdup(inet_ntoa(local)), connid.local_port, strdup(inet_ntoa(foreign)), connid.foreign_port, connid.hash(inet._inet.netif()->rss_conf()));
+    char *local_addr = strdup(inet_ntoa(local));
+    char *foreign_addr = strdup(inet_ntoa(foreign));
+    printf("[tcp] %s:%u -> %s:%u (0x%x)\n", local_addr, connid.local_port, foreign_addr, connid.foreign_port, connid.hash(inet._inet.netif()->rss_conf()));
+    free(local_addr);
+    free(foreign_addr);
 }
 
 template <typename InetTraits>

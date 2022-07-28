@@ -1725,11 +1725,11 @@ void dpdk_device::init_port_fini()
 {
     // Changing FC requires HW reset, so set it before the port is initialized.
     set_hw_flow_control();
-
+    printf("calling rte_eth_dev_start\n");
     if (rte_eth_dev_start(_port_idx) < 0) {
         rte_exit(EXIT_FAILURE, "Cannot start port %d\n", _port_idx);
     }
-
+    printf("post eth dev start\n");
     /* need to defer initialize xstats since NIC specific xstat entries
        show up only after port initization */
     _xstats.start();

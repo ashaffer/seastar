@@ -2130,12 +2130,22 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
     _rx_free_pkts.push_back(m);
     _num_rx_free_segs += m->nb_segs;
 
+    char *d = rte_pktmbuf_mtod(m, char *);
+    uint sz = rte_pktmbuf_data_len(m);
+    printf("Received packet: ");
+    for (uint i = 0; i < sz; i++) {
+        printf("%x ", d[i]);
+    }
+    printf("\n");
+
     if (!_dev->hw_features_ref().rx_lro || rte_pktmbuf_is_contiguous(m)) {
+        printf("from mbuf no lro\n");
         char* data = rte_pktmbuf_mtod(m, char*);
 
         return packet(fragment{data, rte_pktmbuf_data_len(m)},
                       make_free_deleter(data));
     } else {
+        printf("from mbuf lro\n");
         return from_mbuf_lro(m);
     }
 }
@@ -2206,6 +2216,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
     for (uint16_t i = 0; i < count; i++) {
         struct rte_mbuf *m = bufs[i];
         offload_info oi;
+
 
         compat::optional<packet> p = from_mbuf(m);
         p->setReceivedAt(receivedAt);

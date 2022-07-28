@@ -3822,13 +3822,13 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
     if (thread_affinity) {
         smp::pin(allocations[0].cpu_id);
     }
-
+    printf("memory configure\n");
     memory::configure(allocations[0].mem, mbind, hugepages_path);
 
     if (configuration.count("abort-on-seastar-bad-alloc")) {
         memory::enable_abort_on_allocation_failure();
     }
-
+    printf("1\n");
     bool heapprof_enabled = configuration.count("heapprof");
     memory::set_heap_profiling_enabled(heapprof_enabled);
 
@@ -3842,7 +3842,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         dpdk::eal::init(cpus, configuration);
     }
 #endif
-
+    printf("2\n");
     // Better to put it into the smp class, but at smp construction time
     // correct smp::count is not known.
     static boost::barrier reactors_registered(smp::count);

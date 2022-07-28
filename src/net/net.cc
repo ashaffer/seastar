@@ -351,10 +351,12 @@ uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
 
 future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
-    printf("dispatch_packet called\n");
+    printf("dispatch_packet called: %u\n", engine().cpu_id());
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
+        print("a\n");
         if (i != _proto_map.end()) {
+            print("b\n");
             l3_rx_stream& l3 = i->second;
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
@@ -371,8 +373,10 @@ future<> interface::dispatch_packet(packet p) {
             });
 
             if (fw != engine().cpu_id()) {
+                printf("hit wrong cpu: %u vs %u\n", fw, engine().cpu_id());
                 forward(fw, std::move(p));
             } else {
+                printf("hit right cpu: %u\n", engine().cpu_id());
                 auto h = ntoh(*eh);
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));

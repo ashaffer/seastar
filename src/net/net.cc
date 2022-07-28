@@ -256,6 +256,7 @@ l3_protocol::l3_protocol(interface* netif, eth_protocol_num proto_num, packet_pr
 subscription<packet, ethernet_address> l3_protocol::receive(
         std::function<future<> (packet p, ethernet_address from)> rx_fn,
         std::function<bool (forward_hash&, packet&, size_t)> forward) {
+    printf("registered l3\n");
     return _netif->register_l3(_proto_num, std::move(rx_fn), std::move(forward));
 };
 
@@ -354,7 +355,7 @@ future<> interface::dispatch_packet(packet p) {
     printf("dispatch_packet called: %u\n", engine().cpu_id());
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
-        print("a\n");
+        print("a: %u\n", eh->eth_proto);
         if (i != _proto_map.end()) {
             print("b\n");
             l3_rx_stream& l3 = i->second;

@@ -2012,6 +2012,7 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
             rte_eth_dev_socket_id(_dev->port_idx()), _dev->def_tx_conf()) < 0) {
         rte_exit(EXIT_FAILURE, "Cannot initialize tx queue\n");
     }
+    printf("post tx_queue_setup\n");
 
     // Register error statistics: Rx total and checksum errors
     namespace sm = seastar::metrics;

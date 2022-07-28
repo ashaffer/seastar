@@ -235,6 +235,7 @@ arp_for<L3>::lookup(const l3addr& paddr) {
         foreign.s_addr = htonl(paddr.ip);
         char *saddr = strdup(inet_ntoa(foreign));
         printf("ARP Querying: %s\n", saddr);
+        free(saddr);
         (void)send_query(paddr);
     }
 

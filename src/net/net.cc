@@ -256,7 +256,7 @@ l3_protocol::l3_protocol(interface* netif, eth_protocol_num proto_num, packet_pr
 subscription<packet, ethernet_address> l3_protocol::receive(
         std::function<future<> (packet p, ethernet_address from)> rx_fn,
         std::function<bool (forward_hash&, packet&, size_t)> forward) {
-    printf("registered l3\n");
+    printf("registered l3: %u\n", _proto_num);
     return _netif->register_l3(_proto_num, std::move(rx_fn), std::move(forward));
 };
 

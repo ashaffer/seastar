@@ -355,7 +355,7 @@ future<> interface::dispatch_packet(packet p) {
     printf("dispatch_packet called: %u\n", engine().cpu_id());
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
-        print("a: %u\n", eh->eth_proto);
+        print("a: %u\n", ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
             print("b\n");
             l3_rx_stream& l3 = i->second;

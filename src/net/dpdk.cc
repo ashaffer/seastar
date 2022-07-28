@@ -2001,13 +2001,13 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
                   "field!");
     static_assert((inline_mbuf_data_size & (inline_mbuf_data_size - 1)) == 0,
                   "inline_mbuf_data_size has to be a power of two!");
-
+    printf("pre rx_queue_setup\n");
     if (rte_eth_rx_queue_setup(_dev->port_idx(), _qid, default_ring_size,
             rte_eth_dev_socket_id(_dev->port_idx()),
             _dev->def_rx_conf(), _pktmbuf_pool_rx) < 0) {
         rte_exit(EXIT_FAILURE, "Cannot initialize rx queue\n");
     }
-
+    printf("pre tx_queue_setup\n");
     if (rte_eth_tx_queue_setup(_dev->port_idx(), _qid, default_ring_size,
             rte_eth_dev_socket_id(_dev->port_idx()), _dev->def_tx_conf()) < 0) {
         rte_exit(EXIT_FAILURE, "Cannot initialize tx queue\n");

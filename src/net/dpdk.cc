@@ -1883,10 +1883,11 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 
         rte_pktmbuf_pool_init(_pktmbuf_pool_rx, as_cookie(roomsz));
 
-        if (rte_mempool_populate_virt(_pktmbuf_pool_rx,
-                                      (char*)(_rx_xmem.get()), xmem_size,
-                                      page_size,
-                                      nullptr, nullptr) < 0) {
+        if (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0) {
+        // if (rte_mempool_populate_virt(_pktmbuf_pool_rx,
+        //                               (char*)(_rx_xmem.get()), xmem_size,
+        //                               page_size,
+        //                               nullptr, nullptr) < 0) {
             printf("Failed to populate mempool for Rx\n");
             exit(1);
         }
@@ -2176,14 +2177,6 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
         printf("%02x ", (uint8_t)d[i]);
     }
     printf("\n");
-
-    printf("Received packet (subbed): ");
-    d -= RTE_PKTMBUF_HEADROOM;
-    for (uint i = 0; i < sz; i++) {
-        printf("%2x ", (uint8_t)d[i]);
-    }
-    printf("\n");
-
 
     if (!_dev->hw_features_ref().rx_lro || rte_pktmbuf_is_contiguous(m)) {
         printf("from mbuf no lro\n");

@@ -2089,7 +2089,7 @@ dpdk_qp<false>::from_mbuf(rte_mbuf* m)
         uint sz = rte_pktmbuf_data_len(m);
         printf("Received packet: ");
         for (uint i = 0; i < sz; i++) {
-            printf("%1x ", (uint8_t)d[i]);
+            printf("%2x ", (uint8_t)d[i]);
         }
         printf("\n");
 
@@ -2141,7 +2141,7 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
     char *d = rte_pktmbuf_mtod(m, char *);
     uint sz = rte_pktmbuf_data_len(m);
     printf(
-        "Packet: 0x%x, 0x%x 0x%x 0x%lx 0x%x 0x%x 0x%x\n",
+        "Packet: 0x%x 0x%x 0x%x 0x%lx 0x%x 0x%x 0x%x\n",
         (uint)m->refcnt,
         (uint)m->nb_segs,
         (uint)m->port,
@@ -2150,9 +2150,12 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
         (uint)m->data_len,
         (uint)m->buf_len
     );
+    printf("Types: 0x%2x 0x%2x 0x%2x\n", (uint)m->l2_type, (uint)m->l3_type, (uint)m->l4_type);
+    printf("Next: 0x%lx\n", (uint64_t)m->next);
+
     printf("Received packet: ");
     for (uint i = 0; i < sz; i++) {
-        printf("%1x ", (uint8_t)d[i]);
+        printf("%2x ", (uint8_t)d[i]);
     }
     printf("\n");
 

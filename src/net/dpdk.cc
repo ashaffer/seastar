@@ -2150,7 +2150,7 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
         (uint)m->data_len,
         (uint)m->buf_len
     );
-    printf("Types: 0x%2x 0x%2x 0x%2x\n", (uint)m->l2_type, (uint)m->l3_type, (uint)type);
+    printf("Types: 0x%2x 0x%2x 0x%2x\n", (uint)m->l2_type, (uint)m->l3_type, (uint)m->l4_type);
     printf("Next: 0x%lx\n", (uint64_t)m->next);
 
     printf("Received packet: ");

@@ -1854,73 +1854,73 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
     // memory for DPDK pools and this way significantly reduce the memory needed
     // for the DPDK in this case.
     //
-    // if (HugetlbfsMemBackend) {
-    //     size_t xmem_size;
+    if (HugetlbfsMemBackend) {
+        size_t xmem_size;
 
-    //     _rx_xmem.reset(alloc_mempool_xmem(mbufs_per_queue_rx, mbuf_overhead,
-    //                                       xmem_size));
-    //     if (!_rx_xmem.get()) {
-    //         printf("Can't allocate a memory for Rx buffers\n");
-    //         return false;
-    //     }
+        _rx_xmem.reset(alloc_mempool_xmem(mbufs_per_queue_rx, mbuf_overhead,
+                                          xmem_size));
+        if (!_rx_xmem.get()) {
+            printf("Can't allocate a memory for Rx buffers\n");
+            return false;
+        }
 
-    //     //
-    //     // Don't pass single-producer/single-consumer flags to mbuf create as it
-    //     // seems faster to use a cache instead.
-    //     //
-    //     struct rte_pktmbuf_pool_private roomsz = {};
-    //     roomsz.mbuf_data_room_size = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
-    //     _pktmbuf_pool_rx =
-    //         rte_mempool_create_empty(name.c_str(),
-    //                                  mbufs_per_queue_rx, mbuf_overhead,
-    //                                  mbuf_cache_size,
-    //                                  sizeof(struct rte_pktmbuf_pool_private),
-    //                                  rte_socket_id(), 0);
-    //     if (!_pktmbuf_pool_rx) {
-    //         printf("Failed to create mempool for Rx\n");
-    //         exit(1);
-    //     }
+        //
+        // Don't pass single-producer/single-consumer flags to mbuf create as it
+        // seems faster to use a cache instead.
+        //
+        struct rte_pktmbuf_pool_private roomsz = {};
+        roomsz.mbuf_data_room_size = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
+        _pktmbuf_pool_rx =
+            rte_mempool_create_empty(name.c_str(),
+                                     mbufs_per_queue_rx, mbuf_overhead,
+                                     mbuf_cache_size,
+                                     sizeof(struct rte_pktmbuf_pool_private),
+                                     rte_socket_id(), 0);
+        if (!_pktmbuf_pool_rx) {
+            printf("Failed to create mempool for Rx\n");
+            exit(1);
+        }
 
-    //     rte_pktmbuf_pool_init(_pktmbuf_pool_rx, as_cookie(roomsz));
+        rte_pktmbuf_pool_init(_pktmbuf_pool_rx, as_cookie(roomsz));
 
-    //     if (rte_mempool_populate_virt(_pktmbuf_pool_rx,
-    //                                   (char*)(_rx_xmem.get()), xmem_size,
-    //                                   page_size,
-    //                                   nullptr, nullptr) < 0) {
-    //         printf("Failed to populate mempool for Rx\n");
-    //         exit(1);
-    //     }
+        if (rte_mempool_populate_virt(_pktmbuf_pool_rx,
+                                      (char*)(_rx_xmem.get()), xmem_size,
+                                      page_size,
+                                      nullptr, nullptr) < 0) {
+            printf("Failed to populate mempool for Rx\n");
+            exit(1);
+        }
 
-    //     rte_mempool_obj_iter(_pktmbuf_pool_rx, rte_pktmbuf_init, nullptr);
+        rte_mempool_obj_iter(_pktmbuf_pool_rx, rte_pktmbuf_init, nullptr);
 
-    //     // reserve the memory for Rx buffers containers
-    //     _rx_free_pkts.reserve(mbufs_per_queue_rx);
-    //     _rx_free_bufs.reserve(mbufs_per_queue_rx);
+        // reserve the memory for Rx buffers containers
+        _rx_free_pkts.reserve(mbufs_per_queue_rx);
+        _rx_free_bufs.reserve(mbufs_per_queue_rx);
 
-    //     //
-    //     // 1) Pull all entries from the pool.
-    //     // 2) Bind data buffers to each of them.
-    //     // 3) Return them back to the pool.
-    //     //
-    //     for (int i = 0; i < mbufs_per_queue_rx; i++) {
-    //         rte_mbuf* m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
-    //         assert(m);
-    //         _rx_free_bufs.push_back(m);
-    //     }
+        //
+        // 1) Pull all entries from the pool.
+        // 2) Bind data buffers to each of them.
+        // 3) Return them back to the pool.
+        //
+        for (int i = 0; i < mbufs_per_queue_rx; i++) {
+            rte_mbuf* m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
+            assert(m);
+            _rx_free_bufs.push_back(m);
+        }
 
-    //     for (auto&& m : _rx_free_bufs) {
-    //         if (!init_noninline_rx_mbuf(m)) {
-    //             printf("Failed to allocate data buffers for Rx ring. "
-    //                    "Consider increasing the amount of memory.\n");
-    //             exit(1);
-    //         }
-    //     }
+        for (auto&& m : _rx_free_bufs) {
+            if (!init_noninline_rx_mbuf(m)) {
+                printf("Failed to allocate data buffers for Rx ring. "
+                       "Consider increasing the amount of memory.\n");
+                exit(1);
+            }
+        }
 
-    //     rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
-    //                          _rx_free_bufs.size());
+        rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
+                             _rx_free_bufs.size());
 
-    //     _rx_free_bufs.clear();
-    // } else {
+        _rx_free_bufs.clear();
+    } else {
         struct rte_pktmbuf_pool_private roomsz = {};
         roomsz.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
         _pktmbuf_pool_rx =
@@ -1931,7 +1931,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                                rte_pktmbuf_pool_init, as_cookie(roomsz),
                                rte_pktmbuf_init, nullptr,
                                rte_socket_id(), 0);
-    // }
+    }
 
     return _pktmbuf_pool_rx != nullptr;
 }
@@ -2176,6 +2176,14 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
         printf("%02x ", (uint8_t)d[i]);
     }
     printf("\n");
+
+    printf("Received packet (subbed): ");
+    d -= RTE_PKTMBUF_HEADROOM;
+    for (uint i = 0; i < sz; i++) {
+        printf("%2x ", (uint8_t)d[i]);
+    }
+    printf("\n");
+
 
     if (!_dev->hw_features_ref().rx_lro || rte_pktmbuf_is_contiguous(m)) {
         printf("from mbuf no lro\n");

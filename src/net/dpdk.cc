@@ -1243,9 +1243,7 @@ public:
     virtual future<> send(packet p) override {
         abort();
     }
-    virtual ~dpdk_qp() {
-        printf("dpdk_qp destructor called\n");
-    }
+    virtual ~dpdk_qp() { }
 
     virtual uint32_t send(circular_buffer<packet>& pb) override {
         if (HugetlbfsMemBackend) {
@@ -2152,12 +2150,12 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
         (uint)m->data_len,
         (uint)m->buf_len
     );
-    printf("Types: 0x%2x 0x%2x 0x%2x\n", (uint)m->l2_type, (uint)m->l3_type, (uint)m->l4_type);
+    printf("Types: 0x%02x 0x%02x 0x%02x\n", (uint)m->l2_type, (uint)m->l3_type, (uint)m->l4_type);
     printf("Next: 0x%lx\n", (uint64_t)m->next);
 
     printf("Received packet: ");
     for (uint i = 0; i < sz; i++) {
-        printf("%2x ", (uint8_t)d[i]);
+        printf("%02x ", (uint8_t)d[i]);
     }
     printf("\n");
 

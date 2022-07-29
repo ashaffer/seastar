@@ -1883,11 +1883,11 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 
         rte_pktmbuf_pool_init(_pktmbuf_pool_rx, as_cookie(roomsz));
 
-        if (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0) {
-        // if (rte_mempool_populate_virt(_pktmbuf_pool_rx,
-        //                               (char*)(_rx_xmem.get()), xmem_size,
-        //                               page_size,
-        //                               nullptr, nullptr) < 0) {
+        // if (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0) {
+        if (rte_mempool_populate_virt(_pktmbuf_pool_rx,
+                                      (char*)(_rx_xmem.get()), xmem_size,
+                                      page_size,
+                                      nullptr, nullptr) < 0) {
             printf("Failed to populate mempool for Rx\n");
             exit(1);
         }

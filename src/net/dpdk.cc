@@ -1917,8 +1917,8 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             }
         }
 
-        // rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
-        //                      _rx_free_bufs.size());
+        rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
+                             _rx_free_bufs.size());
 
         _rx_free_bufs.clear();
     } else {

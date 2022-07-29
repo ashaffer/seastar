@@ -794,7 +794,7 @@ build_mbuf_cluster:
             for (uint i = 0; i < p.nr_frags(); i++) {
                 struct fragment f = p.frag(i);
                 for (uint j = 0; j < f.size; j++) {
-                    printf("%02x ", f.base[j]);
+                    printf("%02x ", (uint8_t)f.base[j]);
                 }
             }
             printf("\n");

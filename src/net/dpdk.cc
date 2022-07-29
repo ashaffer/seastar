@@ -1243,7 +1243,9 @@ public:
     virtual future<> send(packet p) override {
         abort();
     }
-    virtual ~dpdk_qp() {}
+    virtual ~dpdk_qp() {
+        printf("dpdk_qp destructor called\n");
+    }
 
     virtual uint32_t send(circular_buffer<packet>& pb) override {
         if (HugetlbfsMemBackend) {

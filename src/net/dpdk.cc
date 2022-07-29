@@ -667,6 +667,15 @@ build_mbuf_cluster:
             rte_mbuf *head = nullptr, *last_seg = nullptr;
             unsigned nsegs = 0;
 
+            printf("Sending packet (zc, %u, %u): ", p.nr_frags(), p.len());
+            for (uint i = 0; i < p.nr_frags(); i++) {
+                struct fragment f = p.frag(i);
+                for (uint j = 0; j < f.size; j++) {
+                    printf("%02x ", (uint8_t)(f.base[j] & 0xFF));
+                }
+            }
+            printf("\n");
+
             // Create a HEAD of the fragmented packet
             if (!translate_one_frag(qp, p.frag(0), head, last_seg, nsegs)) {
                 return nullptr;
@@ -674,19 +683,11 @@ build_mbuf_cluster:
 
             unsigned total_nsegs = nsegs;
 
-            printf("Sending packet (zc): ");
             for (unsigned i = 1; i < p.nr_frags(); i++) {
                 rte_mbuf *h = nullptr, *new_last_seg = nullptr;
                 if (!translate_one_frag(qp, p.frag(i), h, new_last_seg, nsegs)) {
                     me(head)->recycle();
-                    printf("returning nullptr\n");
                     return nullptr;
-                }
-
-                struct fragment f = p.frag(i);
-                printf("frag %u, %lu\n", i, f.size);
-                for (uint j = 0; j < f.size; j++) {
-                    printf("%02x ", (uint8_t)f.base[j]);
                 }
 
                 total_nsegs += nsegs;
@@ -695,7 +696,6 @@ build_mbuf_cluster:
                 last_seg->next = h;
                 last_seg = new_last_seg;
             }
-            printf("\n");
 
             // Update the HEAD buffer with the packet info
             head->pkt_len = p.len();

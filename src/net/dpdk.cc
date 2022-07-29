@@ -2085,6 +2085,14 @@ dpdk_qp<false>::from_mbuf(rte_mbuf* m)
         auto len = rte_pktmbuf_data_len(m);
         char* buf = (char*)malloc(len);
 
+        char *d = rte_pktmbuf_mtod(m, char *);
+        uint sz = rte_pktmbuf_data_len(m);
+        printf("Received packet: ");
+        for (uint i = 0; i < sz; i++) {
+            printf("%1x ", d[i]);
+        }
+        printf("\n");
+
         if (!buf) {
             // Drop if allocation failed
             rte_pktmbuf_free(m);

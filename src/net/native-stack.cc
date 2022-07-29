@@ -134,6 +134,11 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     printf("setting local queue\n");
                     sdev->set_local_queue(std::move(qp), qid);
                     printf("post set local\n");
+                    int64_t free = memory::stats().free_memory();
+                    int64_t total = memory::stats().total_memory();
+                    int64_t allocated = memory::stats().allocated_memory();
+                    double per_used = ((total - free) / total) * 100;
+                    printf("\t%u: %ld, %ld, %ld (%.2f%% used - free/total/allocated)\n", engine().cpu_id(), free, total, allocated, per_used);
                 } else {
                     auto master_qid = qid % sdev->hw_queues_count();
                     auto master_cpuid = sdev->qid2cpuid(master_qid);

@@ -2089,7 +2089,7 @@ dpdk_qp<false>::from_mbuf(rte_mbuf* m)
         uint sz = rte_pktmbuf_data_len(m);
         printf("Received packet: ");
         for (uint i = 0; i < sz; i++) {
-            printf("%1x ", d[i]);
+            printf("%1x ", (uint8_t)d[i]);
         }
         printf("\n");
 
@@ -2142,7 +2142,7 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
     uint sz = rte_pktmbuf_data_len(m);
     printf("Received packet: ");
     for (uint i = 0; i < sz; i++) {
-        printf("%1x ", d[i]);
+        printf("%1x ", (uint8_t)d[i]);
     }
     printf("\n");
 

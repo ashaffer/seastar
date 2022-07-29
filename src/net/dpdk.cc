@@ -2362,6 +2362,7 @@ std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variab
     // FIXME: future is discarded
     (void)smp::submit_to(_home_cpu, [this] () mutable {
         if (++_queues_ready == _num_queues) {
+            printf("calling init_port_fini\n");
             init_port_fini();
         }
     });

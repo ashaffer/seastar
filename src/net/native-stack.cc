@@ -140,6 +140,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     double per_used = ((total - free) / total) * 100;
                     printf("\t%u: %ld, %ld, %ld (%.2f%% used - free/total/allocated)\n", engine().cpu_id(), free, total, allocated, per_used);
                 } else {
+                    printf("native stack else case\n");
                     auto master_qid = qid % sdev->hw_queues_count();
                     auto master_cpuid = sdev->qid2cpuid(master_qid);
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);

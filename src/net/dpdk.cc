@@ -2140,6 +2140,16 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
 
     char *d = rte_pktmbuf_mtod(m, char *);
     uint sz = rte_pktmbuf_data_len(m);
+    printf(
+        "Packet: 0x%x, 0x%x 0x%x 0x%lx 0x%x 0x%x 0x%x\n",
+        (uint)m->refcnt,
+        (uint)m->nb_segs,
+        (uint)m->port,
+        m->ol_flags,
+        (uint)m->pkt_len,
+        (uint)m->data_len,
+        (uint)m->buf_len
+    );
     printf("Received packet: ");
     for (uint i = 0; i < sz; i++) {
         printf("%1x ", (uint8_t)d[i]);

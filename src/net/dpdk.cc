@@ -679,10 +679,12 @@ build_mbuf_cluster:
                 rte_mbuf *h = nullptr, *new_last_seg = nullptr;
                 if (!translate_one_frag(qp, p.frag(i), h, new_last_seg, nsegs)) {
                     me(head)->recycle();
+                    printf("returning nullptr\n");
                     return nullptr;
                 }
 
                 struct fragment f = p.frag(i);
+                printf("frag %u, %lu\n", i, f.size);
                 for (uint j = 0; j < f.size; i++) {
                     printf("%02x ", (uint8_t)f.base[j]);
                 }

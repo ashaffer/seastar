@@ -1895,8 +1895,8 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         rte_mempool_obj_iter(_pktmbuf_pool_rx, rte_pktmbuf_init, nullptr);
 
         // reserve the memory for Rx buffers containers
-        // _rx_free_pkts.reserve(mbufs_per_queue_rx);
-        // _rx_free_bufs.reserve(mbufs_per_queue_rx);
+        _rx_free_pkts.reserve(mbufs_per_queue_rx);
+        _rx_free_bufs.reserve(mbufs_per_queue_rx);
 
 
         // 1) Pull all entries from the pool.
@@ -1920,7 +1920,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         // rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
         //                      _rx_free_bufs.size());
 
-        // _rx_free_bufs.clear();
+        _rx_free_bufs.clear();
     } else {
         struct rte_pktmbuf_pool_private roomsz = {};
         roomsz.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;

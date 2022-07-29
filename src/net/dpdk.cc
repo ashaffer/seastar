@@ -790,6 +790,15 @@ build_mbuf_cluster:
                 return nullptr;
             }
 
+            printf("Sending packet: ");
+            for (uint i = 0; i < p.nr_frags(); i++) {
+                struct fragment f = p.frag(i);
+                for (uint j = 0; j < f.size; j++) {
+                    printf("%02x ", f.base[j]);
+                }
+            }
+            printf("\n");
+
             /*
              * Here we are going to use the fact that the inline data size is a
              * power of two.

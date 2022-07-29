@@ -674,11 +674,17 @@ build_mbuf_cluster:
 
             unsigned total_nsegs = nsegs;
 
+            printf("Sending packet: ");
             for (unsigned i = 1; i < p.nr_frags(); i++) {
                 rte_mbuf *h = nullptr, *new_last_seg = nullptr;
                 if (!translate_one_frag(qp, p.frag(i), h, new_last_seg, nsegs)) {
                     me(head)->recycle();
                     return nullptr;
+                }
+
+                struct fragment f = p.frag(i);
+                for (uint j = 0; j < f.size; i++) {
+                    printf("%02x ", (uint8_t)f.base[j]);
                 }
 
                 total_nsegs += nsegs;
@@ -687,6 +693,7 @@ build_mbuf_cluster:
                 last_seg->next = h;
                 last_seg = new_last_seg;
             }
+            printf("\n");
 
             // Update the HEAD buffer with the packet info
             head->pkt_len = p.len();

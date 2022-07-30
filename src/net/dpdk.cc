@@ -1903,11 +1903,11 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         // 2) Bind data buffers to each of them.
         // 3) Return them back to the pool.
 
-        // for (int i = 0; i < mbufs_per_queue_rx; i++) {
-        //     rte_mbuf* m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
-        //     assert(m);
-            // _rx_free_bufs.push_back(m);
-        // }
+        for (int i = 0; i < 2; i++) {
+            rte_mbuf* m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
+            assert(m);
+            _rx_free_bufs.push_back(m);
+        }
 
         for (auto&& m : _rx_free_bufs) {
             if (!init_noninline_rx_mbuf(m)) {

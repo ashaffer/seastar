@@ -1909,16 +1909,18 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             _rx_free_bufs.push_back(m);
         }
 
-        // for (auto&& m : _rx_free_bufs) {
-        //     if (!init_noninline_rx_mbuf(m)) {
-        //         printf("Failed to allocate data buffers for Rx ring. "
-        //                "Consider increasing the amount of memory.\n");
-        //         exit(1);
-        //     }
-        // }
+        for (auto&& m : _rx_free_bufs) {
+            if (!init_noninline_rx_mbuf(m)) {
+                printf("Failed to allocate data buffers for Rx ring. "
+                       "Consider increasing the amount of memory.\n");
+                exit(1);
+            }
+        }
 
-        // rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
-        //                      _rx_free_bufs.size());
+        rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
+                             _rx_free_bufs.size());
+
+        printf("init_rx_mbuf_pool: 0x%lx, 0x%lx\n", (uint64_t)_rx_free_bufs.data(), (uint64_t)_pktmbuf_pool_rx);
 
         _rx_free_bufs.clear();
     } else {

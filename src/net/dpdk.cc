@@ -1922,9 +1922,9 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
         mbuf = _rx_free_bufs[1];
         printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
-        mbuf = _rx_free_bufs[mbufs_per_queue - 2];
+        mbuf = _rx_free_bufs[mbufs_per_queue_rx - 2];
         printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
-        mbuf = _rx_free_bufs[mbufs_per_queue - 1];
+        mbuf = _rx_free_bufs[mbufs_per_queue_rx - 1];
         printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
 
         rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),

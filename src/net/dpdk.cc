@@ -1888,7 +1888,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         int rc = rte_mempool_populate_virt(_pktmbuf_pool_rx,
                                       (char*)(_rx_xmem.get()), xmem_size,
                                       huge_page_size,
-                                      nullptr, nullptr)
+                                      nullptr, nullptr);
         if (rc < 0) {
             printf("Failed to populate mempool for Rx: %d\n", rc);
             exit(1);

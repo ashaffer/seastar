@@ -1137,7 +1137,7 @@ build_mbuf_cluster:
                     rte_pktmbuf_pool_init(_pool, nullptr);
 
                     if (rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
-                                                  xmem_size, huge_page_size,
+                                                  xmem_size, page_size,
                                                   nullptr, nullptr) <= 0) {
                         printf("Failed to populate mempool for Tx\n");
                         exit(1);
@@ -1830,9 +1830,9 @@ void* dpdk_qp<HugetlbfsMemBackend>::alloc_mempool_xmem(
 
     // Aligning to 2M causes the further failure in small allocations.
     // TODO: Check why - and fix.
-    if (posix_memalign((void**)&xmem, huge_page_size, xmem_size)) {
+    if (posix_memalign((void**)&xmem, page_size, xmem_size)) {
         printf("Can't allocate %ld bytes aligned to %ld\n",
-               xmem_size, huge_page_size);
+               xmem_size, page_size);
         return nullptr;
     }
 
@@ -1885,12 +1885,11 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 
         // if (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0) {
         printf("setting page size: 0x%lx\n", page_size);
-        int rc = rte_mempool_populate_virt(_pktmbuf_pool_rx,
+        if (rte_mempool_populate_virt(_pktmbuf_pool_rx,
                                       (char*)(_rx_xmem.get()), xmem_size,
-                                      huge_page_size,
-                                      nullptr, nullptr);
-        if (rc < 0) {
-            printf("Failed to populate mempool for Rx: %d\n", rc);
+                                      page_size,
+                                      nullptr, nullptr) < 0) {
+            printf("Failed to populate mempool for Rx\n");
             exit(1);
         }
 
@@ -1907,9 +1906,6 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 
         for (int i = 0; i < mbufs_per_queue_rx; i++) {
             rte_mbuf* m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
-            if (i < 2 || i > mbufs_per_queue_rx - 3) {
-                printf("Allocated mbuf %d: 0x%lx\n", i, (uint64_t)m);
-            }
             assert(m);
             _rx_free_bufs.push_back(m);
         }
@@ -1921,6 +1917,11 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                 exit(1);
             }
         }
+
+        auto *mbuf = _rx_free_bufs[0];
+        printf("Allocated mbuf %d: 0x%lx (0x%lx, 0x%lx)\n", i, (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
+        auto *mbuf = _rx_free_bufs[1];
+        printf("Allocated mbuf %d: 0x%lx (0x%lx, 0x%lx)\n", i, (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
 
         rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
                              _rx_free_bufs.size());

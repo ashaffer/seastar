@@ -1137,7 +1137,7 @@ build_mbuf_cluster:
                     rte_pktmbuf_pool_init(_pool, nullptr);
 
                     if (rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
-                                                  xmem_size, page_size,
+                                                  xmem_size, huge_page_size,
                                                   nullptr, nullptr) <= 0) {
                         printf("Failed to populate mempool for Tx\n");
                         exit(1);
@@ -1830,9 +1830,9 @@ void* dpdk_qp<HugetlbfsMemBackend>::alloc_mempool_xmem(
 
     // Aligning to 2M causes the further failure in small allocations.
     // TODO: Check why - and fix.
-    if (posix_memalign((void**)&xmem, page_size, xmem_size)) {
+    if (posix_memalign((void**)&xmem, huge_page_size, xmem_size)) {
         printf("Can't allocate %ld bytes aligned to %ld\n",
-               xmem_size, page_size);
+               xmem_size, huge_page_size);
         return nullptr;
     }
 

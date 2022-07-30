@@ -1918,14 +1918,18 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             }
         }
 
-        auto *mbuf = _rx_free_bufs[0];
-        printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
-        mbuf = _rx_free_bufs[1];
-        printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
-        mbuf = _rx_free_bufs[mbufs_per_queue_rx - 2];
-        printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
-        mbuf = _rx_free_bufs[mbufs_per_queue_rx - 1];
-        printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
+        if (engine().cpu_id() == 0) {
+            for (int i = 0; i < mbufs_per_queue_rx / 2; i++<>) {
+                auto *mbuf = _rx_free_bufs[i];
+                printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
+            }
+        }
+        // mbuf = _rx_free_bufs[1];
+        // printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
+        // mbuf = _rx_free_bufs[mbufs_per_queue_rx - 2];
+        // printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
+        // mbuf = _rx_free_bufs[mbufs_per_queue_rx - 1];
+        // printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
 
         rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
                              _rx_free_bufs.size());

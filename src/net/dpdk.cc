@@ -1923,7 +1923,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                 auto *mbuf = _rx_free_bufs[i];
                 printf("Allocated mbuf 0x%lx (0x%lx, 0x%lx):", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
                 for (int j = 0; j < 10; j++) {
-                    printf(" %02x", mbuf->buf_addr[j]);
+                    printf(" %02x", (uint8_t)mbuf->buf_addr[j]);
                 }
                 printf("\n");
             }

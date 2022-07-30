@@ -1872,7 +1872,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         roomsz.mbuf_data_room_size = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
         _pktmbuf_pool_rx =
             rte_mempool_create_empty(name.c_str(),
-                                     mbufs_per_queue_rx, mbuf_overhead,
+                                     mbufs_per_queue_rx, inline_mbuf_size,//mbuf_overhead,
                                      mbuf_cache_size,
                                      sizeof(struct rte_pktmbuf_pool_private),
                                      rte_socket_id(), 0);
@@ -1885,6 +1885,11 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 
         if (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0) {
         printf("setting page size: 0x%lx\n", page_size);
+        // if (rte_mempool_populate_iova(_pktmbuf_pool_rx,
+        //                       (char*)(_rx_xmem.get()), xmem_size,
+        //                       page_size,
+        //                       nullptr, nullptr) < 0) {
+
         // if (rte_mempool_populate_virt(_pktmbuf_pool_rx,
         //                               (char*)(_rx_xmem.get()), xmem_size,
         //                               page_size,
@@ -1910,13 +1915,13 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             _rx_free_bufs.push_back(m);
         }
 
-        for (auto&& m : _rx_free_bufs) {
-            if (!init_noninline_rx_mbuf(m)) {
-                printf("Failed to allocate data buffers for Rx ring. "
-                       "Consider increasing the amount of memory.\n");
-                exit(1);
-            }
-        }
+        // for (auto&& m : _rx_free_bufs) {
+        //     if (!init_noninline_rx_mbuf(m)) {
+        //         printf("Failed to allocate data buffers for Rx ring. "
+        //                "Consider increasing the amount of memory.\n");
+        //         exit(1);
+        //     }
+        // }
 
         // if (engine().cpu_id() == 0) {
         //     for (int i = 0; i < mbufs_per_queue_rx / 2; i++) {

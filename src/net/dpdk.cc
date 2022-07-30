@@ -1928,7 +1928,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         //         printf("\n");
         //     }
         // }
-        mbuf = _rx_free_bufs[768];
+        struct rte_mbuf *mbuf = _rx_free_bufs[768];
         printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
         // mbuf = _rx_free_bufs[mbufs_per_queue_rx - 2];
         // printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);

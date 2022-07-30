@@ -1918,10 +1918,10 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             }
         }
 
-        auto *mbuf2 = _rx_free_bufs[0];
-        printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf2, (uint64_t)mbuf2->buf_addr, mbuf2->buf_iova);
-        auto *mbuf2 = _rx_free_bufs[1];
-        printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf2, (uint64_t)mbuf2->buf_addr, mbuf2->buf_iova);
+        auto *mbuf = _rx_free_bufs[0];
+        printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
+        mbuf = _rx_free_bufs[1];
+        printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
 
         rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
                              _rx_free_bufs.size());

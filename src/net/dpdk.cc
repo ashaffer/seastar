@@ -2154,6 +2154,8 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
         }
     }
 
+    _rx_free_bufs.clear();
+
     static_assert(offsetof(class tx_buf, private_end) -
                   offsetof(class tx_buf, private_start) <= RTE_PKTMBUF_HEADROOM,
                   "RTE_PKTMBUF_HEADROOM is less than dpdk_qp::tx_buf size! "

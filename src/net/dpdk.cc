@@ -2007,7 +2007,9 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         }
 
         // rte_rwlock_write_lock(RTE_EAL_MEMPOOL_RWLOCK);
-        const struct rte_memzone *mz = rte_memzone_reserve("testing123", _rx_free_bufs.size() * mbuf_data_size, rte_socket_id(), RTE_MEMZONE_1GB|RTE_MEMZONE_SIZE_HINT_ONLY);
+        char mzname[32] = {0};
+        sprintf(mzname, "testing%u", engine().cpu_id());
+        const struct rte_memzone *mz = rte_memzone_reserve(mzname, _rx_free_bufs.size() * mbuf_data_size, rte_socket_id(), RTE_MEMZONE_1GB|RTE_MEMZONE_SIZE_HINT_ONLY);
         // rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
 
         if (mz == NULL) {

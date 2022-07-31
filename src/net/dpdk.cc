@@ -1885,15 +1885,15 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 
         // int rc = (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0);
         printf("rx mbuf pool: 0x%lx\n", (uint64_t)_pktmbuf_pool_rx);
-        // int rc = rte_mempool_populate_iova(_pktmbuf_pool_rx,
-        //                       (char*)(_rx_xmem.get()), xmem_size,
-        //                       huge_page_size,
-        //                       nullptr, nullptr) < 0);
+        int rc = rte_mempool_populate_iova(_pktmbuf_pool_rx,
+                              (char*)(_rx_xmem.get()), xmem_size,
+                              huge_page_size,
+                              nullptr, nullptr);
 
-        int rc = rte_mempool_populate_virt(_pktmbuf_pool_rx,
-                                      (char*)(_rx_xmem.get()), xmem_size,
-                                      huge_page_size,
-                                      nullptr, nullptr);
+        // int rc = rte_mempool_populate_virt(_pktmbuf_pool_rx,
+        //                               (char*)(_rx_xmem.get()), xmem_size,
+        //                               huge_page_size,
+        //                               nullptr, nullptr);
         if (rc < 0) {
             printf("Failed to populate mempool for Rx: %d\n", rc);
             exit(1);

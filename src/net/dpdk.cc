@@ -2010,8 +2010,10 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         // rte_rwlock_write_lock(RTE_EAL_MEMPOOL_RWLOCK);
         // char mzname[32] = {0};
         // sprintf(mzname, "testing%u", engine().cpu_id());
-        // uint32_t len = _rx_free_bufs.size() * mbuf_data_size;
-        // void *addr = rte_zmalloc(NULL, len, 0);
+        uint32_t len = _rx_free_bufs.size() * mbuf_data_size;
+        void *addr = rte_zmalloc(NULL, len, 0);
+        printf("dma mapping zmalloc\n");
+        rte_vfio_dma_map(addr, rte_mem_virt2iova(addr), len);
         // void *addr = malloc(len);
         // rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
 

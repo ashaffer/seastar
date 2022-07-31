@@ -1904,7 +1904,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         struct rte_pktmbuf_pool_private roomsz2 = {};
         roomsz2.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
         rte_mempool *_pktmbuf_pool_rx2 =
-            rte_mempool_create(name.c_str(),
+            rte_mempool_create((name + "_2").c_str(),
                                mbufs_per_queue_rx, inline_mbuf_size,
                                mbuf_cache_size,
                                sizeof(struct rte_pktmbuf_pool_private),

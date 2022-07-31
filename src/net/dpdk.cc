@@ -2045,7 +2045,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             }
             if (m->buf_iova != paddr) {
                 printf("\tPaddr mismatch: 0x%lx vs 0x%lx (0x%lx)\n", (uint64_t)m->buf_iova, (uint64_t)paddr, (uint64_t)rte_mem_virt2iova(m->buf_addr));
-                // m->buf_iova = paddr;
+                m->buf_iova = paddr;
             }
         }
 

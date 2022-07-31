@@ -2155,9 +2155,9 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
         rte_exit(EXIT_FAILURE, "Cannot initialize mbuf pools\n");
     }
     printf("post init_rx_mbuf_pool\n");
-    // if (HugetlbfsMemBackend && !map_dma()) {
-    //     rte_exit(EXIT_FAILURE, "Cannot map DMA\n");
-    // }
+    if (HugetlbfsMemBackend && !map_dma()) {
+        rte_exit(EXIT_FAILURE, "Cannot map DMA\n");
+    }
 
     printf("post map_dma\n");
     for (auto&& m : _rx_free_bufs) {

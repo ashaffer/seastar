@@ -1919,7 +1919,8 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         printf("here\n");
         for (int i = 0; i < mbufs_per_queue_rx; i++) {
             rte_mbuf *m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
-            rte_mbuf *m2 = rte_pktmbuf_alloc(_pktmbuf_pool_rx2);
+            rte_mbuf *m2 = NULL;
+            rte_mempool_get(_pktmbuf_pool_rx2, (void **)&m2);
             assert(m);
             assert(m2);
             m->buf_addr = m2->buf_addr;

@@ -2006,12 +2006,18 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             _rx_free_bufs.push_back(m);
         }
 
+        const struct rte_memzone *mz = rte_memzone_reserve("testing123", _rx_free_bufs.size() * mbuf_data_size, rte_socket_id(), 0);
+        char *ptr = (char *)mz->addr;
         for (auto&& m : _rx_free_bufs) {
             if (!init_noninline_rx_mbuf(m)) {
                 printf("Failed to allocate data buffers for Rx ring. "
                        "Consider increasing the amount of memory.\n");
                 exit(1);
             }
+
+            m->buf_addr = (void *)ptr;
+            m->buf_iova = rte_mem_virt2iova(m->buf_addr);
+            ptr += mbuf_data_size;
 
             uintptr_t paddr;
             int rc = virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);

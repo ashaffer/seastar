@@ -2026,12 +2026,16 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                 exit(1);
             }
 
+            int rc = rte_vfio_dma_map((uint64_t)m->buf_addr, m->buf_iova, mbuf_data_size);
+            if (rc != 0) {
+                printf("mbuf vfio_dma_map failed: %d\n", rc);
+            }
             // m->buf_addr = (void *)ptr;
             // m->buf_iova = rte_mem_virt2iova(m->buf_addr);
             // ptr += mbuf_data_size;
 
             uintptr_t paddr;
-            int rc = virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
+            rc = virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
             if (rc != 0) {
                 printf("Error converting virt to phys\n");
             }

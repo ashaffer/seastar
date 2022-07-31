@@ -1884,16 +1884,12 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         rte_pktmbuf_pool_init(_pktmbuf_pool_rx, as_cookie(roomsz));
 
         // int rc = (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0);
-        printf("rx mbuf pool: 0x%lx\n", (uint64_t)_pktmbuf_pool_rx);
-        int rc = rte_mempool_populate_iova(_pktmbuf_pool_rx,
-                              (char*)(_rx_xmem.get()), (char *)(rte_mem_virt2iova(_rx_xmem.get())), xmem_size,
-                              huge_page_size,
-                              nullptr, nullptr);
+        // printf("rx mbuf pool: 0x%lx\n", (uint64_t)_pktmbuf_pool_rx);
 
-        // int rc = rte_mempool_populate_virt(_pktmbuf_pool_rx,
-        //                               (char*)(_rx_xmem.get()), xmem_size,
-        //                               huge_page_size,
-        //                               nullptr, nullptr);
+        int rc = rte_mempool_populate_virt(_pktmbuf_pool_rx,
+                                      (char*)(_rx_xmem.get()), xmem_size,
+                                      huge_page_size,
+                                      nullptr, nullptr);
         if (rc < 0) {
             printf("Failed to populate mempool for Rx: %d\n", rc);
             exit(1);
@@ -1905,14 +1901,31 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         _rx_free_pkts.reserve(mbufs_per_queue_rx);
         _rx_free_bufs.reserve(mbufs_per_queue_rx);
 
+        struct rte_pktmbuf_pool_private roomsz2 = {};
+        roomsz2.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
+        rte_mempool *_pktmbuf_pool_rx2 =
+            rte_mempool_create(name.c_str(),
+                               mbufs_per_queue_rx, inline_mbuf_size,
+                               mbuf_cache_size,
+                               sizeof(struct rte_pktmbuf_pool_private),
+                               rte_pktmbuf_pool_init, as_cookie(roomsz),
+                               rte_pktmbuf_init, nullptr,
+                               rte_socket_id(), 0);
+
 
         // 1) Pull all entries from the pool.
         // 2) Bind data buffers to each of them.
         // 3) Return them back to the pool.
         printf("here\n");
         for (int i = 0; i < mbufs_per_queue_rx; i++) {
-            rte_mbuf* m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
-            printf("m %d: 0x%lx\n", i, (uint64_t)m);
+            rte_mbuf *m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
+            rte_mbuf *m2 = rte_pktmbuf_alloc(_pktmbuf_pool_rx2);
+
+            m->buf_addr = m2->buf_addr;
+            m->buf_iova = m2->buf_iova;
+            m->buf_len       = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
+            m->data_off      = RTE_PKTMBUF_HEADROOM;
+
             assert(m);
             _rx_free_bufs.push_back(m);
         }

@@ -2053,7 +2053,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 
         printf("init_rx_mbuf_pool: 0x%lx, 0x%lx\n", (uint64_t)_rx_free_bufs.data(), (uint64_t)_pktmbuf_pool_rx);
 
-        _rx_free_bufs.clear();
+        // _rx_free_bufs.clear();
     } else {
         struct rte_pktmbuf_pool_private roomsz = {};
         roomsz.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
@@ -2142,7 +2142,14 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
     if (HugetlbfsMemBackend && !map_dma()) {
         rte_exit(EXIT_FAILURE, "Cannot map DMA\n");
     }
+
     printf("post map_dma\n");
+    for (auto&& m : _rx_free_bufs) {
+        rte_iova_t iov = rte_mem_virt2iova(m->buf_addr);
+        uintptr_t paddr;
+        virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
+        printf("\t post dma: 0x%lx vs 0x%lx\n", (uint64_t)iov, (uint64_t)paddr);
+    }
 
     static_assert(offsetof(class tx_buf, private_end) -
                   offsetof(class tx_buf, private_start) <= RTE_PKTMBUF_HEADROOM,

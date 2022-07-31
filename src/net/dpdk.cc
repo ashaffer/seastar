@@ -1931,7 +1931,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             _rx_free_bufs.push_back(m);
         }
 
-        for (auto&& m : _rx_free_bufs) {
+        // for (auto&& m : _rx_free_bufs) {
             // if (!init_noninline_rx_mbuf(m)) {
             //     printf("Failed to allocate data buffers for Rx ring. "
             //            "Consider increasing the amount of memory.\n");
@@ -1939,7 +1939,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             // }
 
             // m->buf_iova = 0;
-        }
+        // }
 
         // if (engine().cpu_id() == 0) {
         //     for (int i = 0; i < mbufs_per_queue_rx / 2; i++) {

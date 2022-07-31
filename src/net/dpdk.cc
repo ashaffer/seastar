@@ -2007,11 +2007,11 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         }
 
         for (auto&& m : _rx_free_bufs) {
-            if (!init_noninline_rx_mbuf(m)) {
-                printf("Failed to allocate data buffers for Rx ring. "
-                       "Consider increasing the amount of memory.\n");
-                exit(1);
-            }
+            // if (!init_noninline_rx_mbuf(m)) {
+            //     printf("Failed to allocate data buffers for Rx ring. "
+            //            "Consider increasing the amount of memory.\n");
+            //     exit(1);
+            // }
 
             uintptr_t paddr;
             int rc = virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);

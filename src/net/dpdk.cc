@@ -2006,7 +2006,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             _rx_free_bufs.push_back(m);
         }
 
-        const struct rte_memzone *mz = rte_memzone_reserve("testing123", _rx_free_bufs.size() * mbuf_data_size, rte_socket_id(), 0);
+        const struct rte_memzone *mz = rte_memzone_reserve("testing123", _rx_free_bufs.size() * mbuf_data_size, rte_socket_id(), RTE_MEMZONE_1GB|RTE_MEMZONE_SIZE_HINT_ONLY);
         if (mz == NULL) {
             printf("Memzone allocation failed\n");
         }

@@ -1872,7 +1872,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         roomsz.mbuf_data_room_size = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
         _pktmbuf_pool_rx =
             rte_mempool_create_empty(name.c_str(),
-                                     mbufs_per_queue_rx, inline_mbuf_size,//mbuf_overhead,
+                                     mbufs_per_queue_rx, mbuf_overhead,
                                      mbuf_cache_size,
                                      sizeof(struct rte_pktmbuf_pool_private),
                                      rte_socket_id(), 0);
@@ -1886,7 +1886,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         // int rc = (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0);
         printf("rx mbuf pool: 0x%lx\n", (uint64_t)_pktmbuf_pool_rx);
         int rc = rte_mempool_populate_iova(_pktmbuf_pool_rx,
-                              (char*)(_rx_xmem.get()), xmem_size,
+                              (char*)(_rx_xmem.get()), (char *)(rte_mem_virt2iova(_rx_xmem.get())), xmem_size,
                               huge_page_size,
                               nullptr, nullptr);
 
@@ -1912,7 +1912,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         printf("here\n");
         for (int i = 0; i < mbufs_per_queue_rx; i++) {
             rte_mbuf* m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
-            printf("m: 0x%lx\n", (uint64_t)m);
+            printf("m %d: 0x%lx\n", i, (uint64_t)m);
             assert(m);
             _rx_free_bufs.push_back(m);
         }

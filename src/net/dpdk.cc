@@ -1938,7 +1938,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                 exit(1);
             }
 
-            (uint64_t)m->buf_addr += 4;
+            m->buf_addr = (void *)((uint64_t)m->buf_addr + 4);
             (uint64_t)m->buf_iova += 4;
         }
 

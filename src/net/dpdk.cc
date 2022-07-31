@@ -2170,17 +2170,17 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
     }
 
     printf("post map_dma\n");
-    for (auto&& m : _rx_free_bufs) {
-        rte_iova_t iov = rte_mem_virt2iova(m->buf_addr);
-        uintptr_t paddr;
-        virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
+    // for (auto&& m : _rx_free_bufs) {
+        // rte_iova_t iov = rte_mem_virt2iova(m->buf_addr);
+        // uintptr_t paddr;
+        // virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
         // if (iov != paddr) {
             // printf("iov/paddr mismatch\n");
         // }
         // if (iov != m->buf_iova) {
         //     printf("\tPost DMA mismatch: 0x%lx vs 0x%lx\n", (uint64_t)iov, (uint64_t)m->buf_iova);
         // }
-    }
+    // }
 
     _rx_free_bufs.clear();
 

@@ -1883,12 +1883,12 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 
         rte_pktmbuf_pool_init(_pktmbuf_pool_rx, as_cookie(roomsz));
 
-        // if (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0) {
-        printf("setting page size: 0x%lx\n", page_size);
-        // if (rte_mempool_populate_iova(_pktmbuf_pool_rx,
+        // int rc = (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0);
+        printf("rx mbuf pool: 0x%lx\n", (uint64_t)_pktmbuf_pool_rx);
+        // int rc = rte_mempool_populate_iova(_pktmbuf_pool_rx,
         //                       (char*)(_rx_xmem.get()), xmem_size,
         //                       huge_page_size,
-        //                       nullptr, nullptr) < 0) {
+        //                       nullptr, nullptr) < 0);
 
         int rc = rte_mempool_populate_virt(_pktmbuf_pool_rx,
                                       (char*)(_rx_xmem.get()), xmem_size,

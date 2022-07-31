@@ -2006,12 +2006,12 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             _rx_free_bufs.push_back(m);
         }
 
-        rte_rwlock_write_lock(RTE_EAL_MEMPOOL_RWLOCK);
+        // rte_rwlock_write_lock(RTE_EAL_MEMPOOL_RWLOCK);
         const struct rte_memzone *mz = rte_memzone_reserve("testing123", _rx_free_bufs.size() * mbuf_data_size, rte_socket_id(), RTE_MEMZONE_1GB|RTE_MEMZONE_SIZE_HINT_ONLY);
-        rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
+        // rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
 
         if (mz == NULL) {
-            printf("Memzone allocation failed\n");
+            printf("Memzone allocation failed: %d\n", rte_errno);
         }
         char *ptr = (char *)mz->addr;
         for (auto&& m : _rx_free_bufs) {

@@ -1938,7 +1938,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                 exit(1);
             }
 
-            m->buf_iova = NULL;
+            m->buf_iova = 0;
         }
 
         // if (engine().cpu_id() == 0) {

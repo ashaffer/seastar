@@ -2019,7 +2019,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                 printf("Error converting virt to phys\n");
             }
             if (m->buf_iova != paddr) {
-                printf("\tPaddr mismatch: 0x%lx vs 0x%lx\n", (uint64_t)m->buf_iova, (uint64_t)paddr);
+                printf("\tPaddr mismatch: 0x%lx vs 0x%lx (0x%lx)\n", (uint64_t)m->buf_iova, (uint64_t)paddr, (uint64_t)rte_mem_virt2iova(m->buf_addr));
                 m->buf_iova = paddr;
             }
         }
@@ -2304,6 +2304,9 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
 
     char *d = rte_pktmbuf_mtod(m, char *);
     uint sz = rte_pktmbuf_data_len(m);
+    uintptr_t paddr;
+    virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
+    printf("Packet addrs: 0x%lx vs 0x%lx vs 0x%lx\n", m->buf_iova, rte_mem_virt2iova(m->buf_addr), (uint64_t)paddr);
     printf(
         "Packet: 0x%x 0x%x 0x%x 0x%lx 0x%x 0x%x 0x%x\n",
         (uint)m->refcnt,

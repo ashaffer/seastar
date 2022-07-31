@@ -56,6 +56,7 @@
 #include <rte_cycles.h>
 #include <rte_memzone.h>
 #include <rte_vfio.h>
+#include <rte_malloc.h>
 
 #include <fcntl.h> /* open */
 #include <stdint.h> /* uint64_t  */
@@ -2007,15 +2008,16 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         }
 
         // rte_rwlock_write_lock(RTE_EAL_MEMPOOL_RWLOCK);
-        char mzname[32] = {0};
-        sprintf(mzname, "testing%u", engine().cpu_id());
-        const struct rte_memzone *mz = rte_memzone_reserve(mzname, _rx_free_bufs.size() * mbuf_data_size, rte_socket_id(), RTE_MEMZONE_2MB);
+        // char mzname[32] = {0};
+        // sprintf(mzname, "testing%u", engine().cpu_id());
+        uint32_t len = _rx_free_bufs.size() * mbuf_data_size;
+        void *addr = rte_zmalloc(NULL, len, RTE_CACHE_LINE_SIZE);
         // rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
 
-        if (mz == NULL) {
+        if (addr == NULL) {
             printf("Memzone allocation failed: %d\n", rte_errno);
         }
-        char *ptr = (char *)mz->addr;
+        char *ptr = (char *)addr;
         for (auto&& m : _rx_free_bufs) {
             if (!init_noninline_rx_mbuf(m)) {
                 printf("Failed to allocate data buffers for Rx ring. "

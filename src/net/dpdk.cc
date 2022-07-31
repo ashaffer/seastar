@@ -2011,7 +2011,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         // char mzname[32] = {0};
         // sprintf(mzname, "testing%u", engine().cpu_id());
         uint32_t len = _rx_free_bufs.size() * mbuf_data_size;
-        void *addr = rte_zmalloc(NULL, len, RTE_CACHE_LINE_SIZE);
+        void *addr = rte_zmalloc(NULL, len, 0);
         // rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
 
         if (addr == NULL) {

@@ -2044,7 +2044,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                 printf("Error converting virt to phys\n");
             }
             if (m->buf_iova != paddr) {
-                printf("\tPaddr mismatch: 0x%lx vs 0x%lx (0x%lx)\n", (uint64_t)m->buf_iova, (uint64_t)paddr, (uint64_t)rte_mem_virt2iova(m->buf_addr));
+                // printf("\tPaddr mismatch: 0x%lx vs 0x%lx (0x%lx)\n", (uint64_t)m->buf_iova, (uint64_t)paddr, (uint64_t)rte_mem_virt2iova(m->buf_addr));
                 m->buf_iova = paddr;
             }
         }
@@ -2174,12 +2174,12 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
         rte_iova_t iov = rte_mem_virt2iova(m->buf_addr);
         uintptr_t paddr;
         virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
-        if (iov != paddr) {
-            printf("iov/paddr mismatch\n");
-        }
-        if (iov != m->buf_iova) {
-            printf("\tPost DMA mismatch: 0x%lx vs 0x%lx\n", (uint64_t)iov, (uint64_t)m->buf_iova);
-        }
+        // if (iov != paddr) {
+            // printf("iov/paddr mismatch\n");
+        // }
+        // if (iov != m->buf_iova) {
+        //     printf("\tPost DMA mismatch: 0x%lx vs 0x%lx\n", (uint64_t)iov, (uint64_t)m->buf_iova);
+        // }
     }
 
     _rx_free_bufs.clear();

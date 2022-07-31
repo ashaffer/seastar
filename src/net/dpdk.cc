@@ -1901,16 +1901,16 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         _rx_free_pkts.reserve(mbufs_per_queue_rx);
         _rx_free_bufs.reserve(mbufs_per_queue_rx);
 
-        struct rte_pktmbuf_pool_private roomsz2 = {};
-        roomsz2.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
-        rte_mempool *_pktmbuf_pool_rx2 =
-            rte_mempool_create((name + "_2").c_str(),
-                               mbufs_per_queue_rx, inline_mbuf_size,
-                               mbuf_cache_size,
-                               sizeof(struct rte_pktmbuf_pool_private),
-                               rte_pktmbuf_pool_init, as_cookie(roomsz2),
-                               rte_pktmbuf_init, nullptr,
-                               rte_socket_id(), 0);
+        // struct rte_pktmbuf_pool_private roomsz2 = {};
+        // roomsz2.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
+        // rte_mempool *_pktmbuf_pool_rx2 =
+        //     rte_mempool_create((name + "_2").c_str(),
+        //                        mbufs_per_queue_rx, inline_mbuf_size,
+        //                        mbuf_cache_size,
+        //                        sizeof(struct rte_pktmbuf_pool_private),
+        //                        rte_pktmbuf_pool_init, as_cookie(roomsz2),
+        //                        rte_pktmbuf_init, nullptr,
+        //                        rte_socket_id(), 0);
 
 
         // 1) Pull all entries from the pool.

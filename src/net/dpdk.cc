@@ -2020,8 +2020,10 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             }
             if (m->buf_iova != paddr) {
                 printf("\tPaddr mismatch: 0x%lx vs 0x%lx\n", (uint64_t)m->buf_iova, (uint64_t)paddr);
+                m->buf_iova = paddr;
+            } else {
+                printf("\tPaddr == iova addr: 0x%lx vs 0x%lx\n", (uint64_t)m->buf_iova, (uint64_t)paddr);
             }
-            m->buf_iova = paddr;
         }
 
         // if (engine().cpu_id() == 0) {

@@ -1908,7 +1908,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                                mbufs_per_queue_rx, inline_mbuf_size,
                                mbuf_cache_size,
                                sizeof(struct rte_pktmbuf_pool_private),
-                               rte_pktmbuf_pool_init, as_cookie(roomsz),
+                               rte_pktmbuf_pool_init, as_cookie(roomsz2),
                                rte_pktmbuf_init, nullptr,
                                rte_socket_id(), 0);
 
@@ -1920,13 +1920,13 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         for (int i = 0; i < mbufs_per_queue_rx; i++) {
             rte_mbuf *m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
             rte_mbuf *m2 = rte_pktmbuf_alloc(_pktmbuf_pool_rx2);
-
+            assert(m);
+            assert(m2);
             m->buf_addr = m2->buf_addr;
             m->buf_iova = m2->buf_iova;
             m->buf_len       = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
             m->data_off      = RTE_PKTMBUF_HEADROOM;
 
-            assert(m);
             _rx_free_bufs.push_back(m);
         }
 

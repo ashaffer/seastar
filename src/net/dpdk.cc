@@ -1976,16 +1976,16 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         _rx_free_pkts.reserve(mbufs_per_queue_rx);
         _rx_free_bufs.reserve(mbufs_per_queue_rx);
 
-        struct rte_pktmbuf_pool_private roomsz2 = {};
-        roomsz2.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
-        rte_mempool *_pktmbuf_pool_rx2 =
-            rte_mempool_create((name + "_2").c_str(),
-                               mbufs_per_queue_rx, inline_mbuf_size,
-                               mbuf_cache_size,
-                               sizeof(struct rte_pktmbuf_pool_private),
-                               rte_pktmbuf_pool_init, as_cookie(roomsz2),
-                               rte_pktmbuf_init, nullptr,
-                               rte_socket_id(), 0);
+        // struct rte_pktmbuf_pool_private roomsz2 = {};
+        // roomsz2.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
+        // rte_mempool *_pktmbuf_pool_rx2 =
+        //     rte_mempool_create((name + "_2").c_str(),
+        //                        mbufs_per_queue_rx, inline_mbuf_size,
+        //                        mbuf_cache_size,
+        //                        sizeof(struct rte_pktmbuf_pool_private),
+        //                        rte_pktmbuf_pool_init, as_cookie(roomsz2),
+        //                        rte_pktmbuf_init, nullptr,
+        //                        rte_socket_id(), 0);
 
 
         // 1) Pull all entries from the pool.
@@ -1994,24 +1994,24 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         printf("here\n");
         for (int i = 0; i < mbufs_per_queue_rx; i++) {
             rte_mbuf *m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
-            rte_mbuf *m2 = NULL;
-            rte_mempool_get(_pktmbuf_pool_rx2, (void **)&m2);
-            assert(m);
-            assert(m2);
-            m->buf_addr = m2->buf_addr;
-            m->buf_iova = m2->buf_iova;
-            m->buf_len       = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
-            m->data_off      = RTE_PKTMBUF_HEADROOM;
+            // rte_mbuf *m2 = NULL;
+            // rte_mempool_get(_pktmbuf_pool_rx2, (void **)&m2);
+            // assert(m);
+            // assert(m2);
+            // m->buf_addr = m2->buf_addr;
+            // m->buf_iova = m2->buf_iova;
+            // m->buf_len       = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
+            // m->data_off      = RTE_PKTMBUF_HEADROOM;
 
             _rx_free_bufs.push_back(m);
         }
 
         for (auto&& m : _rx_free_bufs) {
-            // if (!init_noninline_rx_mbuf(m)) {
-            //     printf("Failed to allocate data buffers for Rx ring. "
-            //            "Consider increasing the amount of memory.\n");
-            //     exit(1);
-            // }
+            if (!init_noninline_rx_mbuf(m)) {
+                printf("Failed to allocate data buffers for Rx ring. "
+                       "Consider increasing the amount of memory.\n");
+                exit(1);
+            }
 
             uintptr_t paddr;
             int rc = virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
@@ -2020,7 +2020,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             }
             if (m->buf_iova != paddr) {
                 printf("\tPaddr mismatch: 0x%lx vs 0x%lx (0x%lx)\n", (uint64_t)m->buf_iova, (uint64_t)paddr, (uint64_t)rte_mem_virt2iova(m->buf_addr));
-                m->buf_iova = paddr;
+                // m->buf_iova = paddr;
             }
         }
 

@@ -2010,15 +2010,15 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         // rte_rwlock_write_lock(RTE_EAL_MEMPOOL_RWLOCK);
         // char mzname[32] = {0};
         // sprintf(mzname, "testing%u", engine().cpu_id());
-        uint32_t len = _rx_free_bufs.size() * mbuf_data_size;
+        // uint32_t len = _rx_free_bufs.size() * mbuf_data_size;
         // void *addr = rte_zmalloc(NULL, len, 0);
-        void *addr = malloc(len);
+        // void *addr = malloc(len);
         // rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
 
-        if (addr == NULL) {
-            printf("Memzone allocation failed: %d\n", rte_errno);
-        }
-        char *ptr = (char *)addr;
+        // if (addr == NULL) {
+        //     printf("Memzone allocation failed: %d\n", rte_errno);
+        // }
+        // char *ptr = (char *)addr;
         for (auto&& m : _rx_free_bufs) {
             if (!init_noninline_rx_mbuf(m)) {
                 printf("Failed to allocate data buffers for Rx ring. "
@@ -2026,9 +2026,9 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                 exit(1);
             }
 
-            m->buf_addr = (void *)ptr;
-            m->buf_iova = rte_mem_virt2iova(m->buf_addr);
-            ptr += mbuf_data_size;
+            // m->buf_addr = (void *)ptr;
+            // m->buf_iova = rte_mem_virt2iova(m->buf_addr);
+            // ptr += mbuf_data_size;
 
             uintptr_t paddr;
             int rc = virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
@@ -2092,6 +2092,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
 {
     auto m = memory::get_memory_layout();
     rte_iova_t iova = rte_mem_virt2iova((const void*)m.start);
+    printf("Mapping DMA: 0x%lx - 0x%lx (0x%lx)\n", (uint64_t)m.start, (uint64_t)m.end, (uint64_t)(m.end - m.start));
     return rte_vfio_dma_map(m.start, iova, m.end - m.start) == 0;
 }
 

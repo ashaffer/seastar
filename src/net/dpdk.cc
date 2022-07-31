@@ -2021,8 +2021,6 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             if (m->buf_iova != paddr) {
                 printf("\tPaddr mismatch: 0x%lx vs 0x%lx\n", (uint64_t)m->buf_iova, (uint64_t)paddr);
                 m->buf_iova = paddr;
-            } else {
-                printf("\tPaddr == iova addr: 0x%lx vs 0x%lx\n", (uint64_t)m->buf_iova, (uint64_t)paddr);
             }
         }
 
@@ -2148,7 +2146,12 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
         rte_iova_t iov = rte_mem_virt2iova(m->buf_addr);
         uintptr_t paddr;
         virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
-        printf("\t post dma: 0x%lx vs 0x%lx\n", (uint64_t)iov, (uint64_t)paddr);
+        if (iov != paddr) {
+            printf("iov/paddr mismatch\n");
+        }
+        if (iov != m->buf_iova) {
+            printf("\tPost DMA mismatch: 0x%lx vs 0x%lx\n", (uint64_t)iov, (uint64_t)m->buf_iova);
+        }
     }
 
     static_assert(offsetof(class tx_buf, private_end) -

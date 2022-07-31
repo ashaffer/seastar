@@ -127,8 +127,9 @@ int virt_to_phys_user(uintptr_t *paddr, uintptr_t vaddr)
         return 1;
     }
     close(pagemap_fd);
-    printf("virt_to_phys: 0x%x 0x%lx\n", _SC_PAGE_SIZE, (unsigned long)sysconf(_SC_PAGE_SIZE));
-    *paddr = (entry.pfn * sysconf(_SC_PAGE_SIZE)) + (vaddr % sysconf(_SC_PAGE_SIZE));
+    unsigned long pg_sz = sysconf(_SC_PAGE_SIZE);
+    pg_sz = RTE_PGSIZE_2M;
+    *paddr = (entry.pfn * pg_sz) + (vaddr % pg_sz);
     return 0;
 }
 

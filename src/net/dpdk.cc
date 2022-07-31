@@ -1919,25 +1919,27 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         printf("here\n");
         for (int i = 0; i < mbufs_per_queue_rx; i++) {
             rte_mbuf *m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
-            rte_mbuf *m2 = NULL;
-            rte_mempool_get(_pktmbuf_pool_rx2, (void **)&m2);
-            assert(m);
-            assert(m2);
-            m->buf_addr = m2->buf_addr;
-            m->buf_iova = m2->buf_iova;
-            m->buf_len       = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
-            m->data_off      = RTE_PKTMBUF_HEADROOM;
+            // rte_mbuf *m2 = NULL;
+            // rte_mempool_get(_pktmbuf_pool_rx2, (void **)&m2);
+            // assert(m);
+            // assert(m2);
+            // m->buf_addr = m2->buf_addr;
+            // m->buf_iova = m2->buf_iova;
+            // m->buf_len       = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
+            // m->data_off      = RTE_PKTMBUF_HEADROOM;
 
             _rx_free_bufs.push_back(m);
         }
 
-        // for (auto&& m : _rx_free_bufs) {
-        //     if (!init_noninline_rx_mbuf(m)) {
-        //         printf("Failed to allocate data buffers for Rx ring. "
-        //                "Consider increasing the amount of memory.\n");
-        //         exit(1);
-        //     }
-        // }
+        for (auto&& m : _rx_free_bufs) {
+            if (!init_noninline_rx_mbuf(m)) {
+                printf("Failed to allocate data buffers for Rx ring. "
+                       "Consider increasing the amount of memory.\n");
+                exit(1);
+            }
+        }
+
+        m->buf_iova += 4;
 
         // if (engine().cpu_id() == 0) {
         //     for (int i = 0; i < mbufs_per_queue_rx / 2; i++) {

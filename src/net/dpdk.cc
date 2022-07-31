@@ -2013,7 +2013,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         uint32_t len = _rx_free_bufs.size() * mbuf_data_size;
         void *addr = rte_zmalloc(NULL, len, 0);
         printf("dma mapping zmalloc\n");
-        rte_vfio_dma_map(addr, rte_mem_virt2iova(addr), len);
+        rte_vfio_dma_map((uint64_t)addr, rte_mem_virt2iova(addr), len);
         // void *addr = malloc(len);
         // rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
 

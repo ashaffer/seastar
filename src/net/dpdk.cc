@@ -57,6 +57,81 @@
 #include <rte_memzone.h>
 #include <rte_vfio.h>
 
+#include <fcntl.h> /* open */
+#include <stdint.h> /* uint64_t  */
+#include <stdio.h> /* printf */
+#include <stdlib.h> /* size_t */
+#include <unistd.h> /* pread, sysconf */
+
+typedef struct {
+    uint64_t pfn : 55;
+    unsigned int soft_dirty : 1;
+    unsigned int file_page : 1;
+    unsigned int swapped : 1;
+    unsigned int present : 1;
+} PagemapEntry;
+
+/* Parse the pagemap entry for the given virtual address.
+ *
+ * @param[out] entry      the parsed entry
+ * @param[in]  pagemap_fd file descriptor to an open /proc/pid/pagemap file
+ * @param[in]  vaddr      virtual address to get entry for
+ * @return 0 for success, 1 for failure
+ */
+int pagemap_get_entry(PagemapEntry *entry, int pagemap_fd, uintptr_t vaddr)
+{
+    size_t nread;
+    ssize_t ret;
+    uint64_t data;
+    uintptr_t vpn;
+
+    vpn = vaddr / sysconf(_SC_PAGE_SIZE);
+    nread = 0;
+    while (nread < sizeof(data)) {
+        ret = pread(pagemap_fd, ((uint8_t*)&data) + nread, sizeof(data) - nread,
+                vpn * sizeof(data) + nread);
+        nread += ret;
+        if (ret <= 0) {
+            return 1;
+        }
+    }
+    entry->pfn = data & (((uint64_t)1 << 55) - 1);
+    entry->soft_dirty = (data >> 55) & 1;
+    entry->file_page = (data >> 61) & 1;
+    entry->swapped = (data >> 62) & 1;
+    entry->present = (data >> 63) & 1;
+    return 0;
+}
+
+/* Convert the given virtual address to physical using /proc/PID/pagemap.
+ *
+ * @param[out] paddr physical address
+ * @param[in]  pid   process to convert for
+ * @param[in] vaddr virtual address to get entry for
+ * @return 0 for success, 1 for failure
+ */
+int virt_to_phys_user(uintptr_t *paddr, uintptr_t vaddr)
+{
+    char pagemap_file[BUFSIZ];
+    int pagemap_fd;
+    pid_t pid = getpid();
+
+    snprintf(pagemap_file, sizeof(pagemap_file), "/proc/%ju/pagemap", (uintmax_t)pid);
+    pagemap_fd = open(pagemap_file, O_RDONLY);
+    if (pagemap_fd < 0) {
+        return 1;
+    }
+    PagemapEntry entry;
+    if (pagemap_get_entry(&entry, pagemap_fd, vaddr)) {
+        return 1;
+    }
+    close(pagemap_fd);
+    *paddr = (entry.pfn * sysconf(_SC_PAGE_SIZE)) + (vaddr % sysconf(_SC_PAGE_SIZE));
+    return 0;
+}
+
+
+
 #if RTE_VERSION <= RTE_VERSION_NUM(2,0,0,16)
 
 static
@@ -115,8 +190,8 @@ namespace dpdk {
 /******************* Net device related constatns *****************************/
 static constexpr uint16_t default_ring_size      = 1024;
 
-// 
-// We need 2 times the ring size of buffers because of the way PMDs 
+//
+// We need 2 times the ring size of buffers because of the way PMDs
 // refill the ring.
 //
 static constexpr uint16_t mbufs_per_queue_rx     = 2 * default_ring_size;
@@ -541,7 +616,7 @@ class dpdk_qp : public net::qp {
             // For a TSO case each MSS window should not include more than 8
             // fragments including headers.
             //
-            
+
             // Calculate the number of frags containing headers.
             //
             // Note: we support neither VLAN nor tunneling thus headers size
@@ -1554,7 +1629,7 @@ int dpdk_device::init_port_start()
     // Even if port has a single queue we still want the RSS feature to be
     // available in order to make HW calculate RSS hash for us.
     if (smp::count > 1) {
-        if (_dev_info.hash_key_size == 40) {            
+        if (_dev_info.hash_key_size == 40) {
             // _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
             printf("Using 40 byte rss hash key\n");
             _rss_conf.key = default_rsskey_40bytes;
@@ -1686,7 +1761,7 @@ int dpdk_device::init_port_start()
 
     printf("Port %u init ... ", _port_idx);
     fflush(stdout);
-    
+
     /*
      * Standard DPDK port initialisation - config port, then set up
      * rx and tx rings.
@@ -1938,8 +2013,15 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                 exit(1);
             }
 
-            m->buf_addr = (void *)((uint64_t)m->buf_addr + 4);
-            m->buf_iova += 4;
+            uintptr_t paddr;
+            int rc = virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
+            if (rc != 0) {
+                printf("Error converting virt to phys\n");
+            }
+            if (m->buf_iova != paddr) {
+                printf("\tPaddr mismatch: 0x%lx vs 0x%lx\n", (uint64_t)m->buf_iova, (uint64_t)paddr);
+            }
+            m->buf_iova = paddr;
         }
 
         // if (engine().cpu_id() == 0) {
@@ -2373,8 +2455,8 @@ bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
     if (likely(rx_count > 0)) {
         printf("process_packets: %u\n", (uint)rx_count);
         process_packets(
-            buf, 
-            rx_count, 
+            buf,
+            rx_count,
             receivedAt,
             std::chrono::duration_cast<std::chrono::microseconds>(receivedAt - lastPoll).count()
         );

@@ -2025,11 +2025,12 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                        "Consider increasing the amount of memory.\n");
                 exit(1);
             }
+            int rc;
 
-            int rc = rte_vfio_dma_map((uint64_t)m->buf_addr, m->buf_iova, mbuf_data_size);
-            if (rc != 0) {
-                printf("mbuf vfio_dma_map failed: %d\n", rc);
-            }
+            // rc = rte_vfio_dma_map((uint64_t)m->buf_addr, m->buf_iova, mbuf_data_size);
+            // if (rc != 0) {
+            //     printf("mbuf vfio_dma_map failed: %d\n", rc);
+            // }
             // m->buf_addr = (void *)ptr;
             // m->buf_iova = rte_mem_virt2iova(m->buf_addr);
             // ptr += mbuf_data_size;

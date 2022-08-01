@@ -2100,7 +2100,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 template <bool HugetlbfsMemBackend>
 bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
 {
-    auto m = memory::get_memory_layout();
+    // auto m = memory::get_memory_layout();
     // rte_iova_t iova = rte_mem_virt2iova((const void*)m.start);
 
     // uint pg_sz = RTE_PGSIZE_2M;

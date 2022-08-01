@@ -2102,8 +2102,9 @@ bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
     // rte_iova_t iova = rte_mem_virt2iova((const void*)m.start);
     // uintptr_t iova;
     // virt_to_phys_user(&iova, (uint64_t)m.start);
+    uint pg_sz = RTE_PGSIZE_2M;
     for (uintptr_t p = m.start; p < m.end; p += pg_sz) {
-        int rc = rte_vfio_dma_map(p, rte_mem_virt2iova((const void *)p));
+        int rc = rte_vfio_dma_map(p, rte_mem_virt2iova((const void *)p), pg_sz);
         if (rc != 0) {
             return false;
         }

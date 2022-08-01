@@ -2108,10 +2108,13 @@ bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
     uint pg_sz = RTE_PGSIZE_2M;
     uintptr_t prev_iova = rte_mem_virt2iova((const void *)m.start);
     uintptr_t prev_addr = m.start;
+    uintptr_t trailing_iova = prev_iova;
 
     for (uintptr_t p = m.start + pg_sz; p < m.end; p += pg_sz) {
         uintptr_t cur_iova = rte_mem_virt2iova((const void *)p);
-        if (cur_iova != prev_iova + pg_sz) {
+
+        if (cur_iova != trailing_iova + pg_sz) {
+            printf("cur_iova: 0x%lx 0x%lx\n", cur_iova, trailing_iova + pg_sz);
             printf("Mapping DMA: 0x%lx - 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)prev_addr, (uint64_t)p, (uint64_t)(p - prev_addr), prev_iova);
             if (rte_vfio_dma_map(prev_addr, prev_iova, p - prev_addr) != 0) {
                 return false;
@@ -2119,6 +2122,8 @@ bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
             prev_iova = cur_iova;
             prev_addr = p;
         }
+
+        trailing_iova = cur_iova;
     }
 
     return true;

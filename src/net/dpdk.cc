@@ -2019,7 +2019,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         // rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
         void *addr;
         posix_memalign(&addr, RTE_PGSIZE_2M, len);
-        rte_vfio_dma_map((uint64_t)addr, rte_mem_virt2iova(addr), len);
+        // rte_vfio_dma_map((uint64_t)addr, rte_mem_virt2iova(addr), len);
         // if (addr == NULL) {
         //     printf("Memzone allocation failed: %d\n", rte_errno);
         // }

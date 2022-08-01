@@ -2100,10 +2100,18 @@ bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
 {
     auto m = memory::get_memory_layout();
     // rte_iova_t iova = rte_mem_virt2iova((const void*)m.start);
-    uintptr_t iova;
-    virt_to_phys_user(&iova, (uint64_t)m.start);
-    printf("Mapping DMA: 0x%lx - 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)m.start, (uint64_t)m.end, (uint64_t)(m.end - m.start), iova);
-    return rte_vfio_dma_map(m.start, (rte_iova_t)iova, m.end - m.start) == 0;
+    // uintptr_t iova;
+    // virt_to_phys_user(&iova, (uint64_t)m.start);
+    for (uintptr_t p = m.start; p < m.end; p += pg_sz) {
+        int rc = rte_vfio_dma_map(p, rte_mem_virt2iova((const void *)p));
+        if (rc != 0) {
+            return false;
+        }
+    }
+
+    return true;
+    // printf("Mapping DMA: 0x%lx - 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)m.start, (uint64_t)m.end, (uint64_t)(m.end - m.start), iova);
+    // return rte_vfio_dma_map(m.start, (rte_iova_t)iova, m.end - m.start) == 0;
 }
 
 void dpdk_device::check_port_link_status()

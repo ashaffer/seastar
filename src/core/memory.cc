@@ -919,7 +919,7 @@ allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t h
     auto ret = fd.map(
             how_much,
             PROT_READ | PROT_WRITE,
-            MAP_SHARED | MAP_LOCKED | MAP_POPULATE | (where ? MAP_FIXED : 0),
+            MAP_SHARED | MAP_POPULATE | (where ? MAP_FIXED : 0),
             pos,
             where.value_or(nullptr));
     return ret;

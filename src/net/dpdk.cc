@@ -2012,16 +2012,18 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         // rte_rwlock_write_lock(RTE_EAL_MEMPOOL_RWLOCK);
         // char mzname[32] = {0};
         // sprintf(mzname, "testing%u", engine().cpu_id());
-        // uint32_t len = _rx_free_bufs.size() * mbuf_data_size;
+        uint32_t len = _rx_free_bufs.size() * mbuf_data_size;
         // void *addr = rte_zmalloc(NULL, len, 0);
         // rte_vfio_dma_map((uint64_t)addr, rte_mem_virt2iova(addr), len);
         // void *addr = malloc(len);
         // rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
-
+        void *addr;
+        posix_memalign(&addr, RTE_PGSIZE_2M, len);
+        rte_vfio_dma_map((uint64_t)addr, rte_mem_virt2iova(addr), len);
         // if (addr == NULL) {
         //     printf("Memzone allocation failed: %d\n", rte_errno);
         // }
-        // char *ptr = (char *)addr;
+        char *ptr = (char *)addr;
         for (auto&& m : _rx_free_bufs) {
             if (!init_noninline_rx_mbuf(m)) {
                 printf("Failed to allocate data buffers for Rx ring. "
@@ -2034,19 +2036,19 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             // if (rc != 0) {
             //     printf("mbuf vfio_dma_map failed: %d\n", rc);
             // }
-            // m->buf_addr = (void *)ptr;
-            // m->buf_iova = rte_mem_virt2iova(m->buf_addr);
-            // ptr += mbuf_data_size;
+            m->buf_addr = (void *)ptr;
+            m->buf_iova = rte_mem_virt2iova(m->buf_addr);
+            ptr += mbuf_data_size;
 
-            uintptr_t paddr;
-            rc = virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
-            if (rc != 0) {
-                printf("Error converting virt to phys\n");
-            }
-            if (m->buf_iova != paddr) {
-                // printf("\tPaddr mismatch: 0x%lx vs 0x%lx (0x%lx)\n", (uint64_t)m->buf_iova, (uint64_t)paddr, (uint64_t)rte_mem_virt2iova(m->buf_addr));
-                m->buf_iova = paddr;
-            }
+            // uintptr_t paddr;
+            // rc = virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
+            // if (rc != 0) {
+            //     printf("Error converting virt to phys\n");
+            // }
+            // if (m->buf_iova != paddr) {
+            //     // printf("\tPaddr mismatch: 0x%lx vs 0x%lx (0x%lx)\n", (uint64_t)m->buf_iova, (uint64_t)paddr, (uint64_t)rte_mem_virt2iova(m->buf_addr));
+            //     // m->buf_iova = paddr;
+            // }
         }
 
         // if (engine().cpu_id() == 0) {
@@ -2100,19 +2102,10 @@ bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
 {
     auto m = memory::get_memory_layout();
     // rte_iova_t iova = rte_mem_virt2iova((const void*)m.start);
-    // uintptr_t iova;
-    // virt_to_phys_user(&iova, (uint64_t)m.start);
-    uint pg_sz = RTE_PGSIZE_2M;
-    for (uintptr_t p = m.start; p < m.end; p += pg_sz) {
-        int rc = rte_vfio_dma_map(p, rte_mem_virt2iova((const void *)p), pg_sz);
-        if (rc != 0) {
-            return false;
-        }
-    }
-
-    return true;
-    // printf("Mapping DMA: 0x%lx - 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)m.start, (uint64_t)m.end, (uint64_t)(m.end - m.start), iova);
-    // return rte_vfio_dma_map(m.start, (rte_iova_t)iova, m.end - m.start) == 0;
+    uintptr_t iova;
+    virt_to_phys_user(&iova, (uint64_t)m.start);
+    printf("Mapping DMA: 0x%lx - 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)m.start, (uint64_t)m.end, (uint64_t)(m.end - m.start), iova);
+    return rte_vfio_dma_map(m.start, (rte_iova_t)iova, m.end - m.start) == 0;
 }
 
 void dpdk_device::check_port_link_status()

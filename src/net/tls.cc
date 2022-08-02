@@ -642,6 +642,7 @@ public:
             return make_ready_future<>();
         }
         try {
+            printf("tls1\n");
             _connState = 2;
             auto res = gnutls_handshake(*this);
             if (res < 0) {
@@ -650,10 +651,12 @@ public:
                     // #453 always wait for output first.
                     // If none is pending, it should be a no-op
                 {
+                    printf("tls2\n");
                     ++_eagainCount;
                     int dir = gnutls_record_get_direction(*this);
                     _connState = 3;
                     return wait_for_output().then([this, dir] {
+                        printf("tls3\n");
                         _connState = 4;
                         // we actually E_AGAIN:ed in a write. Don't
                         // wait for input.
@@ -663,6 +666,7 @@ public:
                         }
                         _connState = 5;
                         return wait_for_input().then([this] {
+                            printf("tls4\n");
                             _connState = 6;
                             return do_handshake();
                         });
@@ -824,7 +828,10 @@ public:
             // typically, unencrypted data can get smaller (padding),
             // but not larger.
             temporary_buffer<char> buf(avail);
+            printf("pre gnutls_record_recv\n");
             auto n = gnutls_record_recv(*this, buf.get_write(), buf.size());
+            printf("post gnutls_record_recv\n");
+
             if (n < 0) {
                 switch (n) {
                 case GNUTLS_E_AGAIN:
@@ -940,6 +947,7 @@ public:
             gnutls_transport_set_errno(*this, EAGAIN);
             return -1;
         }
+        printf("pull\n");
         auto n = std::min(len, _input.size());
         memcpy(dst, _input.get(), n);
         _input.trim_front(n);

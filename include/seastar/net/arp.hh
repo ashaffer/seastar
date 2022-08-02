@@ -231,11 +231,11 @@ arp_for<L3>::lookup(const l3addr& paddr) {
         });
         res._timeout_timer.arm_periodic(std::chrono::seconds(1));
         // FIXME: future is discarded
-        in_addr foreign;
-        foreign.s_addr = htonl(paddr.ip);
-        char *saddr = strdup(inet_ntoa(foreign));
-        printf("ARP Querying: %s\n", saddr);
-        free(saddr);
+        // in_addr foreign;
+        // foreign.s_addr = htonl(paddr.ip);
+        // char *saddr = strdup(inet_ntoa(foreign));
+        // printf("ARP Querying: %s\n", saddr);
+        // free(saddr);
         (void)send_query(paddr);
     }
 

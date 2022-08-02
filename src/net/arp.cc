@@ -41,7 +41,6 @@ arp::arp(interface* netif) : _netif(netif), _proto(netif, eth_protocol_num::arp,
     [this](forward_hash& out_hash_data, packet& p, size_t off) {
         return forward(out_hash_data, p, off);
     })) {
-        printf("created arp\n");
 }
 
 compat::optional<l3_protocol::l3packet> arp::get_packet() {
@@ -79,7 +78,6 @@ arp::process_packet(packet p, ethernet_address from) {
     auto ah = arp_hdr::read(h);
     auto i = _arp_for_protocol.find(ah.ptype);
     if (i != _arp_for_protocol.end()) {
-        printf("passing packet to received\n");
         return i->second->received(std::move(p));
     }
     return make_ready_future<>();

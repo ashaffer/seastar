@@ -1974,6 +1974,9 @@ packet tcp<InetTraits>::tcb::read() {
     for (auto&& q : _rcv.data) {
         p.append(std::move(q));
     }
+    printf("tcp read ");
+    p.print_hex();
+
     _rcv.data_size = 0;
     _rcv.data.clear();
     _rcv.window = get_default_receive_window_size();

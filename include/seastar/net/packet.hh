@@ -435,7 +435,7 @@ packet::packet(fragment frag, deleter d)
     _impl->_deleter = std::move(d);
     _impl->_frags[_impl->_nr_frags++] = frag;
     _impl->_len = frag.size;
-    printf("Created packet: 0x%lx\n", (uint64_t)_impl);
+    printf("Created packet: 0x%lx\n", (uint64_t)_impl.get());
 }
 
 inline

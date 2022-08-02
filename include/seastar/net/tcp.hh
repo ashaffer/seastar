@@ -1724,7 +1724,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         auto fin_seq = seg_seq + seg_len;
         if (fin_seq == _rcv.next) {
             _rcv.next = fin_seq + 1;
-            printf("s2: %d\n", _local_port);
+            printf("s2: %d, %d\n", _local_port, _rcv.data.size());
             signal_data_received();
 
             // If this <FIN> packet contains data as well, we can ACK both data

@@ -1685,6 +1685,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             _rcv.next += seg_len;
             auto merged = merge_out_of_order();
             _rcv.window = get_modified_receive_window_size();
+            printf("s1\n");
             signal_data_received();
             // Send an acknowledgment of the form:
             // <SEQ=SND.NXT><ACK=RCV.NXT><CTL=ACK>
@@ -1715,6 +1716,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         auto fin_seq = seg_seq + seg_len;
         if (fin_seq == _rcv.next) {
             _rcv.next = fin_seq + 1;
+            printf("s2\n");
             signal_data_received();
 
             // If this <FIN> packet contains data as well, we can ACK both data

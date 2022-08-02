@@ -79,6 +79,7 @@ arp::process_packet(packet p, ethernet_address from) {
     auto ah = arp_hdr::read(h);
     auto i = _arp_for_protocol.find(ah.ptype);
     if (i != _arp_for_protocol.end()) {
+        printf("passing packet to received\n");
         return i->second->received(std::move(p));
     }
     return make_ready_future<>();

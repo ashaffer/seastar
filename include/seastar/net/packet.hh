@@ -152,6 +152,7 @@ class packet final {
         }
         // Matching the operator new above
         void operator delete(void* ptr, size_t nr_frags) {
+            printf("delete1 : 0x%lx\n", (uint64_t)ptr);
             return ::operator delete(ptr);
         }
         // Since the above "placement delete" hides the global one, expose it

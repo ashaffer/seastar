@@ -146,7 +146,7 @@ public:
         _conn = make_lw_shared<typename Protocol::connection>(_proto.connect(sa, local));
         printf("pre-connected\n");
         return _conn->connected().then([conn = _conn]() mutable {
-            printf("post connected!\n");
+            printf("post connected: %d\n", conn->local_port());
             auto csi = std::make_unique<native_connected_socket_impl<Protocol>>(std::move(conn));
             return make_ready_future<connected_socket>(connected_socket(std::move(csi)));
         });

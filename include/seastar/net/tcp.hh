@@ -1919,6 +1919,7 @@ void tcp<InetTraits>::tcb::output_one(bool data_retransmit) {
 
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::wait_for_data() {
+    printf("wait_for_data called\n");
     if (!_rcv.data.empty() || foreign_will_not_send()) {
         return make_ready_future<>();
     }

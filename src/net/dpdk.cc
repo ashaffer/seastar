@@ -745,15 +745,6 @@ build_mbuf_cluster:
             rte_mbuf *head = nullptr, *last_seg = nullptr;
             unsigned nsegs = 0;
 
-            printf("Sending packet (zc, %u, %u): ", p.nr_frags(), p.len());
-            for (uint i = 0; i < p.nr_frags(); i++) {
-                struct fragment f = p.frag(i);
-                for (uint j = 0; j < f.size; j++) {
-                    printf("%02x ", (uint8_t)(f.base[j] & 0xFF));
-                }
-            }
-            printf("\n");
-
             // Create a HEAD of the fragmented packet
             if (!translate_one_frag(qp, p.frag(0), head, last_seg, nsegs)) {
                 return nullptr;
@@ -869,15 +860,6 @@ build_mbuf_cluster:
             if (!p.len()) {
                 return nullptr;
             }
-
-            printf("Sending packet (copy): ");
-            for (uint i = 0; i < p.nr_frags(); i++) {
-                struct fragment f = p.frag(i);
-                for (uint j = 0; j < f.size; j++) {
-                    printf("%02x ", (uint8_t)(f.base[j] & 0xFF));
-                }
-            }
-            printf("\n");
 
             /*
              * Here we are going to use the fact that the inline data size is a
@@ -1821,11 +1803,10 @@ void dpdk_device::init_port_fini()
 {
     // Changing FC requires HW reset, so set it before the port is initialized.
     set_hw_flow_control();
-    printf("calling rte_eth_dev_start\n");
     if (rte_eth_dev_start(_port_idx) < 0) {
         rte_exit(EXIT_FAILURE, "Cannot start port %d\n", _port_idx);
     }
-    printf("post eth dev start\n");
+
     /* need to defer initialize xstats since NIC specific xstat entries
        show up only after port initization */
     _xstats.start();
@@ -2069,9 +2050,8 @@ void dpdk_device::check_port_link_status()
 
     std::cout << "\nChecking link status " << std::endl;
     auto t = new timer<>;
-    printf("Checking link status\n");
+
     t->set_callback([this, count, t] () mutable {
-        printf("Callback called\n");
         const int max_check_time = 90;  /* 9s (90 * 100ms) in total */
         struct rte_eth_link link;
         memset(&link, 0, sizeof(link));
@@ -2090,7 +2070,6 @@ void dpdk_device::check_port_link_status()
             // We may start collecting statistics only after the Link is UP.
             _stats_collector.arm_periodic(2s);
         } else if (count++ < max_check_time) {
-            printf("link status: %u\n", (uint)link.link_status);
              std::cout << "." << std::flush;
              return;
         } else {
@@ -2099,7 +2078,7 @@ void dpdk_device::check_port_link_status()
         t->cancel();
         delete t;
     });
-    printf("Arming periodic: %u\n", engine().cpu_id());
+
     t->arm_periodic(check_interval);
 }
 
@@ -2115,16 +2094,13 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
        _tx_buf_factory(_dev->port_idx(), qid),
        _tx_gc_poller(reactor::poller::simple([&] { return _tx_buf_factory.gc(); }))
 {
-    printf("pre init_rx_mbuf_pool\n");
     if (!init_rx_mbuf_pool()) {
         rte_exit(EXIT_FAILURE, "Cannot initialize mbuf pools\n");
     }
-    printf("post init_rx_mbuf_pool\n");
+
     if (HugetlbfsMemBackend && !map_dma()) {
         rte_exit(EXIT_FAILURE, "Cannot map DMA\n");
     }
-
-    printf("post map_dma\n");
 
     static_assert(offsetof(class tx_buf, private_end) -
                   offsetof(class tx_buf, private_start) <= RTE_PKTMBUF_HEADROOM,
@@ -2135,18 +2111,17 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
                   "field!");
     static_assert((inline_mbuf_data_size & (inline_mbuf_data_size - 1)) == 0,
                   "inline_mbuf_data_size has to be a power of two!");
-    printf("pre rx_queue_setup\n");
+
     if (rte_eth_rx_queue_setup(_dev->port_idx(), _qid, default_ring_size,
             rte_eth_dev_socket_id(_dev->port_idx()),
             _dev->def_rx_conf(), _pktmbuf_pool_rx) < 0) {
         rte_exit(EXIT_FAILURE, "Cannot initialize rx queue\n");
     }
-    printf("pre tx_queue_setup\n");
+
     if (rte_eth_tx_queue_setup(_dev->port_idx(), _qid, default_ring_size,
             rte_eth_dev_socket_id(_dev->port_idx()), _dev->def_tx_conf()) < 0) {
         rte_exit(EXIT_FAILURE, "Cannot initialize tx queue\n");
     }
-    printf("post tx_queue_setup\n");
 
     // Register error statistics: Rx total and checksum errors
     namespace sm = seastar::metrics;
@@ -2219,14 +2194,6 @@ dpdk_qp<false>::from_mbuf(rte_mbuf* m)
         auto len = rte_pktmbuf_data_len(m);
         char* buf = (char*)malloc(len);
 
-        char *d = rte_pktmbuf_mtod(m, char *);
-        uint sz = rte_pktmbuf_data_len(m);
-        printf("Received packet: ");
-        for (uint i = 0; i < sz; i++) {
-            printf("%2x ", (uint8_t)d[i]);
-        }
-        printf("\n");
-
         if (!buf) {
             // Drop if allocation failed
             rte_pktmbuf_free(m);
@@ -2272,30 +2239,7 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
     _rx_free_pkts.push_back(m);
     _num_rx_free_segs += m->nb_segs;
 
-    char *d = rte_pktmbuf_mtod(m, char *);
-    uint sz = rte_pktmbuf_data_len(m);
-    printf("Packet addrs: 0x%lx vs 0x%lx\n", m->buf_iova, rte_mem_virt2iova(m->buf_addr));
-    printf(
-        "Packet: 0x%x 0x%x 0x%x 0x%lx 0x%x 0x%x 0x%x\n",
-        (uint)m->refcnt,
-        (uint)m->nb_segs,
-        (uint)m->port,
-        m->ol_flags,
-        (uint)m->pkt_len,
-        (uint)m->data_len,
-        (uint)m->buf_len
-    );
-    printf("Types: 0x%02x 0x%02x 0x%02x\n", (uint)m->l2_type, (uint)m->l3_type, (uint)m->l4_type);
-    printf("Next: 0x%lx\n", (uint64_t)m->next);
-
-    printf("Received packet: ");
-    for (uint i = 0; i < sz; i++) {
-        printf("%02x ", (uint8_t)d[i]);
-    }
-    printf("\n");
-
     if (!_dev->hw_features_ref().rx_lro || rte_pktmbuf_is_contiguous(m)) {
-        printf("from mbuf no lro\n");
         char* data = rte_pktmbuf_mtod(m, char*);
 
         return packet(fragment{data, rte_pktmbuf_data_len(m)},
@@ -2303,7 +2247,6 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
                         rte_pktmbuf_free(m);
                       }));
     } else {
-        printf("from mbuf lro\n");
         return from_mbuf_lro(m);
     }
 }
@@ -2434,13 +2377,8 @@ bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
     uint16_t rx_count = rte_eth_rx_burst(_dev->port_idx(), _qid,
                                          buf, packet_read_size);
 
-    // if (rx_count >= packet_read_size) {
-    //     printf("rx_count >= packet_read_size (%u, %u)\n", rx_count, packet_read_size);
-    // }
-
     /* Now process the NIC packets read */
     if (likely(rx_count > 0)) {
-        printf("process_packets: %u\n", (uint)rx_count);
         process_packets(
             buf,
             rx_count,
@@ -2488,7 +2426,6 @@ std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variab
     if (opts.count("hugepages")) {
         qp = std::make_unique<dpdk_qp<true>>(this, qid,
                                  _stats_plugin_name + "-" + _stats_plugin_inst);
-        printf("post dpdk_qp\n");
     } else {
         qp = std::make_unique<dpdk_qp<false>>(this, qid,
                                  _stats_plugin_name + "-" + _stats_plugin_inst);
@@ -2497,7 +2434,6 @@ std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variab
     // FIXME: future is discarded
     (void)smp::submit_to(_home_cpu, [this] () mutable {
         if (++_queues_ready == _num_queues) {
-            printf("calling init_port_fini\n");
             init_port_fini();
         }
     });

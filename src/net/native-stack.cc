@@ -129,18 +129,9 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                         cpu_weights[i] = 1;
                     }
                     cpu_weights[qid] = opts["hw-queue-weight"].as<float>();
-                    printf("configuring proxies\n");
                     qp->configure_proxies(cpu_weights);
-                    printf("setting local queue\n");
                     sdev->set_local_queue(std::move(qp), qid);
-                    printf("post set local\n");
-                    int64_t free = memory::stats().free_memory();
-                    int64_t total = memory::stats().total_memory();
-                    int64_t allocated = memory::stats().allocated_memory();
-                    double per_used = ((total - free) / total) * 100;
-                    printf("\t%u: %ld, %ld, %ld (%.2f%% used - free/total/allocated)\n", engine().cpu_id(), free, total, allocated, per_used);
                 } else {
-                    printf("native stack else case\n");
                     auto master_qid = qid % sdev->hw_queues_count();
                     auto master_cpuid = sdev->qid2cpuid(master_qid);
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);

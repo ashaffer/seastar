@@ -117,7 +117,6 @@ struct deleter::impl {
 
 inline
 deleter::~deleter() {
-    printf("deleter destructor called\n");
     if (is_raw_object()) {
         std::free(to_raw_object());
         return;

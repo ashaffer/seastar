@@ -609,9 +609,11 @@ private:
         }
         void signal_data_received() {
             if (_rcv._data_received_promise) {
-                printf("setting data received promise\n");
+                printf("setting data received promise: %d\n", _local_port);
                 _rcv._data_received_promise->set_value();
                 _rcv._data_received_promise = {};
+            } else {
+                printf("no data received promise: %d\n", _local_port);
             }
         }
         void signal_all_data_acked() {
@@ -1925,7 +1927,7 @@ void tcp<InetTraits>::tcb::output_one(bool data_retransmit) {
 
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::wait_for_data() {
-    printf("wait_for_data called\n");
+    printf("wait_for_data called: %d\n", _local_port);
     if (!_rcv.data.empty() || foreign_will_not_send()) {
         printf("making ready future\n");
         return make_ready_future<>();

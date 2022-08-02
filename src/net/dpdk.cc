@@ -828,6 +828,7 @@ build_mbuf_cluster:
                         // We are done - set the data size of the last segment
                         // of the cluster.
                         //
+                        printf("Setting data len: %d\n", cur_seg->data_len);
                         cur_seg->data_len = cur_seg_offset;
                         break;
                     }
@@ -837,6 +838,7 @@ build_mbuf_cluster:
 
                 if (cur_seg_offset >= inline_mbuf_data_size) {
                     cur_seg->data_len = inline_mbuf_data_size;
+                    printf("Setting data len2: %d\n", cur_seg->data_len);
                     cur_seg = cur_seg->next;
                     cur_seg_offset = 0;
 

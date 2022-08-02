@@ -1961,9 +1961,6 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 
         rte_pktmbuf_pool_init(_pktmbuf_pool_rx, as_cookie(roomsz));
 
-        // int rc = (rte_mempool_populate_default(_pktmbuf_pool_rx) < 0);
-        // printf("rx mbuf pool: 0x%lx\n", (uint64_t)_pktmbuf_pool_rx);
-
         int rc = rte_mempool_populate_virt(_pktmbuf_pool_rx,
                                       (char*)(_rx_xmem.get()), xmem_size,
                                       page_size,
@@ -1979,33 +1976,11 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         _rx_free_pkts.reserve(mbufs_per_queue_rx);
         _rx_free_bufs.reserve(mbufs_per_queue_rx);
 
-        // struct rte_pktmbuf_pool_private roomsz2 = {};
-        // roomsz2.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
-        // rte_mempool *_pktmbuf_pool_rx2 =
-        //     rte_mempool_create((name + "_2").c_str(),
-        //                        mbufs_per_queue_rx, inline_mbuf_size,
-        //                        mbuf_cache_size,
-        //                        sizeof(struct rte_pktmbuf_pool_private),
-        //                        rte_pktmbuf_pool_init, as_cookie(roomsz2),
-        //                        rte_pktmbuf_init, nullptr,
-        //                        rte_socket_id(), 0);
-
-
         // 1) Pull all entries from the pool.
         // 2) Bind data buffers to each of them.
         // 3) Return them back to the pool.
-        printf("here\n");
         for (int i = 0; i < mbufs_per_queue_rx; i++) {
             rte_mbuf *m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
-            // rte_mbuf *m2 = NULL;
-            // rte_mempool_get(_pktmbuf_pool_rx2, (void **)&m2);
-            // assert(m);
-            // assert(m2);
-            // m->buf_addr = m2->buf_addr;
-            // m->buf_iova = m2->buf_iova;
-            // m->buf_len       = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
-            // m->data_off      = RTE_PKTMBUF_HEADROOM;
-
             _rx_free_bufs.push_back(m);
         }
 
@@ -2014,15 +1989,6 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
         // sprintf(mzname, "testing%u", engine().cpu_id());
         uint32_t len = _rx_free_bufs.size() * mbuf_data_size;
         void *addr = rte_zmalloc(NULL, len, 0);
-        // rte_vfio_dma_map((uint64_t)addr, rte_mem_virt2iova(addr), len);
-        // void *addr = malloc(len);
-        // rte_rwlock_write_unlock(RTE_EAL_MEMPOOL_RWLOCK);
-        // void *addr;
-        // posix_memalign(&addr, RTE_PGSIZE_2M, len);
-        // rte_vfio_dma_map((uint64_t)addr, rte_mem_virt2iova(addr), len);
-        // if (addr == NULL) {
-        //     printf("Memzone allocation failed: %d\n", rte_errno);
-        // }
         char *ptr = (char *)addr;
         for (auto&& m : _rx_free_bufs) {
             // if (!init_noninline_rx_mbuf(m)) {
@@ -2032,51 +1998,13 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
             // }
             // int rc;
 
-            // rc = rte_vfio_dma_map((uint64_t)m->buf_addr, m->buf_iova, mbuf_data_size);
-            // if (rc != 0) {
-            //     printf("mbuf vfio_dma_map failed: %d\n", rc);
-            // }
             m->buf_addr = (void *)ptr;
             m->buf_iova = rte_mem_virt2iova(m->buf_addr);
             ptr += mbuf_data_size;
-
-            // uintptr_t paddr;
-            // rc = virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
-            // if (rc != 0) {
-            //     printf("Error converting virt to phys\n");
-            // }
-            // if (m->buf_iova != paddr) {
-            //     // printf("\tPaddr mismatch: 0x%lx vs 0x%lx (0x%lx)\n", (uint64_t)m->buf_iova, (uint64_t)paddr, (uint64_t)rte_mem_virt2iova(m->buf_addr));
-            //     // m->buf_iova = paddr;
-            // }
         }
-
-        // if (engine().cpu_id() == 0) {
-        //     for (int i = 0; i < mbufs_per_queue_rx / 2; i++) {
-        //         auto *mbuf = _rx_free_bufs[i];
-        //         printf("Allocated mbuf 0x%lx (0x%lx, 0x%lx):", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
-        //         for (int j = 0; j < 10; j++) {
-        //             printf(" %02x", ((uint8_t *)mbuf->buf_addr)[j]);
-        //         }
-        //         printf("\n");
-        //     }
-        // }
-        // struct rte_mbuf *mbuf = _rx_free_bufs[768];
-        // printf("Allocated mbuf 0x%lx (0x%lx, 0x%lx):", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
-        // for (int j = 0; j < 10; j++) {
-        //     printf(" %02x", ((uint8_t *)mbuf->buf_addr)[j]);
-        // }
-        // printf("\n");
-
-        // mbuf = _rx_free_bufs[mbufs_per_queue_rx - 2];
-        // printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
-        // mbuf = _rx_free_bufs[mbufs_per_queue_rx - 1];
-        // printf("Allocated mbuf: 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)mbuf, (uint64_t)mbuf->buf_addr, mbuf->buf_iova);
 
         rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
                              _rx_free_bufs.size());
-
-        printf("init_rx_mbuf_pool: 0x%lx, 0x%lx\n", (uint64_t)_rx_free_bufs.data(), (uint64_t)_pktmbuf_pool_rx);
 
         _rx_free_bufs.clear();
     } else {
@@ -2342,9 +2270,7 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
 
     char *d = rte_pktmbuf_mtod(m, char *);
     uint sz = rte_pktmbuf_data_len(m);
-    uintptr_t paddr;
-    virt_to_phys_user(&paddr, (uintptr_t)m->buf_addr);
-    printf("Packet addrs: 0x%lx vs 0x%lx vs 0x%lx\n", m->buf_iova, rte_mem_virt2iova(m->buf_addr), (uint64_t)paddr);
+    printf("Packet addrs: 0x%lx vs 0x%lx\n", m->buf_iova, rte_mem_virt2iova(m->buf_addr));
     printf(
         "Packet: 0x%x 0x%x 0x%x 0x%lx 0x%x 0x%x 0x%x\n",
         (uint)m->refcnt,

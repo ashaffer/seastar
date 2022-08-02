@@ -232,10 +232,9 @@ arp_for<L3>::lookup(const l3addr& paddr) {
         res._timeout_timer.arm_periodic(std::chrono::seconds(1));
         // FIXME: future is discarded
         in_addr foreign;
-        foreign.s_addr = htonl(paddr.ip);
-        char *saddr = strdup(inet_ntoa(foreign));
+        foreign.s_addr
+        char *saddr = strdup(inet_ntoa(paddr.ip));
         printf("ARP Querying: %s\n", saddr);
-        free(saddr);
         (void)send_query(paddr);
     }
 
@@ -271,7 +270,6 @@ arp_for<L3>::is_self(l3addr paddr) {
 template <typename L3>
 future<>
 arp_for<L3>::received(packet p) {
-    printf("received arp packet\n");
     auto ah = p.get_header(0, arp_hdr::size());
     if (!ah) {
         return make_ready_future<>();

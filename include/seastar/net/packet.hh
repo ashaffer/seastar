@@ -156,6 +156,7 @@ class packet final {
         }
         // Since the above "placement delete" hides the global one, expose it
         void operator delete(void* ptr) {
+            printf("Deleting packet: 0x%lx\n", (uint64_t)ptr);
             return ::operator delete(ptr);
         }
 

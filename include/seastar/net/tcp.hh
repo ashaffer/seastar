@@ -516,11 +516,6 @@ private:
         }
         future<> connect_done() {
             printf("connect_done\n");
-            _connect_done.get_future().then([] () {
-                printf("connection established\n");
-            }).handle_exception([] (std::exception_ptr e) {
-                printf("connection error\n");
-            });
             return _connect_done.get_future();
         }
         tcp_state& state() {

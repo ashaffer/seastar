@@ -144,7 +144,9 @@ public:
         assert(sa.as_posix_sockaddr().sa_family == AF_INET);
 
         _conn = make_lw_shared<typename Protocol::connection>(_proto.connect(sa, local));
+        printf("pre-connected\n");
         return _conn->connected().then([conn = _conn]() mutable {
+            printf("post connected!\n");
             auto csi = std::make_unique<native_connected_socket_impl<Protocol>>(std::move(conn));
             return make_ready_future<connected_socket>(connected_socket(std::move(csi)));
         });

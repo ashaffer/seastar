@@ -72,7 +72,7 @@ struct ethernet_address {
     std::string to_string () {
         char s[32] = {0};
 
-        sprintf("%02x:%02x:%02x:%02x:%02x:%02x",
+        sprintf(s, "%02x:%02x:%02x:%02x:%02x:%02x",
             (uint8_t)mac[0],
             (uint8_t)mac[1],
             (uint8_t)mac[2],

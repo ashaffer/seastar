@@ -95,7 +95,7 @@ struct ipv4_address {
 
     std::string to_string () {
         char s[32] = {0};
-        sprintf("%u.%u.%u.%u",
+        sprintf(s, "%u.%u.%u.%u",
             (uint8_t)((ip >> 24) & 0xFF),
             (uint8_t)((ip >> 16) & 0xFF),
             (uint8_t)((ip >>  8) & 0xFF),

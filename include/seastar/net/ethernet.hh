@@ -71,7 +71,8 @@ struct ethernet_address {
 
     void print_hex () {
         for (uint i = 0; i < sizeof(mac); i++) {
-            printf(" %02x", mac[i]);
+            if (i != 0) printf(":");
+            printf("%02x", mac[i]);
         }
         printf("\n");
     }

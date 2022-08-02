@@ -95,7 +95,7 @@ struct ipv4_address {
 
     void print_str () {
         for (uint i = 0; i < 4; i++) {
-            uint8_t b = (ip >> (i * 8)) & 0xFF;
+            uint8_t b = (ip >> ((3 - i) * 8)) & 0xFF;
             if (i != 0) printf(".");
             printf("%d", b);
         }

@@ -68,6 +68,13 @@ struct ethernet_address {
     static constexpr size_t size() {
         return 6;
     }
+
+    void print_hex () {
+        for (uint i = 0; i < sizeof(mac); i++) {
+            printf(" %02x", mac[i]);
+        }
+        printf("\n");
+    }
 } __attribute__((packed));
 
 std::ostream& operator<<(std::ostream& os, ethernet_address ea);

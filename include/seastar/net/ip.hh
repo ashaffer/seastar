@@ -92,6 +92,16 @@ struct ipv4_address {
     void produce(char*& p) const {
         produce_be<uint32_t>(p, ip);
     }
+
+    void print_str () {
+        for (uint i = 0; i < 4; i++) {
+            uint8_t b = (ip >> (i * 8)) & 0xFF;
+            if (i != 0) printf(".");
+            printf("%d", b);
+        }
+        printf("\n");
+    }
+
     static constexpr size_t size() {
         return 4;
     }

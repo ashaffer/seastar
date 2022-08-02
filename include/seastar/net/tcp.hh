@@ -762,6 +762,8 @@ public:
             return _tcb->connect_done();
         }
         future<> send(packet p) {
+            printf("send ");
+            p.print_hex();
             return _tcb->send(std::move(p));
         }
         future<> wait_for_data() {

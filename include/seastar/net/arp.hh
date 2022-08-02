@@ -250,11 +250,7 @@ arp_for<L3>::lookup(const l3addr& paddr) {
 template <typename L3>
 void
 arp_for<L3>::learn(l2addr hwaddr, l3addr paddr) {
-    printf("arp learn:");
-    hwaddr.print_hex();
-    printf(" -> ");
-    paddr.print_str();
-    printf("\n");
+    printf("arp learn: %s -> %s\n", hwaddr.to_string().c_str(), paddr.to_string().c_str());
 
     _table[paddr] = hwaddr;
     auto i = _in_progress.find(paddr);

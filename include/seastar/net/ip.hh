@@ -93,13 +93,16 @@ struct ipv4_address {
         produce_be<uint32_t>(p, ip);
     }
 
-    void print_str () {
-        for (uint i = 0; i < 4; i++) {
-            uint8_t b = (ip >> ((3 - i) * 8)) & 0xFF;
-            if (i != 0) printf(".");
-            printf("%d", b);
-        }
-        printf("\n");
+    std::string to_string () {
+        char s[32] = {0};
+        sprintf("%u.%u.%u.%u",
+            (uint8_t)((ip >> 24) & 0xFF),
+            (uint8_t)((ip >> 16) & 0xFF),
+            (uint8_t)((ip >>  8) & 0xFF),
+            (uint8_t)((ip      ) & 0xFF)
+        );
+
+        return s;
     }
 
     static constexpr size_t size() {

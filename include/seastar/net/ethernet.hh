@@ -69,13 +69,21 @@ struct ethernet_address {
         return 6;
     }
 
-    void print_hex () {
-        for (uint i = 0; i < sizeof(mac); i++) {
-            if (i != 0) printf(":");
-            printf("%02x", mac[i]);
-        }
-        printf("\n");
+    std::string to_string () {
+        char s[32] = {0};
+
+        sprintf("%02x:%02x:%02x:%02x:%02x:%02x",
+            (uint8_t)mac[0],
+            (uint8_t)mac[1],
+            (uint8_t)mac[2],
+            (uint8_t)mac[3],
+            (uint8_t)mac[4],
+            (uint8_t)mac[5]
+        );
+
+        return s;
     }
+
 } __attribute__((packed));
 
 std::ostream& operator<<(std::ostream& os, ethernet_address ea);

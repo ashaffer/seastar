@@ -345,7 +345,7 @@ public:
         for (uint i = 0; i < nr_frags(); i++) {
             auto frag = fragment_array()[i];
             for (uint j = 0; j < frag.size; j++) {
-                printf(" 0x%1x", (uint)frag.base[j]);
+                printf(" 0x%02x", (uint8_t)frag.base[j]);
             }
         }
         printf("\n");

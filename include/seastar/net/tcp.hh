@@ -1387,7 +1387,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
     auto seg_len = p.len();
 
     // 4.1 first check sequence number
-    printf("!segment_acceptable: %u, %u, %u\n", seg_seq, seg_len, segment_acceptable(seg_seq, seg_len));
+    printf("!segment_acceptable: %u, %u, %u\n", seg_seq.raw, seg_len, segment_acceptable(seg_seq, seg_len));
     if (!segment_acceptable(seg_seq, seg_len)) {
 
         //<SEQ=SND.NXT><ACK=RCV.NXT><CTL=ACK>

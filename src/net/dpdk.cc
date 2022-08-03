@@ -2357,6 +2357,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
             (*p).set_rss_hash(m->hash.rss);
         // }
 
+        p.print_hex();
         _dev->l2receive(std::move(*p));
     }
 

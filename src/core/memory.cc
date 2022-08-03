@@ -1360,8 +1360,6 @@ void configure(std::vector<resource::memory> m, bool mbind,
 #endif
         pos += x.bytes;
     }
-
-    printf("post configure\n");
 }
 
 statistics stats() {

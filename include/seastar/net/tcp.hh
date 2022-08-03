@@ -1207,7 +1207,7 @@ bool tcp<InetTraits>::tcb::segment_acceptable(tcp_seq seg_seq, unsigned seg_len)
         // SEG.SEQ = RCV.NXT
         return seg_seq == _rcv.next;
     } else if (seg_len == 0 && _rcv.window > 0) {
-        printf("sa2")
+        printf("sa2");
         // RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
         return (_rcv.next <= seg_seq) && (seg_seq < _rcv.next + _rcv.window);
     } else if (seg_len > 0 && _rcv.window > 0) {

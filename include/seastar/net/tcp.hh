@@ -1384,6 +1384,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.1 first check sequence number
     if (!segment_acceptable(seg_seq, seg_len)) {
+        printf("!segment_acceptable\n");
         //<SEQ=SND.NXT><ACK=RCV.NXT><CTL=ACK>
         return output();
     }
@@ -1391,6 +1392,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
     // In the following it is assumed that the segment is the idealized
     // segment that begins at RCV.NXT and does not exceed the window.
     if (seg_seq < _rcv.next) {
+        printf("_rcv.next\n");
         // ignore already acknowledged data
         auto dup = std::min(uint32_t(_rcv.next - seg_seq), seg_len);
         p.trim_front(dup);
@@ -1400,6 +1402,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
     // FIXME: We should trim data outside the right edge of the receive window as well
 
     if (seg_seq != _rcv.next) {
+        printf("insert_ooo\n");
         insert_out_of_order(seg_seq, std::move(p));
         // A TCP receiver SHOULD send an immediate duplicate ACK
         // when an out-of-order segment arrives.
@@ -1408,6 +1411,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.2 second check the RST bit
     if (th->f_rst) {
+        printf("rst\n");
         // in_addr local;
         // in_addr foreign;
         // local.s_addr = htonl(_local_ip.ip);
@@ -1469,6 +1473,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.4 fourth, check the SYN bit
     if (th->f_syn) {
+        printf("f_syn\n");
         // SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2
         // CLOSE_WAIT, CLOSING, LAST_ACK, TIME_WAIT
 
@@ -1488,11 +1493,13 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.5 fifth check the ACK field
     if (!th->f_ack) {
+        printf("f_ack\n");
         // if the ACK bit is off drop the segment and return
         return;
     } else {
         // SYN_RECEIVED STATE
         if (in_state(SYN_RECEIVED)) {
+            printf("in_state(SYN_RECEIVED)\n");
             // If SND.UNA =< SEG.ACK =< SND.NXT then enter ESTABLISHED state
             // and continue processing.
             if (_snd.unacknowledged <= seg_ack && seg_ack <= _snd.next) {
@@ -1521,6 +1528,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         // ESTABLISHED STATE or
         // CLOSE_WAIT STATE: Do the same processing as for the ESTABLISHED state.
         if (in_state(ESTABLISHED | CLOSE_WAIT)){
+            printf("in_state(ESTABLISHED | CLOSE_WAIT)\n");
             // When we are in zero window probing phase and packets_out = 0 we bypass "duplicated ack" check
             auto packets_out = _snd.next - _snd.unacknowledged - _snd.zero_window_probing_out;
             // If SND.UNA < SEG.ACK =< SND.NXT then, set SND.UNA <- SEG.ACK.
@@ -1636,6 +1644,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         }
         // FIN_WAIT_1 STATE
         if (in_state(FIN_WAIT_1)) {
+            printf("fin_wait_1\n");
             // In addition to the processing for the ESTABLISHED state, if
             // our FIN is now acknowledged then enter FIN-WAIT-2 and continue
             // processing in that state.
@@ -1647,6 +1656,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         }
         // FIN_WAIT_2 STATE
         if (in_state(FIN_WAIT_2)) {
+            printf("fin_wait_2\n");
             // In addition to the processing for the ESTABLISHED state, if
             // the retransmission queue is empty, the user’s CLOSE can be
             // acknowledged ("ok") but do not delete the TCB.
@@ -1654,6 +1664,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         }
         // CLOSING STATE
         if (in_state(CLOSING)) {
+            printf("closing\n");
             if (seg_ack == _snd.next + 1) {
                 tcp_debug("ack: CLOSING -> TIME_WAIT\n");
                 do_local_fin_acked();
@@ -1664,6 +1675,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         }
         // LAST_ACK STATE
         if (in_state(LAST_ACK)) {
+            printf("last_ack\n");
             if (seg_ack == _snd.next + 1) {
                 tcp_debug("ack: LAST_ACK -> CLOSED\n");
                 do_local_fin_acked();
@@ -1672,6 +1684,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         }
         // TIME_WAIT STATE
         if (in_state(TIME_WAIT)) {
+            printf("time_wait\n");
             // The only thing that can arrive in this state is a
             // retransmission of the remote FIN. Acknowledge it, and restart
             // the 2 MSL timeout.
@@ -1686,6 +1699,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.7 seventh, process the segment text
     if (in_state(ESTABLISHED | FIN_WAIT_1 | FIN_WAIT_2)) {
+        printf("established | fin_wait_1 | fin_wait_2\n");
         if (p.len()) {
             // Once the TCP takes responsibility for the data it advances
             // RCV.NXT over the data accepted, and adjusts RCV.WND as
@@ -1712,6 +1726,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
             }
         }
     } else if (in_state(CLOSE_WAIT | CLOSING | LAST_ACK | TIME_WAIT)) {
+        printf("else if\n");
         // This should not occur, since a FIN has been received from the
         // remote side. Ignore the segment text.
         return;
@@ -1719,6 +1734,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.8 eighth, check the FIN bit
     if (th->f_fin) {
+        printf("f_fin2\n");
         if (in_state(CLOSED | LISTEN | SYN_SENT)) {
             // Do not process the FIN if the state is CLOSED, LISTEN or SYN-SENT
             // since the SEG.SEQ cannot be validated; drop the segment and return.

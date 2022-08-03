@@ -1203,12 +1203,15 @@ uint32_t tcp<InetTraits>::tcb::data_segment_acked(tcp_seq seg_ack) {
 template <typename InetTraits>
 bool tcp<InetTraits>::tcb::segment_acceptable(tcp_seq seg_seq, unsigned seg_len) {
     if (seg_len == 0 && _rcv.window == 0) {
+        printf("sa1\n");
         // SEG.SEQ = RCV.NXT
         return seg_seq == _rcv.next;
     } else if (seg_len == 0 && _rcv.window > 0) {
+        printf("sa2")
         // RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
         return (_rcv.next <= seg_seq) && (seg_seq < _rcv.next + _rcv.window);
     } else if (seg_len > 0 && _rcv.window > 0) {
+        printf("sa3\n");
         // RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
         //    or
         // RCV.NXT =< SEG.SEQ+SEG.LEN-1 < RCV.NXT+RCV.WND
@@ -1216,6 +1219,7 @@ bool tcp<InetTraits>::tcb::segment_acceptable(tcp_seq seg_seq, unsigned seg_len)
         bool y = (_rcv.next <= seg_seq + seg_len - 1) && (seg_seq + seg_len - 1 < _rcv.next + _rcv.window);
         return x || y;
     } else  {
+        printf("sa4\n");
         // SEG.LEN > 0 RCV.WND = 0, not acceptable
         return false;
     }
@@ -1383,8 +1387,9 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
     auto seg_len = p.len();
 
     // 4.1 first check sequence number
+    printf("!segment_acceptable: %u, %u, %u\n", seg_seq, seg_len, segment_acceptable(seg_seq, seg_len));
     if (!segment_acceptable(seg_seq, seg_len)) {
-        printf("!segment_acceptable\n");
+
         //<SEQ=SND.NXT><ACK=RCV.NXT><CTL=ACK>
         return output();
     }

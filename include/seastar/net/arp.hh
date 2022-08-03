@@ -284,7 +284,7 @@ arp_for<L3>::received(packet p) {
     case op_request:
         return handle_request(&h);
     case op_reply:
-        printf("arp learn: %s -> %s\n", hwaddr.to_string().c_str(), paddr.to_string().c_str());
+        printf("arp learn: %s -> %s\n", h.sender_hwaddr.to_string().c_str(), h.sender_paddr.to_string().c_str());
         arp_learn(h.sender_hwaddr, h.sender_paddr);
         return make_ready_future<>();
     default:

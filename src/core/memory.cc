@@ -298,7 +298,7 @@ class small_pool {
     unsigned _max_free;
     unsigned _pages_in_use = 0;
     page_list _span_list;
-    static constexpr unsigned idx_frac_bits = 2;
+    static constexpr unsigned long idx_frac_bits = 2;
 public:
     explicit small_pool(unsigned object_size) noexcept;
     ~small_pool();
@@ -306,8 +306,8 @@ public:
     void deallocate(void* object);
     unsigned object_size() const { return _object_size; }
     bool objects_page_aligned() const { return is_page_aligned(_object_size); }
-    static constexpr unsigned size_to_idx(unsigned size);
-    static constexpr unsigned idx_to_size(unsigned idx);
+    static constexpr unsigned size_to_idx(unsigned long size);
+    static constexpr unsigned idx_to_size(unsigned long idx);
     allocation_site_ptr& alloc_site_holder(void* ptr);
 private:
     void add_more_objects();
@@ -318,14 +318,14 @@ private:
 // index 0b0001'1100 -> size (1 << 4) + 0b11 << (4 - 2)
 
 constexpr unsigned
-small_pool::idx_to_size(unsigned idx) {
+small_pool::idx_to_size(unsigned long idx) {
     return (((1 << idx_frac_bits) | (idx & ((1 << idx_frac_bits) - 1)))
               << (idx >> idx_frac_bits))
                   >> idx_frac_bits;
 }
 
 constexpr unsigned
-small_pool::size_to_idx(unsigned size) {
+small_pool::size_to_idx(unsigned long size) {
     return ((log2floor(size) << idx_frac_bits) - ((1 << idx_frac_bits) - 1))
             + ((size - 1) >> (log2floor(size) - idx_frac_bits));
 }

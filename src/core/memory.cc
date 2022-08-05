@@ -1047,7 +1047,7 @@ void cpu_pages::set_min_free_pages(size_t pages) {
 
 small_pool::small_pool(unsigned object_size) noexcept
     : _object_size(object_size) {
-    unsigned span_size = 1;
+    unsigned long span_size = 1;
     auto span_bytes = [&] { return span_size * page_size; };
     auto waste = [&] { return (span_bytes() % _object_size) / (1.0 * span_bytes()); };
     while (object_size > span_bytes()) {
@@ -1061,7 +1061,7 @@ small_pool::small_pool(unsigned object_size) noexcept
         ++span_size;
     }
     _span_sizes.preferred = span_size;
-    _max_free = std::max<unsigned>(100, span_bytes() * 2 / _object_size);
+    _max_free = std::max<unsigned long>(100, span_bytes() * 2 / _object_size);
     _min_free = _max_free / 2;
 }
 

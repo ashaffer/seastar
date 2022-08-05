@@ -279,11 +279,10 @@ struct l4connid {
                 hash_data.push_back(htons(local_port));
             }
         } else {
-            printf("rss hash else case: %u\n", rss_conf.initial);
             hash_data.push_back(htonl(foreign_ip.ip));
             hash_data.push_back(htonl(local_ip.ip));
-            hash_data.push_back(htonl(foreign_port));
-            hash_data.push_back(htonl(local_port));
+            hash_data.push_back(htons(foreign_port));
+            hash_data.push_back(htons(local_port));
         }
 
         return toeplitz_hash(rss_conf, hash_data);
@@ -311,8 +310,8 @@ struct l4connid {
         } else {
             hash_data.push_back(htonl(local_ip.ip));
             hash_data.push_back(htonl(foreign_ip.ip));
-            hash_data.push_back(htonl(local_port));
-            hash_data.push_back(htonl(foreign_port));
+            hash_data.push_back(htons(local_port));
+            hash_data.push_back(htons(foreign_port));
         }
 
         return toeplitz_hash(rss_conf, hash_data);

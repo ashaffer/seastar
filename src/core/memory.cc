@@ -300,7 +300,7 @@ class small_pool {
     page_list _span_list;
     static constexpr unsigned long idx_frac_bits = 2;
 public:
-    explicit small_pool(unsigned object_size) noexcept;
+    explicit small_pool(unsigned long object_size) noexcept;
     ~small_pool();
     void* allocate();
     void deallocate(void* object);
@@ -1045,7 +1045,7 @@ void cpu_pages::set_min_free_pages(size_t pages) {
     maybe_reclaim();
 }
 
-small_pool::small_pool(unsigned object_size) noexcept
+small_pool::small_pool(unsigned long object_size) noexcept
     : _object_size(object_size) {
     unsigned long span_size = 1;
     auto span_bytes = [&] { return span_size * page_size; };

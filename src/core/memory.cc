@@ -290,7 +290,7 @@ class small_pool {
         uint8_t preferred;
         uint8_t fallback;
     };
-    unsigned _object_size;
+    unsigned long _object_size;
     span_sizes _span_sizes;
     free_object* _free = nullptr;
     size_t _free_count = 0;
@@ -317,14 +317,14 @@ private:
 
 // index 0b0001'1100 -> size (1 << 4) + 0b11 << (4 - 2)
 
-constexpr unsigned
+constexpr unsigned long
 small_pool::idx_to_size(unsigned long idx) {
     return (((1 << idx_frac_bits) | (idx & ((1 << idx_frac_bits) - 1)))
               << (idx >> idx_frac_bits))
                   >> idx_frac_bits;
 }
 
-constexpr unsigned
+constexpr unsigned long
 small_pool::size_to_idx(unsigned long size) {
     return ((log2floor(size) << idx_frac_bits) - ((1 << idx_frac_bits) - 1))
             + ((size - 1) >> (log2floor(size) - idx_frac_bits));
@@ -1048,7 +1048,7 @@ void cpu_pages::set_min_free_pages(size_t pages) {
 small_pool::small_pool(unsigned long object_size) noexcept
     : _object_size(object_size) {
     unsigned long span_size = 1;
-    auto span_bytes = [&] { return span_size * page_size; };
+    auto span_bytes = [&] { return (unsigned long)(span_size * page_size); };
     auto waste = [&] { return (span_bytes() % _object_size) / (1.0 * span_bytes()); };
     while (object_size > span_bytes()) {
         ++span_size;

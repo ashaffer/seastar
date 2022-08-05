@@ -416,7 +416,7 @@ class dpdk_device : public device {
     bool _use_lro;
     bool _enable_fc;
     std::vector<uint8_t> _redir_table;
-    rss_key_type _rss_key;
+    // rss_key_type _rss_key;
     port_stats _stats;
     timer<> _stats_collector;
     const std::string _stats_plugin_name;
@@ -1634,7 +1634,16 @@ int dpdk_device::init_port_start()
                 "Port %d: We support only 40 or 52 bytes RSS hash keys, %d bytes key requested",
                 _port_idx, _dev_info.hash_key_size);
         } else {
-            printf("Using default rss hash key (40 bytes)\n");
+            printf("Using default rss hash key (40 bytes): ");
+            for (uint i = 0; i < sizeof(default_rsskey_40bytes); i++) {
+                if (i == 0) {
+                    printf("%02x", (uint8_t)default_rsskey_40bytes[i]);
+                } else {
+                    printf(":%02x", (uint8_t)default_rsskey_40bytes[i]);
+                }
+            }
+            printf("\n");
+
             // _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
             _dev_info.hash_key_size = sizeof(default_rsskey_40bytes);
             _rss_conf.key = default_rsskey_40bytes;
@@ -1645,7 +1654,7 @@ int dpdk_device::init_port_start()
         /* enable all supported rss offloads */
         port_conf.rx_adv_conf.rss_conf.rss_hf = _dev_info.flow_type_rss_offloads;
         if (_dev_info.hash_key_size) {
-            port_conf.rx_adv_conf.rss_conf.rss_key = const_cast<uint8_t *>(_rss_key);
+            port_conf.rx_adv_conf.rss_conf.rss_key = const_cast<uint8_t *>(_rss_conf.key);
             port_conf.rx_adv_conf.rss_conf.rss_key_len = _dev_info.hash_key_size;
         }
     } else {

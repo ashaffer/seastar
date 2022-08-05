@@ -69,6 +69,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     device_configs dev_cfgs;
 
     bool fullHash = opts["full-rss-hash"].as<bool>();
+    bool rssSort = opts["rss-sort"].as<bool>();
     uint32_t initialHash = opts["rss-seed"].as<uint32_t>();
 
     if ( deprecated_config_used) {
@@ -76,7 +77,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         if ( opts.count("dpdk-pmd")) {
              devices.push_back(create_dpdk_net_device(opts["dpdk-port-index"].as<unsigned>(), smp::count,
                 !(opts.count("lro") && opts["lro"].as<std::string>() == "off"),
-                !(opts.count("hw-fc") && opts["hw-fc"].as<std::string>() == "off"), fullHash, initialHash));
+                !(opts.count("hw-fc") && opts["hw-fc"].as<std::string>() == "off"), fullHash, initialHash, rssSort));
        } else 
 #endif  
         devices.push_back(create_virtio_net_device(opts));
@@ -397,6 +398,7 @@ boost::program_options::options_description nns_options() {
         ("net-config-file",
                 boost::program_options::value<std::string>()->default_value(""),
                 "net config file describing the NIC devices to use")
+        ("rss-sort", boost::program_options::value<bool>()->default_value(false), "Whether the src/dst IP/port are sorted by value before being passed to the RSS hash")
         ("full-rss-hash", boost::program_options::value<bool>()->default_value(false), "Whether to return the full rss hash, or mirror the low order word")
         ("rss-seed", boost::program_options::value<uint32_t>()->default_value(0xFFFFFFFF), "Initial value to begin hash with for RSS")
         ("tap-device",

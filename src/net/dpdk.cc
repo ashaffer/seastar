@@ -472,7 +472,7 @@ private:
 
 public:
     dpdk_device(uint16_t port_idx, uint16_t num_queues, bool use_lro,
-                bool enable_fc, bool fullHash, uint32_t initialHash)
+                bool enable_fc, bool fullHash, uint32_t initialHash, bool rssSort)
         : _port_idx(port_idx)
         , _num_queues(num_queues)
         , _home_cpu(engine().cpu_id())
@@ -482,6 +482,7 @@ public:
         , _stats_plugin_inst(std::string("port") + std::to_string(_port_idx))
         , _xstats(port_idx)
     {
+        _rss_conf.sort = rssSort;
         _rss_conf.full = fullHash;
         _rss_conf.initial = initialHash;
         /* now initialise the port we will use */
@@ -2453,7 +2454,8 @@ std::unique_ptr<net::device> create_dpdk_net_device(
                                     bool use_lro,
                                     bool enable_fc,
                                     bool fullHash,
-                                    uint32_t initialHash)
+                                    uint32_t initialHash,
+                                    bool rssSort)
 {
     // static bool called = false;
 
@@ -2470,7 +2472,7 @@ std::unique_ptr<net::device> create_dpdk_net_device(
     }
 
     return std::make_unique<dpdk::dpdk_device>(port_idx, num_queues, use_lro,
-                                               enable_fc, fullHash, initialHash);
+                                               enable_fc, fullHash, initialHash, rssSort);
 }
 
 std::string get_mac_for_port (uint16_t port_idx) {
@@ -2502,13 +2504,13 @@ uint16_t get_port_index_by_mac (std::string mac) {
 }
 
 std::unique_ptr<net::device> create_dpdk_net_device(
-                                    const hw_config& hw_cfg, uint16_t num_queues, bool fullHash, uint32_t initialHash)
+                                    const hw_config& hw_cfg, uint16_t num_queues, bool fullHash, uint32_t initialHash, bool rssSort)
 {
     if (hw_cfg.mac_address != "") {
         uint portIdx = get_port_index_by_mac(hw_cfg.mac_address);
-        return create_dpdk_net_device(portIdx, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash);
+        return create_dpdk_net_device(portIdx, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash, rssSort);
     } else {
-        return create_dpdk_net_device(*hw_cfg.port_index, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash);
+        return create_dpdk_net_device(*hw_cfg.port_index, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash, rssSort);
     }
 }
 

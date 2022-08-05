@@ -55,6 +55,7 @@ typedef struct {
 	uint32_t keySize;
 	uint32_t initial;
 	bool full;
+   bool sort;
 } rss_config;
 
 // Mellanox Linux's driver key

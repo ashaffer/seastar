@@ -36,10 +36,11 @@ std::unique_ptr<net::device> create_dpdk_net_device(
                                     bool use_lro = true,
                                     bool enable_fc = true,
                                     bool fullHash = false,
-                                    uint32_t initialHash = 0xFFFFFFFF);
+                                    uint32_t initialHash = 0xFFFFFFFF,
+                                    bool rssSort = false);
 
 std::unique_ptr<net::device> create_dpdk_net_device(
-                                    const net::hw_config& hw_cfg, uint16_t num_queues, bool fullHash = false, uint32_t initialHash = 0xFFFFFFFF);
+                                    const net::hw_config& hw_cfg, uint16_t num_queues, bool fullHash = false, uint32_t initialHash = 0xFFFFFFFF, bool rssSort = false);
 
 
 boost::program_options::options_description get_dpdk_net_options_description();

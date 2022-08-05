@@ -829,7 +829,7 @@ build_mbuf_cluster:
                         // of the cluster.
                         //
                         cur_seg->data_len = cur_seg_offset;
-                        printf("Setting data len: %d\n", cur_seg->data_len);
+                        printf("Setting data len: %d (%u)\n", cur_seg->data_len, engine().cpu_id());
                         break;
                     }
 

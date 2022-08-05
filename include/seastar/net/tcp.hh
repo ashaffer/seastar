@@ -994,7 +994,7 @@ void printConnid (Connid &connid, Inet &inet) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
-    printf("tcp received\n");
+    printf("tcp received: %u\n", engine().cpu_id());
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
         return;
@@ -1704,7 +1704,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.7 seventh, process the segment text
     if (in_state(ESTABLISHED | FIN_WAIT_1 | FIN_WAIT_2)) {
-        printf("established | fin_wait_1 | fin_wait_2\n");
+        printf("established | fin_wait_1 | fin_wait_2: %u, %u, %u\n", in_state(ESTABLISHED), in_state(FIN_WAIT_1), in_state(FIN_WAIT_2));
         if (p.len()) {
             // Once the TCP takes responsibility for the data it advances
             // RCV.NXT over the data accepted, and adjusts RCV.WND as

@@ -279,6 +279,7 @@ struct l4connid {
                 hash_data.push_back(htons(local_port));
             }
         } else {
+            printf("rss hash else case: %u\n", rss_conf.initial);
             hash_data.push_back(htonl(foreign_ip.ip));
             hash_data.push_back(htonl(local_ip.ip));
             hash_data.push_back(htonl(foreign_port));

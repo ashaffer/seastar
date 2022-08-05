@@ -306,8 +306,8 @@ public:
     void deallocate(void* object);
     unsigned object_size() const { return _object_size; }
     bool objects_page_aligned() const { return is_page_aligned(_object_size); }
-    static constexpr unsigned size_to_idx(unsigned long size);
-    static constexpr unsigned idx_to_size(unsigned long idx);
+    static constexpr unsigned long size_to_idx(unsigned long size);
+    static constexpr unsigned long idx_to_size(unsigned long idx);
     allocation_site_ptr& alloc_site_holder(void* ptr);
 private:
     void add_more_objects();

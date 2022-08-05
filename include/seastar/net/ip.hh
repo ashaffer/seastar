@@ -278,6 +278,26 @@ struct l4connid {
         }
         return toeplitz_hash(rss_conf, hash_data);
     }
+
+    uint32_t reverse_hash(const rss_config& rss_conf) const {
+        forward_hash hash_data;
+        if (local_ip.ip > foreign_ip.ip) {
+            hash_data.push_back(htonl(local_ip.ip));
+            hash_data.push_back(htonl(foreign_ip.ip));
+        } else {
+            hash_data.push_back(htonl(foreign_ip.ip));
+            hash_data.push_back(htonl(local_ip.ip));
+        }
+
+        if (local_port > foreign_port) {
+            hash_data.push_back(htons(local_port));
+            hash_data.push_back(htons(foreign_port));
+        } else {
+            hash_data.push_back(htons(foreign_port));
+            hash_data.push_back(htons(local_port));
+        }
+        return toeplitz_hash(rss_conf, hash_data);
+    }
 };
 
 class ipv4_tcp final : public ip_protocol {

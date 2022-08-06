@@ -499,6 +499,7 @@ void cpu_pages::free_span_no_merge(size_t span_start, size_t nr_pages) {
     span->free = span_end->free = true;
     span->span_size = span_end->span_size = nr_pages;
     auto idx = index_of(nr_pages);
+    printf("freeing span: %u\n", idx);
     link(free_spans[idx], span);
 }
 
@@ -955,7 +956,7 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
     ::madvise(mmap_start, mmap_size, MADV_HUGEPAGE);
     // one past last page structure is a sentinel
     auto new_page_array_pages = align_up(sizeof(page[new_pages + 1]), page_size) / page_size;
-    printf("allocating new page array pages: 0x%lx\n", new_page_array_pages);
+    printf("allocating new page array pages: 0x%lx, 0x%lx\n", new_pages, new_page_array_pages);
     auto new_page_array
         = reinterpret_cast<page*>(allocate_large(new_page_array_pages));
     if (!new_page_array) {

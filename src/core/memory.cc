@@ -938,11 +938,12 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     std::memcpy(relocated_old_mem.get(), old_mem, old_bytes);
     alloc_sys_mem({old_mem}, new_bytes).release();
     std::memcpy(old_mem, relocated_old_mem.get(), old_bytes);
-    nr_pages = new_bytes / huge_page_size;
+    nr_pages = new_bytes / page_size;
 }
 
 void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_mem) {
     auto new_pages = new_size / page_size;
+    printf("here: 0x%lx, 0x%lx\n", new_pages, nr_pages);
     if (new_pages <= nr_pages) {
         return;
     }

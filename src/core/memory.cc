@@ -427,7 +427,7 @@ struct cpu_pages {
     void free_span(pageidx start, size_t nr_pages);
     void free_span_no_merge(pageidx start, size_t nr_pages);
     void free_span_unaligned(pageidx start, size_t nr_pages);
-    void* allocate_small(unsigned size);
+    void* allocate_small(size_t size);
     void free(void* ptr);
     void free(void* ptr, size_t size);
     bool try_cross_cpu_free(void* ptr);

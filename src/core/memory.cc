@@ -946,6 +946,7 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
     if (new_pages <= nr_pages) {
         return;
     }
+    printf("doing reize: 0x%lx, 0x%lx\n", new_pages, nr_pages);
     auto old_size = nr_pages * page_size;
     auto mmap_start = memory + old_size;
     auto mmap_size = new_size - old_size;
@@ -954,6 +955,7 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
     ::madvise(mmap_start, mmap_size, MADV_HUGEPAGE);
     // one past last page structure is a sentinel
     auto new_page_array_pages = align_up(sizeof(page[new_pages + 1]), page_size) / page_size;
+    printf("allocating new page array pages: 0x%lx\n", new_page_array_pages);
     auto new_page_array
         = reinterpret_cast<page*>(allocate_large(new_page_array_pages));
     if (!new_page_array) {

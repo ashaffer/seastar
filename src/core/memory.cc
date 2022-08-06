@@ -931,13 +931,14 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // (for no reason at all).  So we must copy the anonymous memory to some other
     // place, map hugetlbfs in place, and copy it back, without modifying it during
     // the operation.
-    auto bytes = align_up(nr_pages * page_size, huge_page_size);
+    auto old_bytes = nr_pages * page_size;
+    auto new_bytes = align_up(old_bytes, huge_page_size);
     auto old_mem = mem();
-    auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
-    std::memcpy(relocated_old_mem.get(), old_mem, bytes);
-    alloc_sys_mem({old_mem}, bytes).release();
-    std::memcpy(old_mem, relocated_old_mem.get(), bytes);
-    nr_pages = bytes / huge_page_size;
+    auto relocated_old_mem = mmap_anonymous(nullptr, new_bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
+    std::memcpy(relocated_old_mem.get(), old_mem, old_bytes);
+    alloc_sys_mem({old_mem}, new_bytes).release();
+    std::memcpy(old_mem, relocated_old_mem.get(), old_bytes);
+    nr_pages = new_bytes / huge_page_size;
 }
 
 void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_mem) {

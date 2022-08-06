@@ -878,7 +878,7 @@ bool cpu_pages::initialize() {
     assert(cpu_id < max_cpus);
     all_cpus[cpu_id] = this;
     auto base = mem_base() + (size_t(cpu_id) << cpu_id_shift);
-    auto size = std::max(32ul << 20, page_size);  // Small size for bootstrap
+    auto size = std::max(32ul << 20, 2 * page_size);  // Small size for bootstrap
     auto r = ::mmap(base, size,
             PROT_READ | PROT_WRITE,
             MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,

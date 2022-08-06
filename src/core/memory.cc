@@ -949,11 +949,16 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
     }
     printf("doing reize: 0x%lx, 0x%lx\n", new_pages, nr_pages);
     auto old_size = nr_pages * page_size;
-    auto mmap_start = memory + old_size;
-    auto mmap_size = new_size - old_size;
-    auto mem = alloc_sys_mem({mmap_start}, mmap_size);
-    mem.release();
-    ::madvise(mmap_start, mmap_size, MADV_HUGEPAGE);
+    auto old_offset = std::max(old_size, huge_page_size);
+    auto mmap_start = memory + old_offset;
+    auto mmap_size = std::max(new_size, huge_page_size) - old_offset;
+
+    if (mmap_size > 0) {
+        auto mem = alloc_sys_mem({mmap_start}, mmap_size);
+        mem.release();
+        ::madvise(mmap_start, mmap_size, MADV_HUGEPAGE);
+    }
+
     // one past last page structure is a sentinel
     auto new_page_array_pages = align_up(sizeof(page[new_pages + 1]), page_size) / page_size;
     printf("allocating new page array pages: 0x%lx, 0x%lx\n", new_pages, new_page_array_pages);
@@ -988,7 +993,7 @@ void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) 
     while (nr_pages * page_size < new_size) {
         // don't reallocate all at once, since there might not
         // be enough free memory available to relocate the pages array
-        auto tmp_size = std::max(huge_page_size, std::min(new_size, 4 * nr_pages * page_size));
+        auto tmp_size = std::min(new_size, 4 * nr_pages * page_size);
         printf("do_resize: 0x%lx\n", tmp_size);
         do_resize(tmp_size, alloc_memory);
     }

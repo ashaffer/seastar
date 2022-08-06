@@ -534,7 +534,6 @@ void cpu_pages::free_span_unaligned(size_t span_start, size_t nr_pages) {
         auto start_nr_bits = span_start ? count_trailing_zeros(span_start) : 32;
         auto size_nr_bits = count_trailing_zeros(nr_pages);
         auto now = 1ul << std::min(start_nr_bits, size_nr_bits);
-        printf("free_span: 0x%lx, 0x%lx\n", span_start, now);
         free_span(span_start, now);
         span_start += now;
         nr_pages -= now;
@@ -876,9 +875,6 @@ bool cpu_pages::initialize() {
         return false;
     }
     cpu_id = cpu_id_gen.fetch_add(1, std::memory_order_relaxed);
-    if (cpu_id >= max_cpus) {
-        printf("test: %u, %u\n", cpu_id, max_cpus);
-    }
     assert(cpu_id < max_cpus);
     all_cpus[cpu_id] = this;
     auto base = mem_base() + (size_t(cpu_id) << cpu_id_shift);
@@ -918,9 +914,7 @@ allocate_anonymous_memory(compat::optional<void*> where, size_t how_much) {
 mmap_area
 allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
     auto pos = fd.size();
-    printf("Fd truncate: 0x%lx, 0x%lx, 0x%lx\n", pos, how_much, pos + how_much);
     fd.truncate(pos + how_much);
-    printf("post truncate\n");
 
     auto ret = fd.map(
             how_much,
@@ -937,7 +931,6 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // (for no reason at all).  So we must copy the anonymous memory to some other
     // place, map hugetlbfs in place, and copy it back, without modifying it during
     // the operation.
-    printf("replace_memory_backing: %ld, %ld\n", (size_t)nr_pages, (size_t)page_size);
     auto bytes = nr_pages * page_size;
     auto old_mem = mem();
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);

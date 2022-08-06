@@ -877,7 +877,7 @@ bool cpu_pages::initialize() {
     }
     cpu_id = cpu_id_gen.fetch_add(1, std::memory_order_relaxed);
     if (cpu_id >= max_cpus) {
-        printf("test\n");
+        printf("test: %u, %u\n", cpu_id, max_cpus);
     }
     assert(cpu_id < max_cpus);
     all_cpus[cpu_id] = this;

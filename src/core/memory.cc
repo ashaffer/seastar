@@ -943,7 +943,6 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
 
 void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_mem) {
     auto new_pages = new_size / page_size;
-    printf("here: 0x%lx, 0x%lx\n", new_pages, nr_pages);
     if (new_pages <= nr_pages) {
         return;
     }

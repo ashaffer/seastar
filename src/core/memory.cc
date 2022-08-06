@@ -916,8 +916,9 @@ mmap_area
 allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
     auto pos = fd.size();
     how_much = align_up(how_much, huge_page_size);
+    printf("pre-truncate: 0x%lx\n", how_much);
     fd.truncate(pos + how_much);
-
+    printf("post-truncate: 0x%lx\n", pos);
     auto ret = fd.map(
             how_much,
             PROT_READ | PROT_WRITE,

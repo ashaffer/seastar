@@ -875,7 +875,8 @@ bool cpu_pages::initialize() {
     if (is_initialized()) {
         return false;
     }
-    printf("here: %d, %d\n", cpu_id_gen.load(), max_cpus);
+    std::string str = "Here: " + std::to_string(cpu_id_gen.load()) + ", " + std::to_string(max_cpus);
+    puts(str.c_str());
     cpu_id = cpu_id_gen.fetch_add(1, std::memory_order_relaxed);
     assert(cpu_id < max_cpus);
     all_cpus[cpu_id] = this;

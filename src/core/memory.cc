@@ -933,6 +933,7 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // (for no reason at all).  So we must copy the anonymous memory to some other
     // place, map hugetlbfs in place, and copy it back, without modifying it during
     // the operation.
+    printf("replace_memory_backing: %d, %d\n", nr_pages, page_size);
     auto bytes = nr_pages * page_size;
     auto old_mem = mem();
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);

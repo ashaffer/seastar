@@ -893,7 +893,7 @@ bool cpu_pages::initialize() {
     // we reserve the end page so we don't have to special case
     // the last span.
     auto reserved = align_up(sizeof(page) * (nr_pages + 1), page_size) / page_size;
-    reserved = 1u << log2ceil(reserved);
+    reserved = 1ul << log2ceil(reserved);
     for (pageidx i = 0; i < reserved; ++i) {
         pages[i].free = false;
     }

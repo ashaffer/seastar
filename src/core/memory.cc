@@ -591,10 +591,12 @@ void*
 cpu_pages::allocate_large_and_trim(size_t n_pages) {
     // Avoid exercising the reclaimers for requests we'll not be able to satisfy
     // nr_pages might be zero during startup, so check for that too
+    printf("a: 0x%lx\n", n_pages);
     if (nr_pages && n_pages >= nr_pages) {
         return nullptr;
     }
     page* span = find_and_unlink_span_reclaiming(n_pages);
+    printf("b\n");
     if (!span) {
         return nullptr;
     }
@@ -604,12 +606,16 @@ cpu_pages::allocate_large_and_trim(size_t n_pages) {
     while (span_size >= n_pages * 2) {
         span_size /= 2;
         auto other_span_idx = span_idx + span_size;
+        printf("b.1\n");
         free_span_no_merge(other_span_idx, span_size);
+        printf("b.2\n");
     }
+    printf("c\n");
     auto span_end = &pages[span_idx + span_size - 1];
     span->free = span_end->free = false;
     span->span_size = span_end->span_size = span_size;
     span->pool = nullptr;
+    printf("d\n");
 #ifdef SEASTAR_HEAPPROF
     auto alloc_site = get_allocation_site();
     span->alloc_site = alloc_site;

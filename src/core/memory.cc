@@ -543,7 +543,7 @@ void cpu_pages::free_span_unaligned(size_t span_start, size_t nr_pages) {
 page*
 cpu_pages::find_and_unlink_span(size_t n_pages) {
     auto idx = index_of(n_pages);
-    if (n_pages >= (2u << idx)) {
+    if (n_pages >= (2ul << idx)) {
         return nullptr;
     }
     while (idx < nr_span_lists && free_spans[idx].empty()) {

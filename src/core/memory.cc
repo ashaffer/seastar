@@ -915,6 +915,7 @@ allocate_anonymous_memory(compat::optional<void*> where, size_t how_much) {
 mmap_area
 allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
     auto pos = fd.size();
+    how_much = align_up(how_much, huge_page_size);
     fd.truncate(pos + how_much);
 
     auto ret = fd.map(

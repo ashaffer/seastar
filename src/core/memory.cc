@@ -913,9 +913,13 @@ allocate_anonymous_memory(compat::optional<void*> where, size_t how_much) {
 
 mmap_area
 allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
+    uint64_t pgsz = 1 << 30;
     auto pos = fd.size();
-    printf("Fd truncate: 0x%lx, 0x%lx, 0x%lx\n", pos, how_much, pos + how_much);
-    fd.truncate(pos + how_much);
+    // Find the smallest number of pages of the current size
+    // that can contain how_much bytes
+    uint64_t bytes = ((pos + how_much) + pgsz - 1) / pgsz;
+    printf("Fd truncate: 0x%lx, 0x%lx, 0x%lx, 0x%lx\n", pos, how_much, pos + how_much, bytes);
+    fd.truncate(bytes);
     printf("post truncate\n");
 
     auto ret = fd.map(

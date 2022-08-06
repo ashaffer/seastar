@@ -164,7 +164,7 @@ static void on_allocation_failure(size_t size);
 static constexpr unsigned cpu_id_shift = 36; // FIXME: make dynamic
 static constexpr unsigned max_cpus = 256;
 
-using pageidx = uint32_t;
+using pageidx = size_t;
 
 struct page;
 class page_list;
@@ -190,8 +190,8 @@ unsigned object_cpu_id(const void* ptr) {
 }
 
 class page_list_link {
-    uint32_t _prev;
-    uint32_t _next;
+    size_t _prev;
+    size_t _next;
     friend class page_list;
     friend void on_allocation_failure(size_t);
 };
@@ -235,7 +235,7 @@ struct page {
     bool free;
     uint8_t offset_in_span;
     uint16_t nr_small_alloc;
-    uint32_t span_size; // in pages, if we're the head or the tail
+    size_t span_size; // in pages, if we're the head or the tail
     page_list_link link;
     small_pool* pool;  // if used in a small_pool
     free_object* freelist;
@@ -245,8 +245,8 @@ struct page {
 };
 
 class page_list {
-    uint32_t _front = 0;
-    uint32_t _back = 0;
+    size_t _front = 0;
+    size_t _back = 0;
 public:
     page& front(page* ary) { return ary[_front]; }
     page& back(page* ary) { return ary[_back]; }
@@ -290,13 +290,13 @@ class small_pool {
         uint8_t preferred;
         uint8_t fallback;
     };
-    unsigned long _object_size;
+    size_t _object_size;
     span_sizes _span_sizes;
     free_object* _free = nullptr;
     size_t _free_count = 0;
-    unsigned _min_free;
-    unsigned _max_free;
-    unsigned _pages_in_use = 0;
+    size_t _min_free;
+    size_t _max_free;
+    size_t _pages_in_use = 0;
     page_list _span_list;
     static constexpr unsigned long idx_frac_bits = 2;
 public:
@@ -304,7 +304,7 @@ public:
     ~small_pool();
     void* allocate();
     void deallocate(void* object);
-    unsigned object_size() const { return _object_size; }
+    size_t object_size() const { return _object_size; }
     bool objects_page_aligned() const { return is_page_aligned(_object_size); }
     static constexpr unsigned long size_to_idx(unsigned long size);
     static constexpr unsigned long idx_to_size(unsigned long idx);
@@ -383,12 +383,12 @@ struct cross_cpu_free_item {
 };
 
 struct cpu_pages {
-    uint32_t min_free_pages = 20000000 / page_size;
+    size_t min_free_pages = 20000000 / page_size;
     char* memory;
     page* pages;
-    uint32_t nr_pages;
-    uint32_t nr_free_pages;
-    uint32_t current_min_free_pages = 0;
+    size_t nr_pages;
+    size_t nr_free_pages;
+    size_t current_min_free_pages = 0;
     size_t large_allocation_warning_threshold = std::numeric_limits<size_t>::max();
     unsigned cpu_id = -1U;
     std::function<void (std::function<void ()>)> reclaim_hook;
@@ -413,20 +413,20 @@ struct cpu_pages {
     void link(page_list& list, page* span);
     void unlink(page_list& list, page* span);
     struct trim {
-        unsigned offset;
-        unsigned nr_pages;
+        size_t offset;
+        size_t nr_pages;
     };
     void maybe_reclaim();
-    void* allocate_large_and_trim(unsigned nr_pages);
-    void* allocate_large(unsigned nr_pages);
-    void* allocate_large_aligned(unsigned align_pages, unsigned nr_pages);
-    page* find_and_unlink_span(unsigned nr_pages);
-    page* find_and_unlink_span_reclaiming(unsigned n_pages);
+    void* allocate_large_and_trim(size_t nr_pages);
+    void* allocate_large(size_t nr_pages);
+    void* allocate_large_aligned(size_t align_pages, size_t nr_pages);
+    page* find_and_unlink_span(size_t nr_pages);
+    page* find_and_unlink_span_reclaiming(size_t n_pages);
     void free_large(void* ptr);
-    bool grow_span(pageidx& start, uint32_t& nr_pages, unsigned idx);
-    void free_span(pageidx start, uint32_t nr_pages);
-    void free_span_no_merge(pageidx start, uint32_t nr_pages);
-    void free_span_unaligned(pageidx start, uint32_t nr_pages);
+    bool grow_span(pageidx& start, size_t& nr_pages, unsigned idx);
+    void free_span(pageidx start, size_t nr_pages);
+    void free_span_no_merge(pageidx start, size_t nr_pages);
+    void free_span_unaligned(pageidx start, size_t nr_pages);
     void* allocate_small(unsigned size);
     void free(void* ptr);
     void free(void* ptr, size_t size);
@@ -491,7 +491,7 @@ cpu_pages::link(page_list& list, page* span) {
     list.push_front(pages, *span);
 }
 
-void cpu_pages::free_span_no_merge(uint32_t span_start, uint32_t nr_pages) {
+void cpu_pages::free_span_no_merge(size_t span_start, size_t nr_pages) {
     assert(nr_pages);
     nr_free_pages += nr_pages;
     auto span = &pages[span_start];
@@ -502,7 +502,7 @@ void cpu_pages::free_span_no_merge(uint32_t span_start, uint32_t nr_pages) {
     link(free_spans[idx], span);
 }
 
-bool cpu_pages::grow_span(uint32_t& span_start, uint32_t& nr_pages, unsigned idx) {
+bool cpu_pages::grow_span(size_t& span_start, size_t& nr_pages, unsigned idx) {
     auto which = (span_start >> idx) & 1; // 0=lower, 1=upper
     // locate first page of upper buddy or last page of lower buddy
     // examples: span_start = 0x10 nr_pages = 0x08 -> buddy = 0x18  (which = 0)
@@ -520,7 +520,7 @@ bool cpu_pages::grow_span(uint32_t& span_start, uint32_t& nr_pages, unsigned idx
     return false;
 }
 
-void cpu_pages::free_span(uint32_t span_start, uint32_t nr_pages) {
+void cpu_pages::free_span(size_t span_start, size_t nr_pages) {
     auto idx = index_of(nr_pages);
     while (grow_span(span_start, nr_pages, idx)) {
         ++idx;
@@ -529,7 +529,7 @@ void cpu_pages::free_span(uint32_t span_start, uint32_t nr_pages) {
 }
 
 // Internal, used during startup. Span is not aligned so needs to be broken up
-void cpu_pages::free_span_unaligned(uint32_t span_start, uint32_t nr_pages) {
+void cpu_pages::free_span_unaligned(size_t span_start, size_t nr_pages) {
     while (nr_pages) {
         auto start_nr_bits = span_start ? count_trailing_zeros(span_start) : 32;
         auto size_nr_bits = count_trailing_zeros(nr_pages);
@@ -541,7 +541,7 @@ void cpu_pages::free_span_unaligned(uint32_t span_start, uint32_t nr_pages) {
 }
 
 page*
-cpu_pages::find_and_unlink_span(unsigned n_pages) {
+cpu_pages::find_and_unlink_span(size_t n_pages) {
     auto idx = index_of(n_pages);
     if (n_pages >= (2u << idx)) {
         return nullptr;
@@ -562,7 +562,7 @@ cpu_pages::find_and_unlink_span(unsigned n_pages) {
 }
 
 page*
-cpu_pages::find_and_unlink_span_reclaiming(unsigned n_pages) {
+cpu_pages::find_and_unlink_span_reclaiming(size_t n_pages) {
     while (true) {
         auto span = find_and_unlink_span(n_pages);
         if (span) {
@@ -587,7 +587,7 @@ void cpu_pages::maybe_reclaim() {
 }
 
 void*
-cpu_pages::allocate_large_and_trim(unsigned n_pages) {
+cpu_pages::allocate_large_and_trim(size_t n_pages) {
     // Avoid exercising the reclaimers for requests we'll not be able to satisfy
     // nr_pages might be zero during startup, so check for that too
     if (nr_pages && n_pages >= nr_pages) {
@@ -637,13 +637,13 @@ cpu_pages::check_large_allocation(size_t size) {
 }
 
 void*
-cpu_pages::allocate_large(unsigned n_pages) {
+cpu_pages::allocate_large(size_t n_pages) {
     check_large_allocation(n_pages * page_size);
     return allocate_large_and_trim(n_pages);
 }
 
 void*
-cpu_pages::allocate_large_aligned(unsigned align_pages, unsigned n_pages) {
+cpu_pages::allocate_large_aligned(size_t align_pages, size_t n_pages) {
     check_large_allocation(n_pages * page_size);
     // buddy allocation is always aligned
     return allocate_large_and_trim(n_pages);
@@ -933,7 +933,7 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // (for no reason at all).  So we must copy the anonymous memory to some other
     // place, map hugetlbfs in place, and copy it back, without modifying it during
     // the operation.
-    printf("replace_memory_backing: %d, %d\n", (int)nr_pages, (int)page_size);
+    printf("replace_memory_backing: %ld, %ld\n", (size_t)nr_pages, (size_t)page_size);
     auto bytes = nr_pages * page_size;
     auto old_mem = mem();
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
@@ -1187,8 +1187,8 @@ void* allocate_large(size_t size) {
 
 void* allocate_large_aligned(size_t align, size_t size) {
     abort_on_underflow(size);
-    unsigned size_in_pages = (size + page_size - 1) >> page_bits;
-    unsigned align_in_pages = std::max(align, page_size) >> page_bits;
+    size_t size_in_pages = (size + page_size - 1) >> page_bits;
+    size_t align_in_pages = std::max(align, page_size) >> page_bits;
     return cpu_mem.allocate_large_aligned(align_in_pages, size_in_pages);
 }
 
@@ -1428,7 +1428,7 @@ void on_allocation_failure(size_t size) {
         for (unsigned i = 0; i< cpu_mem.nr_span_lists; i++) {
             auto& span_list = cpu_mem.free_spans[i];
             auto front = span_list._front;
-            uint32_t total = 0;
+            size_t total = 0;
             while(front) {
                 auto& span = cpu_mem.pages[front];
                 total += span.span_size;

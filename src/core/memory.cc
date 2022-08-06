@@ -533,7 +533,8 @@ void cpu_pages::free_span_unaligned(size_t span_start, size_t nr_pages) {
     while (nr_pages) {
         auto start_nr_bits = span_start ? count_trailing_zeros(span_start) : 32;
         auto size_nr_bits = count_trailing_zeros(nr_pages);
-        auto now = 1u << std::min(start_nr_bits, size_nr_bits);
+        auto now = 1ul << std::min(start_nr_bits, size_nr_bits);
+        printf("free_span: 0x%lx, 0x%lx\n", span_start, now);
         free_span(span_start, now);
         span_start += now;
         nr_pages -= now;
@@ -898,6 +899,7 @@ bool cpu_pages::initialize() {
         pages[i].free = false;
     }
     pages[nr_pages].free = false;
+    printf("free_span_unaligned: 0x%lx, 0x%lx, 0x%lx\n", reserved, nr_pages, nr_pages - reserved);
     free_span_unaligned(reserved, nr_pages - reserved);
     live_cpus[cpu_id].store(true, std::memory_order_relaxed);
     return true;

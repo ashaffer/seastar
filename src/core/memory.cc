@@ -918,16 +918,18 @@ allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t h
     // Find the smallest number of pages of the current size
     // that can contain how_much bytes
     uint64_t nr_pages = ((pos + how_much) + pgsz - 1) / pgsz;
-    printf("Fd truncate: 0x%lx, 0x%lx, 0x%lx, 0x%lx\n", pos, how_much, pos + how_much, nr_pages);
-    fd.truncate(nr_pages * pgsz);
+    uint64_t bytes = nr_pages * pgsz;
+    printf("Fd truncate: 0x%lx, 0x%lx, 0x%lx, 0x%lx\n", pos, how_much, pos + how_much, bytes);
+    fd.truncate(bytes);
     printf("post truncate\n");
 
     auto ret = fd.map(
-            how_much,
+            bytes,
             PROT_READ | PROT_WRITE,
             MAP_SHARED | MAP_POPULATE | (where ? MAP_FIXED : 0),
             pos,
             where.value_or(nullptr));
+
     return ret;
 }
 

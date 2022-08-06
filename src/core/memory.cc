@@ -875,9 +875,8 @@ bool cpu_pages::initialize() {
     if (is_initialized()) {
         return false;
     }
-    std::string str = "Here: " + std::to_string(cpu_id_gen.load()) + ", " + std::to_string(max_cpus);
-    puts(str.c_str());
     cpu_id = cpu_id_gen.fetch_add(1, std::memory_order_relaxed);
+    std::string str = "test: " + std::to_string(cpu_id) + ", " + std::to_string(max_cpus);
     assert(cpu_id < max_cpus);
     all_cpus[cpu_id] = this;
     auto base = mem_base() + (size_t(cpu_id) << cpu_id_shift);
@@ -893,6 +892,7 @@ bool cpu_pages::initialize() {
     pages = reinterpret_cast<page*>(base);
     memory = base;
     nr_pages = size / page_size;
+    puts(str.c_str());
     // we reserve the end page so we don't have to special case
     // the last span.
     auto reserved = align_up(sizeof(page) * (nr_pages + 1), page_size) / page_size;

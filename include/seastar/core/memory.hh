@@ -57,15 +57,16 @@ namespace memory {
 #ifdef SEASTAR_OVERRIDE_ALLOCATOR_PAGE_SIZE
 #define SEASTAR_INTERNAL_ALLOCATOR_PAGE_SIZE (SEASTAR_OVERRIDE_ALLOCATOR_PAGE_SIZE)
 #else
-// #define SEASTAR_INTERNAL_ALLOCATOR_PAGE_SIZE 4096
-#define SEASTAR_INTERNAL_ALLOCATOR_PAGE_SIZE 1073741824
+#define SEASTAR_INTERNAL_ALLOCATOR_PAGE_SIZE 4096
+// #define SEASTAR_INTERNAL_ALLOCATOR_PAGE_SIZE 1073741824
 #endif
 
 static constexpr size_t page_size = SEASTAR_INTERNAL_ALLOCATOR_PAGE_SIZE;
 static constexpr size_t page_bits = log2ceil(page_size);
 static constexpr size_t huge_page_size =
 #if defined(__x86_64__) || defined(__i386__) || defined(__s390x__) || defined(__zarch__)
-    1 << 21; // 2M
+    // 1 << 21; // 2M
+    1 << 30;
 #elif defined(__aarch64__)
     1 << 21; // 2M
 #elif defined(__PPC__)

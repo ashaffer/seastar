@@ -948,22 +948,18 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     std::memcpy(old_mem, relocated_old_mem.get(), bytes);
 }
 
+
 void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_mem) {
     auto new_pages = new_size / page_size;
     if (new_pages <= nr_pages) {
         return;
     }
     auto old_size = nr_pages * page_size;
-    auto old_offset = std::max(old_size, huge_page_size);
-    auto mmap_start = memory + old_offset;
-    auto mmap_size = std::max(new_size, huge_page_size) - old_offset;
-
-    if (mmap_size > 0) {
-        auto mem = alloc_sys_mem({mmap_start}, mmap_size);
-        mem.release();
-        ::madvise(mmap_start, mmap_size, MADV_HUGEPAGE);
-    }
-
+    auto mmap_start = memory + old_size;
+    auto mmap_size = new_size - old_size;
+    auto mem = alloc_sys_mem({mmap_start}, mmap_size);
+    mem.release();
+    ::madvise(mmap_start, mmap_size, MADV_HUGEPAGE);
     // one past last page structure is a sentinel
     auto new_page_array_pages = align_up(sizeof(page[new_pages + 1]), page_size) / page_size;
     auto new_page_array
@@ -991,6 +987,50 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
     }
     free_span_unaligned(old_nr_pages, new_pages - old_nr_pages);
 }
+
+// void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_mem) {
+//     auto new_pages = new_size / page_size;
+//     if (new_pages <= nr_pages) {
+//         return;
+//     }
+//     auto old_size = nr_pages * page_size;
+//     auto old_offset = std::max(old_size, huge_page_size);
+//     auto mmap_start = memory + old_offset;
+//     auto mmap_size = std::max(new_size, huge_page_size) - old_offset;
+
+//     if (mmap_size > 0) {
+//         auto mem = alloc_sys_mem({mmap_start}, mmap_size);
+//         mem.release();
+//         ::madvise(mmap_start, mmap_size, MADV_HUGEPAGE);
+//     }
+
+//     // one past last page structure is a sentinel
+//     auto new_page_array_pages = align_up(sizeof(page[new_pages + 1]), page_size) / page_size;
+//     auto new_page_array
+//         = reinterpret_cast<page*>(allocate_large(new_page_array_pages));
+//     if (!new_page_array) {
+//         throw std::bad_alloc();
+//     }
+//     std::copy(pages, pages + nr_pages, new_page_array);
+//     // mark new one-past-last page as taken to avoid boundary conditions
+//     new_page_array[new_pages].free = false;
+//     auto old_pages = reinterpret_cast<char*>(pages);
+//     auto old_nr_pages = nr_pages;
+//     auto old_pages_size = align_up(sizeof(page[nr_pages + 1]), page_size);
+//     old_pages_size = size_t(1) << log2ceil(old_pages_size);
+//     pages = new_page_array;
+//     nr_pages = new_pages;
+//     auto old_pages_start = (old_pages - memory) / page_size;
+//     if (old_pages_start == 0) {
+//         // keep page 0 allocated
+//         old_pages_start = 1;
+//         old_pages_size -= page_size;
+//     }
+//     if (old_pages_size != 0) {
+//         free_span_unaligned(old_pages_start, old_pages_size / page_size);
+//     }
+//     free_span_unaligned(old_nr_pages, new_pages - old_nr_pages);
+// }
 
 void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) {
     new_size = align_down(new_size, huge_page_size);

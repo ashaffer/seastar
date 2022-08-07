@@ -2025,29 +2025,29 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 template <bool HugetlbfsMemBackend>
 bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
 {
-    // auto m = memory::get_memory_layout();
-    // rte_iova_t iova = rte_mem_virt2iova((const void*)m.start);
+    auto m = memory::get_memory_layout();
+    rte_iova_t iova = rte_mem_virt2iova((const void*)m.start);
 
-    // uint pg_sz = RTE_PGSIZE_2M;
-    // uintptr_t prev_iova = rte_mem_virt2iova((const void *)m.start);
-    // uintptr_t prev_addr = m.start;
-    // uintptr_t trailing_iova = prev_iova;
+    uint pg_sz = RTE_PGSIZE_1G;
+    uintptr_t prev_iova = rte_mem_virt2iova((const void *)m.start);
+    uintptr_t prev_addr = m.start;
+    uintptr_t trailing_iova = prev_iova;
 
-    // for (uintptr_t p = m.start + pg_sz; p < m.end; p += pg_sz) {
-    //     uintptr_t cur_iova = rte_mem_virt2iova((const void *)p);
+    for (uintptr_t p = m.start + pg_sz; p < m.end; p += pg_sz) {
+        uintptr_t cur_iova = rte_mem_virt2iova((const void *)p);
 
-    //     if (cur_iova != trailing_iova + pg_sz) {
-    //         printf("cur_iova: 0x%lx 0x%lx\n", cur_iova, trailing_iova + pg_sz);
-    //         printf("Mapping DMA: 0x%lx - 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)prev_addr, (uint64_t)p, (uint64_t)(p - prev_addr), prev_iova);
-    //         if (rte_vfio_dma_map(prev_addr, prev_iova, p - prev_addr) != 0) {
-    //             return false;
-    //         }
-    //         prev_iova = cur_iova;
-    //         prev_addr = p;
-    //     }
+        if (cur_iova != trailing_iova + pg_sz) {
+            printf("cur_iova: 0x%lx 0x%lx\n", cur_iova, trailing_iova + pg_sz);
+            printf("Mapping DMA: 0x%lx - 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)prev_addr, (uint64_t)p, (uint64_t)(p - prev_addr), prev_iova);
+            if (rte_vfio_dma_map(prev_addr, prev_iova, p - prev_addr) != 0) {
+                return false;
+            }
+            prev_iova = cur_iova;
+            prev_addr = p;
+        }
 
-    //     trailing_iova = cur_iova;
-    // }
+        trailing_iova = cur_iova;
+    }
 
     return true;
     // printf("Mapping DMA: 0x%lx - 0x%lx (0x%lx, 0x%lx)\n", (uint64_t)m.start, (uint64_t)m.end, (uint64_t)(m.end - m.start), iova);

@@ -1341,6 +1341,11 @@ void configure(std::vector<resource::memory> m, bool mbind,
     }
     allocate_system_memory_fn sys_alloc = allocate_anonymous_memory;
     if (hugetlbfs_path) {
+        // First resize the memory to be at least as big as 1 page
+        // worth of the huge page size
+        uint tmp_total = std::min(huge_page_size, total);
+        cpu_mem.resize(tmp_total, sys_alloc);
+
         // std::function is copyable, but file_desc is not, so we must use
         // a shared_ptr to allow sys_alloc to be copied around
         auto fdp = make_lw_shared<file_desc>(file_desc::temporary(*hugetlbfs_path));

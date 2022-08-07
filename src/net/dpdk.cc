@@ -2026,7 +2026,7 @@ template <bool HugetlbfsMemBackend>
 bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
 {
     auto m = memory::get_memory_layout();
-    rte_iova_t iova = rte_mem_virt2iova((const void*)m.start);
+    // rte_iova_t iova = rte_mem_virt2iova((const void*)m.start);
 
     uint pg_sz = RTE_PGSIZE_1G;
     uintptr_t prev_iova = rte_mem_virt2iova((const void *)m.start);

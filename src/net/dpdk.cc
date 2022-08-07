@@ -1041,7 +1041,7 @@ build_mbuf_cluster:
             }
 
             size_t len = std::min(buf_len, max_frag_len);
-
+            printf("set_zc_info: 0x%lx, 0x%lx %lu\n", (uint64_t)va, (uint64_t)iova, len);
             buf->set_zc_info(va, iova, len);
             m = buf->rte_mbuf_p();
 

@@ -933,6 +933,7 @@ build_mbuf_cluster:
             assert(frag.size);
 
             // Create a HEAD of mbufs' cluster and set the first bytes into it
+            printf("do_one_buf: 0x%lx\n", (uint64_t)base);
             len = do_one_buf(qp, head, base, left_to_set);
             if (!len) {
                 return false;
@@ -948,6 +949,7 @@ build_mbuf_cluster:
             //
             rte_mbuf* prev_seg = head;
             while (left_to_set) {
+                printf("do_one_buf2: 0x%lx\n", (uint64_t)base);
                 len = do_one_buf(qp, m, base, left_to_set);
                 if (!len) {
                     me(head)->recycle();

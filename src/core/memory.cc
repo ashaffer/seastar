@@ -997,8 +997,8 @@ void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) 
     while (nr_pages * page_size < new_size) {
         // don't reallocate all at once, since there might not
         // be enough free memory available to relocate the pages array
-        // auto tmp_size = std::min(new_size, 4 * nr_pages * page_size);
-        do_resize(4 * nr_pages * page_size, alloc_memory);
+        auto tmp_size = std::min(new_size, 4 * nr_pages * page_size);
+        do_resize(tmp_size, alloc_memory);
     }
 }
 

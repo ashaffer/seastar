@@ -1330,13 +1330,12 @@ void configure(std::vector<resource::memory> m, bool mbind,
         total += x.bytes;
     }
     allocate_system_memory_fn sys_alloc = allocate_anonymous_memory;
-    printf("pre huge\n");
+
     if (hugetlbfs_path) {
         // First resize the memory to be at least as big as 1 page
         // worth of the huge page size
         uint tmp_total = std::min(huge_page_size, total);
         cpu_mem.resize(tmp_total, sys_alloc);
-        printf("post first resize\n");
 
         // std::function is copyable, but file_desc is not, so we must use
         // a shared_ptr to allow sys_alloc to be copied around
@@ -1347,9 +1346,7 @@ void configure(std::vector<resource::memory> m, bool mbind,
         cpu_mem.replace_memory_backing(sys_alloc);
     }
 
-    printf("pre second resize\n");
     cpu_mem.resize(total, sys_alloc);
-    printf("post second resize\n");
     size_t pos = 0;
     for (auto&& x : m) {
 #ifdef SEASTAR_HAVE_NUMA

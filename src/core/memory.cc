@@ -982,6 +982,7 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
 void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) {
     new_size = align_down(new_size, huge_page_size);
     uint mul = 4;
+    uint i = 0;
     while (nr_pages * page_size < new_size) {
         // don't reallocate all at once, since there might not
         // be enough free memory available to relocate the pages array
@@ -990,8 +991,9 @@ void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) 
         // We can be more aggressive on each iteration, because nothing is being
         // allocated in between
         mul *= 2;
-        printf("resize loop: %u\n", engine().cpu_id());
+        ++i;
     }
+    printf("resize iter: %u\n", i);
 }
 
 reclaiming_result cpu_pages::run_reclaimers(reclaimer_scope scope, size_t n_pages) {

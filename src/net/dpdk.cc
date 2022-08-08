@@ -830,7 +830,6 @@ build_mbuf_cluster:
                         // of the cluster.
                         //
                         cur_seg->data_len = cur_seg_offset;
-                        printf("Setting data len: %d (%u)\n", cur_seg->data_len, engine().cpu_id());
                         break;
                     }
 
@@ -839,7 +838,6 @@ build_mbuf_cluster:
 
                 if (cur_seg_offset >= inline_mbuf_data_size) {
                     cur_seg->data_len = inline_mbuf_data_size;
-                    printf("Setting data len2: %d\n", cur_seg->data_len);
                     cur_seg = cur_seg->next;
                     cur_seg_offset = 0;
 
@@ -933,7 +931,6 @@ build_mbuf_cluster:
             assert(frag.size);
 
             // Create a HEAD of mbufs' cluster and set the first bytes into it
-            printf("do_one_buf: 0x%lx\n", (uint64_t)base);
             len = do_one_buf(qp, head, base, left_to_set);
             if (!len) {
                 return false;
@@ -949,7 +946,6 @@ build_mbuf_cluster:
             //
             rte_mbuf* prev_seg = head;
             while (left_to_set) {
-                printf("do_one_buf2: 0x%lx\n", (uint64_t)base);
                 len = do_one_buf(qp, m, base, left_to_set);
                 if (!len) {
                     me(head)->recycle();
@@ -1041,7 +1037,6 @@ build_mbuf_cluster:
             }
 
             size_t len = std::min(buf_len, max_frag_len);
-            printf("set_zc_info: 0x%lx, 0x%lx %lu\n", (uint64_t)va, (uint64_t)iova, len);
             buf->set_zc_info(va, iova, len);
             m = buf->rte_mbuf_p();
 
@@ -1329,18 +1324,18 @@ public:
     virtual ~dpdk_qp() { }
 
     virtual uint32_t send(circular_buffer<packet>& pb) override {
-        // if (HugetlbfsMemBackend) {
-        //     printf("zero copy send\n");
-        //     // Zero-copy send
-        //     return _send(pb, [&] (packet&& p) {
-        //         return tx_buf::from_packet_zc(std::move(p), *this);
-        //     });
-        // } else {
+        if (HugetlbfsMemBackend) {
+            printf("zero copy send\n");
+            // Zero-copy send
+            return _send(pb, [&] (packet&& p) {
+                return tx_buf::from_packet_zc(std::move(p), *this);
+            });
+        } else {
             // "Copy"-send
             return _send(pb, [&](packet&& p) {
                 return tx_buf::from_packet_copy(std::move(p), *this);
             });
-        // }
+        }
     }
 
     dpdk_device& port() const { return *_dev; }
@@ -2307,9 +2302,6 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
 
 
         compat::optional<packet> p = from_mbuf(m);
-        printf("dpdk received ");
-        p->print_hex();
-        printf("buf va/iova: 0x%lx/0x%lx (0x%x)\n", (uint64_t)m->buf_addr, m->buf_iova, m->data_off);
 
         p->setReceivedAt(receivedAt);
         p->setPollDelay(pollDelay);
@@ -2346,8 +2338,6 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
             (*p).set_rss_hash(m->hash.rss);
         // }
 
-        printf("received ");
-        p->print_hex();
         _dev->l2receive(std::move(*p));
     }
 

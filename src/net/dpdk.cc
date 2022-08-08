@@ -2320,6 +2320,9 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
 
 
         compat::optional<packet> p = from_mbuf(m);
+        printf("dpdk received ");
+        p->print_hex();
+
         p->setReceivedAt(receivedAt);
         p->setPollDelay(pollDelay);
 

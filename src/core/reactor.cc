@@ -3823,14 +3823,12 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         smp::pin(allocations[0].cpu_id);
     }
 
-    printf("pre-mem\n");
     memory::configure(allocations[0].mem, mbind, hugepages_path);
-    printf("post-mem\n");
 
     if (configuration.count("abort-on-seastar-bad-alloc")) {
         memory::enable_abort_on_allocation_failure();
     }
-    printf("abort on bad alloc\n");
+
     bool heapprof_enabled = configuration.count("heapprof");
     memory::set_heap_profiling_enabled(heapprof_enabled);
 

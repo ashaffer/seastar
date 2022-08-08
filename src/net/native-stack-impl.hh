@@ -144,9 +144,7 @@ public:
         assert(sa.as_posix_sockaddr().sa_family == AF_INET);
 
         _conn = make_lw_shared<typename Protocol::connection>(_proto.connect(sa, local));
-        printf("pre-connected\n");
         return _conn->connected().then([conn = _conn]() mutable {
-            printf("post connected: %d\n", conn->local_port());
             auto csi = std::make_unique<native_connected_socket_impl<Protocol>>(std::move(conn));
             return make_ready_future<connected_socket>(connected_socket(std::move(csi)));
         });
@@ -181,7 +179,6 @@ public:
     explicit native_data_source_impl(lw_shared_ptr<connection_type> conn)
         : _conn(std::move(conn)) {}
     virtual future<temporary_buffer<char>> get() override {
-        printf("native_data_source_impl get\n");
         if (_eof) {
             return make_ready_future<temporary_buffer<char>>(temporary_buffer<char>(0));
         }
@@ -191,9 +188,8 @@ public:
                     temporary_buffer<char>(f.base, f.size,
                             make_deleter(deleter(), [p = _buf.share()] () mutable {})));
         }
-        printf("waiting for data\n");
+
         return _conn->wait_for_data().then([this] {
-            printf("got data\n");
             _buf = _conn->read();
             _conn->setReceivedAt(_buf.getReceivedAt());
             _conn->setPollDelay(_buf.getPollDelay());
@@ -228,7 +224,6 @@ public:
 
 template <typename Protocol>
 data_source native_connected_socket_impl<Protocol>::source() {
-    printf("native stack source\n");
     return data_source(std::make_unique<native_data_source_impl>(_conn));
 }
 

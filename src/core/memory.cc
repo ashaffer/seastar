@@ -981,19 +981,12 @@ void cpu_pages::do_resize(size_t new_size, allocate_system_memory_fn alloc_sys_m
 
 void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) {
     new_size = align_down(new_size, huge_page_size);
-    uint mul = 4;
-    uint i = 0;
     while (nr_pages * page_size < new_size) {
         // don't reallocate all at once, since there might not
         // be enough free memory available to relocate the pages array
-        auto tmp_size = std::min(new_size, mul * nr_pages * page_size);
+        auto tmp_size = std::min(new_size, 4 * nr_pages * page_size);
         do_resize(tmp_size, alloc_memory);
-        // We can be more aggressive on each iteration, because nothing is being
-        // allocated in between
-        // mul *= 2;
-        ++i;
     }
-    printf("resize iter: %u\n", i);
 }
 
 reclaiming_result cpu_pages::run_reclaimers(reclaimer_scope scope, size_t n_pages) {

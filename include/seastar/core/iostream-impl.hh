@@ -292,7 +292,6 @@ template <typename CharType>
 future<temporary_buffer<CharType>>
 input_stream<CharType>::read() {
     using tmp_buf = temporary_buffer<CharType>;
-    printf("input_stream::read\n");
     if (_eof) {
         return make_ready_future<tmp_buf>();
     }

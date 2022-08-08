@@ -939,7 +939,6 @@ public:
             gnutls_transport_set_errno(*this, EAGAIN);
             return -1;
         }
-        printf("pull\n");
         auto n = std::min(len, _input.size());
         memcpy(dst, _input.get(), n);
         _input.trim_front(n);

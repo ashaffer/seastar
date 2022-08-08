@@ -2322,7 +2322,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         compat::optional<packet> p = from_mbuf(m);
         printf("dpdk received ");
         p->print_hex();
-        printf("buf: 0x%lx (0x%x)\n", (uint64_t)m->buf_addr, m->data_off);
+        printf("buf va/iova: 0x%lx/0x%lx (0x%x)\n", (uint64_t)m->buf_addr, m->buf_iova, m->data_off);
 
         p->setReceivedAt(receivedAt);
         p->setPollDelay(pollDelay);

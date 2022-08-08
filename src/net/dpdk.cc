@@ -2012,7 +2012,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
 
     for (uintptr_t p = m.start; p < m.end; p += pg_sz) {
         uintptr_t iova = rte_mem_virt2iova((const void *)p);
-        printf("Mapping DMA: 0x%lx / 0x%lx\n", (uint64_t)p, (uint64_t)iova);
+        // printf("Mapping DMA: 0x%lx / 0x%lx\n", (uint64_t)p, (uint64_t)iova);
         if (rte_vfio_dma_map(p, (rte_iova_t)iova, pg_sz) != 0) {
             return false;
         }

@@ -990,7 +990,7 @@ void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) 
         do_resize(tmp_size, alloc_memory);
         // We can be more aggressive on each iteration, because nothing is being
         // allocated in between
-        mul *= 2;
+        // mul *= 2;
         ++i;
     }
     printf("resize iter: %u\n", i);

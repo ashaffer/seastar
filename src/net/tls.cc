@@ -642,7 +642,6 @@ public:
             return make_ready_future<>();
         }
         try {
-            printf("tls1\n");
             _connState = 2;
             auto res = gnutls_handshake(*this);
             if (res < 0) {
@@ -651,22 +650,18 @@ public:
                     // #453 always wait for output first.
                     // If none is pending, it should be a no-op
                 {
-                    printf("tls2\n");
                     ++_eagainCount;
                     int dir = gnutls_record_get_direction(*this);
                     _connState = 3;
                     return wait_for_output().then([this, dir] {
-                        printf("tls3\n");
                         _connState = 4;
                         // we actually E_AGAIN:ed in a write. Don't
                         // wait for input.
                         if (dir == 1) {
-                            printf("[tls] gnutls_e_again in a write\n");
                             return do_handshake();
                         }
                         _connState = 5;
                         return wait_for_input().then([this] {
-                            printf("tls4\n");
                             _connState = 6;
                             return do_handshake();
                         });
@@ -828,9 +823,7 @@ public:
             // typically, unencrypted data can get smaller (padding),
             // but not larger.
             temporary_buffer<char> buf(avail);
-            printf("pre gnutls_record_recv\n");
             auto n = gnutls_record_recv(*this, buf.get_write(), buf.size());
-            printf("post gnutls_record_recv\n");
 
             if (n < 0) {
                 switch (n) {
@@ -840,7 +833,6 @@ public:
                     // Our input buffer should be empty now, so just go again
                     return do_get();
                 case GNUTLS_E_REHANDSHAKE:
-                    printf("GNUTLS_E_REHANDSHAKE\n");
                     // server requests new HS. must release semaphore, so set new state
                     // and return nada.
                     _connected = false;

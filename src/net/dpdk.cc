@@ -1325,7 +1325,6 @@ public:
 
     virtual uint32_t send(circular_buffer<packet>& pb) override {
         if (HugetlbfsMemBackend) {
-            printf("zero copy send\n");
             // Zero-copy send
             return _send(pb, [&] (packet&& p) {
                 return tx_buf::from_packet_zc(std::move(p), *this);

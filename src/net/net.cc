@@ -351,7 +351,6 @@ uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
 
 future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
-    printf("net received: %u (%u)\n", (uint)p.size(), engine().cpu_id());
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
@@ -371,10 +370,8 @@ future<> interface::dispatch_packet(packet p) {
             });
 
             if (fw != engine().cpu_id()) {
-                printf("net forward: %u\n", (uint)p.size());
                 forward(fw, std::move(p));
             } else {
-                printf("net cpu match: %u\n", (uint)p.size());
                 auto h = ntoh(*eh);
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));

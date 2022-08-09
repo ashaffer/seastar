@@ -942,7 +942,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
              (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_conf())) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
-    printConnid(id, _inet);
+    // printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
     tcbp->connect();
@@ -996,8 +996,6 @@ void printConnid (Connid &connid, Inet &inet) {
 
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
-    printf("tcp received: %u\n", p.size());
-
     auto th = p.get_header(0, tcp_hdr::len);
     if (!th) {
         return;

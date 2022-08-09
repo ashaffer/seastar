@@ -2304,7 +2304,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
 
         compat::optional<packet> p = from_mbuf(m);
 
-        printf("received: %u bytes", p.size());
+        printf("received: %u bytes", p->size());
         // p->print_hex();
 
         p->setReceivedAt(receivedAt);

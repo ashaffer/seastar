@@ -590,6 +590,7 @@ public:
 
 template <bool HugetlbfsMemBackend>
 class dpdk_qp : public net::qp {
+    uint num_packets = 0;
     class tx_buf_factory;
 
     class tx_buf {
@@ -2296,6 +2297,8 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
     struct rte_mbuf **bufs, uint16_t count, std::chrono::high_resolution_clock::time_point receivedAt, uint pollDelay)
 {
     uint64_t nr_frags = 0, bytes = 0;
+    num_packets += count;
+    printf("received %u packets\n", num_packets);
 
     for (uint16_t i = 0; i < count; i++) {
         struct rte_mbuf *m = bufs[i];

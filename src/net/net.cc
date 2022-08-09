@@ -351,7 +351,7 @@ uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
 
 future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
-    printf("net received: %u\n", (uint)p.size());
+    printf("net received: %u (%u)\n", (uint)p.size(), engine().cpu_id());
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
         if (i != _proto_map.end()) {
@@ -385,7 +385,7 @@ future<> interface::dispatch_packet(packet p) {
                 }
             }
         } else {
-            printf("[net] received %u byte packet on unknown L3 protocol\n", (uint)eh->eth_proto);
+            printf("[net] received %u byte packet on unknown L3 protocol: %u\n", (uint)p.size(), (uint)eh->eth_proto);
         }
     }
     return make_ready_future<>();

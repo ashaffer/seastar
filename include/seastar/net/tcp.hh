@@ -980,13 +980,14 @@ void printConnid (Connid &connid, Inet &inet) {
     char *foreign_addr = strdup(inet_ntoa(foreign));
 
     printf(
-        "[tcp] %s:%u -> %s:%u (0x%x, 0x%x)\n",
+        "[tcp] %s:%u -> %s:%u (0x%x, 0x%x, %u)\n",
         local_addr,
         connid.local_port,
         foreign_addr,
         connid.foreign_port,
         connid.hash(inet._inet.netif()->rss_conf()),
-        connid.reverse_hash(inet._inet.netif()->rss_conf())
+        connid.reverse_hash(inet._inet.netif()->rss_conf()),
+        engine().cpu_id()
     );
 
     free(local_addr);

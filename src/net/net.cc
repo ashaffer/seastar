@@ -385,7 +385,7 @@ future<> interface::dispatch_packet(packet p) {
                 }
             }
         } else {
-            printf("[net] received %u byte packet on unknown L3 protocol\n", eh->eth_proto);
+            printf("[net] received %u byte packet on unknown L3 protocol\n", (uint)eh->eth_proto);
         }
     }
     return make_ready_future<>();

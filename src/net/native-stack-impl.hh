@@ -184,6 +184,7 @@ public:
         }
         if (_cur_frag != _buf.nr_frags()) {
             auto& f = _buf.fragments()[_cur_frag++];
+            printf("tcp read %u bytes\n", (uint)f.size);
             return make_ready_future<temporary_buffer<char>>(
                     temporary_buffer<char>(f.base, f.size,
                             make_deleter(deleter(), [p = _buf.share()] () mutable {})));

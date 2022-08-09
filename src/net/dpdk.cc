@@ -1350,8 +1350,8 @@ private:
                 // TODO: assert() in a fast path! Remove me ASAP!
                 // assert(p.len());
                 p.notifyTransmitted(start, 2);
-                printf("sending ");
-                p.print_hex();
+                printf("sending: %u bytes", p.size());
+                // p.print_hex();
                 tx_buf* buf = packet_to_tx_buf_p(std::move(p));
                 if (!buf) {
                     break;
@@ -2304,8 +2304,8 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
 
         compat::optional<packet> p = from_mbuf(m);
 
-        printf("received ");
-        p->print_hex();
+        printf("received: %u bytes", p.size());
+        // p->print_hex();
 
         p->setReceivedAt(receivedAt);
         p->setPollDelay(pollDelay);

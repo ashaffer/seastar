@@ -360,6 +360,16 @@ public:
         printf("\n");
     }
 
+    uint size () {
+        uint sz = 0;
+
+        for (uint i = 0; i < nr_frags(); i++) {
+            sz += (uint)frag(i).size;
+        }
+
+        return sz;
+    }
+
     explicit operator bool() {
         return bool(_impl);
     }

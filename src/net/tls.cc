@@ -824,6 +824,7 @@ public:
             // but not larger.
             temporary_buffer<char> buf(avail);
             auto n = gnutls_record_recv(*this, buf.get_write(), buf.size());
+            printf("do_get: %u\n", (uint)n);
 
             if (n < 0) {
                 switch (n) {
@@ -942,6 +943,7 @@ public:
         auto n = std::min(len, _input.size());
         memcpy(dst, _input.get(), n);
         _input.trim_front(n);
+        printf("tls pull: %u\n", (uint)n);
         return n;
     }
     ssize_t vec_push(const giovec_t * iov, int iovcnt) {

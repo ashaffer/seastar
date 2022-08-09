@@ -1410,7 +1410,6 @@ private:
         char* data;
 
         if (posix_memalign((void**)&data, size, size)) {
-            printf("REFILL RX MBUF FAILED!!\n");
             return false;
         }
 
@@ -2226,12 +2225,7 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
 
     if (!_dev->hw_features_ref().rx_lro || rte_pktmbuf_is_contiguous(m)) {
         char* data = rte_pktmbuf_mtod(m, char*);
-
-        return packet(fragment{data, rte_pktmbuf_data_len(m)},
-                      make_deleter(deleter(), [m] () {
-                        printf("freeing packet\n");
-                        rte_pktmbuf_free(m);
-                      }));
+        return packet(fragment{data, rte_pktmbuf_data_len(m)}, make_free_deleter(data));
     } else {
         return from_mbuf_lro(m);
     }

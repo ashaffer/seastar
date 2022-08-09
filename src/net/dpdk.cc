@@ -1410,6 +1410,7 @@ private:
         char* data;
 
         if (posix_memalign((void**)&data, size, size)) {
+            printf("REFILL RX MBUF FAILED!!\n");
             return false;
         }
 
@@ -2228,6 +2229,7 @@ inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
 
         return packet(fragment{data, rte_pktmbuf_data_len(m)},
                       make_deleter(deleter(), [m] () {
+                        printf("freeing packet\n");
                         rte_pktmbuf_free(m);
                       }));
     } else {
@@ -2298,7 +2300,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
 {
     uint64_t nr_frags = 0, bytes = 0;
     num_packets += count;
-    printf("received %u packets\n", num_packets);
+    printf("received %u packets (%u, %u)\n", num_packets, (uint)_rx_free_pkts.size(), (uint)_rx_free_bufs.size());
 
     for (uint16_t i = 0; i < count; i++) {
         struct rte_mbuf *m = bufs[i];

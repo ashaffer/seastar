@@ -591,6 +591,7 @@ public:
 template <bool HugetlbfsMemBackend>
 class dpdk_qp : public net::qp {
     uint num_packets = 0;
+    static std::unordered_map<uint64_t, bool> dma_mapped;
     class tx_buf_factory;
 
     class tx_buf {
@@ -2003,6 +2004,9 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
     return _pktmbuf_pool_rx != nullptr;
 }
 
+template<bool HugeTlbfsMemBackend>
+std::unordered_map<uint64_t, bool> dpdk_qp<HugeTlbfsMemBackend>::dma_mapped;
+
 // Map DMA address explicitly.
 // XXX: does NOT work with Mellanox NICs as they use IB libs instead of VFIO.
 template <bool HugetlbfsMemBackend>
@@ -2012,10 +2016,14 @@ bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
     uint pg_sz = RTE_PGSIZE_1G;
 
     for (uintptr_t p = m.start; p < m.end; p += pg_sz) {
-        uintptr_t iova = rte_mem_virt2iova((const void *)p);
-        // printf("Mapping DMA: 0x%lx / 0x%lx\n", (uint64_t)p, (uint64_t)iova);
-        if (rte_vfio_dma_map(p, (rte_iova_t)iova, pg_sz) != 0) {
-            return false;
+        if (dma_mapped.find((uint64_t)p) == dma_mapped.end()) {
+            dma_mapped[(uint64_t)p] = true;
+
+            uintptr_t iova = rte_mem_virt2iova((const void *)p);
+            // printf("Mapping DMA: 0x%lx / 0x%lx\n", (uint64_t)p, (uint64_t)iova);
+            if (rte_vfio_dma_map(p, (rte_iova_t)iova, pg_sz) != 0) {
+                return false;
+            }
         }
     }
 

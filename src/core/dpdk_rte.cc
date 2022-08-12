@@ -88,7 +88,10 @@ void eal::init(cpuset cpus, boost::program_options::variables_map opts)
         cargs.push_back(a.data());
     }
     /* initialise the EAL for all */
+    printf("pre rte_eal_init\n");
     int ret = rte_eal_init(cargs.size(), cargs.data());
+    printf("post rte_eal_init\n");
+
     if (ret < 0) {
         rte_exit(EXIT_FAILURE, "Cannot init EAL\n");
     }

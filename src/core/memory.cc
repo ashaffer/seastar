@@ -1201,7 +1201,6 @@ size_t object_size(void* ptr) {
 // Mark as cold so that GCC8+ can move to .text.unlikely.
 [[gnu::cold]]
 static void init_cpu_mem_ptr(cpu_pages*& cpu_mem_ptr) {
-    printf("initializing cpu mem: 0x%lx\n", (uint64_t)&cpu_mem);
     cpu_mem_ptr = &cpu_mem;
 };
 

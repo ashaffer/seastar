@@ -933,9 +933,13 @@ void cpu_pages::replace_memory_backing(allocate_system_memory_fn alloc_sys_mem) 
     // the operation.
     auto bytes = nr_pages * page_size;
     auto old_mem = mem();
+    printf("c\n");
     auto relocated_old_mem = mmap_anonymous(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE);
+    printf("d\n");
     std::memcpy(relocated_old_mem.get(), old_mem, bytes);
+    printf("e\n");
     alloc_sys_mem({old_mem}, bytes).release();
+    printf("f\n");
     std::memcpy(old_mem, relocated_old_mem.get(), bytes);
 }
 
@@ -1325,6 +1329,7 @@ void disable_large_allocation_warning() {
 void configure(std::vector<resource::memory> m, bool mbind,
         optional<std::string> hugetlbfs_path) {
     size_t total = 0;
+    printf("memory configure\n");
 
     for (auto&& x : m) {
         total += x.bytes;
@@ -1332,17 +1337,19 @@ void configure(std::vector<resource::memory> m, bool mbind,
     allocate_system_memory_fn sys_alloc = allocate_anonymous_memory;
 
     if (hugetlbfs_path) {
+        printf("a\n");
         // First resize the memory to be at least as big as 1 page
         // worth of the huge page size
         uint tmp_total = std::min(huge_page_size, total);
         cpu_mem.resize(tmp_total, sys_alloc);
-
+        printf("b\n");
         // std::function is copyable, but file_desc is not, so we must use
         // a shared_ptr to allow sys_alloc to be copied around
         auto fdp = make_lw_shared<file_desc>(file_desc::temporary(*hugetlbfs_path));
         sys_alloc = [fdp] (optional<void*> where, size_t how_much) {
             return allocate_hugetlbfs_memory(*fdp, where, how_much);
         };
+        printf("c\n");
         cpu_mem.replace_memory_backing(sys_alloc);
     }
 

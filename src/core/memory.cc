@@ -989,6 +989,7 @@ void cpu_pages::resize(size_t new_size, allocate_system_memory_fn alloc_memory) 
         // don't reallocate all at once, since there might not
         // be enough free memory available to relocate the pages array
         auto tmp_size = std::min(new_size, 4 * nr_pages * page_size);
+        printf("g.1: 0x%lx\n", tmp_size);
         do_resize(tmp_size, alloc_memory);
     }
 }
@@ -1352,8 +1353,9 @@ void configure(std::vector<resource::memory> m, bool mbind,
         printf("c\n");
         cpu_mem.replace_memory_backing(sys_alloc);
     }
-
+    printf("g\n");
     cpu_mem.resize(total, sys_alloc);
+    printf("h\n");
     size_t pos = 0;
     for (auto&& x : m) {
 #ifdef SEASTAR_HAVE_NUMA

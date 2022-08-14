@@ -31,6 +31,8 @@
 # This is the minimum version of Boost we need the CMake-bundled `FindBoost.cmake` to know about.
 find_package (Boost 1.64 MODULE QUIET COMPONENTS filesystem)
 
+set(Boost_USE_STATIC_LIBS ON)
+
 # The imported target is undefined when the version of Boost requested is not
 # supported by the find-module.
 if (NOT (TARGET Boost::filesystem))
@@ -42,6 +44,9 @@ endif ()
 # with the corresponding configuration for each 3rd-party dependency.
 #
 macro (seastar_find_dependencies)
+  # Force all linking to be static
+  set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+
   #
   # List of Seastar dependencies that is meant to be used
   # both in Seastar configuration and by clients which

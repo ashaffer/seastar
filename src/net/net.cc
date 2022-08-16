@@ -59,7 +59,7 @@ ipv4_addr::ipv4_addr(const std::string &addr) {
 }
 
 ipv4_addr::ipv4_addr(const std::string &addr, uint16_t port_) : ip(boost::asio::ip::address_v4::from_string(addr).to_ulong()), port(port_) {
-    printf("ipv4_addr: 0x%lx 0x%x\n", (uint64_t)this, ip);
+    printf("ipv4_addr: 0x%lx 0x%x\n", (uint64_t)this, this->ip);
 }
 
 ipv4_addr::ipv4_addr(const net::inet_address& a, uint16_t port)

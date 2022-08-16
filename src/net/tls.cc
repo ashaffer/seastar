@@ -1293,6 +1293,8 @@ public:
             : _cred(cred), _name(std::move(name)), _socket(engine().net().socket()) {
     }
     virtual future<connected_socket> connect(socket_address sa, socket_address local, transport proto = transport::TCP) override {
+        auto ip = ipv4_addr(sa);
+        printf("tls connect: 0x%x\n", (uint)ip.ip);
         return _socket.connect(sa, local, proto).then([cred = std::move(_cred), name = std::move(_name)](connected_socket s) mutable {
             return wrap_client(cred, std::move(s), std::move(name));
         });

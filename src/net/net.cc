@@ -59,8 +59,6 @@ ipv4_addr::ipv4_addr(const std::string &addr) {
 }
 
 ipv4_addr::ipv4_addr(const std::string &addr, uint16_t port_) : ip(boost::asio::ip::address_v4::from_string(addr).to_ulong()), port(port_) {
-    printf("ipv4_addr: 0x%lx 0x%x\n", (uint64_t)this, this->ip);
-    ip = boost::asio::ip::address_v4::from_string(addr).to_ulong();
 }
 
 ipv4_addr::ipv4_addr(const net::inet_address& a, uint16_t port)
@@ -371,7 +369,7 @@ future<> interface::dispatch_packet(packet p) {
                     return 0u;
                 }
             });
-            printf("received packet: %u %u\n", (uint)engine().cpu_id(), (uint)fw);
+
             if (fw != engine().cpu_id()) {
                 forward(fw, std::move(p));
             } else {

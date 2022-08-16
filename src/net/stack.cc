@@ -298,7 +298,7 @@ socket_address::socket_address(uint16_t p)
     : socket_address(ipv4_addr(p))
 {}
 
-socket_address::socket_address(ipv4_addr addr)
+socket_address::socket_address(const ipv4_addr addr)
 {
     addr_length = sizeof(::sockaddr_in);
     u.in.sin_family = AF_INET;

@@ -1322,12 +1322,18 @@ data_sink tls::tls_connected_socket_impl::sink() {
 
 
 future<connected_socket> tls::connect(shared_ptr<certificate_credentials> cred, socket_address sa, sstring name) {
+    auto ip = ipv4_addr(sa);
+    printf("tls connect: 0x%x\n", (uint)ip.ip);
+
     return engine().connect(sa).then([cred = std::move(cred), name = std::move(name)](connected_socket s) mutable {
         return wrap_client(cred, std::move(s), std::move(name));
     });
 }
 
 future<connected_socket> tls::connect(shared_ptr<certificate_credentials> cred, socket_address sa, socket_address local, sstring name) {
+    auto ip = ipv4_addr(sa);
+    printf("tls connect: 0x%x\n", (uint)ip.ip);
+
     return engine().connect(sa, local).then([cred = std::move(cred), name = std::move(name)](connected_socket s) mutable {
         return wrap_client(cred, std::move(s), std::move(name));
     });

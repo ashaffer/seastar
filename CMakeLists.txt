@@ -271,7 +271,7 @@ set (Seastar_GEN_BINARY_DIR ${Seastar_BINARY_DIR}/gen)
 #
 
 # Force all linking to be static
-set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+# set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 
 include (SeastarDependencies)
 set (StdFilesystem_CXX_DIALECT ${Seastar_CXX_DIALECT})

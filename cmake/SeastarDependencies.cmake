@@ -45,7 +45,7 @@ endif ()
 #
 macro (seastar_find_dependencies)
   # Force all linking to be static
-  # set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+  set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 
   #
   # List of Seastar dependencies that is meant to be used

@@ -34,7 +34,6 @@ namespace net {
 ipv4_address::ipv4_address(const std::string& addr) {
     boost::system::error_code ec;
     auto ipv4 = boost::asio::ip::address_v4::from_string(addr, ec);
-    printf("ipv4: 0x%lx\n", ipv4.to_ulong());
     if (ec) {
         throw std::runtime_error(
             format("Wrong format for IPv4 address {}. Please ensure it's in dotted-decimal format", addr));

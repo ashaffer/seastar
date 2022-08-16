@@ -49,6 +49,7 @@ ipv4_addr::ipv4_addr(const std::string &addr) {
     boost::split(items, addr, boost::is_any_of(":"));
     if (items.size() == 1) {
         ip = boost::asio::ip::address_v4::from_string(addr).to_ulong();
+        printf("ipv4_addr: 0x%x\n", ip);
         port = 0;
     } else if (items.size() == 2) {
         ip = boost::asio::ip::address_v4::from_string(items[0]).to_ulong();

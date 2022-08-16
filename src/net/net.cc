@@ -368,7 +368,7 @@ future<> interface::dispatch_packet(packet p) {
                     return 0u;
                 }
             });
-
+            printf("received packet: %u %u\n", (uint)engine().cpu_id(), (uint)fw);
             if (fw != engine().cpu_id()) {
                 forward(fw, std::move(p));
             } else {

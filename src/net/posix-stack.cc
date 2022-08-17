@@ -164,11 +164,11 @@ public:
         return 0;
     }
 
-    std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
-        return std::chrono::high_resolution_clock::now();
+    uint64_t getReceivedAt () const override {
+        return __rdtsc();
     }
 
-    uint getPollDelay() const override {
+    uint64_t getPollDelay() const override {
         return 0;
     }
 
@@ -233,11 +233,11 @@ public:
         return 0;
     }
 
-    std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
-        return std::chrono::high_resolution_clock::now();
+    uint64_t getReceivedAt () const override {
+        return __rdtsc();
     }
 
-    uint getPollDelay () const override {
+    uint64_t getPollDelay () const override {
         return 0;
     }
     

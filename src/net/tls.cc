@@ -591,7 +591,7 @@ public:
             gtls_chk(gnutls_priority_set(*this, prio));
         }
 
-        onTransmitFn = [] (std::chrono::time_point<std::chrono::high_resolution_clock>, int) {};
+        onTransmitFn = [] (uint64_t, int) {};
         gnutls_server_name_set(*this, GNUTLS_NAME_DNS, _hostname.data(), _hostname.size());
         gnutls_transport_set_ptr(*this, this);
         gnutls_transport_set_vec_push_function(*this, &vec_push_wrapper);
@@ -862,7 +862,7 @@ public:
 
     typedef net::fragment* frag_iter;
 
-    future<> do_put(frag_iter i, frag_iter e, std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>, int)> onTransmit) {
+    future<> do_put(frag_iter i, frag_iter e, std::function<void(uint64_t, int)> onTransmit) {
         out_sem_reason = 1;
 
         assert(_output_pending.available());
@@ -963,7 +963,7 @@ public:
             // printf("TLS Socket (vec_push): %u\n", socketId);
             // p.print_hex();
             p.onTransmit(onTransmitFn);
-            p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
+            p.notifyTransmitted(__rdtsc(), 0);
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {
@@ -1120,7 +1120,7 @@ private:
     uint _eagainCount = 0;
     bool _shutdownCb = false;
     future<> _output_pending;
-    std::function<void(std::chrono::time_point<std::chrono::high_resolution_clock>, int)> onTransmitFn;
+    std::function<void(uint64_t, int)> onTransmitFn;
     buf_type _input;
 
     // modify this to a unique_ptr to handle exceptions in our constructor.
@@ -1196,11 +1196,11 @@ public:
         return _session->socket().can_send();
     }
 
-    std::chrono::high_resolution_clock::time_point getReceivedAt () const override {
+    uint64_t getReceivedAt () const override {
         return _session->socket().getReceivedAt();
     }
 
-    uint getPollDelay () const override {
+    uint64_t getPollDelay () const override {
         return _session->socket().getPollDelay();
     }
 

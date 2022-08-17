@@ -201,9 +201,9 @@ public:
     /// progress due to a peer failure.
     void shutdown_input();
 
-    virtual std::chrono::high_resolution_clock::time_point getReceivedAt();
+    virtual uint64_t getReceivedAt();
     // virtual gnutls_session_t *gnutls_session();
-    virtual uint getPollDelay();
+    virtual uint64_t getPollDelay();
     virtual void ignore_semaphore();
     virtual void set_alpn_string(const std::string& str);
     virtual bool isClosed();

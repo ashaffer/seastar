@@ -43,8 +43,8 @@ public:
     virtual bool get_keepalive() const = 0;
     virtual void set_keepalive_parameters(const keepalive_params&) = 0;
     virtual keepalive_params get_keepalive_parameters() const = 0;
-    virtual std::chrono::high_resolution_clock::time_point getReceivedAt() const = 0;
-    virtual uint getPollDelay() const = 0;
+    virtual uint64_t getReceivedAt() const = 0;
+    virtual uint64_t getPollDelay() const = 0;
     virtual void set_alpn_string(const std::string& str) = 0;
     virtual bool isClosed() const = 0;
     virtual uint32_t can_send() = 0;

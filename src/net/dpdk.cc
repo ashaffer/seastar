@@ -1346,7 +1346,7 @@ private:
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
         if (_tx_burst.size() == 0) {
-            auto start = std::chrono::high_resolution_clock::now();
+            uint64_t start = __rdtsc();
 
             for (auto&& p : pb) {
                 // TODO: assert() in a fast path! Remove me ASAP!
@@ -1474,7 +1474,7 @@ private:
      * @param bufs An array of received rte_mbuf's
      * @param count Number of buffers in the bufs[]
      */
-    void process_packets(struct rte_mbuf **bufs, uint16_t count);
+    void process_packets(struct rte_mbuf **bufs, uint16_t count, uint64_t receivedAt, uint64_t pollDelay);
 
     /**
      * Translate rte_mbuf into the "packet".
@@ -1511,7 +1511,7 @@ private:
     std::vector<rte_mbuf*> _tx_burst;
     uint16_t _tx_burst_idx = 0;
     static constexpr phys_addr_t page_mask = ~(memory::page_size - 1);
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastPoll;
+    uint64_t lastPoll;
 };
 
 int dpdk_device::init_port_start()
@@ -2295,7 +2295,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
 
 template <bool HugetlbfsMemBackend>
 void dpdk_qp<HugetlbfsMemBackend>::process_packets(
-    struct rte_mbuf **bufs, uint16_t count)
+    struct rte_mbuf **bufs, uint16_t count, uint64_t receivedAt, uint64_t pollDelay)
 {
     uint64_t nr_frags = 0, bytes = 0;
     num_packets += count;
@@ -2307,8 +2307,8 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
 
         compat::optional<packet> p = from_mbuf(m);
 
-        // p->setReceivedAt(receivedAt);
-        // p->setPollDelay(pollDelay);
+        p->setReceivedAt(receivedAt);
+        p->setPollDelay(pollDelay);
 
         // Drop the packet if translation above has failed
         if (!p) {
@@ -2358,7 +2358,7 @@ template <bool HugetlbfsMemBackend>
 bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
 {
     struct rte_mbuf *buf[packet_read_size];
-    // auto receivedAt = std::chrono::high_resolution_clock::now();
+    uint64_t receivedAt = __rdtsc();
 
     /* read a port */
     uint16_t rx_count = rte_eth_rx_burst(_dev->port_idx(), _qid,
@@ -2368,13 +2368,17 @@ bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
     if (likely(rx_count > 0)) {
         process_packets(
             buf,
-            rx_count
-            // receivedAt,
-            // std::chrono::duration_cast<std::chrono::microseconds>(receivedAt - lastPoll).count()
+            rx_count,
+            receivedAt,
+            // Since we don't want to force strict instruction serialization via cpuid
+            // we need to make sure we don't pass along a negative value here
+            receivedAt > lastPoll
+                ? receivedAt - lastPoll
+                : 0
         );
     }
 
-    // lastPoll = receivedAt;
+    lastPoll = receivedAt;
     return rx_count;
 }
 

@@ -80,7 +80,6 @@ class packet final {
     // enough for lots of headers, not quite two cache lines:
     static constexpr size_t internal_data_size = 128 - 16;
     static constexpr size_t default_nr_frags = 4;
-    using PerfTime = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
     struct pseudo_vector {
         fragment* _start;
@@ -103,9 +102,9 @@ class packet final {
         char _data[internal_data_size]; // only _frags[0] may use
         unsigned _headroom = internal_data_size; // in _data
         // FIXME: share _data/_frags space
-        std::chrono::high_resolution_clock::time_point _receivedAt;
-        uint _pollDelay;
-        std::function<void(PerfTime, int)> _onTransmit;
+        uint64_t _receivedAt;
+        uint64_t _pollDelay;
+        std::function<void(uint64_t, int)> _onTransmit;
 
         fragment _frags[];
 
@@ -276,32 +275,32 @@ public:
 
     void reset() { _impl.reset(); }
 
-    void onTransmit (std::function<void(PerfTime, int)> onTransmit) {
+    void onTransmit (std::function<void(uint64_t, int)> onTransmit) {
         _impl->_onTransmit = onTransmit;
     }
 
-    std::function<void(PerfTime, int)> getOnTransmit () {
+    std::function<void(uint64_t, int)> getOnTransmit () {
         return _impl->_onTransmit;
     }
 
     inline
-    void notifyTransmitted (PerfTime ts, int i) {
+    void notifyTransmitted (uint64_t ts, int i) {
         _impl->_onTransmit(ts, i);
     }
 
-    void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
+    void setReceivedAt (uint64_t receivedAt) {
         _impl->_receivedAt = receivedAt;
     }
 
-    void setPollDelay (uint pollDelay) {
+    void setPollDelay (uint64_t pollDelay) {
         _impl->_pollDelay = pollDelay;
     }
 
-    std::chrono::high_resolution_clock::time_point getReceivedAt () {
+    uint64_t getReceivedAt () {
         return _impl->_receivedAt;
     }
 
-    uint getPollDelay () {
+    uint64_t getPollDelay () {
         return _impl->_pollDelay;
     }
 
@@ -395,14 +394,14 @@ packet::packet(packet&& x) noexcept
 inline
 packet::impl::impl(size_t nr_frags)
     : _len(0), _allocated_frags(nr_frags) {
-        _onTransmit = [] (PerfTime, int) {};
+        _onTransmit = [] (uint64_t, int) {};
 }
 
 inline
 packet::impl::impl(fragment frag, size_t nr_frags)
     : _len(frag.size), _allocated_frags(nr_frags) {
     assert(_allocated_frags > _nr_frags);
-    _onTransmit = [] (PerfTime, int) {};
+    _onTransmit = [] (uint64_t, int) {};
 
     if (frag.size <= internal_data_size) {
         _headroom -= frag.size;

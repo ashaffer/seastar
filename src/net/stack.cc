@@ -97,11 +97,11 @@ void connected_socket::set_nodelay(bool nodelay) {
     _csi->set_nodelay(nodelay);
 }
 
-std::chrono::high_resolution_clock::time_point connected_socket::getReceivedAt () {
+uint64_t connected_socket::getReceivedAt () {
     return _csi->getReceivedAt();
 }
 
-uint connected_socket::getPollDelay () {
+uint64_t connected_socket::getPollDelay () {
     return _csi->getPollDelay();
 }
 

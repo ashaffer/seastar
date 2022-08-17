@@ -398,18 +398,18 @@ private:
         static constexpr uint16_t _max_nr_retransmit{5};
         timer<lowres_clock> _retransmit;
         timer<lowres_clock> _persist;
-        std::chrono::high_resolution_clock::time_point _receivedAt;
-        uint _pollDelay;
+        uint64_t _receivedAt;
+        uint64_t _pollDelay;
         bool doCloseCalled = false;
 
         uint16_t _nr_full_seg_received = 0;
         uint closeCalled = -1;
         uint closeState = -1;
         uint resetState = -1;
-        std::chrono::high_resolution_clock::time_point _penultimateSend;
-        std::chrono::high_resolution_clock::time_point _lastSend;
-        std::chrono::high_resolution_clock::time_point _lastRecv;
-        std::chrono::high_resolution_clock::time_point _createdAt;
+        uint64_t _penultimateSend;
+        uint64_t _lastSend;
+        uint64_t _lastRecv;
+        uint64_t _createdAt;
 
         struct isn_secret {
             // 512 bits secretkey for ISN generating
@@ -457,7 +457,7 @@ private:
             auto id = connid{_local_ip, _foreign_ip, _local_port, _foreign_port};
             _tcp._tcbs.erase(id);
         }
-        void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
+        void setReceivedAt (uint64_t receivedAt) {
             _receivedAt = receivedAt;
         }
 
@@ -736,8 +736,8 @@ public:
     }
     class connection {
         lw_shared_ptr<tcb> _tcb;
-        std::chrono::high_resolution_clock::time_point _receivedAt;
-        uint _pollDelay;
+        uint64_t _receivedAt;
+        uint64_t _pollDelay;
 
     public:
         explicit connection(lw_shared_ptr<tcb> tcbp) : _tcb(std::move(tcbp)) { _tcb->_conn = this; }
@@ -777,19 +777,19 @@ public:
             return _tcb->_local_port;
         }
 
-        void setReceivedAt (std::chrono::high_resolution_clock::time_point receivedAt) {
+        void setReceivedAt (uint64_t receivedAt) {
             _receivedAt = receivedAt;
         }
 
-        void setPollDelay (uint pollDelay) {
+        void setPollDelay (uint64_t pollDelay) {
             _pollDelay = pollDelay;
         }
 
-        std::chrono::high_resolution_clock::time_point getReceivedAt () {
+        uint64_t getReceivedAt () {
             return _receivedAt;
         }
 
-        uint getPollDelay() {
+        uint64_t getPollDelay() {
             return _pollDelay;
         }
 
@@ -1109,8 +1109,8 @@ tcp<InetTraits>::tcb::tcb(tcp& t, connid id)
     , _delayed_ack([this] { _nr_full_seg_received = 0; output(); })
     , _retransmit([this] { retransmit(); })
     , _persist([this] { persist(); }) {
-        _receivedAt = std::chrono::high_resolution_clock::now();
-        _createdAt = std::chrono::high_resolution_clock::now();
+        _receivedAt = __rdtsc();
+        _createdAt = __rdtsc();
 }
 
 template <typename InetTraits>
@@ -1310,7 +1310,7 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
         // foreign.s_addr = htonl(_foreign_ip.ip);
         // char *slocal = strdup(inet_ntoa(local));
         // char *flocal = strdup(inet_ntoa(foreign));
-        // auto now = std::chrono::high_resolution_clock::now();
+        // uint64_t now = __rdtsc();
         // uint sincePenultimate = std::chrono::duration_cast<std::chrono::microseconds>(now - _penultimateSend).count();
         // uint sinceSend = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSend).count();
         // uint sinceRecv = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastRecv).count();
@@ -1982,7 +1982,7 @@ packet tcp<InetTraits>::tcb::read() {
     _rcv.data_size = 0;
     _rcv.data.clear();
     _rcv.window = get_default_receive_window_size();
-    _lastRecv = std::chrono::high_resolution_clock::now();
+    _lastRecv = __rdtsc();
     p.setReceivedAt(_receivedAt);
     return p;
 }
@@ -2018,7 +2018,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
 
     auto len = p.len();
     _penultimateSend = _lastSend;
-    _lastSend = std::chrono::high_resolution_clock::now();    
+    _lastSend = __rdtsc();
     _snd.current_queue_space += len;
     _snd.unsent_len += len;
     auto notifyTransmitted = p.getOnTransmit();
@@ -2029,7 +2029,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
             // _snd.unsent_len -= len;
             // output_immediately(std::move(p));
             output();
-            notifyTransmitted(std::chrono::high_resolution_clock::now(), 1);
+            notifyTransmitted(__rdtsc(), 1);
             // _tcp._inet.flush();
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());

@@ -268,11 +268,11 @@ public:
 
     void shutdown_input() { _socket.shutdown_input(); }
 
-    std::chrono::high_resolution_clock::time_point getReceivedAt () {
+    uint64_t getReceivedAt () {
         return _socket.getReceivedAt();
     }
 
-    uint getPollDelay() {
+    uint64_t getPollDelay() {
         return _socket.getPollDelay();
     }
 

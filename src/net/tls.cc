@@ -913,7 +913,7 @@ public:
         // printf("TLS Socket (put): %u\n", socketId);
         // p.print_text();
 
-        // p.notifyTransmitted(std::chrono::high_resolution_clock::now(), 0);
+        // p.notifyTransmitted(__rdtsc(), 0);
         if (_ignore_semaphore) {
             return do_put(i, e, p.getOnTransmit());
         } else {

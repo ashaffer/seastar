@@ -1474,7 +1474,7 @@ private:
      * @param bufs An array of received rte_mbuf's
      * @param count Number of buffers in the bufs[]
      */
-    void process_packets(struct rte_mbuf **bufs, uint16_t count, std::chrono::high_resolution_clock::time_point receivedAt, uint pollDelay);
+    void process_packets(struct rte_mbuf **bufs, uint16_t count);
 
     /**
      * Translate rte_mbuf into the "packet".
@@ -2295,7 +2295,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
 
 template <bool HugetlbfsMemBackend>
 void dpdk_qp<HugetlbfsMemBackend>::process_packets(
-    struct rte_mbuf **bufs, uint16_t count, std::chrono::high_resolution_clock::time_point receivedAt, uint pollDelay)
+    struct rte_mbuf **bufs, uint16_t count)
 {
     uint64_t nr_frags = 0, bytes = 0;
     num_packets += count;
@@ -2307,8 +2307,8 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
 
         compat::optional<packet> p = from_mbuf(m);
 
-        p->setReceivedAt(receivedAt);
-        p->setPollDelay(pollDelay);
+        // p->setReceivedAt(receivedAt);
+        // p->setPollDelay(pollDelay);
 
         // Drop the packet if translation above has failed
         if (!p) {
@@ -2358,7 +2358,7 @@ template <bool HugetlbfsMemBackend>
 bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
 {
     struct rte_mbuf *buf[packet_read_size];
-    auto receivedAt = std::chrono::high_resolution_clock::now();
+    // auto receivedAt = std::chrono::high_resolution_clock::now();
 
     /* read a port */
     uint16_t rx_count = rte_eth_rx_burst(_dev->port_idx(), _qid,
@@ -2368,13 +2368,13 @@ bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
     if (likely(rx_count > 0)) {
         process_packets(
             buf,
-            rx_count,
-            receivedAt,
-            std::chrono::duration_cast<std::chrono::microseconds>(receivedAt - lastPoll).count()
+            rx_count
+            // receivedAt,
+            // std::chrono::duration_cast<std::chrono::microseconds>(receivedAt - lastPoll).count()
         );
     }
 
-    lastPoll = receivedAt;
+    // lastPoll = receivedAt;
     return rx_count;
 }
 

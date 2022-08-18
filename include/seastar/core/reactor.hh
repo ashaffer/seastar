@@ -78,7 +78,6 @@
 #include <seastar/core/manual_clock.hh>
 #include <seastar/core/metrics_registration.hh>
 #include <seastar/core/scheduling.hh>
-#include <dpdk/generic/rte_cycles.h>
 #include "internal/pollable_fd.hh"
 #include "internal/poll.hh"
 
@@ -373,6 +372,13 @@ class cpu_stall_detector;
 class io_desc;
 class io_queue;
 class disk_config_params;
+
+// Prototype taken from DPDK. We can't use the actual header file because
+// some of the other things it defines/includes conflict with things
+// we do.
+uint64_t
+rte_get_tsc_hz(void);
+
 
 struct FastClock {
     typedef std::chrono::nanoseconds           duration;

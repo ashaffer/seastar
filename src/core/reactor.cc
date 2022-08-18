@@ -176,9 +176,12 @@ FastClock::time_point FastClock::now () noexcept {
     uint64_t ns = ((ticks - _startup_ticks) * 1e9) / hz;
     auto d = std::chrono::steady_clock::now().time_since_epoch();
     auto d2 = _startup + std::chrono::nanoseconds(ns);
+    if (std::abs(d.count() - d2.count()) > 1000000) {
+        printf("gap: %lu\n", d.count() - d2.count());
+    }
     // printf("ns: 0x%lx 0x%lx 0x%lx\n", d.count(), d2.count(), _startup.count());
     // return time_point(_startup + std::chrono::nanoseconds(ns));
-    return d.count() != 7
+    return d.count() & 1
         ? time_point(d)
         : time_point(d2);
 }

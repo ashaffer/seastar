@@ -161,6 +161,9 @@ struct convert<seastar::mountpoint_params> {
 
 namespace seastar {
 
+// uint64_t FastClock::_startup;
+uint64_t FastClock::_startup_ticks = 0;
+
 seastar::logger seastar_logger("seastar");
 seastar::logger sched_logger("scheduler");
 

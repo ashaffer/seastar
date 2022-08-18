@@ -899,7 +899,9 @@ reactor::reactor(unsigned id, reactor_backend_selector rbs, reactor_config cfg)
     _task_queues.push_back(std::make_unique<task_queue>(0, "main", 1000));
     _task_queues.push_back(std::make_unique<task_queue>(1, "atexit", 1000));
     _at_destroy_tasks = _task_queues.back().get();
+
     g_need_preempt = &_preemption_monitor;
+    printf("initialized g_need_preempt: 0x%lx, 0x%lx\n", (uint64_t)g_need_preempt, (uint64_t)&_preemption_monitor);
     seastar::thread_impl::init();
     _backend->start_tick();
     for (unsigned i = 0; i != max_aio; ++i) {

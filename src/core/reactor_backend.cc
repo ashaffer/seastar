@@ -259,6 +259,7 @@ void reactor_backend_aio::handle_signal(int signo) {
 void reactor_backend_aio::start_tick() {
     // Preempt whenever an event (timer tick or signal) is available on the
     // _preempting_io ring
+    printf("starting ticks on %u\n", engine().cpu_id());
     g_need_preempt = reinterpret_cast<const preemption_monitor*>(_preempting_io.io_context + 8);
     // reactor::request_preemption() will write to reactor::_preemption_monitor, which is now ignored
 }

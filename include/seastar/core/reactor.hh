@@ -376,9 +376,7 @@ class disk_config_params;
 // Prototype taken from DPDK. We can't use the actual header file because
 // some of the other things it defines/includes conflict with things
 // we do.
-uint64_t
-rte_get_tsc_hz(void);
-
+extern "C" uint64_t rte_get_tsc_hz(void);
 
 struct FastClock {
     typedef std::chrono::nanoseconds           duration;

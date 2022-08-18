@@ -181,10 +181,9 @@ FastClock::time_point FastClock::now () noexcept {
     }
     // printf("ns: 0x%lx 0x%lx 0x%lx\n", d.count(), d2.count(), _startup.count());
     // return time_point(_startup + std::chrono::nanoseconds(ns));
-    return time_point(d2);
-    // return d.count() & 1
-    //     ? time_point(d)
-    //     : time_point(d2);
+    return d.count() == 7
+        ? time_point(d)
+        : time_point(d2);
 }
 
 seastar::logger seastar_logger("seastar");

@@ -385,9 +385,6 @@ struct FastClock {
     typedef std::chrono::time_point<FastClock> time_point;
 
     static const bool is_steady = true;
-    static std::chrono::nanoseconds _startup;
-    static uint64_t _startup_ticks;
-
     static time_point now () noexcept;
 };
 

@@ -387,12 +387,12 @@ struct FastClock {
     static const bool is_steady = true;
 
     static time_point now () noexcept {
-        return time_point(std::chrono::steady_clock::now().time_since_epoch());
-        // asm("cpuid");
-        // uint64_t ticks = __rdtsc();
-        // uint64_t hz = rte_get_tsc_hz();
-        // uint64_t ns = (ticks * 1e9) / hz;
+        asm("cpuid");
+        uint64_t ticks = __rdtsc();
+        uint64_t hz = rte_get_tsc_hz();
+        uint64_t ns = (ticks * 1e9) / hz;
         // return time_point(std::chrono::nanoseconds(ns));
+        return time_point(std::chrono::steady_clock::now().time_since_epoch());
     }
 };
 

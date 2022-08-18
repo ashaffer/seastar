@@ -387,7 +387,7 @@ struct FastClock {
     static const bool is_steady = true;
 
     static time_point now () noexcept {
-        return std::chrono::steady_clock::now();
+        return time_point(std::chrono::steady_clock::now().time_since_epoch());
         // asm("cpuid");
         // uint64_t ticks = __rdtsc();
         // uint64_t hz = rte_get_tsc_hz();
@@ -396,7 +396,7 @@ struct FastClock {
     }
 };
 
-typedef std::chrono::steady_clock FastClock;
+// typedef std::chrono::steady_clock FastClock;
 
 class reactor {
     using sched_clock = FastClock; //std::chrono::steady_clock;

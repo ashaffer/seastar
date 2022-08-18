@@ -78,6 +78,7 @@
 #include <seastar/core/manual_clock.hh>
 #include <seastar/core/metrics_registration.hh>
 #include <seastar/core/scheduling.hh>
+#include <dpdk/rte_cycles.h>
 #include "internal/pollable_fd.hh"
 #include "internal/poll.hh"
 
@@ -373,8 +374,25 @@ class io_desc;
 class io_queue;
 class disk_config_params;
 
+struct FastClock {
+    typedef std::chrono::nanoseconds           duration;
+    typedef duration::rep                      rep;
+    typedef duration::period                   period;
+    typedef std::chrono::time_point<FastClock> time_point;
+
+    static const bool is_steady = true;
+
+    static time_point now () noexcept {
+        asm("cpuid");
+        uint64_t ticks = __rdtsc();
+        uint64_t hz = rte_get_tsc_hz();
+        uint64_t ns = (ticks * 1e9) / hz;
+        return time_point(std::chrono::nanoseconds(ns));
+    }
+};
+
 class reactor {
-    using sched_clock = std::chrono::steady_clock;
+    using sched_clock = FastClock; //std::chrono::steady_clock;
 private:
     struct task_queue;
     using task_queue_list = circular_buffer_fixed_capacity<task_queue*, max_scheduling_groups()>;

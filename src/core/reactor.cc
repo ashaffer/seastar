@@ -1053,11 +1053,11 @@ cpu_stall_detector::get_config() const {
 
 void cpu_stall_detector::update_config(cpu_stall_detector_config cfg) {
     _config = cfg;
-    _threshold = std::chrono::duration_cast<std::chrono::steady_clock::duration>(cfg.threshold);
-    _slack = std::chrono::duration_cast<std::chrono::steady_clock::duration>(cfg.threshold * cfg.slack);
+    _threshold = std::chrono::duration_cast<FastClock::duration>(cfg.threshold);
+    _slack = std::chrono::duration_cast<FastClock::duration>(cfg.threshold * cfg.slack);
     _stall_detector_reports_per_minute = cfg.stall_detector_reports_per_minute;
     _max_reports_per_minute = cfg.stall_detector_reports_per_minute;
-    _rearm_timer_at = std::chrono::steady_clock::now();
+    _rearm_timer_at = FastClock::now();
 }
 
 void cpu_stall_detector::maybe_report() {
@@ -1084,7 +1084,7 @@ void cpu_stall_detector::on_signal() {
     arm_timer();
 }
 
-void cpu_stall_detector::report_suppressions(std::chrono::steady_clock::time_point now) {
+void cpu_stall_detector::report_suppressions(FastClock::time_point now) {
     if (now > _minute_mark + 60s) {
         if (_reported > _max_reports_per_minute) {
             auto suppressed = _reported - _max_reports_per_minute;
@@ -1108,7 +1108,7 @@ void cpu_stall_detector::arm_timer() {
     timer_settime(_timer, 0, &its, nullptr);
 }
 
-void cpu_stall_detector::start_task_run(std::chrono::steady_clock::time_point now) {
+void cpu_stall_detector::start_task_run(FastClock::time_point now) {
     if (now > _rearm_timer_at) {
         report_suppressions(now);
         _report_at = 1;
@@ -1120,7 +1120,7 @@ void cpu_stall_detector::start_task_run(std::chrono::steady_clock::time_point no
     std::atomic_signal_fence(std::memory_order_release); // Don't delay this write, so the signal handler can see it
 }
 
-void cpu_stall_detector::end_task_run(std::chrono::steady_clock::time_point now) {
+void cpu_stall_detector::end_task_run(FastClock::time_point now) {
     std::atomic_signal_fence(std::memory_order_acquire); // Don't hoist this write, so the signal handler can see it
     _last_tasks_processed_seen.store(0, std::memory_order_relaxed);
 }
@@ -1128,7 +1128,7 @@ void cpu_stall_detector::end_task_run(std::chrono::steady_clock::time_point now)
 void cpu_stall_detector::start_sleep() {
     auto its = posix::to_relative_itimerspec(0s,  0s);
     timer_settime(_timer, 0, &its, nullptr);
-    _rearm_timer_at = std::chrono::steady_clock::now();
+    _rearm_timer_at = FastClock::now();
 }
 
 void cpu_stall_detector::end_sleep() {
@@ -1204,7 +1204,7 @@ reactor::block_notifier(int) {
 
 void
 cpu_stall_detector::generate_trace() {
-    auto delta = std::chrono::steady_clock::now() - _run_started_at;
+    auto delta = FastClock::now() - _run_started_at;
 
     if (_config.report) {
         _config.report();
@@ -2555,7 +2555,7 @@ reactor::run_some_tasks() {
     sched_print("run_some_tasks: start");
     reset_preemption_monitor();
 
-    sched_clock::time_point t_run_completed = std::chrono::steady_clock::now();
+    sched_clock::time_point t_run_completed = FastClock::now();
     STAP_PROBE(seastar, reactor_run_tasks_start);
     _cpu_stall_detector->start_task_run(t_run_completed);
     do {
@@ -2568,7 +2568,7 @@ reactor::run_some_tasks() {
         _last_vruntime = std::max(tq->_vruntime, _last_vruntime);
         run_tasks(*tq);
         tq->_current = false;
-        t_run_completed = std::chrono::steady_clock::now();
+        t_run_completed = FastClock::now();
         auto delta = t_run_completed - t_run_started;
         account_runtime(*tq, delta);
         sched_print("run complete ({} {}); time consumed {} usec; final vruntime {} empty {}",
@@ -4478,35 +4478,35 @@ rename_scheduling_group(scheduling_group sg, sstring new_name) {
 namespace internal {
 
 inline
-std::chrono::steady_clock::duration
+FastClock::duration
 timeval_to_duration(::timeval tv) {
     return std::chrono::seconds(tv.tv_sec) + std::chrono::microseconds(tv.tv_usec);
 }
 
 class reactor_stall_sampler : public reactor::pollfn {
-    std::chrono::steady_clock::time_point _run_start;
+    FastClock::time_point _run_start;
     ::rusage _run_start_rusage;
     uint64_t _kernel_stalls = 0;
-    std::chrono::steady_clock::duration _nonsleep_cpu_time = {};
-    std::chrono::steady_clock::duration _nonsleep_wall_time = {};
+    FastClock::duration _nonsleep_cpu_time = {};
+    FastClock::duration _nonsleep_wall_time = {};
 private:
     static ::rusage get_rusage() {
         struct ::rusage ru;
         ::getrusage(RUSAGE_THREAD, &ru);
         return ru;
     }
-    static std::chrono::steady_clock::duration cpu_time(const ::rusage& ru) {
+    static FastClock::duration cpu_time(const ::rusage& ru) {
         return timeval_to_duration(ru.ru_stime) + timeval_to_duration(ru.ru_utime);
     }
     void mark_run_start() {
-        _run_start = std::chrono::steady_clock::now();
+        _run_start = FastClock::now();
         _run_start_rusage = get_rusage();
     }
     void mark_run_end() {
         auto start_nvcsw = _run_start_rusage.ru_nvcsw;
         auto start_cpu_time = cpu_time(_run_start_rusage);
         auto start_time = _run_start;
-        _run_start = std::chrono::steady_clock::now();
+        _run_start = FastClock::now();
         _run_start_rusage = get_rusage();
         _kernel_stalls += _run_start_rusage.ru_nvcsw - start_nvcsw;
         _nonsleep_cpu_time += cpu_time(_run_start_rusage) - start_cpu_time;
@@ -4549,7 +4549,7 @@ report_reactor_stalls(noncopyable_function<future<> ()> uut) {
 }
 
 std::ostream& operator<<(std::ostream& os, const stall_report& sr) {
-    auto to_ms = [] (std::chrono::steady_clock::duration d) -> float {
+    auto to_ms = [] (FastClock::duration d) -> float {
         return std::chrono::duration<float>(d) / 1ms;
     };
     return os << format("{} stalls, {} ms stall time, {} ms run time", sr.kernel_stalls, to_ms(sr.stall_time), to_ms(sr.run_wall_time));

@@ -1,4 +1,3 @@
-
 /*
  * This file is open source software, licensed to you under the terms
  * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
@@ -31,6 +30,7 @@
 namespace seastar {
 
 class reactor;
+struct FastClock;
 
 namespace internal {
 
@@ -53,23 +53,23 @@ class cpu_stall_detector {
     unsigned _shard_id;
     unsigned _thread_id;
     unsigned _report_at{};
-    std::chrono::steady_clock::time_point _minute_mark{};
-    std::chrono::steady_clock::time_point _rearm_timer_at{};
-    std::chrono::steady_clock::time_point _run_started_at{};
-    std::chrono::steady_clock::duration _threshold;
-    std::chrono::steady_clock::duration _slack;
+    FastClock::time_point _minute_mark{};
+    FastClock::time_point _rearm_timer_at{};
+    FastClock::time_point _run_started_at{};
+    FastClock::duration _threshold;
+    FastClock::duration _slack;
     cpu_stall_detector_config _config;
     friend reactor;
 private:
     void maybe_report();
     void arm_timer();
-    void report_suppressions(std::chrono::steady_clock::time_point now);
+    void report_suppressions(FastClock::time_point now);
 public:
     cpu_stall_detector(reactor* r, cpu_stall_detector_config cfg = {});
     ~cpu_stall_detector();
     static int signal_number() { return SIGRTMIN + 1; }
-    void start_task_run(std::chrono::steady_clock::time_point now);
-    void end_task_run(std::chrono::steady_clock::time_point now);
+    void start_task_run(FastClock::time_point now);
+    void end_task_run(FastClock::time_point now);
     void generate_trace();
     void update_config(cpu_stall_detector_config cfg);
     cpu_stall_detector_config get_config() const;

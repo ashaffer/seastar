@@ -388,20 +388,7 @@ struct FastClock {
     static std::chrono::nanoseconds _startup;
     static uint64_t _startup_ticks;
 
-    static time_point now () noexcept {
-        asm("cpuid");
-        uint64_t ticks = __rdtsc();
-
-        if (_startup_ticks == 0) {
-            _startup = std::chrono::steady_clock::now().time_since_epoch();
-            _startup_ticks = ticks;
-        }
-
-        uint64_t hz = rte_get_tsc_hz();
-        uint64_t ns = ((ticks - _startup_ticks) * 1e9) / hz;
-        return time_point(_startup + std::chrono::nanoseconds(ns));
-        // return time_point(std::chrono::steady_clock::now().time_since_epoch());
-    }
+    static time_point now () noexcept;
 };
 
 // typedef std::chrono::steady_clock FastClock;

@@ -30,7 +30,8 @@
 namespace seastar {
 
 class reactor;
-struct FastClock;
+// struct FastClock;
+typedef std::chrono::steady_clock FastClock;
 
 namespace internal {
 

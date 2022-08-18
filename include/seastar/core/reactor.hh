@@ -378,22 +378,24 @@ class disk_config_params;
 // we do.
 extern "C" uint64_t rte_get_tsc_hz(void);
 
-struct FastClock {
-    typedef std::chrono::nanoseconds           duration;
-    typedef duration::rep                      rep;
-    typedef duration::period                   period;
-    typedef std::chrono::time_point<FastClock> time_point;
+// struct FastClock {
+//     typedef std::chrono::nanoseconds           duration;
+//     typedef duration::rep                      rep;
+//     typedef duration::period                   period;
+//     typedef std::chrono::time_point<FastClock> time_point;
 
-    static const bool is_steady = true;
+//     static const bool is_steady = true;
 
-    static time_point now () noexcept {
-        asm("cpuid");
-        uint64_t ticks = __rdtsc();
-        uint64_t hz = rte_get_tsc_hz();
-        uint64_t ns = (ticks * 1e9) / hz;
-        return time_point(std::chrono::nanoseconds(ns));
-    }
-};
+//     static time_point now () noexcept {
+//         asm("cpuid");
+//         uint64_t ticks = __rdtsc();
+//         uint64_t hz = rte_get_tsc_hz();
+//         uint64_t ns = (ticks * 1e9) / hz;
+//         return time_point(std::chrono::nanoseconds(ns));
+//     }
+// };
+
+typedef std::chrono::steady_clock FastClock;
 
 class reactor {
     using sched_clock = FastClock; //std::chrono::steady_clock;

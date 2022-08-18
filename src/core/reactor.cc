@@ -162,21 +162,21 @@ struct convert<seastar::mountpoint_params> {
 namespace seastar {
 
 FastClock::time_point FastClock::now () noexcept {
-    // asm("cpuid");
-    // uint64_t ticks = __rdtsc();
-    // static thread_local std::chrono::nanoseconds _startup{};
-    // static thread_local uint64_t _startup_ticks = 0;
+    asm("cpuid");
+    uint64_t ticks = __rdtsc();
+    static thread_local std::chrono::nanoseconds _startup{};
+    static thread_local uint64_t _startup_ticks = 0;
 
-    // if (_startup_ticks == 0) {
-    //    _startup = std::chrono::steady_clock::now().time_since_epoch();
-    //    _startup_ticks = ticks;
-    // }
+    if (_startup_ticks == 0) {
+       _startup = std::chrono::steady_clock::now().time_since_epoch();
+       _startup_ticks = ticks;
+    }
 
-    // uint64_t hz = rte_get_tsc_hz();
-    // uint64_t ns = ((ticks - _startup_ticks) * 1e9) / hz;
-    // printf("ns: 0x%lx 0x%lx\n", ns, _startup.count());
-    // return time_point(_startup + std::chrono::nanoseconds(ns));
-    return time_point(std::chrono::steady_clock::now().time_since_epoch());
+    uint64_t hz = rte_get_tsc_hz();
+    uint64_t ns = ((ticks - _startup_ticks) * 1e9) / hz;
+    printf("ns: 0x%lx 0x%lx\n", ns, _startup.count());
+    return time_point(_startup + std::chrono::nanoseconds(ns));
+    // return time_point(std::chrono::steady_clock::now().time_since_epoch());
 }
 
 seastar::logger seastar_logger("seastar");

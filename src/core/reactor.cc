@@ -175,7 +175,6 @@ FastClock::time_point FastClock::now () noexcept {
 
     uint64_t hz = rte_get_tsc_hz();
     uint64_t ns = ((ticks - _startup_ticks) * 1e9) / hz;
-    printf("ns: 0x%lx 0x%lx\n", ns, _startup.count());
     return time_point(_startup + std::chrono::nanoseconds(ns));
     // return time_point(std::chrono::steady_clock::now().time_since_epoch());
 }

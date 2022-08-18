@@ -78,7 +78,7 @@
 #include <seastar/core/manual_clock.hh>
 #include <seastar/core/metrics_registration.hh>
 #include <seastar/core/scheduling.hh>
-#include <dpdk/rte_cycles.h>
+#include <dpdk/generic/rte_cycles.h>
 #include "internal/pollable_fd.hh"
 #include "internal/poll.hh"
 

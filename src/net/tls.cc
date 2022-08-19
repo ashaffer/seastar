@@ -540,6 +540,13 @@ shared_ptr<tls::server_credentials> tls::credentials_builder::build_server_crede
 
 namespace tls {
 
+inline void slow_memcpy(void *a, const void *b, size_t n) {
+    for (uint i = 0; i < n; i++) {
+        ((char *)a)[i] = ((char *)b)[i];
+    }
+}
+
+
 /**
  * Session wraps gnutls session, and is the
  * actual conduit for an TLS/SSL data flow.
@@ -940,7 +947,7 @@ public:
             return -1;
         }
         auto n = std::min(len, _input.size());
-        memcpy(dst, _input.get(), n);
+        slow_memcpy(dst, _input.get(), n);
         _input.trim_front(n);
         return n;
     }

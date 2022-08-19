@@ -84,6 +84,13 @@ public:
             status_code(status_code) {}
 };
 
+inline void slow_memcpy2(void *a, const void *b, size_t n) {
+    for (uint i = 0; i < n; i++) {
+        ((char *)a)[i] = ((char *)b)[i];
+    }
+}
+
+
 /**
  * Represent a full fragment header.
  * It's initialized with a 2 bytes buffer. If necessary, it can be extended to support longer fragment headers.
@@ -128,23 +135,17 @@ public:
         return ret;
     }
 
-    void slow_memcpy(void *a, const void *b, size_t n) {
-        for (uint i = 0; i < n; i++) {
-            ((char *)a)[i] = ((char *)b)[i];
-        }
-    }
-
     void feed_extended_header(temporary_buffer<char>& extended_header) {
         if (length == 126 && extended_header.size() >= sizeof(uint16_t)) {
             uint16_t len;
-            slow_memcpy(&len, extended_header.get(), sizeof(uint16_t));
+            slow_memcpy2(&len, extended_header.get(), sizeof(uint16_t));
             length = net::ntoh(len);
         } else if (length == 127 && extended_header.size() >= sizeof(uint64_t)) {
-            slow_memcpy(&length, extended_header.get(), sizeof(uint64_t));
+            slow_memcpy2(&length, extended_header.get(), sizeof(uint64_t));
             length = net::ntoh(length);
         }
         if (masked) {
-            slow_memcpy(&mask_key, extended_header.end() - sizeof(uint32_t), sizeof(uint32_t));
+            slow_memcpy2(&mask_key, extended_header.end() - sizeof(uint32_t), sizeof(uint32_t));
         }
     }
 };

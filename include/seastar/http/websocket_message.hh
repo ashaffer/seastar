@@ -102,7 +102,7 @@ class message final : public message_base {
 };
 
 
-void slow_memcpy(void *a, const void *b, size_t n) {
+inline void slow_memcpy(void *a, const void *b, size_t n) {
     for (uint i = 0; i < n; i++) {
         ((char *)a)[i] = ((char *)b)[i];
     }

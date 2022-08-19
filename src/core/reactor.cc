@@ -166,7 +166,7 @@ FastClock::time_point FastClock::now () noexcept {
     static thread_local uint64_t _startup_ticks = 0;
 
     // asm("mfence");
-    asm("cpuid");
+    // asm("cpuid");
     uint64_t ticks = __rdtsc();
 
     if (_startup_ticks == 0) {

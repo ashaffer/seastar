@@ -918,7 +918,6 @@ reactor::reactor(unsigned id, reactor_backend_selector rbs, reactor_config cfg)
     _at_destroy_tasks = _task_queues.back().get();
 
     g_need_preempt = &(this->_preemption_monitor);
-    printf("initialized g_need_preempt %u: 0x%lx, 0x%lx\n", engine().cpu_id(), (uint64_t)g_need_preempt, (uint64_t)&_preemption_monitor);
     seastar::thread_impl::init();
     _backend->start_tick();
     for (unsigned i = 0; i != max_aio; ++i) {

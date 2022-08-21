@@ -11,12 +11,15 @@
 namespace seastar {
 namespace httpd {
 namespace websocket {
+
+typedef CryptoPP::SHA1 SHA;
+
 sstring encode_handshake_key(sstring nonce) {
     constexpr char uuid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     constexpr size_t uuid_len = 36;
 
-    CryptoPP::SHA hash;
-    byte digest[CryptoPP::SHA::DIGESTSIZE];
+    SHA hash;
+    byte digest[SHA::DIGESTSIZE];
     hash.Update((byte*) nonce.data(), nonce.size());
     hash.Update((byte*) uuid, uuid_len);
     hash.Final(digest);

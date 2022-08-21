@@ -13,6 +13,7 @@ namespace httpd {
 namespace websocket {
 
 typedef CryptoPP::SHA1 SHA;
+typedef std::byte byte;
 
 sstring encode_handshake_key(sstring nonce) {
     constexpr char uuid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";

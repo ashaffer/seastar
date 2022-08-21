@@ -72,6 +72,11 @@ typedef struct {
     unsigned int present : 1;
 } PagemapEntry;
 
+uint64_t ticks () {
+    asm("mfence");
+    return __rdtsc();
+}
+
 /* Parse the pagemap entry for the given virtual address.
  *
  * @param[out] entry      the parsed entry
@@ -1346,7 +1351,7 @@ private:
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
         if (_tx_burst.size() == 0) {
-            uint64_t start = __rdtsc();
+            uint64_t start = ticks();
 
             for (auto&& p : pb) {
                 // TODO: assert() in a fast path! Remove me ASAP!
@@ -2358,7 +2363,7 @@ template <bool HugetlbfsMemBackend>
 bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
 {
     struct rte_mbuf *buf[packet_read_size];
-    uint64_t receivedAt = __rdtsc();
+    uint64_t receivedAt = ticks();
 
     /* read a port */
     uint16_t rx_count = rte_eth_rx_burst(_dev->port_idx(), _qid,

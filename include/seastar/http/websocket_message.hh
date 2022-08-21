@@ -102,12 +102,6 @@ class message final : public message_base {
 };
 
 
-inline void slow_memcpy(void *a, const void *b, size_t n) {
-    for (uint i = 0; i < n; i++) {
-        ((char *)a)[i] = ((char *)b)[i];
-    }
-}
-
 template<>
 class message<CLIENT> final : public message_base {
     using message_base::message_base;
@@ -125,7 +119,7 @@ public:
         char* buf = payload.get_write();
         for (unsigned int j = 0; j < fragments.size(); ++j) {
             //SERVER never mask data, so we concatenate all fragments to assemble the final message
-            slow_memcpy(buf + k, fragments[j].message.get(), fragments[j].message.size());
+            std::memcpy(buf + k, fragments[j].message.get(), fragments[j].message.size());
             k += fragments[j].message.size();
         }
         // if (opcode == websocket::opcode::TEXT && !utf8_check((const unsigned char*)buf, payload.size())) {
@@ -148,7 +142,7 @@ public:
         static thread_local std::independent_bits_engine<std::default_random_engine, std::numeric_limits<uint32_t>::digits, uint32_t> rbe;
         uint32_t mask = rbe();
         // std::memcpy(wr + header_size, &mask, sizeof(uint32_t));
-        slow_memcpy(wr + header_size, &mask, sizeof(uint32_t));
+        std::memcpy(wr + header_size, &mask, sizeof(uint32_t));
 
         header_size += sizeof(uint32_t);
         un_mask(payload.get_write(), payload.get(), (char*)(&mask), payload.size());

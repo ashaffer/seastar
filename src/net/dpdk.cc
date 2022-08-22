@@ -73,7 +73,6 @@ typedef struct {
 } PagemapEntry;
 
 uint64_t ticks () {
-    asm("mfence");
     return __rdtsc();
 }
 

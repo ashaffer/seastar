@@ -348,7 +348,9 @@ resources allocate(configuration c) {
     auto available_memory = machine->memory.total_memory;
     size_t mem = calculate_memory(c, std::min(available_memory,
                                               cgroup::memory_limit()));
+    auto available_procs2 = hwloc_get_nbobjs_by_depth(topology, HWLOC_OBJ_PU);
     unsigned available_procs = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+    printf("available_procs; %u (%u)\n", available_procs, available_procs2);
     unsigned procs = c.cpus.value_or(available_procs);
     if (procs > available_procs) {
         printf("Procs: %u vs %u\n", procs, available_procs);

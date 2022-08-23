@@ -328,19 +328,19 @@ resources allocate(configuration c) {
         for (auto idx : *c.cpu_set) {
             hwloc_bitmap_set(bm, idx);
         }
-        auto r = hwloc_topology_restrict(topology, bm,
-                HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES
-                | HWLOC_RESTRICT_FLAG_ADAPT_MISC
-                | HWLOC_RESTRICT_FLAG_ADAPT_IO);
-        if (r == -1) {
-            if (errno == ENOMEM) {
-                throw std::bad_alloc();
-            }
-            if (errno == EINVAL) {
-                throw std::runtime_error("bad cpuset");
-            }
-            abort();
-        }
+        // auto r = hwloc_topology_restrict(topology, bm,
+        //         HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES
+        //         | HWLOC_RESTRICT_FLAG_ADAPT_MISC
+        //         | HWLOC_RESTRICT_FLAG_ADAPT_IO);
+        // if (r == -1) {
+        //     if (errno == ENOMEM) {
+        //         throw std::bad_alloc();
+        //     }
+        //     if (errno == EINVAL) {
+        //         throw std::runtime_error("bad cpuset");
+        //     }
+        //     abort();
+        // }
     }
     auto machine_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_MACHINE);
     assert(hwloc_get_nbobjs_by_depth(topology, machine_depth) == 1);

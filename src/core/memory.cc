@@ -1645,7 +1645,20 @@ int malloc_trim(size_t pad) {
 }
 
 static inline
-void* throw_if_null(void* ptr) {
+void* throw_if_null(void* ptr, size_t size) {
+    auto free = seastar::memory::stats().free_memory();
+    auto total = seastar::memory::stats().total_memory();
+    static thread_local uint low_mem_warnings = 0;
+
+    if ((double)free / (double)total < 0.10 && low_mem_warnings < 5) {
+        printf("Low memory condition: %lu", (uint64_t)size);
+        printf("Throwing on null pointer: %u\n", seastar::engine().cpu_id());
+        printf("\t     free: %lu\n", seastar::memory::stats().free_memory());
+        printf("\t    total: %lu\n", seastar::memory::stats().total_memory());
+        printf("\tallocated: %lu\n", seastar::memory::stats().allocated_memory());
+        low_mem_warnings++;
+    }
+
     if (!ptr) {
         printf("Throwing on null pointer: %u\n", seastar::engine().cpu_id());
         printf("\t     free: %lu\n", seastar::memory::stats().free_memory());
@@ -1663,7 +1676,7 @@ void* operator new(size_t size) {
     if (size == 0) {
         size = 1;
     }
-    return throw_if_null(allocate(size));
+    return throw_if_null(allocate(size), size);
 }
 
 [[gnu::visibility("default")]]
@@ -1672,7 +1685,7 @@ void* operator new[](size_t size) {
     if (size == 0) {
         size = 1;
     }
-    return throw_if_null(allocate(size));
+    return throw_if_null(allocate(size), size);
 }
 
 [[gnu::visibility("default")]]
@@ -1756,14 +1769,14 @@ void operator delete[](void* ptr, size_t size, std::nothrow_t) throw () {
 void* operator new(size_t size, std::align_val_t a) {
     trigger_error_injector();
     auto ptr = allocate_aligned(size_t(a), size);
-    return throw_if_null(ptr);
+    return throw_if_null(ptr, size_t(a));
 }
 
 [[gnu::visibility("default")]]
 void* operator new[](size_t size, std::align_val_t a) {
     trigger_error_injector();
     auto ptr = allocate_aligned(size_t(a), size);
-    return throw_if_null(ptr);
+    return throw_if_null(ptr, size_t(a));
 }
 
 [[gnu::visibility("default")]]

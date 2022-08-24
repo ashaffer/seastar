@@ -21,6 +21,7 @@
 #
 
 find_package (PkgConfig REQUIRED)
+set(CMAKE_FIND_LIBRARY_SUFFIXES .so)
 
 pkg_search_module (hwloc_PC
   QUIET
@@ -61,3 +62,5 @@ if (hwloc_FOUND AND NOT (TARGET hwloc::hwloc))
       IMPORTED_LOCATION ${hwloc_LIBRARY}
       INTERFACE_INCLUDE_DIRECTORIES ${hwloc_INCLUDE_DIRS})
 endif ()
+
+set(CMAKE_FIND_LIBRARY_SUFFIXES .a)

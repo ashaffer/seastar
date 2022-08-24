@@ -325,9 +325,7 @@ resources allocate(configuration c) {
     if (c.cpu_set) {
         auto bm = hwloc_bitmap_alloc();
         auto free_bm = defer([&] { hwloc_bitmap_free(bm); });
-        printf("setting cpu_set:\n");
         for (auto idx : *c.cpu_set) {
-            printf("\t idx: %u\n", idx);
             hwloc_bitmap_set(bm, idx);
         }
         auto r = hwloc_topology_restrict(topology, bm,
@@ -350,12 +348,9 @@ resources allocate(configuration c) {
     auto available_memory = machine->memory.total_memory;
     size_t mem = calculate_memory(c, std::min(available_memory,
                                               cgroup::memory_limit()));
-    auto available_procs2 = hwloc_get_nbobjs_by_depth(topology, HWLOC_OBJ_PU);
     unsigned available_procs = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
-    printf("available_procs; %u (%u, %u)\n", available_procs, available_procs2, HWLOC_OBJ_PU);
     unsigned procs = c.cpus.value_or(available_procs);
     if (procs > available_procs) {
-        printf("Procs: %u vs %u\n", procs, available_procs);
         throw std::runtime_error("insufficient processing units");
     }
     auto mem_per_proc = align_down<size_t>(mem / procs, 2 << 20);

@@ -2298,9 +2298,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
             assert((_rx_free_pkts.empty() && !_num_rx_free_segs) ||
                    (!_rx_free_pkts.empty() && _num_rx_free_segs));
         }
-
-        printf("rx gc occurred\n");
-    }
+   }
 
     return _num_rx_free_segs >= rx_gc_thresh;
 }

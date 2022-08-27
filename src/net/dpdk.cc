@@ -1280,7 +1280,7 @@ build_mbuf_cluster:
         }
 
         bool gc() {
-            printf("tx buf factory gc\n");
+            auto t = ticks();
             for (int cnt = 0; cnt < gc_count; ++cnt) {
                 auto tx_buf_p = get_one_completed();
                 if (!tx_buf_p) {
@@ -1289,7 +1289,10 @@ build_mbuf_cluster:
 
                 put(tx_buf_p);
             }
-
+            int us = ticks_to_us(ticks() - t);
+            if (us > 0) {
+                printf("tx gc: %d\n", us);
+            }
             return true;
         }
     private:
@@ -2269,8 +2272,8 @@ inline bool dpdk_qp<HugetlbfsMemBackend>::refill_one_cluster(rte_mbuf* head)
 template <bool HugetlbfsMemBackend>
 bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
 {
-    auto t = ticks();
     if (_num_rx_free_segs >= rx_gc_thresh) {
+        auto t = ticks();
         while (!_rx_free_pkts.empty()) {
             //
             // Use back() + pop_back() semantics to avoid an extra
@@ -2300,10 +2303,14 @@ bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
             assert((_rx_free_pkts.empty() && !_num_rx_free_segs) ||
                    (!_rx_free_pkts.empty() && _num_rx_free_segs));
         }
+
+        uint64_t d = ticks() - t;
+        int us = ticks_to_us(d);
+        if (us > 0) {
+            printf("gc time: %d\n", us);
+        }
     }
 
-    uint64_t d = ticks() - t;
-    printf("gc time: %d\n", ticks_to_us(d));
     return _num_rx_free_segs >= rx_gc_thresh;
 }
 

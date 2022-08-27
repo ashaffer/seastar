@@ -57,6 +57,7 @@
 #include <rte_memzone.h>
 #include <rte_vfio.h>
 #include <rte_malloc.h>
+#include <rte_cycles.h>
 
 #include <fcntl.h> /* open */
 #include <stdint.h> /* uint64_t  */
@@ -77,7 +78,7 @@ inline uint64_t ticks () {
 }
 
 inline int ticks_to_us (uint64_t delta) {
-    uint64_t hz = rte_get_tsc_hz();
+    uint64_t hz = eal_tsc_resolution_hz;//rte_get_tsc_hz();
     return (1000000 * delta) / hz;
 }
 

@@ -1280,7 +1280,6 @@ build_mbuf_cluster:
         }
 
         bool gc() {
-            auto t = ticks();
             for (int cnt = 0; cnt < gc_count; ++cnt) {
                 auto tx_buf_p = get_one_completed();
                 if (!tx_buf_p) {
@@ -1289,9 +1288,9 @@ build_mbuf_cluster:
 
                 put(tx_buf_p);
             }
-            int us = ticks_to_us(ticks() - t);
-            if (us > 0) {
-                printf("tx gc: %d\n", us);
+
+            if (gc_count > 0) {
+                printf("tx gc occurred\n");
             }
             return true;
         }
@@ -2273,7 +2272,6 @@ template <bool HugetlbfsMemBackend>
 bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
 {
     if (_num_rx_free_segs >= rx_gc_thresh) {
-        auto t = ticks();
         while (!_rx_free_pkts.empty()) {
             //
             // Use back() + pop_back() semantics to avoid an extra
@@ -2304,11 +2302,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
                    (!_rx_free_pkts.empty() && _num_rx_free_segs));
         }
 
-        uint64_t d = ticks() - t;
-        int us = ticks_to_us(d);
-        if (us > 0) {
-            printf("gc time: %d\n", us);
-        }
+        printf("rx gc occurred\n");
     }
 
     return _num_rx_free_segs >= rx_gc_thresh;
@@ -2435,13 +2429,13 @@ void dpdk_device::set_rss_table()
 std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variables_map opts, uint16_t qid) {
 
     std::unique_ptr<qp> qp;
-    if (opts.count("hugepages")) {
-        qp = std::make_unique<dpdk_qp<true>>(this, qid,
-                                 _stats_plugin_name + "-" + _stats_plugin_inst);
-    } else {
+    // if (opts.count("hugepages")) {
+    //     qp = std::make_unique<dpdk_qp<true>>(this, qid,
+    //                              _stats_plugin_name + "-" + _stats_plugin_inst);
+    // } else {
         qp = std::make_unique<dpdk_qp<false>>(this, qid,
                                  _stats_plugin_name + "-" + _stats_plugin_inst);
-    }
+    // }
 
     // FIXME: future is discarded
     (void)smp::submit_to(_home_cpu, [this] () mutable {

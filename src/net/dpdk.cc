@@ -2268,6 +2268,7 @@ inline bool dpdk_qp<HugetlbfsMemBackend>::refill_one_cluster(rte_mbuf* head)
 template <bool HugetlbfsMemBackend>
 bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
 {
+    auto t = ticks();
     if (_num_rx_free_segs >= rx_gc_thresh) {
         while (!_rx_free_pkts.empty()) {
             //
@@ -2300,6 +2301,8 @@ bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
         }
     }
 
+    uint64_t d = ticks() - t;
+    printf("gc time: %d\n", ticks_to_us(d));
     return _num_rx_free_segs >= rx_gc_thresh;
 }
 
@@ -2310,6 +2313,9 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
 {
     uint64_t nr_frags = 0, bytes = 0;
     num_packets += count;
+    uint64_t pollDelay = receivedAt > lastPoll
+        ? ticks_to_us(receivedAt - lastPoll)
+        : 0;
 
     for (uint16_t i = 0; i < count; i++) {
         struct rte_mbuf *m = bufs[i];
@@ -2319,10 +2325,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         compat::optional<packet> p = from_mbuf(m);
 
         p->setReceivedAt(receivedAt);
-        p->setPollDelay(receivedAt > lastPoll
-                ? ticks_to_us(receivedAt - lastPoll)
-                : 0
-        );
+        p->setPollDelay(pollDelay);
 
         // Drop the packet if translation above has failed
         if (!p) {

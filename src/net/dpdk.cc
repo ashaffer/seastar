@@ -1280,6 +1280,7 @@ build_mbuf_cluster:
         }
 
         bool gc() {
+            printf("tx buf factory gc\n");
             for (int cnt = 0; cnt < gc_count; ++cnt) {
                 auto tx_buf_p = get_one_completed();
                 if (!tx_buf_p) {

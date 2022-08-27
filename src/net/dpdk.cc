@@ -1289,9 +1289,6 @@ build_mbuf_cluster:
                 put(tx_buf_p);
             }
 
-            if (gc_count > 0) {
-                printf("tx gc occurred\n");
-            }
             return true;
         }
     private:

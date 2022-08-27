@@ -72,9 +72,15 @@ typedef struct {
     unsigned int present : 1;
 } PagemapEntry;
 
-uint64_t ticks () {
+inline uint64_t ticks () {
     return __rdtsc();
 }
+
+inline int ticks_to_us (uint64_t delta) {
+    uint64_t hz = rte_get_tsc_hz();
+    return (1000000 * delta) / hz;
+}
+
 
 /* Parse the pagemap entry for the given virtual address.
  *
@@ -1478,7 +1484,7 @@ private:
      * @param bufs An array of received rte_mbuf's
      * @param count Number of buffers in the bufs[]
      */
-    void process_packets(struct rte_mbuf **bufs, uint16_t count, uint64_t receivedAt, uint64_t pollDelay);
+    void process_packets(struct rte_mbuf **bufs, uint16_t count, uint64_t receivedAt, uint64_t lastPoll);
 
     /**
      * Translate rte_mbuf into the "packet".
@@ -2299,7 +2305,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::rx_gc()
 
 template <bool HugetlbfsMemBackend>
 void dpdk_qp<HugetlbfsMemBackend>::process_packets(
-    struct rte_mbuf **bufs, uint16_t count, uint64_t receivedAt, uint64_t pollDelay)
+    struct rte_mbuf **bufs, uint16_t count, uint64_t receivedAt, uint64_t lastPoll)
 {
     uint64_t nr_frags = 0, bytes = 0;
     num_packets += count;
@@ -2312,7 +2318,10 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         compat::optional<packet> p = from_mbuf(m);
 
         p->setReceivedAt(receivedAt);
-        p->setPollDelay(pollDelay);
+        p->setPollDelay(receivedAt > lastPoll
+                ? ticks_to_us(receivedAt - lastPoll)
+                : 0
+        );
 
         // Drop the packet if translation above has failed
         if (!p) {
@@ -2374,11 +2383,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::poll_rx_once()
             buf,
             rx_count,
             receivedAt,
-            // Since we don't want to force strict instruction serialization via cpuid
-            // we need to make sure we don't pass along a negative value here
-            receivedAt > lastPoll
-                ? receivedAt - lastPoll
-                : 0
+            lastPoll
         );
     }
 

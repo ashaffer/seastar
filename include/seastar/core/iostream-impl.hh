@@ -299,9 +299,6 @@ input_stream<CharType>::read() {
         return _fd.get().then([this] (tmp_buf buf) {
             _eof = buf.empty();
             return make_ready_future<tmp_buf>(std::move(buf));
-        }).handle_exception([] (auto ep) -> future<temporary_buffer<CharType>> {
-            printf("iostream_impl read: exception\n");
-            return make_exception_future<temporary_buffer<char>>(ep);
         });
     } else {
         return make_ready_future<tmp_buf>(std::move(_buf));

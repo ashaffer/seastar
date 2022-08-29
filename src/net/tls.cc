@@ -737,10 +737,6 @@ public:
                 _eofState = 3;
             }
            _input = std::move(buf);
-        }).handle_exception([this](auto ep) {
-           _error = true;
-           printf("[tls] wait_for_input exception: %u\n", _connState);
-           return make_exception_future(ep);
         });
     }
     future<> wait_for_output() {
@@ -789,7 +785,6 @@ public:
 
     future<temporary_buffer<char>> get() {
         if (_error) {
-            printf("[tls] get _error\n");
             return make_exception_future<temporary_buffer<char>>(std::system_error(EINVAL, std::system_category()));
         }
         if (_shutdown || eof()) {
@@ -810,9 +805,6 @@ public:
             }
 
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
-        }).handle_exception([](auto ep) -> future<temporary_buffer<char>> {
-            printf("[tls] get exception\n");
-            return make_exception_future<temporary_buffer<char>>(ep);
         });
     }
 
@@ -861,9 +853,6 @@ public:
         // No input? wait for out buffers to fill...
         return wait_for_input().then([this] {
             return do_get();
-        }).handle_exception([](auto ep) -> future<temporary_buffer<char>> {
-            printf("[tls] do_get exception\n");
-            return make_exception_future<temporary_buffer<char>>(ep);
         });
     }
 

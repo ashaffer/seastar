@@ -654,6 +654,7 @@ private:
 
             if (_rcv._data_received_promise) {
                 this->closeState = 20;
+                printf("do_reset: %u\n", resetState);
                 // printf("[tcp] connection reset: _data_received_promise\n");
                 _rcv._data_received_promise->set_exception(tcp_reset_error());
                 _rcv._data_received_promise = compat::nullopt;
@@ -1031,6 +1032,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // FIXME:
             //      if ACK off: <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
             //      if ACK on:  <SEQ=SEG.ACK><CTL=RST>
+            printf("respond_with_reset 1\n");
             return respond_with_reset(&h, id.local_ip, id.foreign_ip);
         } else {
             // 2) In LISTEN state
@@ -1044,6 +1046,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
                 // Any acknowledgment is bad if it arrives on a connection
                 // still in the LISTEN state.
                 // <SEQ=SEG.ACK><CTL=RST>
+                printf("respond_with_reset 2\n");
                 return respond_with_reset(&h, id.local_ip, id.foreign_ip);
             }
             // 2.3 third check for a SYN
@@ -1295,6 +1298,7 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
         // If SEG.ACK =< ISS, or SEG.ACK > SND.NXT, send a reset (unless the
         // RST bit is set, if so drop the segment and return)
         if (seg_ack <= _snd.initial || seg_ack > _snd.next) {
+            printf("respond_with_reset 3\n");
             return respond_with_reset(th);
         }
 
@@ -1472,6 +1476,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         // all segment queues should be flushed, the user should also
         // receive an unsolicited general "connection reset" signal, enter
         // the CLOSED state, delete the TCB, and return.
+        printf("respond_with_reset 4\n");
         respond_with_reset(th);
         resetState = 4;
         return do_reset();
@@ -1496,6 +1501,7 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
                 _tcp.add_connected_tcb(this->shared_from_this(), _local_port);
             } else {
                 // <SEQ=SEG.ACK><CTL=RST>
+                printf("respond_with_reset 5\n");
                 return respond_with_reset(th);
             }
         }
@@ -1934,6 +1940,7 @@ template <typename InetTraits>
 void
 tcp<InetTraits>::tcb::abort_reader() {
     if (_rcv._data_received_promise) {
+        printf("abort_reader called\n");
         _rcv._data_received_promise->set_exception(
                 std::make_exception_ptr(std::system_error(ECONNABORTED, std::system_category())));
         _rcv._data_received_promise = compat::nullopt;

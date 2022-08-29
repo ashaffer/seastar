@@ -789,6 +789,7 @@ public:
 
     future<temporary_buffer<char>> get() {
         if (_error) {
+            printf("[tls] get _error\n");
             return make_exception_future<temporary_buffer<char>>(std::system_error(EINVAL, std::system_category()));
         }
         if (_shutdown || eof()) {

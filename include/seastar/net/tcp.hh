@@ -1033,7 +1033,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // FIXME:
             //      if ACK off: <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
             //      if ACK on:  <SEQ=SEG.ACK><CTL=RST>
-            printf("respond_with_reset 1: %u %u\n", isListening, listener->second->full());
+            printf("respond_with_reset 1: %u\n", isListening); //, listener->second->full());
             printConnid(id, _inet);
             return respond_with_reset(&h, id.local_ip, id.foreign_ip);
         } else {

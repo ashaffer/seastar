@@ -296,17 +296,10 @@ input_stream<CharType>::read() {
         return make_ready_future<tmp_buf>();
     }
     if (_buf.empty()) {
-        auto f = _fd.get().then([this] (tmp_buf buf) {
+        return _fd.get().then([this] (tmp_buf buf) {
             _eof = buf.empty();
             return make_ready_future<tmp_buf>(std::move(buf));
         });
-
-        f.handle_exception([] (auto ep) {
-            printf("input_stream::read exception\n");
-            return make_exception_future(ep);
-        }).discard_result();
-
-        return std::move(f);
     } else {
         return make_ready_future<tmp_buf>(std::move(_buf));
     }

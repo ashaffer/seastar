@@ -810,6 +810,9 @@ public:
             }
 
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
+        }).handle_exception([this](auto ep) {
+            printf("[tls] get exception\n");
+            return make_exception_future(ep);
         });
     }
 
@@ -858,6 +861,9 @@ public:
         // No input? wait for out buffers to fill...
         return wait_for_input().then([this] {
             return do_get();
+        }).handle_exception([this](auto ep) {
+            printf("[tls] do_get exception\n");
+            return make_exception_future(ep);
         });
     }
 

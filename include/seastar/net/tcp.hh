@@ -1024,7 +1024,8 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
 
     if (tcbi == _tcbs.end()) {
         auto listener = _listening.find(id.local_port);
-        if (listener == _listening.end() || listener->second->full()) {
+        bool isListening = listener == _listening.end();
+        if (isListening || listener->second->full()) {
             // 1) In CLOSE state
             // 1.1 all data in the incoming segment is discarded.  An incoming
             // segment containing a RST is discarded. An incoming segment not
@@ -1032,7 +1033,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // FIXME:
             //      if ACK off: <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
             //      if ACK on:  <SEQ=SEG.ACK><CTL=RST>
-            printf("respond_with_reset 1\n");//, listener == _listening.end(), listener->second->full());
+            printf("respond_with_reset 1: %u %u\n", isListening, listener->second->full());
             printConnid(id, _inet);
             return respond_with_reset(&h, id.local_ip, id.foreign_ip);
         } else {

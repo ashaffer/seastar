@@ -863,7 +863,7 @@ public:
 
         assert(_output_pending.available());
         onTransmitFn = onTransmit;
-        onTransmitFn(__rdtsc, 3);
+        onTransmitFn(__rdtsc(), 3);
 
         return do_for_each(i, e, [this](net::fragment& f) {
             auto ptr = f.base;

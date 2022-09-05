@@ -863,7 +863,6 @@ public:
 
         assert(_output_pending.available());
         onTransmitFn = onTransmit;
-        onTransmitFn(__rdtsc(), 3);
 
         return do_for_each(i, e, [this](net::fragment& f) {
             auto ptr = f.base;
@@ -874,6 +873,7 @@ public:
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
 
+                onTransmitFn(__rdtsc(), 3);
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
                     off += res;

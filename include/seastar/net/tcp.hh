@@ -904,6 +904,9 @@ tcp<InetTraits>::tcp(inet_type& inet)
             _packetq.pop_front();
             _queue_space.signal(l4p.value().p.len());
         } else {
+            if (c) {
+                printf("here: %u, %u\n", (uint)engine().cpu_id(), (uint)c);
+            }
             while (c--) {
                 tcb_polled++;
                 lw_shared_ptr<tcb> tcb;

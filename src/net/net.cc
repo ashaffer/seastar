@@ -96,6 +96,7 @@ bool qp::poll_tx() {
     }
 
     if (!_tx_packetq.empty()) {
+        printf("Transmitting: %u packets (%u)\n", (uint)_tx_packetq.size(), (uint)engine().cpu_id());
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
         return true;
     }

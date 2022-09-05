@@ -904,9 +904,6 @@ tcp<InetTraits>::tcp(inet_type& inet)
             _packetq.pop_front();
             _queue_space.signal(l4p.value().p.len());
         } else {
-            if (c) {
-                printf("here: %u, %u\n", (uint)engine().cpu_id(), (uint)c);
-            }
             while (c--) {
                 tcb_polled++;
                 lw_shared_ptr<tcb> tcb;
@@ -931,8 +928,6 @@ future<> tcp<InetTraits>::poll_tcb(ipaddr to, lw_shared_ptr<tcb> tcb) {
         tcb->notifyTransmit();
         uint prior_size = (uint)_poll_tcbs.size();
         _poll_tcbs.emplace_back(std::move(tcb), dst);
-        printf("emplace_back: %u, %u, %u\n", (uint)engine().cpu_id(), prior_size, (uint)_poll_tcbs.size());
-
     });
 }
 

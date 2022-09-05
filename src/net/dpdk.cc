@@ -771,6 +771,7 @@ build_mbuf_cluster:
             }
 
             unsigned total_nsegs = nsegs;
+            auto t1 = ticks();
 
             for (unsigned i = 1; i < p.nr_frags(); i++) {
                 rte_mbuf *h = nullptr, *new_last_seg = nullptr;
@@ -786,6 +787,7 @@ build_mbuf_cluster:
                 last_seg = new_last_seg;
             }
 
+            auto t2 = ticks();
             // Update the HEAD buffer with the packet info
             head->pkt_len = p.len();
             head->nb_segs = total_nsegs;
@@ -809,11 +811,11 @@ build_mbuf_cluster:
 
                 goto build_mbuf_cluster;
             }
-
+            auto t3 = ticks();
             me(last_seg)->set_packet(std::move(p));
             auto end = ticks();
-            later().then([start, end] () {
-                printf("from_packet_zc: %uns\n", ticks_to_ns(end - start));
+            later().then([start, end, t1, t2, t3] () {
+                printf("from_packet_zc: %uns, %uns, %uns, %uns (%u)\n", ticks_to_ns(t1 - start), ticks_to_ns(t2 - start), ticks_to_ns(t3 - start), ticks_to_ns(end - start), (uint)engine().cpu_id());
             });
             return me(head);
         }

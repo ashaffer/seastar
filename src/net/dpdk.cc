@@ -1049,14 +1049,14 @@ build_mbuf_cluster:
         static size_t set_one_data_buf(
             dpdk_qp& qp, rte_mbuf*& m, char* va, size_t buf_len) {
             static constexpr size_t max_frag_len = 15 * 1024; // 15K
-
+            auto t1 = ticks();
             //
             // Currently we break a buffer on a 15K boundary because 82599
             // devices have a 15.5K limitation on a maximum single fragment
             // size.
             //
             rte_iova_t iova = rte_mem_virt2iova(va);
-
+            auto t2 = ticks();
             if (iova == RTE_BAD_IOVA) {
                 printf("bad iova\n");
                 return copy_one_data_buf(qp, m, va, buf_len);
@@ -1066,11 +1066,14 @@ build_mbuf_cluster:
             if (!buf) {
                 return 0;
             }
-
+            auto t3 = ticks();
             size_t len = std::min(buf_len, max_frag_len);
             buf->set_zc_info(va, iova, len);
             m = buf->rte_mbuf_p();
-
+            auto t4 = ticks();
+            later().then([t1, t2, t3, t4] () {
+                printf("set_one_data_buf: %uns, %uns, %uns (%u)\n", ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2), ticks_to_ns(t4 - t3), (uint)engine().cpu_id());
+            });
             return len;
         }
 

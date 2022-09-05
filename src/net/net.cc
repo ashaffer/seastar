@@ -291,6 +291,7 @@ void interface::send(l3_protocol::l3packet l3pv) {
 inline int ticks_to_ns (uint64_t delta) {
     uint64_t hz = eal_tsc_resolution_hz;//rte_get_tsc_hz();
     return (1000000000 * delta) / hz;
+}
 
 void interface::flush() {
     auto start = __rdtsc();

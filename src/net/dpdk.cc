@@ -1935,71 +1935,71 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
     // memory for DPDK pools and this way significantly reduce the memory needed
     // for the DPDK in this case.
     //
-    if (HugetlbfsMemBackend) {
-        size_t xmem_size;
+    // if (HugetlbfsMemBackend) {
+    //     size_t xmem_size;
 
-        _rx_xmem.reset(alloc_mempool_xmem(mbufs_per_queue_rx, mbuf_overhead,
-                                          xmem_size));
-        if (!_rx_xmem.get()) {
-            printf("Can't allocate a memory for Rx buffers\n");
-            return false;
-        }
+    //     _rx_xmem.reset(alloc_mempool_xmem(mbufs_per_queue_rx, mbuf_overhead,
+    //                                       xmem_size));
+    //     if (!_rx_xmem.get()) {
+    //         printf("Can't allocate a memory for Rx buffers\n");
+    //         return false;
+    //     }
 
-        //
-        // Don't pass single-producer/single-consumer flags to mbuf create as it
-        // seems faster to use a cache instead.
-        //
-        struct rte_pktmbuf_pool_private roomsz = {};
-        roomsz.mbuf_data_room_size = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
-        _pktmbuf_pool_rx =
-            rte_mempool_create_empty(name.c_str(),
-                                     mbufs_per_queue_rx, mbuf_overhead,
-                                     mbuf_cache_size,
-                                     sizeof(struct rte_pktmbuf_pool_private),
-                                     rte_socket_id(), 0);
-        if (!_pktmbuf_pool_rx) {
-            printf("Failed to create mempool for Rx\n");
-            exit(1);
-        }
+    //     //
+    //     // Don't pass single-producer/single-consumer flags to mbuf create as it
+    //     // seems faster to use a cache instead.
+    //     //
+    //     struct rte_pktmbuf_pool_private roomsz = {};
+    //     roomsz.mbuf_data_room_size = mbuf_data_size + RTE_PKTMBUF_HEADROOM;
+    //     _pktmbuf_pool_rx =
+    //         rte_mempool_create_empty(name.c_str(),
+    //                                  mbufs_per_queue_rx, mbuf_overhead,
+    //                                  mbuf_cache_size,
+    //                                  sizeof(struct rte_pktmbuf_pool_private),
+    //                                  rte_socket_id(), 0);
+    //     if (!_pktmbuf_pool_rx) {
+    //         printf("Failed to create mempool for Rx\n");
+    //         exit(1);
+    //     }
 
-        rte_pktmbuf_pool_init(_pktmbuf_pool_rx, as_cookie(roomsz));
+    //     rte_pktmbuf_pool_init(_pktmbuf_pool_rx, as_cookie(roomsz));
 
-        int rc = rte_mempool_populate_virt(_pktmbuf_pool_rx,
-                                      (char*)(_rx_xmem.get()), xmem_size,
-                                      page_size,
-                                      nullptr, nullptr);
-        if (rc < 0) {
-            printf("Failed to populate mbuf mempool for Rx: %d\n", rc);
-            exit(1);
-        }
+    //     int rc = rte_mempool_populate_virt(_pktmbuf_pool_rx,
+    //                                   (char*)(_rx_xmem.get()), xmem_size,
+    //                                   page_size,
+    //                                   nullptr, nullptr);
+    //     if (rc < 0) {
+    //         printf("Failed to populate mbuf mempool for Rx: %d\n", rc);
+    //         exit(1);
+    //     }
 
-        rte_mempool_obj_iter(_pktmbuf_pool_rx, rte_pktmbuf_init, nullptr);
+    //     rte_mempool_obj_iter(_pktmbuf_pool_rx, rte_pktmbuf_init, nullptr);
 
-        // reserve the memory for Rx buffers containers
-        _rx_free_pkts.reserve(mbufs_per_queue_rx);
-        _rx_free_bufs.reserve(mbufs_per_queue_rx);
+    //     // reserve the memory for Rx buffers containers
+    //     _rx_free_pkts.reserve(mbufs_per_queue_rx);
+    //     _rx_free_bufs.reserve(mbufs_per_queue_rx);
 
-        // 1) Pull all entries from the pool.
-        // 2) Bind data buffers to each of them.
-        // 3) Return them back to the pool.
-        for (int i = 0; i < mbufs_per_queue_rx; i++) {
-            rte_mbuf *m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
-            _rx_free_bufs.push_back(m);
-        }
+    //     // 1) Pull all entries from the pool.
+    //     // 2) Bind data buffers to each of them.
+    //     // 3) Return them back to the pool.
+    //     for (int i = 0; i < mbufs_per_queue_rx; i++) {
+    //         rte_mbuf *m = rte_pktmbuf_alloc(_pktmbuf_pool_rx);
+    //         _rx_free_bufs.push_back(m);
+    //     }
 
-        for (auto&& m : _rx_free_bufs) {
-            if (!init_noninline_rx_mbuf(m)) {
-                printf("Failed to allocate data buffers for Rx ring. "
-                       "Consider increasing the amount of memory.\n");
-                exit(1);
-            }
-        }
+    //     for (auto&& m : _rx_free_bufs) {
+    //         if (!init_noninline_rx_mbuf(m)) {
+    //             printf("Failed to allocate data buffers for Rx ring. "
+    //                    "Consider increasing the amount of memory.\n");
+    //             exit(1);
+    //         }
+    //     }
 
-        rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
-                             _rx_free_bufs.size());
+    //     rte_mempool_put_bulk(_pktmbuf_pool_rx, (void**)_rx_free_bufs.data(),
+    //                          _rx_free_bufs.size());
 
-        _rx_free_bufs.clear();
-    } else {
+    //     _rx_free_bufs.clear();
+    // } else {
         struct rte_pktmbuf_pool_private roomsz = {};
         roomsz.mbuf_data_room_size = inline_mbuf_data_size + RTE_PKTMBUF_HEADROOM;
         _pktmbuf_pool_rx =
@@ -2010,7 +2010,7 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
                                rte_pktmbuf_pool_init, as_cookie(roomsz),
                                rte_pktmbuf_init, nullptr,
                                rte_socket_id(), 0);
-    }
+    // }
 
     return _pktmbuf_pool_rx != nullptr;
 }
@@ -2146,9 +2146,9 @@ void dpdk_qp<HugetlbfsMemBackend>::rx_start() {
     _rx_poller = reactor::poller::simple([&] { return poll_rx_once(); });
 }
 
-template<>
+template<bool HugetlbfsMemBackend>
 inline compat::optional<packet>
-dpdk_qp<false>::from_mbuf_lro(rte_mbuf* m)
+dpdk_qp<HugetlbfsMemBackend>::from_mbuf_lro(rte_mbuf* m)
 {
     //
     // Try to allocate a buffer for the whole packet's data.
@@ -2180,9 +2180,9 @@ dpdk_qp<false>::from_mbuf_lro(rte_mbuf* m)
     return compat::nullopt;
 }
 
-template<>
+template<bool HugetlbfsMemBackend>
 inline compat::optional<packet>
-dpdk_qp<false>::from_mbuf(rte_mbuf* m)
+dpdk_qp<HugetlbfsMemBackend>::from_mbuf(rte_mbuf* m)
 {
     if (!_dev->hw_features_ref().rx_lro || rte_pktmbuf_is_contiguous(m)) {
         //
@@ -2210,42 +2210,42 @@ dpdk_qp<false>::from_mbuf(rte_mbuf* m)
     }
 }
 
-template<>
-inline compat::optional<packet>
-dpdk_qp<true>::from_mbuf_lro(rte_mbuf* m)
-{
-    _frags.clear();
-    _bufs.clear();
+// template<>
+// inline compat::optional<packet>
+// dpdk_qp<true>::from_mbuf_lro(rte_mbuf* m)
+// {
+//     _frags.clear();
+//     _bufs.clear();
 
-    for (; m != nullptr; m = m->next) {
-        char* data = rte_pktmbuf_mtod(m, char*);
+//     for (; m != nullptr; m = m->next) {
+//         char* data = rte_pktmbuf_mtod(m, char*);
 
-        _frags.emplace_back(fragment{data, rte_pktmbuf_data_len(m)});
-        _bufs.push_back(data);
-    }
+//         _frags.emplace_back(fragment{data, rte_pktmbuf_data_len(m)});
+//         _bufs.push_back(data);
+//     }
 
-    return packet(_frags.begin(), _frags.end(),
-                  make_deleter(deleter(),
-                          [bufs_vec = std::move(_bufs)] {
-                              for (auto&& b : bufs_vec) {
-                                  free(b);
-                              }
-                          }));
-}
+//     return packet(_frags.begin(), _frags.end(),
+//                   make_deleter(deleter(),
+//                           [bufs_vec = std::move(_bufs)] {
+//                               for (auto&& b : bufs_vec) {
+//                                   free(b);
+//                               }
+//                           }));
+// }
 
-template<>
-inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
-{
-    _rx_free_pkts.push_back(m);
-    _num_rx_free_segs += m->nb_segs;
+// template<>
+// inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
+// {
+//     _rx_free_pkts.push_back(m);
+//     _num_rx_free_segs += m->nb_segs;
 
-    if (!_dev->hw_features_ref().rx_lro || rte_pktmbuf_is_contiguous(m)) {
-        char* data = rte_pktmbuf_mtod(m, char*);
-        return packet(fragment{data, rte_pktmbuf_data_len(m)}, make_free_deleter(data));
-    } else {
-        return from_mbuf_lro(m);
-    }
-}
+//     if (!_dev->hw_features_ref().rx_lro || rte_pktmbuf_is_contiguous(m)) {
+//         char* data = rte_pktmbuf_mtod(m, char*);
+//         return packet(fragment{data, rte_pktmbuf_data_len(m)}, make_free_deleter(data));
+//     } else {
+//         return from_mbuf_lro(m);
+//     }
+// }
 
 template <bool HugetlbfsMemBackend>
 inline bool dpdk_qp<HugetlbfsMemBackend>::refill_one_cluster(rte_mbuf* head)
@@ -2362,10 +2362,10 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
     _stats.rx.good.update_pkts_bunch(count);
     _stats.rx.good.update_frags_stats(nr_frags, bytes);
 
-    if (!HugetlbfsMemBackend) {
+    // if (!HugetlbfsMemBackend) {
         _stats.rx.good.copy_frags = _stats.rx.good.nr_frags;
         _stats.rx.good.copy_bytes = _stats.rx.good.bytes;
-    }
+    // }
 }
 
 template <bool HugetlbfsMemBackend>
@@ -2424,13 +2424,13 @@ void dpdk_device::set_rss_table()
 std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variables_map opts, uint16_t qid) {
 
     std::unique_ptr<qp> qp;
-    // if (opts.count("hugepages")) {
-    //     qp = std::make_unique<dpdk_qp<true>>(this, qid,
-    //                              _stats_plugin_name + "-" + _stats_plugin_inst);
-    // } else {
+    if (opts.count("hugepages")) {
+        qp = std::make_unique<dpdk_qp<true>>(this, qid,
+                                 _stats_plugin_name + "-" + _stats_plugin_inst);
+    } else {
         qp = std::make_unique<dpdk_qp<false>>(this, qid,
                                  _stats_plugin_name + "-" + _stats_plugin_inst);
-    // }
+    }
 
     // FIXME: future is discarded
     (void)smp::submit_to(_home_cpu, [this] () mutable {

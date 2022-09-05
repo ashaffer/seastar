@@ -464,6 +464,13 @@ private:
         void setPollDelay (uint pollDelay) {
             _pollDelay = pollDelay;
         }
+
+        void notifyTransmit () {
+            auto t = __rdtsc();
+            for (auto&& p : _snd.unsent) {
+                p.notifyTransmitted(t, 1);
+            }
+        }
         compat::optional<typename InetTraits::l4packet> get_packet();
         void output() {
             if (!_poll_active) {
@@ -918,6 +925,7 @@ tcp<InetTraits>::tcp(inet_type& inet)
 template <typename InetTraits>
 future<> tcp<InetTraits>::poll_tcb(ipaddr to, lw_shared_ptr<tcb> tcb) {  
     return  _inet.get_l2_dst_address(to).then_sync([this, tcb = std::move(tcb)] (ethernet_address dst) {
+        tcb->notifyTransmit();
         _poll_tcbs.emplace_back(std::move(tcb), dst);
     });
 }
@@ -2027,7 +2035,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     _lastSend = __rdtsc();
     _snd.current_queue_space += len;
     _snd.unsent_len += len;
-    auto notifyTransmitted = p.getOnTransmit();
+    // auto notifyTransmitted = p.getOnTransmit();
     _snd.unsent.push_back(std::move(p));
 
     if (can_send() > 0) {
@@ -2035,7 +2043,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
             // _snd.unsent_len -= len;
             // output_immediately(std::move(p));
             output();
-            notifyTransmitted(__rdtsc(), 1);
+            // notifyTransmitted(__rdtsc(), 1);
             // _tcp._inet.flush();
         } catch (std::exception& e) {
             printf("[tcp] output threw: %s\n", e.what());

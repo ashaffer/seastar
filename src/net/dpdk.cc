@@ -82,6 +82,11 @@ inline int ticks_to_us (uint64_t delta) {
     return (1000000 * delta) / hz;
 }
 
+inline int ticks_to_ns (uint64_t delta) {
+    uint64_t hz = eal_tsc_resolution_hz;//rte_get_tsc_hz();
+    return (1000000000 * delta) / hz;
+}
+
 
 /* Parse the pagemap entry for the given virtual address.
  *
@@ -748,6 +753,7 @@ class dpdk_qp : public net::qp {
          *         failure
          */
         static tx_buf* from_packet_zc(packet&& p, dpdk_qp& qp) {
+            auto start = ticks();
 
             // Too fragmented - linearize
             if (p.nr_frags() > max_frags) {
@@ -805,7 +811,10 @@ build_mbuf_cluster:
             }
 
             me(last_seg)->set_packet(std::move(p));
-
+            auto end = ticks();
+            later().then([start, end] () {
+                printf("from_packet_zc: %uns\n", ticks_to_ns(end - start));
+            });
             return me(head);
         }
 

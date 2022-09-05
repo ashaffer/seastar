@@ -753,13 +753,14 @@ class dpdk_qp : public net::qp {
          *         failure
          */
         static tx_buf* from_packet_zc(packet&& p, dpdk_qp& qp) {
-            auto start = ticks();
 
             // Too fragmented - linearize
             if (p.nr_frags() > max_frags) {
                 p.linearize();
                 ++qp._stats.tx.linearized;
             }
+
+            auto start = ticks();
 
 build_mbuf_cluster:
             rte_mbuf *head = nullptr, *last_seg = nullptr;
@@ -955,7 +956,12 @@ build_mbuf_cluster:
             assert(frag.size);
 
             // Create a HEAD of mbufs' cluster and set the first bytes into it
+            auto t1 = ticks();
             len = do_one_buf(qp, head, base, left_to_set);
+            auto t2 = ticks();
+            later().then([t1, t2] () {
+                printf("do_one_buf: %uns (%u)\n", ticks_to_ns(t2 - t1), (uint)engine().cpu_id());
+            });
             if (!len) {
                 return false;
             }

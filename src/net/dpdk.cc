@@ -1052,6 +1052,7 @@ build_mbuf_cluster:
             rte_iova_t iova = rte_mem_virt2iova(va);
 
             if (iova == RTE_BAD_IOVA) {
+                printf("bad iova\n");
                 return copy_one_data_buf(qp, m, va, buf_len);
             }
 

@@ -926,7 +926,6 @@ template <typename InetTraits>
 future<> tcp<InetTraits>::poll_tcb(ipaddr to, lw_shared_ptr<tcb> tcb) {  
     return  _inet.get_l2_dst_address(to).then_sync([this, tcb = std::move(tcb)] (ethernet_address dst) {
         tcb->notifyTransmit();
-        uint prior_size = (uint)_poll_tcbs.size();
         _poll_tcbs.emplace_back(std::move(tcb), dst);
     });
 }

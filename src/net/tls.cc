@@ -863,6 +863,7 @@ public:
 
         assert(_output_pending.available());
         onTransmitFn = onTransmit;
+        onTransmitFn(__rdtsc, 3);
 
         return do_for_each(i, e, [this](net::fragment& f) {
             auto ptr = f.base;
@@ -1240,7 +1241,6 @@ private:
     }
     using data_sink_impl::put;
     future<> put(net::packet p) override {
-        p.notifyTransmitted(__rdtsc(), 3);
         return _session->put(std::move(p)).handle_exception([] (std::exception_ptr ep) {
             try {
                 std::rethrow_exception(ep);

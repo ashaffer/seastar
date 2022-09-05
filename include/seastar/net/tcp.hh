@@ -896,6 +896,7 @@ tcp<InetTraits>::tcp(inet_type& inet)
                                         "Divide it by a total TCP receive packet rate to get an everage number of lineraizations per TCP packet."))
     });
 
+    printf("TCP CONSTRUCTED ON %u\n", (uint)engine().cpu_id());
     _inet.register_packet_provider([this, tcb_polled = 0u] () mutable {
         compat::optional<typename InetTraits::l4packet> l4p;
         auto c = _poll_tcbs.size();

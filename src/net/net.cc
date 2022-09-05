@@ -296,7 +296,10 @@ inline int ticks_to_ns (uint64_t delta) {
 void interface::flush() {
     auto start = __rdtsc();
     _dev->local_queue().poll_tx();
-    printf("flush: %u, %u\n", engine().cpu_id(), ticks_to_ns(__rdtsc() - start));
+    auto end = __rdtsc();
+    seastar::later().then([start, end] () {
+        printf("flush: %u, %u\n", engine().cpu_id(), ticks_to_ns(end - start));
+    });
 }
 
 subscription<packet, ethernet_address>

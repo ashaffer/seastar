@@ -1097,6 +1097,16 @@ public:
     static unsigned count;
 };
 
+inline future<> later() {
+    promise<> p;
+    auto f = p.get_future();
+    engine().force_poll();
+    schedule(make_task(default_scheduling_group(), [p = std::move(p)] () mutable {
+        p.set_value();
+    }));
+    return f;
+}
+
 inline
 pollable_fd_state::~pollable_fd_state() {
     engine().forget(*this);

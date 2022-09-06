@@ -4297,20 +4297,6 @@ inline int ticks_to_ns (uint64_t delta) {
     return (1000000000 * delta) / hz;
 }
 
-future<> later() {
-    auto a = __rdtsc();
-    promise<> p;
-    auto f = p.get_future();
-    engine().force_poll();
-    auto b = __rdtsc();
-    schedule(make_task(default_scheduling_group(), [p = std::move(p)] () mutable {
-        p.set_value();
-    }));
-    auto c = __rdtsc();
-    printf("later: %uns, %uns\n", ticks_to_ns(b - a), ticks_to_ns(c - b));
-    return f;
-}
-
 void add_to_flush_poller(output_stream<char>* os) {
     engine()._flush_batching.emplace_back(os);
 }

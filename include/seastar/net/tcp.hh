@@ -2013,11 +2013,6 @@ future<> tcp<InetTraits>::tcb::wait_send_available() {
     return _snd._send_available_promise->get_future();
 }
 
-inline int ticks_to_ns (uint64_t delta) {
-    uint64_t hz = rte_get_tsc_hz();
-    return (1000000000 * delta) / hz;
-}
-
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::send(packet p) {
     // We can not send after the connection is closed
@@ -2044,7 +2039,6 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     // auto notifyTransmitted = p.getOnTransmit();
     _snd.unsent.push_back(std::move(p));
 
-    auto a = __rdtsc();
     if (can_send() > 0) {
         try {
             // _snd.unsent_len -= len;
@@ -2061,12 +2055,7 @@ future<> tcp<InetTraits>::tcb::send(packet p) {
     //     _snd.unsent.push_back(std::move(p));
     }
 
-    auto f = wait_send_available();
-    uint b = ticks_to_ns(__rdtsc() - a);
-    if (b > 500) {
-        printf("Long send: %uns\n", b);
-    }
-    return std::move(f);
+    return wait_send_available();
 }
 
 template <typename InetTraits>

@@ -1362,9 +1362,15 @@ public:
     virtual uint32_t send(circular_buffer<packet>& pb) override {
         if (HugetlbfsMemBackend) {
             // Zero-copy send
-            return _send(pb, [&] (packet&& p) {
+            auto t1 = ticks();
+            auto result = _send(pb, [&] (packet&& p) {
                 return tx_buf::from_packet_zc(std::move(p), *this);
             });
+            auto t2 = ticks();
+            later().then([t1, t2]() {
+                printf("outer send %u: %uns\n", engine().cpu_id(), ticks_to_ns(t2 - t1));
+            });
+            return result;
         } else {
             // "Copy"-send
             return _send(pb, [&](packet&& p) {

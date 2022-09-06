@@ -304,8 +304,8 @@ void interface::flush() {
     bool res = _dev->local_queue().poll_tx();
     auto end = __rdtsc();
     if (res) {
-        seastar::later().then([start, end] () {
-            printf("flush: %u, %uns, %uns, %uns\n", engine().cpu_id(), ticks_to_ns(end - start), ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2));
+        seastar::later().then([start, end, t1_ = t1, t2_ = t2, t3_ = t3] () {
+            printf("flush: %u, %uns, %uns, %uns\n", engine().cpu_id(), ticks_to_ns(end - start), ticks_to_ns(t2_ - t1_), ticks_to_ns(t3_ - t2_));
         });
     }
 }

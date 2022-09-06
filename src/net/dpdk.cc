@@ -153,7 +153,7 @@ int virt_to_phys_user(uintptr_t *paddr, uintptr_t vaddr)
 static thread_local uint64_t *virt2iova_table;
 
 void build_virt2iova_table () {
-    auto m = memory::get_memory_layout();
+    auto m = seastar::memory::get_memory_layout();
     uint page_size = 1 << 21;
     uint num_pages = (m.end - m.start) / page_size;
     uint i = 0;
@@ -168,7 +168,7 @@ void build_virt2iova_table () {
 uint64_t fast_virt2iova (void *p) {
     constexpr uint mask = (1 << 21) - 1;
     uint offset = (uint64_t)p & mask;
-    uint index = ((uint64_t)p - memory::get_memory_layout().start) >> 21;
+    uint index = ((uint64_t)p - seastar::memory::get_memory_layout().start) >> 21;
     return virt2iova_table[index] + offset;
 }
 

@@ -81,12 +81,13 @@ ipv4_addr::ipv4_addr(const ::in_addr& in, uint16_t p)
 {}
 
 namespace net {
-
+static thread_local uint64_t t1, t2, t3;
 inline
 bool qp::poll_tx() {
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;
+        t1 = __rdtsc();
         do {
             work = 0;
             for (auto&& pr : _pkt_providers) {
@@ -100,10 +101,12 @@ bool qp::poll_tx() {
                 }
             }
         } while (work && _tx_packetq.size() < 128);
+        t2 = __rdtsc();
     }
 
     if (!_tx_packetq.empty()) {
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
+        t3 = __rdtsc();
         return true;
     }
 
@@ -298,11 +301,13 @@ void interface::send(l3_protocol::l3packet l3pv) {
 
 void interface::flush() {
     auto start = __rdtsc();
-    _dev->local_queue().poll_tx();
+    bool res = _dev->local_queue().poll_tx();
     auto end = __rdtsc();
-    seastar::later().then([start, end] () {
-        printf("flush: %u, %uns\n", engine().cpu_id(), ticks_to_ns(end - start));
-    });
+    if (res) {
+        seastar::later().then([start, end] () {
+            printf("flush: %u, %uns, %uns, %uns\n", engine().cpu_id(), ticks_to_ns(end - start), ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2));
+        });
+    }
 }
 
 subscription<packet, ethernet_address>

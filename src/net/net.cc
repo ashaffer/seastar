@@ -81,13 +81,12 @@ ipv4_addr::ipv4_addr(const ::in_addr& in, uint16_t p)
 {}
 
 namespace net {
-static thread_local uint64_t t1, t2, t3;
+
 inline
 bool qp::poll_tx() {
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;
-        t1 = __rdtsc();
         do {
             work = 0;
             for (auto&& pr : _pkt_providers) {
@@ -101,12 +100,10 @@ bool qp::poll_tx() {
                 }
             }
         } while (work && _tx_packetq.size() < 128);
-        t2 = __rdtsc();
     }
 
     if (!_tx_packetq.empty()) {
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
-        t3 = __rdtsc();
         return true;
     }
 

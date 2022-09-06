@@ -775,7 +775,6 @@ class dpdk_qp : public net::qp {
          *         failure
          */
         static tx_buf* from_packet_zc(packet&& p, dpdk_qp& qp) {
-            auto start = ticks();
             // Too fragmented - linearize
             if (p.nr_frags() > max_frags) {
                 p.linearize();
@@ -832,10 +831,6 @@ build_mbuf_cluster:
             }
 
             me(last_seg)->set_packet(std::move(p));
-            auto end = ticks();
-            later().then([start, end] () {
-                printf("from_packet_zc: %uns\n", ticks_to_ns(end - start));
-            });
             return me(head);
         }
 
@@ -1384,6 +1379,7 @@ private:
 
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
+        auto start = ticks();
         if (_tx_burst.size() == 0) {
             uint64_t start = ticks();
 
@@ -1400,10 +1396,12 @@ private:
             }
         }
 
+        auto t1 = ticks();
         uint16_t sent = rte_eth_tx_burst(_dev->port_idx(), _qid,
                                          _tx_burst.data() + _tx_burst_idx,
                                          _tx_burst.size() - _tx_burst_idx);
 
+        auto t2 = ticks();
         uint64_t nr_frags = 0, bytes = 0;
 
         for (int i = 0; i < sent; i++) {
@@ -1413,6 +1411,7 @@ private:
             pb.pop_front();
         }
 
+        auto t3 = ticks();
         _stats.tx.good.update_frags_stats(nr_frags, bytes);
 
         _tx_burst_idx += sent;
@@ -1428,6 +1427,11 @@ private:
                 printf("Failed to transmit all packets: %u, %u, %u, %u, %u, %u\n", tbi, tbSz, (uint)sent, pbSz, (uint)nr_frags, (uint)bytes);
             });
         }
+
+        auto t4 = ticks();
+        later().then([start, t1, t2, t3, t4] () {
+            printf("send %u: %uns, %uns, %uns, %unus\n", (uint)engine().cpu_id(), ticks_to_ns(t1 - start), ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2), ticks_to_ns(t4 - t3));
+        });
         // else {
         //     printf("Failed to transmit all packets\n");
         // }

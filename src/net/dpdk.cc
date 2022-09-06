@@ -1395,14 +1395,14 @@ private:
             }
         }
 
-        auto t1 = ticks();
+        // auto t1 = ticks();
         uint16_t sent = rte_eth_tx_burst(_dev->port_idx(), _qid,
                                          _tx_burst.data() + _tx_burst_idx,
                                          _tx_burst.size() - _tx_burst_idx);
-        auto t2 = ticks();
-        later().then([t1, t2] () {
-            printf("tx burst %u: %uns\n", engine().cpu_id(), ticks_to_ns(t2 - t1));
-        });
+        // auto t2 = ticks();
+        // later().then([t1, t2] () {
+        //     printf("tx burst %u: %uns\n", engine().cpu_id(), ticks_to_ns(t2 - t1));
+        // });
         uint64_t nr_frags = 0, bytes = 0;
 
         for (int i = 0; i < sent; i++) {

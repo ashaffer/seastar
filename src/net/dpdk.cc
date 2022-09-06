@@ -150,6 +150,28 @@ int virt_to_phys_user(uintptr_t *paddr, uintptr_t vaddr)
 }
 
 
+static thread_local uint64_t *virt2iova_table;
+
+void build_virt2iova_table () {
+    auto m = memory::get_memory_layout();
+    uint page_size = 1 << 21;
+    uint num_pages = (m.end - m.start) / page_size;
+    uint i = 0;
+
+    virt2iova_table = new uint64_t[num_pages];
+    for (auto p = m.start; p < m.end; p += page_size) {
+        virt2iova_table[i] = rte_mem_virt2iova((char *)p);
+        ++i;
+    }
+}
+
+uint64_t fast_virt2iova (void *p) {
+    constexpr uint mask = (1 << 21) - 1;
+    uint offset = (uint64_t)p & mask;
+    uint index = ((uint64_t)p - memory::get_memory_layout().start) >> 21;
+    return virt2iova_table[index] + offset;
+}
+
 
 #if RTE_VERSION <= RTE_VERSION_NUM(2,0,0,16)
 
@@ -2112,28 +2134,6 @@ void dpdk_device::check_port_link_status()
 // This function uses offsetof with non POD types.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"
-
-static thread_local uint64_t *virt2iova_table;
-
-void build_virt2iova_table () {
-    auto m = memory::get_memory_layout();
-    uint page_size = 1 << 21;
-    uint num_pages = (m.end - m.start) / page_size;
-    uint i = 0;
-
-    virt2iova_table = new uint64_t[num_pages];
-    for (auto p = m.start; p < m.end; p += page_size) {
-        virt2iova_table[i] = rte_mem_virt2iova((char *)p);
-        ++i;
-    }
-}
-
-uint64_t fast_virt2iova (void *p) {
-    constexpr uint mask = (1 << 21) - 1;
-    uint offset = (uint64_t)p & mask;
-    uint index = ((uint64_t)p - memory::get_memory_layout().start) >> 21;
-    return virt2iova_table[index] + offset;
-}
 
 template <bool HugetlbfsMemBackend>
 dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,

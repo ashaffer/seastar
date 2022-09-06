@@ -297,6 +297,7 @@ interface::interface(std::shared_ptr<device> dev)
 }
 
 void interface::send(l3_protocol::l3packet l3pv) {
+    printf("interface send called\n");
     decorate(l3pv);
     _dev->local_queue().send_immediate(std::move(l3pv.p));
 }

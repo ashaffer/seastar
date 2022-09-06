@@ -251,6 +251,7 @@ public:
     virtual ~qp();
     virtual future<> send(packet p) = 0;
     virtual uint32_t send(circular_buffer<packet>& p) {
+        printf("net virtual send called\n");
         uint32_t sent = 0;
         while (!p.empty()) {
             // FIXME: future is discarded

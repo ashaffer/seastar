@@ -775,6 +775,7 @@ class dpdk_qp : public net::qp {
          *         failure
          */
         static tx_buf* from_packet_zc(packet&& p, dpdk_qp& qp) {
+            auto start = ticks();
             // Too fragmented - linearize
             if (p.nr_frags() > max_frags) {
                 p.linearize();
@@ -831,6 +832,10 @@ build_mbuf_cluster:
             }
 
             me(last_seg)->set_packet(std::move(p));
+            auto end = ticks();
+            later().then([start, end] () {
+                printf("from_packet_zc: %uns\n", ticks_to_ns(end - start));
+            })
             return me(head);
         }
 

@@ -33,6 +33,13 @@
 #include <rte_thash.h>
 namespace seastar {
 
+
+inline int ticks_to_ns (uint64_t delta) {
+    uint64_t hz = eal_tsc_resolution_hz;//rte_get_tsc_hz();
+    return (1000000000 * delta) / hz;
+}
+
+
 std::ostream& operator<<(std::ostream &os, ipv4_addr addr) {
     fmt_print(os, "{:d}.{:d}.{:d}.{:d}",
             (addr.ip >> 24) & 0xff,
@@ -77,6 +84,7 @@ namespace net {
 
 inline
 bool qp::poll_tx() {
+    auto start = __rdtsc();
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;
@@ -96,7 +104,12 @@ bool qp::poll_tx() {
     }
 
     if (!_tx_packetq.empty()) {
+        auto t1 = __rdtsc();
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
+        auto t2 = __rdtsc();
+        later().then([start, t1, t2] () {
+            printf("poll_tx %u: %uns, %uns\n", (uint)engine().cpu_id(), ticks_to_ns(t1 - start), ticks_to_ns(t2 - t1));
+        });
         return true;
     }
 
@@ -286,11 +299,6 @@ interface::interface(std::shared_ptr<device> dev)
 void interface::send(l3_protocol::l3packet l3pv) {
     decorate(l3pv);
     _dev->local_queue().send_immediate(std::move(l3pv.p));
-}
-
-inline int ticks_to_ns (uint64_t delta) {
-    uint64_t hz = eal_tsc_resolution_hz;//rte_get_tsc_hz();
-    return (1000000000 * delta) / hz;
 }
 
 void interface::flush() {

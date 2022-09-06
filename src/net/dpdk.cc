@@ -775,14 +775,11 @@ class dpdk_qp : public net::qp {
          *         failure
          */
         static tx_buf* from_packet_zc(packet&& p, dpdk_qp& qp) {
-
             // Too fragmented - linearize
             if (p.nr_frags() > max_frags) {
                 p.linearize();
                 ++qp._stats.tx.linearized;
             }
-
-            auto start = ticks();
 
 build_mbuf_cluster:
             rte_mbuf *head = nullptr, *last_seg = nullptr;
@@ -794,7 +791,6 @@ build_mbuf_cluster:
             }
 
             unsigned total_nsegs = nsegs;
-            auto t1 = ticks();
 
             for (unsigned i = 1; i < p.nr_frags(); i++) {
                 rte_mbuf *h = nullptr, *new_last_seg = nullptr;
@@ -810,7 +806,6 @@ build_mbuf_cluster:
                 last_seg = new_last_seg;
             }
 
-            auto t2 = ticks();
             // Update the HEAD buffer with the packet info
             head->pkt_len = p.len();
             head->nb_segs = total_nsegs;
@@ -834,12 +829,8 @@ build_mbuf_cluster:
 
                 goto build_mbuf_cluster;
             }
-            auto t3 = ticks();
+
             me(last_seg)->set_packet(std::move(p));
-            auto end = ticks();
-            later().then([start, end, t1, t2, t3] () {
-                printf("from_packet_zc: %uns, %uns, %uns, %uns (%u)\n", ticks_to_ns(t1 - start), ticks_to_ns(t2 - start), ticks_to_ns(t3 - start), ticks_to_ns(end - start), (uint)engine().cpu_id());
-            });
             return me(head);
         }
 
@@ -978,12 +969,7 @@ build_mbuf_cluster:
             assert(frag.size);
 
             // Create a HEAD of mbufs' cluster and set the first bytes into it
-            auto t1 = ticks();
             len = do_one_buf(qp, head, base, left_to_set);
-            auto t2 = ticks();
-            later().then([t1, t2] () {
-                printf("do_one_buf: %uns (%u)\n", ticks_to_ns(t2 - t1), (uint)engine().cpu_id());
-            });
             if (!len) {
                 return false;
             }
@@ -1071,7 +1057,6 @@ build_mbuf_cluster:
         static size_t set_one_data_buf(
             dpdk_qp& qp, rte_mbuf*& m, char* va, size_t buf_len) {
             static constexpr size_t max_frag_len = 15 * 1024; // 15K
-            // auto t1 = ticks();
             //
             // Currently we break a buffer on a 15K boundary because 82599
             // devices have a 15.5K limitation on a maximum single fragment
@@ -1079,9 +1064,7 @@ build_mbuf_cluster:
             //
             // rte_iova_t iova = rte_mem_virt2iova(va);
             uint64_t iova = fast_virt2iova(va);
-            // auto t2 = ticks();
             if (iova == RTE_BAD_IOVA) {
-                printf("bad iova\n");
                 return copy_one_data_buf(qp, m, va, buf_len);
             }
 
@@ -1089,18 +1072,10 @@ build_mbuf_cluster:
             if (!buf) {
                 return 0;
             }
-            // auto t3 = ticks();
+
             size_t len = std::min(buf_len, max_frag_len);
             buf->set_zc_info(va, iova, len);
             m = buf->rte_mbuf_p();
-            // auto t4 = ticks();
-            // later().then([t1, t2, t3, t4, va, iova, old_iova, buf_iova = buf->_buf_iova, iova2] () {
-            //     printf("iovas: 0x%lx, 0x%lx\n", iova, iova2);
-            //     printf("set_one_data_buf: %uns, %uns, %uns (%u, 0x%lx, 0x%lx, 0x%lx, 0x%lx)\n",
-            //         ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2),
-            //         ticks_to_ns(t4 - t3), (uint)engine().cpu_id(),
-            //         (uint64_t)iova, (uint64_t)va, (uint64_t)old_iova, (uint64_t)buf_iova);
-            // });
             return len;
         }
 

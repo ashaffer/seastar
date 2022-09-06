@@ -105,10 +105,12 @@ bool qp::poll_tx() {
 
     if (!_tx_packetq.empty()) {
         auto t1 = __rdtsc();
-        _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
+        auto res = send(_tx_packetq);
         auto t2 = __rdtsc();
-        later().then([start, t1, t2] () {
-            printf("poll_tx %u: %uns, %uns\n", (uint)engine().cpu_id(), ticks_to_ns(t1 - start), ticks_to_ns(t2 - t1));
+        _stats.tx.good.update_pkts_bunch(res); //send(_tx_packetq));
+        auto t3 = __rdtsc();
+        later().then([start, t1, t2, t3] () {
+            printf("poll_tx %u: %uns, %uns, %uns\n", (uint)engine().cpu_id(), ticks_to_ns(t1 - start), ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2));
         });
         return true;
     }

@@ -1360,25 +1360,28 @@ public:
     virtual ~dpdk_qp() { }
 
     virtual uint32_t send(circular_buffer<packet>& pb) override {
-        auto t1 = ticks();
+        uint64_t t1e = 0;
         uint64_t t2e = 0;
 
         if (HugetlbfsMemBackend) {
+            auto t1 = ticks();
             // Zero-copy send
             // auto t1 = ticks();
-            auto result = _send(pb, [&] (packet&& p) {
+            auto result = _send(pb, [this] (packet&& p) {
                 return tx_buf::from_packet_zc(std::move(p), *this);
-            }, t1, t2e);
+            }, t1e, t2e);
             auto t2 = ticks();
-            later().then([t1, t2, t2e]() {
-                printf("outer send %u: %uns, %uns\n", engine().cpu_id(), ticks_to_ns(t2 - t1), ticks_to_ns(t2 - t2e));
+            later().then([t1, t2, t1e, t2e]() {
+                printf("outer send %u: %uns, %uns, %uns, %uns, %uns\n",
+                    engine().cpu_id(), ticks_to_ns(t1e - t1), ticks_to_ns(t2e - t1e), ticks_to_ns(t2 - t2e),
+                    ticks_to_ns(t2 - t1), ticks_to_ns(t2 - t2e));
             });
             return result;
         } else {
             // "Copy"-send
-            return _send(pb, [&](packet&& p) {
+            return _send(pb, [this](packet&& p) {
                 return tx_buf::from_packet_copy(std::move(p), *this);
-            }, t1, t2e);
+            }, t1e, t2e);
         }
     }
 
@@ -1387,8 +1390,8 @@ public:
 private:
 
     template <class Func>
-    uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p, uint64_t t, uint64_t& t2) {
-        auto t0 = ticks();
+    uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p, uint64_t& t, uint64_t& t2) {
+        t = ticks();
         if (_tx_burst.size() == 0) {
             uint64_t start = ticks();
 
@@ -1434,11 +1437,11 @@ private:
             });
         }
 
-        auto t4 = t2 = ticks();
-        later().then([t, t0, t4] () {
-            printf("send %u: %uns, %uns\n",
-                (uint)engine().cpu_id(), ticks_to_ns(t0 - t), ticks_to_ns(t4 - t0));
-        });
+        t2 = ticks();
+        // later().then([t, t0, t4] () {
+        //     printf("send %u: %uns, %uns\n",
+        //         (uint)engine().cpu_id(), ticks_to_ns(t0 - t), ticks_to_ns(t4 - t0));
+        // });
         // else {
         //     printf("Failed to transmit all packets\n");
         // }

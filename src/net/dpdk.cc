@@ -1385,7 +1385,7 @@ private:
 
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
-        auto start = ticks();
+        auto t0 = ticks();
         if (_tx_burst.size() == 0) {
             uint64_t start = ticks();
 
@@ -1435,8 +1435,8 @@ private:
         }
 
         auto t4 = ticks();
-        later().then([start, t1, t2, t3, t4] () {
-            printf("send %u: %uns, %uns, %uns, %unus\n", (uint)engine().cpu_id(), ticks_to_ns(t1 - start), ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2), ticks_to_ns(t4 - t3));
+        later().then([t0, t1, t2, t3, t4] () {
+            printf("send %u: %uns\n", (uint)engine().cpu_id(), ticks_to_ns(t1 - t0), ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2), ticks_to_ns(t4 - t3));
         });
         // else {
         //     printf("Failed to transmit all packets\n");

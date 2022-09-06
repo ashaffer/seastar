@@ -1095,7 +1095,7 @@ build_mbuf_cluster:
             buf->set_zc_info(va, iova, len);
             m = buf->rte_mbuf_p();
             auto t4 = ticks();
-            later().then([t1, t2, t3, t4, va, iova, old_iova, buf_iova = buf->_buf_iov, iova2] () {
+            later().then([t1, t2, t3, t4, va, iova, old_iova, buf_iova = buf->_buf_iova, iova2] () {
                 printf("iovas: 0x%x, 0x%lx\n", iova, iova2);
                 printf("set_one_data_buf: %uns, %uns, %uns (%u, 0x%lx, 0x%lx, 0x%lx, 0x%lx)\n",
                     ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2),

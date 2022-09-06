@@ -1367,19 +1367,19 @@ public:
             auto t1 = ticks();
             // Zero-copy send
             // auto t1 = ticks();
-            auto result = _send(pb, [this] (packet&& p) {
+            auto result = _send(pb, [&] (packet&& p) {
                 return tx_buf::from_packet_zc(std::move(p), *this);
             }, t1e, t2e);
             auto t2 = ticks();
             later().then([t1, t2, t1e, t2e]() {
                 printf("outer send %u: %uns, %uns, %uns, %uns, %uns\n",
                     engine().cpu_id(), ticks_to_ns(t1e - t1), ticks_to_ns(t2e - t1e), ticks_to_ns(t2 - t2e),
-                    ticks_to_ns(t2 - t1), ticks_to_ns(t2 - t2e));
+                    ticks_to_ns(t2 - t2e), ticks_to_ns(t2 - t1));
             });
             return result;
         } else {
             // "Copy"-send
-            return _send(pb, [this](packet&& p) {
+            return _send(pb, [&](packet&& p) {
                 return tx_buf::from_packet_copy(std::move(p), *this);
             }, t1e, t2e);
         }

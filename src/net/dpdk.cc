@@ -1056,6 +1056,7 @@ build_mbuf_cluster:
             // size.
             //
             rte_iova_t iova = rte_mem_virt2iova(va);
+            uint64_t iova2 = fast_virt2iova(va);
             auto t2 = ticks();
             if (iova == RTE_BAD_IOVA) {
                 printf("bad iova\n");
@@ -1072,7 +1073,8 @@ build_mbuf_cluster:
             buf->set_zc_info(va, iova, len);
             m = buf->rte_mbuf_p();
             auto t4 = ticks();
-            later().then([t1, t2, t3, t4, va, iova, old_iova, buf_iova = buf->_buf_iova] () {
+            later().then([t1, t2, t3, t4, va, iova, old_iova, buf_iova = buf->_buf_iov, iova2] () {
+                printf("iovas: 0x%x, 0x%lx\n", iova, iova2);
                 printf("set_one_data_buf: %uns, %uns, %uns (%u, 0x%lx, 0x%lx, 0x%lx, 0x%lx)\n",
                     ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2),
                     ticks_to_ns(t4 - t3), (uint)engine().cpu_id(),
@@ -2111,6 +2113,28 @@ void dpdk_device::check_port_link_status()
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"
 
+static thread_local uint64_t *virt2iova_table;
+
+void build_virt2iova_table () {
+    auto m = memory::get_memory_layout();
+    uint page_size = 1 << 21;
+    uint num_pages = (m.end - m.start) / page_size;
+    uint i = 0;
+
+    virt2iova_table = new uint64_t[num_pages];
+    for (auto p = m.start; p < m.end; p += page_size) {
+        virt2iova_table[i] = rte_mem_virt2iova((char *)p);
+        ++i;
+    }
+}
+
+uint64_t fast_virt2iova (void *p) {
+    constexpr uint mask = (1 << 21) - 1;
+    uint offset = (uint64_t)p & mask;
+    uint index = ((uint64_t)p - memory::get_memory_layout().start) >> 21;
+    return virt2iova_table[index] + offset;
+}
+
 template <bool HugetlbfsMemBackend>
 dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
                                       const std::string stats_plugin_name)
@@ -2123,6 +2147,9 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
         rte_exit(EXIT_FAILURE, "Cannot initialize mbuf pools\n");
     }
 
+    if (HugetlbfsMemBackend) {
+        build_virt2iova_table();
+    }
     // if (HugetlbfsMemBackend && !map_dma()) {
     //     rte_exit(EXIT_FAILURE, "Cannot map DMA\n");
     // }

@@ -835,7 +835,7 @@ build_mbuf_cluster:
             auto end = ticks();
             later().then([start, end] () {
                 printf("from_packet_zc: %uns\n", ticks_to_ns(end - start));
-            })
+            });
             return me(head);
         }
 

@@ -1436,7 +1436,8 @@ private:
 
         auto t4 = ticks();
         later().then([t0, t1, t2, t3, t4] () {
-            printf("send %u: %uns\n", (uint)engine().cpu_id(), ticks_to_ns(t1 - t0), ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2), ticks_to_ns(t4 - t3));
+            printf("send %u: %uns, %uns, %uns, %uns\n",
+                (uint)engine().cpu_id(), ticks_to_ns(t1 - t0), ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2), ticks_to_ns(t4 - t3));
         });
         // else {
         //     printf("Failed to transmit all packets\n");

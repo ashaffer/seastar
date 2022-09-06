@@ -1402,12 +1402,10 @@ private:
             }
         }
 
-        auto t1 = ticks();
         uint16_t sent = rte_eth_tx_burst(_dev->port_idx(), _qid,
                                          _tx_burst.data() + _tx_burst_idx,
                                          _tx_burst.size() - _tx_burst_idx);
 
-        auto t2 = ticks();
         uint64_t nr_frags = 0, bytes = 0;
 
         for (int i = 0; i < sent; i++) {
@@ -1417,7 +1415,6 @@ private:
             pb.pop_front();
         }
 
-        auto t3 = ticks();
         _stats.tx.good.update_frags_stats(nr_frags, bytes);
 
         _tx_burst_idx += sent;
@@ -1435,9 +1432,9 @@ private:
         }
 
         auto t4 = ticks();
-        later().then([t0, t1, t2, t3, t4] () {
-            printf("send %u: %uns, %uns, %uns, %uns\n",
-                (uint)engine().cpu_id(), ticks_to_ns(t1 - t0), ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2), ticks_to_ns(t4 - t3));
+        later().then([t0, t4] () {
+            printf("send %u: %uns\n",
+                (uint)engine().cpu_id(), ticks_to_ns(t4 - t0));
         });
         // else {
         //     printf("Failed to transmit all packets\n");

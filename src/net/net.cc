@@ -84,7 +84,6 @@ namespace net {
 
 inline
 bool qp::poll_tx() {
-    auto start = __rdtsc();
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;
@@ -104,14 +103,7 @@ bool qp::poll_tx() {
     }
 
     if (!_tx_packetq.empty()) {
-        auto t1 = __rdtsc();
-        auto res = send(_tx_packetq);
-        auto t2 = __rdtsc();
-        _stats.tx.good.update_pkts_bunch(res); //send(_tx_packetq));
-        auto t3 = __rdtsc();
-        later().then([start, t1, t2, t3] () {
-            printf("poll_tx %u: %uns, %uns, %uns\n", (uint)engine().cpu_id(), ticks_to_ns(t1 - start), ticks_to_ns(t2 - t1), ticks_to_ns(t3 - t2));
-        });
+        _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
         return true;
     }
 
@@ -309,7 +301,7 @@ void interface::flush() {
     _dev->local_queue().poll_tx();
     auto end = __rdtsc();
     seastar::later().then([start, end] () {
-        printf("flush: %u, %u\n", engine().cpu_id(), ticks_to_ns(end - start));
+        printf("flush: %u, %uns\n", engine().cpu_id(), ticks_to_ns(end - start));
     });
 }
 

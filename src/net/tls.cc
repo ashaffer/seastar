@@ -916,7 +916,7 @@ public:
             auto fn = p.getOnTransmit();
             auto f = do_put(i, e, p.getOnTransmit());
             fn(__rdtsc(), 6);
-            return std::move(f);
+            return f;
         } else {
             return with_semaphore_sync(
                 _out_sem, 

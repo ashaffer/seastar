@@ -959,10 +959,11 @@ public:
             auto p = std::move(msg).release();
             // printf("TLS Socket (vec_push): %u\n", socketId);
             // p.print_hex();
+            auto fn = onTransmitFn;
             p.onTransmit(onTransmitFn);
             p.notifyTransmitted(__rdtsc(), 0);
             _output_pending = _out.put(std::move(p));
-            onTransmitFn(__rdtsc(), 4);
+            fn(__rdtsc(), 4);
             return n;
         } catch (...) {
             printf("[tls] exception in vec_push\n");

@@ -885,7 +885,7 @@ public:
                 onTransmitFn(__rdtsc(), 6);
 
                 return off == size
-                    ? f.then([] { return make_ready_future<stop_iteration>(stop_iteration::yes); })
+                    ? f.then_sync([] { return make_ready_future<stop_iteration>(stop_iteration::yes); })
                     : f.then([] { return make_ready_future<stop_iteration>(stop_iteration::no); });
             });
         });

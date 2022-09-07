@@ -913,7 +913,10 @@ public:
 
         // p.notifyTransmitted(__rdtsc(), 0);
         if (_ignore_semaphore) {
-            return do_put(i, e, p.getOnTransmit());
+            auto fn = p.getOnTransmit();
+            auto f = do_put(i, e, p.getOnTransmit());
+            fn(__rdtsc(), 6);
+            return std::move(f);
         } else {
             return with_semaphore_sync(
                 _out_sem, 

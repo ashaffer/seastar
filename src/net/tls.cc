@@ -882,6 +882,8 @@ public:
                
                 // what will we wait for? error or results...
                 auto f = res < 0 ? handle_output_error(res) : wait_for_output();
+                onTransmitFn(__rdtsc(), 6);
+
                 return f.then([] {
                     return make_ready_future<stop_iteration>(stop_iteration::no);
                 });
@@ -906,16 +908,14 @@ public:
                 }
             });
         }
+
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
-        // printf("TLS Socket (put): %u\n", socketId);
-        // p.print_text();
 
-        // p.notifyTransmitted(__rdtsc(), 0);
         if (_ignore_semaphore) {
             auto fn = p.getOnTransmit();
             auto f = do_put(i, e, p.getOnTransmit());
-            fn(__rdtsc(), 6);
+            fn(__rdtsc(), 7);
             return f;
         } else {
             return with_semaphore_sync(

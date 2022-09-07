@@ -962,6 +962,7 @@ public:
             p.onTransmit(onTransmitFn);
             p.notifyTransmitted(__rdtsc(), 0);
             _output_pending = _out.put(std::move(p));
+            p.notifyTransmitted(__rdtsc(), 4);
             return n;
         } catch (...) {
             printf("[tls] exception in vec_push\n");

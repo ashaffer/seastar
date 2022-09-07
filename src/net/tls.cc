@@ -884,9 +884,9 @@ public:
                 auto f = res < 0 ? handle_output_error(res) : wait_for_output();
                 onTransmitFn(__rdtsc(), 6);
 
-                return off == size
-                    ? f.then_sync([] { return make_ready_future<stop_iteration>(stop_iteration::yes); })
-                    : f.then([] { return make_ready_future<stop_iteration>(stop_iteration::no); });
+                return f.then([] {
+                    return make_ready_future<stop_iteration>(stop_iteration::no);
+                });
             });
         });
     }
@@ -1247,13 +1247,7 @@ private:
     }
     using data_sink_impl::put;
     future<> put(net::packet p) override {
-        return _session->put(std::move(p)).handle_exception([] (std::exception_ptr ep) {
-            try {
-                std::rethrow_exception(ep);
-            } catch (std::exception& e) { 
-                printf("[tls data_sink_impl] exception: %s\n", e.what());
-            }
-        });
+        return _session->put(std::move(p));
     }
     future<> close() override {
         _session->close();

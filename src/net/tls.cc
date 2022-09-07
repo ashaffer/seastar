@@ -884,9 +884,9 @@ public:
                 auto f = res < 0 ? handle_output_error(res) : wait_for_output();
                 onTransmitFn(__rdtsc(), 6);
 
-                return f.then([] {
-                    return make_ready_future<stop_iteration>(stop_iteration::no);
-                });
+                return off == size
+                    ? f.then([] { return make_ready_future<stop_iteration>(stop_iteration::yes); })
+                    : f.then([] { return make_ready_future<stop_iteration>(stop_iteration::no); });
             });
         });
     }

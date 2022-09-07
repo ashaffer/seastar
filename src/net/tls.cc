@@ -878,6 +878,7 @@ public:
                 if (res > 0) { // don't really need to check, but...
                     off += res;
                 }
+                onTransmitFn(__rdtsc(), 5);
                
                 // what will we wait for? error or results...
                 auto f = res < 0 ? handle_output_error(res) : wait_for_output();

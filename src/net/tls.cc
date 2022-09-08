@@ -873,16 +873,13 @@ public:
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
 
-                onTransmitFn(__rdtsc(), 3);
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
                     off += res;
                 }
-                onTransmitFn(__rdtsc(), 5);
                
                 // what will we wait for? error or results...
                 auto f = res < 0 ? handle_output_error(res) : wait_for_output();
-                onTransmitFn(__rdtsc(), 6);
 
                 return f.then([] {
                     return make_ready_future<stop_iteration>(stop_iteration::no);
@@ -913,10 +910,7 @@ public:
         auto e = p.fragments().end();
 
         if (_ignore_semaphore) {
-            auto fn = p.getOnTransmit();
-            auto f = do_put(i, e, p.getOnTransmit());
-            fn(__rdtsc(), 7);
-            return f;
+            return do_put(i, e, p.getOnTransmit());
         } else {
             return with_semaphore_sync(
                 _out_sem, 
@@ -961,13 +955,10 @@ public:
 
             auto n = msg.size();
             auto p = std::move(msg).release();
-            // printf("TLS Socket (vec_push): %u\n", socketId);
-            // p.print_hex();
-            auto fn = onTransmitFn;
+
             p.onTransmit(onTransmitFn);
             p.notifyTransmitted(__rdtsc(), 0);
             _output_pending = _out.put(std::move(p));
-            fn(__rdtsc(), 4);
             return n;
         } catch (...) {
             printf("[tls] exception in vec_push\n");

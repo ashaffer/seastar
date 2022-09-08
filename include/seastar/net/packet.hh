@@ -283,8 +283,7 @@ public:
         return _impl->_onTransmit;
     }
 
-    inline
-    void notifyTransmitted (uint64_t ts, int i) {
+    inline void notifyTransmitted (uint64_t ts, int i) {
         _impl->_onTransmit(ts, i);
     }
 

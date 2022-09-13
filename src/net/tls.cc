@@ -869,9 +869,21 @@ public:
             auto size = f.size;
             size_t off = 0; // here to appease eclipse cdt
             return repeat([this, ptr, size, off]() mutable {
+                _putting = true;
+
                 if (off == size) {
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
+
+                if (_shutdown_called) {
+                    printf("do_put after shutdown\n");
+                }
+
+                if (size > 10000000 || (size - off) > 10000000) {
+                    printf("Invalid TLS size: %u, %u, %u\n", (uint)size, (uint)(size - off), _ptridx);
+                }
+
+                _ptridx += *(ptr + off);
 
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
@@ -880,6 +892,7 @@ public:
                
                 // what will we wait for? error or results...
                 auto f = res < 0 ? handle_output_error(res) : wait_for_output();
+                _putting = false;
 
                 return f.then([] {
                     return make_ready_future<stop_iteration>(stop_iteration::no);
@@ -1036,6 +1049,11 @@ public:
         }).finally([me = shared_from_this()] {});
     }
     future<> shutdown() {
+        if (_putting) {
+            printf("Shutdown called while _putting is true\n");
+        }
+
+        _shutdown_called = true;
         // first, make sure any pending write is done.
         // bye handshake is a flush operation, but this
         // allows us to not pay extra attention to output state
@@ -1104,6 +1122,8 @@ private:
     bool _ignore_semaphore = false;
     int out_sem_reason = 0;
 
+    bool _shutdown_called = false;
+    bool _putting = false;
     bool _eof = false;
     bool _shutdown = false;
     bool _connected = false;
@@ -1113,6 +1133,7 @@ private:
     uint _connState = 0;
     uint _eagainCount = 0;
     bool _shutdownCb = false;
+    uint _ptridx = 0;
     future<> _output_pending;
     std::function<void(uint64_t, int)> onTransmitFn;
     buf_type _input;

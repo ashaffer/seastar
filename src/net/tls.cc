@@ -869,11 +869,11 @@ public:
             auto size = f.size;
             size_t off = 0; // here to appease eclipse cdt
             return repeat([this, ptr, size, off]() mutable {
-                _putting = true;
-
                 if (off == size) {
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
+
+                _putting = true;
 
                 if (_shutdown_called) {
                     printf("do_put after shutdown\n");

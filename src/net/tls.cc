@@ -1207,6 +1207,10 @@ public:
         return _session->socket().isClosed();
     }
 
+    uint32_t closeState () const override {
+        return _session->socket().closeState();
+    }
+
     uint32_t can_send () override {
         return _session->socket().can_send();
     }

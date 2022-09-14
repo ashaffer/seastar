@@ -103,6 +103,10 @@ public:
     void set_keepalive_parameters(const keepalive_params&) override;
     keepalive_params get_keepalive_parameters() const override;
 
+    uint32_t closeState () const override {
+        return _conn->closeState();
+    }
+
     uint64_t getReceivedAt () const override {
         return _conn->getReceivedAt();
     }

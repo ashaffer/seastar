@@ -201,6 +201,7 @@ public:
     /// progress due to a peer failure.
     void shutdown_input();
 
+    virtual uint32_t closeState();
     virtual uint64_t getReceivedAt();
     // virtual gnutls_session_t *gnutls_session();
     virtual uint64_t getPollDelay();

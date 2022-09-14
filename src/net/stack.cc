@@ -101,6 +101,10 @@ uint64_t connected_socket::getReceivedAt () {
     return _csi->getReceivedAt();
 }
 
+uint32_t connected_socket::closeState () {
+    return _csi->closeState();
+}
+
 uint64_t connected_socket::getPollDelay () {
     return _csi->getPollDelay();
 }

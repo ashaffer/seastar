@@ -1651,8 +1651,7 @@ void* throw_if_null(void* ptr, size_t size) {
     static thread_local uint low_mem_warnings = 0;
 
     if ((double)free / (double)total < 0.10 && low_mem_warnings < 5) {
-        printf("Low memory condition: %lu", (uint64_t)size);
-        printf("Throwing on null pointer: %u\n", seastar::engine().cpu_id());
+        printf("Low memory condition: %lu\n", (uint64_t)size);
         printf("\t     free: %lu\n", seastar::memory::stats().free_memory());
         printf("\t    total: %lu\n", seastar::memory::stats().total_memory());
         printf("\tallocated: %lu\n", seastar::memory::stats().allocated_memory());

@@ -164,6 +164,10 @@ public:
         return 0;
     }
 
+    uint32_t closeState () const override {
+        return 0;
+    }
+
     uint64_t getReceivedAt () const override {
         return __rdtsc();
     }
@@ -230,6 +234,10 @@ public:
     }
 
     virtual uint32_t can_send () override {
+        return 0;
+    }
+
+    uint32_t closeState () const override {
         return 0;
     }
 

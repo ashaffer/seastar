@@ -794,6 +794,10 @@ public:
             _pollDelay = pollDelay;
         }
 
+        uint32_t closeState () {
+            return _tcb->resetState;
+        }
+
         uint64_t getReceivedAt () {
             return _receivedAt;
         }

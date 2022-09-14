@@ -43,6 +43,7 @@ public:
     virtual bool get_keepalive() const = 0;
     virtual void set_keepalive_parameters(const keepalive_params&) = 0;
     virtual keepalive_params get_keepalive_parameters() const = 0;
+    virtual uint32_t closeState() const = 0;
     virtual uint64_t getReceivedAt() const = 0;
     virtual uint64_t getPollDelay() const = 0;
     virtual void set_alpn_string(const std::string& str) = 0;

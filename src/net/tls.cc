@@ -880,10 +880,8 @@ public:
                 }
 
                 if (size > 10000000 || (size - off) > 10000000) {
-                    printf("Invalid TLS size: %u, %u, %u\n", (uint)size, (uint)(size - off), _ptridx);
+                    printf("Invalid TLS size: %u, %u\n", (uint)size, (uint)(size - off));
                 }
-
-                _ptridx += *(ptr + off);
 
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 if (res > 0) { // don't really need to check, but...
@@ -1133,7 +1131,6 @@ private:
     uint _connState = 0;
     uint _eagainCount = 0;
     bool _shutdownCb = false;
-    uint _ptridx = 0;
     future<> _output_pending;
     std::function<void(uint64_t, int)> onTransmitFn;
     buf_type _input;

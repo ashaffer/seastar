@@ -51,7 +51,7 @@ static bool write_delimited_to(const google::protobuf::MessageLite& message,
         google::protobuf::io::ZeroCopyOutputStream* rawOutput) {
     google::protobuf::io::CodedOutputStream output(rawOutput);
 
-    const int size = message.ByteSizeLong();
+    const int size = message.ByteSize();
     output.WriteVarint32(size);
 
     uint8_t* buffer = output.GetDirectBufferForNBytesAndAdvance(size);

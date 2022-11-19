@@ -947,7 +947,6 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
     socket_address lh{};
     auto src_ip = lh == local ? _inet._inet.host_address() : ipv4_address(local);
     auto dst_ip = ipv4_address(sa);
-    printf("connect: 0x%x, %u\n", (uint)dst_ip.ip, (uint)sa.u.in.sin_port);
     auto dst_port = net::ntoh(sa.u.in.sin_port);
 
     do {
@@ -957,7 +956,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
              (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_conf())) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
-    printConnid(id, _inet);
+    // printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
     tcbp->connect();

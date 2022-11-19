@@ -378,8 +378,6 @@ future<> interface::dispatch_packet(packet p) {
                 }
             });
 
-            printf("Here: %u, %u\n", (uint)engine().cpu_id(), (uint)fw);
-
             if (fw != engine().cpu_id()) {
                 forward(fw, std::move(p));
             } else {

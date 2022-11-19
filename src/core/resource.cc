@@ -351,6 +351,7 @@ resources allocate(configuration c) {
     unsigned available_procs = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
     unsigned procs = c.cpus.value_or(available_procs);
     if (procs > available_procs) {
+        printf("procs > available_procs: %u > %u\n", procs, available_procs);
         throw std::runtime_error("insufficient processing units");
     }
     auto mem_per_proc = align_down<size_t>(mem / procs, 2 << 20);

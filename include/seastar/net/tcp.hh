@@ -947,6 +947,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
     socket_address lh{};
     auto src_ip = lh == local ? _inet._inet.host_address() : ipv4_address(local);
     auto dst_ip = ipv4_address(sa);
+    printf("connect: 0x%x, %u\n", (uint)dst_ip.ip, (uint)sa.u.in.sin_port);
     auto dst_port = net::ntoh(sa.u.in.sin_port);
 
     do {

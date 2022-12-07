@@ -49,13 +49,17 @@ public:
 
 protected:
     future<> write(temporary_buffer<char> header, message_base message) {
-        printf("Header: ");
-        header.print_hex();
-        return _stream.write(std::move(header)).then([this, message = std::move(message)]() mutable -> future<> {
-            printf("Payload: ");
-            message.payload.print_text(25);
-            return _stream.write(std::move(message.payload));
-        });
+        temporary_buffer<char> buf{header.size() + message.size()};
+        memcpy(buf.get(), header.get(), header.size());
+        memcpy(buf.get() + header.size(), message.get(), message.size());
+        return _stream.write(std::move(buf));
+        // printf("Header: ");
+        // header.print_hex();
+        // return _stream.write(std::move(header)).then([this, message = std::move(message)]() mutable -> future<> {
+        //     printf("Payload: ");
+        //     message.payload.print_text(25);
+        //     return _stream.write(std::move(message.payload));
+        // });
     }
 
     friend class reactor;

@@ -228,6 +228,19 @@ public:
     bool operator!=(const temporary_buffer<char>& o) const {
         return !(*this == o);
     }
+
+    void print_hex () {
+        printf("buf (%u):", (uint)size());
+        for (uint i = 0; i < size(); i++) {
+            printf(" %02x", (uint8_t)get()[i]);
+        }
+        printf("\n");
+    }
+
+    void print_text () {
+        printf("buf (%u): ", (uint)size());
+        printf("%.*s\n", (uint)size(), get());
+    }
 };
 
 /// @}

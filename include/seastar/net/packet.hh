@@ -350,7 +350,7 @@ public:
     }
 
     void print_text () {
-        printf("packet (%u):", len());
+        printf("packet (%u): ", len());
         for (uint i = 0; i < nr_frags(); i++) {
             auto frag = fragment_array()[i];
             printf("%.*s", (int)frag.size, frag.base);

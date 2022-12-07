@@ -124,7 +124,7 @@ public:
                                         if (!payload && fragment_header.length > 0)
                                             throw websocket_exception(NORMAL_CLOSURE); //EOF
 
-                                        return inbound_fragment<type>(fragment_header, payload);
+                                        return inbound_fragment<type>(fragment_header, std::move(payload));
                                     });
                         });
             }

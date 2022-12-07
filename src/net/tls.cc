@@ -929,10 +929,11 @@ public:
 
         if (_ignore_semaphore) {
             printf("ignore semaphore put: ");
-            p.print_hex()
+            p.print_hex(32);
             return do_put(i, e, p.getOnTransmit());
         } else {
-            printf("with semaphore put\n");
+            printf("with semaphore put: ");
+            p.print_hex(32);
             return with_semaphore_sync(
                 _out_sem, 
                 1, 

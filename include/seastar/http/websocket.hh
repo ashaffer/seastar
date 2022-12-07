@@ -50,8 +50,8 @@ public:
 protected:
     future<> write(temporary_buffer<char> header, message_base message) {
         temporary_buffer<char> buf{header.size() + message.payload.size()};
-        memcpy(buf.get(), header.get(), header.size());
-        memcpy(buf.get() + header.size(), message.payload.get(), message.payload.size());
+        memcpy((void *)buf.get(), (void *)header.get(), header.size());
+        memcpy((void *)(buf.get() + header.size()), (void *)message.payload.get(), message.payload.size());
         return _stream.write(std::move(buf));
         // printf("Header: ");
         // header.print_hex();

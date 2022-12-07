@@ -338,14 +338,22 @@ public:
         return ret;
     }
 
-    void print_hex () {
+    void print_hex (uint n = 0) {
         printf("packet (%u):", len());
+        n = n == 0 ? size() : n;
+        uint k = 0;
         for (uint i = 0; i < nr_frags(); i++) {
             auto frag = fragment_array()[i];
             for (uint j = 0; j < frag.size; j++) {
                 printf(" %02x", (uint8_t)frag.base[j]);
+                ++k;
+                if (k > n) {
+                    goto end;
+                }
             }
         }
+
+        end:
         printf("\n");
     }
 

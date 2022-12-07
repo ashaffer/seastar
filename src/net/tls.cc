@@ -921,8 +921,10 @@ public:
         auto e = p.fragments().end();
 
         if (_ignore_semaphore) {
+            printf("ignore semaphore put\n");
             return do_put(i, e, p.getOnTransmit());
         } else {
+            printf("with semaphore put\n");
             return with_semaphore_sync(
                 _out_sem, 
                 1, 
@@ -932,6 +934,7 @@ public:
     }
 
     void ignore_semaphore () {
+        printf("IGNORE SEMAPHORE CALLED\n");
         _ignore_semaphore = true;
     }
 

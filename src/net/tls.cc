@@ -873,6 +873,13 @@ public:
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
 
+                uint tmp = 0;
+                printf("before: %u\n", tmp);
+                for (uint i = 0; i < size; i++) {
+                    tmp += *(ptr + i);
+                }
+
+                printf("after: %u\n", tmp);
                 _putting = true;
 
                 if (_shutdown_called) {
@@ -921,7 +928,8 @@ public:
         auto e = p.fragments().end();
 
         if (_ignore_semaphore) {
-            printf("ignore semaphore put\n");
+            printf("ignore semaphore put: ");
+            p.print_hex()
             return do_put(i, e, p.getOnTransmit());
         } else {
             printf("with semaphore put\n");

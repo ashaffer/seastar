@@ -66,10 +66,12 @@ public:
 
     message_base(websocket::opcode opcode, temporary_buffer<char> payload, bool fin = true) noexcept :
             opcode(opcode), payload(std::move(payload)), fin(fin) {
+                payload.print_text(25);
     };
 
     message_base(websocket::opcode opcode, sstring message = "", bool fin = true) noexcept :
             opcode(opcode), payload(std::move(message).release()), fin(fin) {
+                payload.print_text(25);
     };
 
     message_base() = default;
@@ -78,6 +80,7 @@ public:
 
     message_base(message_base&& other) noexcept :
             opcode(other.opcode), header_size(other.header_size), payload(std::move(other.payload)), fin(other.fin) {
+                payload.print_text(25);
     }
 
     void operator=(const message_base&) = delete;

@@ -237,9 +237,10 @@ public:
         printf("\n");
     }
 
-    void print_text () {
+    void print_text (uint n = 0) {
+        n = n == 0 ? size() : n;
         printf("buf (%u): ", (uint)size());
-        printf("%.*s\n", (uint)size(), get());
+        printf("%.*s\n", (uint)n, get());
     }
 };
 

@@ -49,9 +49,9 @@ public:
 
 protected:
     future<> write(temporary_buffer<char> header, message_base message) {
-        temporary_buffer<char> buf{header.size() + message.size()};
+        temporary_buffer<char> buf{header.size() + message.payload.size()};
         memcpy(buf.get(), header.get(), header.size());
-        memcpy(buf.get() + header.size(), message.get(), message.size());
+        memcpy(buf.get() + header.size(), message.payload.get(), message.payload.size());
         return _stream.write(std::move(buf));
         // printf("Header: ");
         // header.print_hex();

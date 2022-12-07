@@ -949,17 +949,20 @@ public:
 
     ssize_t pull(void* dst, size_t len) {
         if (eof()) {
+            printf("pull eof\n");
             return 0;
         }
         // If we have data in buffers, we can complete.
         // Otherwise, we must be conservative.
         if (_input.empty()) {
+            printf("pull empty\n");
             gnutls_transport_set_errno(*this, EAGAIN);
             return -1;
         }
         auto n = std::min(len, _input.size());
         memcpy(dst, _input.get(), n);
         _input.trim_front(n);
+        printf("pull %u\n", (uint)n);
         return n;
     }
     ssize_t vec_push(const giovec_t * iov, int iovcnt) {

@@ -52,7 +52,7 @@ protected:
         printf("Header: ");
         header.print_hex();
         printf("Payload: ");
-        message.payload.print_text();
+        message.payload.print_text(25);
         return _stream.write(std::move(header)).then([this, message = std::move(message)]() mutable -> future<> {
             return _stream.write(std::move(message.payload));
         });

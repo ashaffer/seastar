@@ -139,8 +139,8 @@ public:
 
         wr[1] = (char)(128 | write_header(wr));
         //FIXME Constructing an independent_bits_engine is expensive. static thread_local ?
-        static thread_local std::independent_bits_engine<std::default_random_engine, std::numeric_limits<uint32_t>::digits, uint32_t> rbe;
-        uint32_t mask = rbe();
+        // static thread_local std::independent_bits_engine<std::default_random_engine, std::numeric_limits<uint32_t>::digits, uint32_t> rbe;
+        uint32_t mask = 0; //rbe();
         // std::memcpy(wr + header_size, &mask, sizeof(uint32_t));
         std::memcpy(wr + header_size, &mask, sizeof(uint32_t));
 
@@ -166,6 +166,7 @@ public:
                             }))) {
         uint64_t k = 0;
         char* buf = payload.get_write();
+        printf("SERVER MESSAGE CONSTRUCTION 1\n");
         for (unsigned int j = 0; j < fragments.size(); ++j) {
             un_mask(buf + k, fragments[j].message.get(), (char*)(&fragments[j].header.mask_key),
                     fragments[j].message.size());
@@ -179,6 +180,7 @@ public:
     message(inbound_fragment <SERVER>& fragment) :
             message_base(fragment.header.opcode, temporary_buffer<char>(fragment.message.size())) {
         un_mask(payload.get_write(), fragment.message.get(), (char*)(&fragment.header.mask_key), payload.size());
+        printf("SERVER MESSAGE CONSTRUCTION 2\n");
         if (opcode == websocket::opcode::TEXT && !utf8_check((const unsigned char*)payload.get(), payload.size())) {
             throw websocket_exception(INCONSISTENT_DATA);
         }

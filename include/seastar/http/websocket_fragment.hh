@@ -150,7 +150,7 @@ public:
     fragment_header header;
     temporary_buffer<char> message;
 
-    inbound_fragment_base(fragment_header const& header, temporary_buffer<char>& payload) noexcept :
+    inbound_fragment_base(fragment_header const& header, temporary_buffer<char>&& payload) noexcept :
             header(header), message(std::move(payload)) { }
 
     inbound_fragment_base(const inbound_fragment_base&) = delete;

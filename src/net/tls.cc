@@ -879,7 +879,7 @@ public:
                     tmp += *(ptr + i);
                 }
 
-                printf("after: %u\n (%u)", tmp, (uint)size);
+                printf("after: %u (%u)\n", tmp, (uint)size);
                 _putting = true;
 
                 if (_shutdown_called) {
@@ -927,11 +927,11 @@ public:
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
 
-        if (_ignore_semaphore) {
-            printf("ignore semaphore put: ");
-            p.print_hex(32);
-            return do_put(i, e, p.getOnTransmit());
-        } else {
+        // if (_ignore_semaphore) {
+        //     printf("ignore semaphore put: ");
+        //     p.print_hex(32);
+        //     return do_put(i, e, p.getOnTransmit());
+        // } else {
             printf("with semaphore put: ");
             p.print_hex(32);
             return with_semaphore_sync(
@@ -939,7 +939,7 @@ public:
                 1, 
                 std::bind(&session::do_put, this, i, e, p.getOnTransmit())
             ).finally([p = std::move(p)] {});
-        }
+        // }
     }
 
     void ignore_semaphore () {

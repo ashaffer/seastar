@@ -874,12 +874,12 @@ public:
                 }
 
                 uint tmp = 0;
-                printf("before: %u (%u)\n", tmp, size);
+                printf("before: %u (%u)\n", tmp, (uint)size);
                 for (uint i = 0; i < size; i++) {
                     tmp += *(ptr + i);
                 }
 
-                printf("after: %u\n (%u)", tmp, size);
+                printf("after: %u\n (%u)", tmp, (uint)size);
                 _putting = true;
 
                 if (_shutdown_called) {

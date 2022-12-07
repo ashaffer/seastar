@@ -66,8 +66,6 @@ public:
 
     message_base(websocket::opcode opcode, temporary_buffer<char> payload, bool fin = true) noexcept :
             opcode(opcode), payload(std::move(payload)), fin(fin) {
-                printf("message_base: ");
-                payload.print_text(25);
     };
 
     message_base(websocket::opcode opcode, sstring message = "", bool fin = true) noexcept :

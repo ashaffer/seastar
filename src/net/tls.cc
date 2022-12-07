@@ -873,13 +873,6 @@ public:
                     return make_ready_future<stop_iteration>(stop_iteration::yes);
                 }
 
-                uint tmp = 0;
-                printf("before: %u (%u)\n", tmp, (uint)size);
-                for (uint i = 0; i < size; i++) {
-                    tmp += *(ptr + i);
-                }
-
-                printf("after: %u (%u)\n", tmp, (uint)size);
                 _putting = true;
 
                 if (_shutdown_called) {
@@ -927,42 +920,34 @@ public:
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
 
-        // if (_ignore_semaphore) {
-        //     printf("ignore semaphore put: ");
-        //     p.print_hex(32);
-        //     return do_put(i, e, p.getOnTransmit());
-        // } else {
-            printf("with semaphore put: ");
-            p.print_hex(32);
+        if (_ignore_semaphore) {
+            return do_put(i, e, p.getOnTransmit());
+        } else {
             return with_semaphore_sync(
                 _out_sem, 
                 1, 
                 std::bind(&session::do_put, this, i, e, p.getOnTransmit())
             ).finally([p = std::move(p)] {});
-        // }
+        }
     }
 
     void ignore_semaphore () {
-        printf("IGNORE SEMAPHORE CALLED\n");
         _ignore_semaphore = true;
     }
 
     ssize_t pull(void* dst, size_t len) {
         if (eof()) {
-            printf("pull eof\n");
             return 0;
         }
         // If we have data in buffers, we can complete.
         // Otherwise, we must be conservative.
         if (_input.empty()) {
-            printf("pull empty\n");
             gnutls_transport_set_errno(*this, EAGAIN);
             return -1;
         }
         auto n = std::min(len, _input.size());
         memcpy(dst, _input.get(), n);
         _input.trim_front(n);
-        printf("pull %u\n", (uint)n);
         return n;
     }
     ssize_t vec_push(const giovec_t * iov, int iovcnt) {
@@ -980,9 +965,6 @@ public:
 
             auto n = msg.size();
             auto p = std::move(msg).release();
-
-            printf("Post tls: ");
-            p.print_hex(32);
 
             p.onTransmit(onTransmitFn);
             p.notifyTransmitted(__rdtsc(), 0);

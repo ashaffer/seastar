@@ -874,12 +874,12 @@ public:
                 }
 
                 uint tmp = 0;
-                printf("before: %u\n", tmp);
+                printf("before: %u (%u)\n", tmp, size);
                 for (uint i = 0; i < size; i++) {
                     tmp += *(ptr + i);
                 }
 
-                printf("after: %u\n", tmp);
+                printf("after: %u\n (%u)", tmp, size);
                 _putting = true;
 
                 if (_shutdown_called) {
@@ -975,9 +975,11 @@ public:
                 msg.append(sstring(reinterpret_cast<const char *>(iov[i].iov_base), iov[i].iov_len));
             }
 
-
             auto n = msg.size();
             auto p = std::move(msg).release();
+
+            printf("Post tls: ");
+            p.print_hex(32);
 
             p.onTransmit(onTransmitFn);
             p.notifyTransmitted(__rdtsc(), 0);

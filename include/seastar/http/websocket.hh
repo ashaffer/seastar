@@ -51,9 +51,9 @@ protected:
     future<> write(temporary_buffer<char> header, message_base message) {
         printf("Header: ");
         header.print_hex();
-        printf("Payload: ");
-        message.payload.print_text(25);
         return _stream.write(std::move(header)).then([this, message = std::move(message)]() mutable -> future<> {
+            printf("Payload: ");
+            message.payload.print_text(25);
             return _stream.write(std::move(message.payload));
         });
     }

@@ -164,10 +164,9 @@ public:
         return repeat([this] { // gather all fragments
             return read_fragment().then([this](inbound_fragment<type>&& fragment) {
                 if (!fragment) {
-                    printf("!fragment\n");
                     throw websocket_exception(PROTOCOL_ERROR);
                 }
-                printf("opcode: %u\n", fragment.header.opcode);
+
                 switch (fragment.header.opcode) {
                     case websocket::CONTINUATION: {
                         if (!_fragmented_message.empty()) { _fragmented_message.emplace_back(std::move(fragment)); }

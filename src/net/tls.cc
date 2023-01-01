@@ -1049,7 +1049,7 @@ public:
         if (_putting) {
             printf("Shutdown called while _putting is true\n");
         }
-
+        printf("shutdown called\n");
         _shutdown_called = true;
         // first, make sure any pending write is done.
         // bye handshake is a flush operation, but this
@@ -1064,6 +1064,7 @@ public:
                         std::bind(&session::wait_for_eof, this));
     }
     void close() {
+        printf("close called\n");
         // only do once.
         if (!std::exchange(_shutdown, true)) {
             auto me = shared_from_this();

@@ -114,7 +114,6 @@ public:
                 throw websocket_exception(NORMAL_CLOSURE); //EOF
 
             fragment_header fragment_header(header);
-            printf("read uint16_t: %u\n", fragment_header.opcode);
 
             if (fragment_header.extended_header_size() > 0) {
                 // The frame has an extended header (bigger payload size and/or there is a masking key)
@@ -154,9 +153,7 @@ public:
     future<websocket::message<type>> read() {
         return repeat([this] { // gather all fragments
             return read_fragment().then([this](inbound_fragment<type>&& fragment) {
-                printf("read fragment\n");
                 if (!fragment) { throw websocket_exception(PROTOCOL_ERROR); }
-                printf("opcode: %u\n", fragment.header.opcode);
                 switch (fragment.header.opcode) {
                     case websocket::CONTINUATION: {
                         if (!_fragmented_message.empty()) { _fragmented_message.emplace_back(std::move(fragment)); }

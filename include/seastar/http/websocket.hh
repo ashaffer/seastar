@@ -110,11 +110,12 @@ public:
      */
     future<inbound_fragment<type>> read_fragment() {
         return _stream.read_exactly(sizeof(uint16_t)).then([this](temporary_buffer<char>&& header) {
-            printf("read uint16_t: %u\n", header.opcode);
             if (!header)
                 throw websocket_exception(NORMAL_CLOSURE); //EOF
 
             fragment_header fragment_header(header);
+            printf("read uint16_t: %u\n", fragment_header.opcode);
+
             if (fragment_header.extended_header_size() > 0) {
                 // The frame has an extended header (bigger payload size and/or there is a masking key)
                 return _stream.read_exactly(fragment_header.extended_header_size()).then(

@@ -110,6 +110,7 @@ public:
      */
     future<inbound_fragment<type>> read_fragment() {
         return _stream.read_exactly(sizeof(uint16_t)).then([this](temporary_buffer<char>&& header) {
+            printf("read uint16_t: %u\n", header.opcode);
             if (!header)
                 throw websocket_exception(NORMAL_CLOSURE); //EOF
 
@@ -152,7 +153,9 @@ public:
     future<websocket::message<type>> read() {
         return repeat([this] { // gather all fragments
             return read_fragment().then([this](inbound_fragment<type>&& fragment) {
+                printf("read fragment\n");
                 if (!fragment) { throw websocket_exception(PROTOCOL_ERROR); }
+                printf("opcode: %u\n", fragment.header.opcode);
                 switch (fragment.header.opcode) {
                     case websocket::CONTINUATION: {
                         if (!_fragmented_message.empty()) { _fragmented_message.emplace_back(std::move(fragment)); }

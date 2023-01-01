@@ -157,7 +157,11 @@ public:
     future<websocket::message<type>> read() {
         return repeat([this] { // gather all fragments
             return read_fragment().then([this](inbound_fragment<type>&& fragment) {
-                if (!fragment) { throw websocket_exception(PROTOCOL_ERROR); }
+                if (!fragment) {
+                    printf("!fragment\n");
+                    throw websocket_exception(PROTOCOL_ERROR);
+                }
+                printf("opcode: %u\n", fragment.header.opcode);
                 switch (fragment.header.opcode) {
                     case websocket::CONTINUATION: {
                         if (!_fragmented_message.empty()) { _fragmented_message.emplace_back(std::move(fragment)); }
@@ -224,7 +228,7 @@ public:
 
     future<websocket::message<type>> read() {
         return _input_stream.read().handle_exception_type([this] (websocket_exception& ex) {
-            printf("ws ex close\n");
+            printf("ws ex close: %u\n", ex.status_code);
             return close(ex.status_code).then([ex = std::move(ex)]() -> future<websocket::message<type>> {
                 return make_exception_future<websocket::message<type>>(ex);
             });

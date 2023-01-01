@@ -114,8 +114,10 @@ public:
      */
     future<inbound_fragment<type>> read_fragment() {
         return _stream.read_exactly(sizeof(uint16_t)).then([this](temporary_buffer<char>&& header) {
-            if (!header)
+            if (!header) {
+                printf("EOF received\n");
                 throw websocket_exception(NORMAL_CLOSURE); //EOF
+            }
 
             fragment_header fragment_header(header);
 
@@ -123,15 +125,19 @@ public:
                 // The frame has an extended header (bigger payload size and/or there is a masking key)
                 return _stream.read_exactly(fragment_header.extended_header_size()).then(
                         [this, fragment_header](temporary_buffer<char> extended_header) mutable {
-                            if (!extended_header)
+                            if (!extended_header) {
+                                printf("!extended_header\n");
                                 throw websocket_exception(NORMAL_CLOSURE); //EOF
+                            }
                             fragment_header.feed_extended_header(extended_header);
                             // We now know exactly how much to read to get the full frame payload
                             return _stream.read_exactly(fragment_header.length).then(
                                     [this, fragment_header](temporary_buffer<char>&& payload) {
                                         // Because empty frames are OK, an empty buffer does not necessarally means EOF.
-                                        if (!payload && fragment_header.length > 0)
+                                        if (!payload && fragment_header.length > 0) {
+                                            printf("no payload and header length > 0\n");
                                             throw websocket_exception(NORMAL_CLOSURE); //EOF
+                                        }
 
                                         return inbound_fragment<type>(fragment_header, std::move(payload));
                                     });

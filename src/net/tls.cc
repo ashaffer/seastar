@@ -80,6 +80,7 @@ static future<temporary_buffer<char>> read_fully(const sstring& name, const sstr
             return f.size().then([&f](uint64_t size) {
                 return f.dma_read_bulk<char>(0, size);
             }).finally([&f]() {
+                printf("read fully\n");
                 return f.close();
             });
         });
@@ -1153,6 +1154,7 @@ struct session::session_ref {
         // through session_ref, and we need to initiate shutdown on "last owner",
         // since we cannot revive the session in destructor.
         if (_session && _session.use_count() == 1) {
+            printf("~session_ref\n");
             _session->close();
         }
     }
@@ -1176,9 +1178,11 @@ public:
     data_sink sink() override;
 
     void shutdown_input() override {
+        printf("shutdown_input\n");
         _session->close();
     }
     void shutdown_output() override {
+        printf("shutdown_output\n");
         _session->close();
     }
     void set_nodelay(bool nodelay) override {
@@ -1242,6 +1246,7 @@ private:
         return _session->get();
     }
     future<> close() override {
+        printf("connected_socket_impl close\n");
         _session->close();
         return make_ready_future<>();
     }
@@ -1263,6 +1268,7 @@ private:
         return _session->put(std::move(p));
     }
     future<> close() override {
+        printf("sink impl close\n");
         _session->close();
         return make_ready_future<>();
     }

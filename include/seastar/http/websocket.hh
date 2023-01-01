@@ -43,7 +43,9 @@ public:
 
     output_stream_base& operator=(output_stream_base&&) ;
 
-    future<> close() { return _stream.close(); };
+    future<> close() {
+        printf("ws output close\n");
+        return _stream.close(); };
 
     future<> flush() { return _stream.flush(); };
 
@@ -88,7 +90,9 @@ public:
 
     input_stream_base& operator=(input_stream_base&&) noexcept = default;
 
-    future<> close() { return _stream.close(); }
+    future<> close() {
+        printf("ws input close\n");
+        return _stream.close(); }
 };
 
 template<websocket::endpoint_type type>
@@ -220,6 +224,7 @@ public:
 
     future<websocket::message<type>> read() {
         return _input_stream.read().handle_exception_type([this] (websocket_exception& ex) {
+            printf("ws ex close\n");
             return close(ex.status_code).then([ex = std::move(ex)]() -> future<websocket::message<type>> {
                 return make_exception_future<websocket::message<type>>(ex);
             });
@@ -233,6 +238,7 @@ public:
     };
 
     future<> close(close_status_code code = NORMAL_CLOSURE) {
+        printf("ws close\n");
         return write(websocket::make_close_message<type>(code)).then([this] {
             return _output_stream.flush();
         }).finally([this] {

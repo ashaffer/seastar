@@ -115,7 +115,7 @@ public:
     future<inbound_fragment<type>> read_fragment() {
         return _stream.read_exactly(sizeof(uint16_t)).then([this](temporary_buffer<char>&& header) {
             if (!header) {
-                printf("EOF received\n");
+                printf("EOF received: %u\n", header.size());
                 throw websocket_exception(NORMAL_CLOSURE); //EOF
             }
 

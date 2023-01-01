@@ -185,6 +185,7 @@ input_stream<CharType>::read_exactly(size_t n) {
         // buffer is empty: grab one and retry
         return _fd.get().then([this, n] (auto buf) mutable {
             if (buf.size() == 0) {
+                printf("_eof = true\n");
                 _eof = true;
                 return make_ready_future<tmp_buf>(std::move(buf));
             }

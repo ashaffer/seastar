@@ -43,9 +43,7 @@ public:
 
     output_stream_base& operator=(output_stream_base&&) ;
 
-    future<> close() {
-        printf("ws output close\n");
-        return _stream.close(); };
+    future<> close() { return _stream.close(); };
 
     future<> flush() { return _stream.flush(); };
 
@@ -90,9 +88,7 @@ public:
 
     input_stream_base& operator=(input_stream_base&&) noexcept = default;
 
-    future<> close() {
-        printf("ws input close\n");
-        return _stream.close(); }
+    future<> close() { return _stream.close(); }
 };
 
 template<websocket::endpoint_type type>
@@ -114,30 +110,23 @@ public:
      */
     future<inbound_fragment<type>> read_fragment() {
         return _stream.read_exactly(sizeof(uint16_t)).then([this](temporary_buffer<char>&& header) {
-            if (!header) {
-                printf("EOF received: %u\n", header.size());
+            if (!header)
                 throw websocket_exception(NORMAL_CLOSURE); //EOF
-            }
 
             fragment_header fragment_header(header);
-
             if (fragment_header.extended_header_size() > 0) {
                 // The frame has an extended header (bigger payload size and/or there is a masking key)
                 return _stream.read_exactly(fragment_header.extended_header_size()).then(
                         [this, fragment_header](temporary_buffer<char> extended_header) mutable {
-                            if (!extended_header) {
-                                printf("!extended_header\n");
+                            if (!extended_header)
                                 throw websocket_exception(NORMAL_CLOSURE); //EOF
-                            }
                             fragment_header.feed_extended_header(extended_header);
                             // We now know exactly how much to read to get the full frame payload
                             return _stream.read_exactly(fragment_header.length).then(
                                     [this, fragment_header](temporary_buffer<char>&& payload) {
                                         // Because empty frames are OK, an empty buffer does not necessarally means EOF.
-                                        if (!payload && fragment_header.length > 0) {
-                                            printf("no payload and header length > 0\n");
+                                        if (!payload && fragment_header.length > 0)
                                             throw websocket_exception(NORMAL_CLOSURE); //EOF
-                                        }
 
                                         return inbound_fragment<type>(fragment_header, std::move(payload));
                                     });
@@ -163,10 +152,7 @@ public:
     future<websocket::message<type>> read() {
         return repeat([this] { // gather all fragments
             return read_fragment().then([this](inbound_fragment<type>&& fragment) {
-                if (!fragment) {
-                    throw websocket_exception(PROTOCOL_ERROR);
-                }
-
+                if (!fragment) { throw websocket_exception(PROTOCOL_ERROR); }
                 switch (fragment.header.opcode) {
                     case websocket::CONTINUATION: {
                         if (!_fragmented_message.empty()) { _fragmented_message.emplace_back(std::move(fragment)); }
@@ -233,7 +219,6 @@ public:
 
     future<websocket::message<type>> read() {
         return _input_stream.read().handle_exception_type([this] (websocket_exception& ex) {
-            printf("ws ex close: %u\n", ex.status_code);
             return close(ex.status_code).then([ex = std::move(ex)]() -> future<websocket::message<type>> {
                 return make_exception_future<websocket::message<type>>(ex);
             });
@@ -247,7 +232,6 @@ public:
     };
 
     future<> close(close_status_code code = NORMAL_CLOSURE) {
-        printf("ws close\n");
         return write(websocket::make_close_message<type>(code)).then([this] {
             return _output_stream.flush();
         }).finally([this] {

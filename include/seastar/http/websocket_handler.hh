@@ -203,6 +203,7 @@ private:
             case PONG:
                 return _on_pong(req, stream, std::move(message));
             default: //Other opcode are handled at a lower, protocol level.
+                printf("on_message close\n");
                 return stream.close(); //Hum... This is embarrassing
         }
     }

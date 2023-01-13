@@ -221,6 +221,7 @@ public:
 
     future<websocket::message<type>> read() {
         return _input_stream.read().handle_exception_type([this] (websocket_exception& ex) {
+            printf("read close\n");
             return close(ex.status_code).then([ex = std::move(ex)]() -> future<websocket::message<type>> {
                 return make_exception_future<websocket::message<type>>(ex);
             });
@@ -238,8 +239,8 @@ public:
             return seastar::make_ready_future<>();
         }
 
+        printf("ws close: %u\n", _closing);
         _closing = true;
-        printf("ws close\n");
         return write(websocket::make_close_message<type>(code))
         .then([this] {
             return _output_stream.flush().then([] () {

@@ -183,6 +183,7 @@ public:
                     }
 
                     case CLOSE: //remote pair asked for close
+                        printf("input stream close\n");
                         throw websocket_exception(NONE); //protocol error, close connection
 
                     case RESERVED: //protocol error, close connection

@@ -95,30 +95,6 @@ connect(socket_address sa, socket_address local) {
     });
 }
 
-template<websocket::endpoint_type type>
-future<> duplex_stream<type>::close (close_status_code code) {
-    if (_ws->is_closing()) {
-        return seastar::make_ready_future<>();
-    }
-
-    _ws->set_closing(true);
-    printf("ws close\n");
-    return write(websocket::make_close_message<type>(code))
-    .then([this] {
-        return _output_stream.flush().then([] () {
-            return seastar::sleep(std::chrono::milliseconds(100));
-        });
-    })
-    .finally([this] {
-        printf("_output_stream.close\n");
-        return _output_stream.close().then([this]() {
-            printf("_input_stream.close\n");
-            return _input_stream.close();
-        });
-        // return when_all(_input_stream.close(), _output_stream.close()).discard_result();
-    });
-}
-
 }
 }
 }

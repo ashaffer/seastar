@@ -183,7 +183,6 @@ public:
                     }
 
                     case CLOSE: //remote pair asked for close
-                        printf("input stream close\n");
                         throw websocket_exception(NONE); //protocol error, close connection
 
                     case RESERVED: //protocol error, close connection
@@ -198,6 +197,9 @@ public:
     }
 };
 
+template<websocket::endpoint_type type>
+class connected_websocket;
+
 /**
  * The websocket protocol specifies that, when closing a connection, a CLOSE frame must be sent. Hence the need for a
  * duplex stream able to send messages if a CLOSE frame is received, or if errors occurred when reading from the
@@ -208,13 +210,15 @@ class duplex_stream {
 private:
     input_stream<type> _input_stream;
     output_stream<type> _output_stream;
-    bool _closing = false;
+    connected_websocket<type> *_ws;
 
 public:
     duplex_stream(input_stream<type>&& input_stream,
-            output_stream<type>&& output_stream) noexcept:
+            output_stream<type>&& output_stream,
+            connected_websocket<type> *ws) noexcept:
             _input_stream(std::move(input_stream)),
-            _output_stream(std::move(output_stream)) {}
+            _output_stream(std::move(output_stream)),
+            _ws(ws) {}
 
     duplex_stream(duplex_stream&&) noexcept = default;
 
@@ -222,7 +226,6 @@ public:
 
     future<websocket::message<type>> read() {
         return _input_stream.read().handle_exception_type([this] (websocket_exception& ex) {
-            printf("read close: %u\n", (uint)ex.status_code);
             return close(ex.status_code).then([ex = std::move(ex)]() -> future<websocket::message<type>> {
                 return make_exception_future<websocket::message<type>>(ex);
             });
@@ -235,28 +238,7 @@ public:
         return _output_stream.write(std::move(message));
     };
 
-    future<> close(close_status_code code = NORMAL_CLOSURE) {
-        if (_closing) {
-            return seastar::make_ready_future<>();
-        }
-
-        printf("ws close: %u\n", _closing);
-        _closing = true;
-        return write(websocket::make_close_message<type>(code))
-        .then([this] {
-            return _output_stream.flush().then([] () {
-                return seastar::sleep(std::chrono::milliseconds(100));
-            });
-        })
-        .finally([this] {
-            printf("_output_stream.close\n");
-            return _output_stream.close().then([this]() {
-                printf("_input_stream.close\n");
-                return _input_stream.close();
-            });
-            // return when_all(_input_stream.close(), _output_stream.close()).discard_result();
-        });
-    };
+    future<> close(close_status_code code = NORMAL_CLOSURE);
 
     future<> flush() { return _output_stream.flush(); };
 };
@@ -265,6 +247,7 @@ template<websocket::endpoint_type type>
 class connected_websocket {
 private:
     seastar::connected_socket _socket;
+    bool _closing = false;
 
 public:
     socket_address remote_adress;
@@ -298,6 +281,14 @@ public:
 
     uint64_t getPollDelay() {
         return _socket.getPollDelay();
+    }
+
+    bool is_closing () {
+        return _closing;
+    }
+
+    void set_closing (bool closing) {
+        _closing = closing;
     }
 
     void ignore_semaphore() {

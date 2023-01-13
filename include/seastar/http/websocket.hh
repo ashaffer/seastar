@@ -25,6 +25,7 @@
 #include <seastar/http/request.hh>
 #include <seastar/http/websocket_fragment.hh>
 #include <seastar/http/websocket_message.hh>
+#include <seastar/core/sleep.hh>
 
 namespace seastar {
 namespace httpd {

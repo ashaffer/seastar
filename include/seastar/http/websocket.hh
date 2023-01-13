@@ -207,6 +207,7 @@ class duplex_stream {
 private:
     input_stream<type> _input_stream;
     output_stream<type> _output_stream;
+    bool _closing = false;
 
 public:
     duplex_stream(input_stream<type>&& input_stream,
@@ -233,6 +234,11 @@ public:
     };
 
     future<> close(close_status_code code = NORMAL_CLOSURE) {
+        if (_closing) {
+            return seastar::make_ready_future<>();
+        }
+
+        _closing = true;
         printf("ws close\n");
         return write(websocket::make_close_message<type>(code))
         .then([this] {

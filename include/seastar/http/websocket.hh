@@ -232,9 +232,11 @@ public:
     };
 
     future<> close(close_status_code code = NORMAL_CLOSURE) {
-        return write(websocket::make_close_message<type>(code)).then([this] {
-            return _output_stream.flush();
-        }).finally([this] {
+        return write(websocket::make_close_message<type>(code))
+        // .then([this] {
+        //     return _output_stream.flush();
+        // })
+        .finally([this] {
             return _output_stream.close().then([this]() {
                 return _input_stream.close();
             });

@@ -236,7 +236,7 @@ public:
         return write(websocket::make_close_message<type>(code))
         .then([this] {
             return _output_stream.flush().then([] () {
-                return sleep(std::chrono::milliseconds(100));
+                return seastar::sleep(std::chrono::milliseconds(100));
             });
         })
         .finally([this] {

@@ -30,7 +30,7 @@
 #include <seastar/core/timer.hh>
 #include <seastar/core/print.hh>
 #include <seastar/net/tls.hh>
-#include <seastar/net/stafck.hh>
+#include <seastar/net/stack.hh>
 #include <seastar/util/std-compat.hh>
 
 namespace seastar {

@@ -80,7 +80,6 @@ static future<temporary_buffer<char>> read_fully(const sstring& name, const sstr
             return f.size().then([&f](uint64_t size) {
                 return f.dma_read_bulk<char>(0, size);
             }).finally([&f]() {
-                printf("close f\n");
                 return f.close();
             });
         });
@@ -1065,7 +1064,6 @@ public:
     }
     void close() {
         // only do once.
-        printf("tls close called\n");
         if (!std::exchange(_shutdown, true)) {
             auto me = shared_from_this();
             // running in background. try to bye-handshake us nicely, but after 10s we forcefully close.
@@ -1153,7 +1151,6 @@ struct session::session_ref {
         // through session_ref, and we need to initiate shutdown on "last owner",
         // since we cannot revive the session in destructor.
         if (_session && _session.use_count() == 1) {
-            printf("close a\n");
             _session->close();
         }
     }
@@ -1177,11 +1174,9 @@ public:
     data_sink sink() override;
 
     void shutdown_input() override {
-        printf("close b\n");
         _session->close();
     }
     void shutdown_output() override {
-        printf("close c\n");
         _session->close();
     }
     void set_nodelay(bool nodelay) override {
@@ -1245,7 +1240,6 @@ private:
         return _session->get();
     }
     future<> close() override {
-        printf("close d\n");
         _session->close();
         return make_ready_future<>();
     }
@@ -1267,7 +1261,6 @@ private:
         return _session->put(std::move(p));
     }
     future<> close() override {
-        printf("close e\n");
         _session->close();
         return make_ready_future<>();
     }

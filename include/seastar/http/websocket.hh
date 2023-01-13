@@ -232,12 +232,15 @@ public:
     };
 
     future<> close(close_status_code code = NORMAL_CLOSURE) {
+        printf("ws close\n");
         return write(websocket::make_close_message<type>(code))
         // .then([this] {
         //     return _output_stream.flush();
         // })
         .finally([this] {
+            printf("_output_stream.close\n");
             return _output_stream.close().then([this]() {
+                printf("_input_stream.close\n");
                 return _input_stream.close();
             });
             // return when_all(_input_stream.close(), _output_stream.close()).discard_result();

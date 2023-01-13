@@ -243,6 +243,7 @@ public:
     /// \return a future that becomes ready when this stream no longer
     ///         needs the data source.
     future<> close() {
+        printf("input_stream close\n");
         return _fd.close();
     }
     /// Ignores n next bytes from the stream.

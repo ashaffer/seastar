@@ -268,7 +268,7 @@ public:
 
     duplex_stream<type> stream() {
         return duplex_stream<type>(websocket::input_stream<type>(std::move(_socket.input())),
-                websocket::output_stream<type>(std::move(_socket.output())));
+                websocket::output_stream<type>(std::move(_socket.output())), this);
     }
 
     void shutdown_output() { _socket.shutdown_output(); }

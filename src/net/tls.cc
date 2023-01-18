@@ -818,6 +818,10 @@ public:
         if (avail != 0) {
             // typically, unencrypted data can get smaller (padding),
             // but not larger.
+            if (avail > 1e9) {
+                printf("Huge TLS alloc attempt: %u (0x%x)\n", (uint)avail, (uint)avail);
+            }
+
             temporary_buffer<char> buf(avail);
             auto n = gnutls_record_recv(*this, buf.get_write(), buf.size());
 

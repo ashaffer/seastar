@@ -653,7 +653,6 @@ private:
         void do_syn_sent() {
             _state = SYN_SENT;
             _snd.syn_tx_time = clock_type::now();
-            printf("do_syn_sent called on %u\n", engine().cpu_id());
             // Send <SYN> to remote
             output();
         }

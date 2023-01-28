@@ -969,7 +969,15 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
              (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_conf())) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
-    printf("outer connect: %u\n", engine().cpu_id());
+    auto hash = id.hash(_inet._inet.netif()->rss_conf());
+    printf("outer connect: %u port, %u cpu (%u hw queues, 0x%x hash, %u target cpu, %u local port used)\n",
+        _inet._inet.port_idx(),
+        engine().cpu_id(),
+        _inet._inet.netif()->hw_queues_count(),
+        hash,
+        _inet._inet.netif()->hash2cpu(hash),
+        _tcbs.find(id) != _tcbs.end()
+    );
     printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});

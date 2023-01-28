@@ -58,6 +58,17 @@ typedef struct {
    bool sort;
 } rss_config;
 
+inline static void print_rss_conf (rss_config conf) {
+   printf("rss conf: %u key size, 0x%x initial value, %u full, %u sort\n", conf.keySize, conf.initial, (uint)conf.full, (uint)conf.sort);
+   printf("     key: ");
+
+   for (uint i = 0; i < conf.keySize; i++) {
+      printf(" %02.2x", (uint8_t)conf.key[i]);
+   }
+
+   printf("\n");
+}
+
 // Mellanox Linux's driver key
 // static constexpr uint8_t default_rsskey_40bytes[] = {
 //     0xd1, 0x81, 0xc6, 0x2c, 0xf7, 0xf4, 0xdb, 0x5b,

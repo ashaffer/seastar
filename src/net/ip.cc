@@ -77,6 +77,7 @@ ipv4::ipv4(interface* netif)
 
 bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
 {
+    const auto& rss_conf = _netif->rss_conf();
     auto iph = p.get_header<ip_hdr>(off);
     in_addr src, dst;
     src.s_addr = iph->src_ip.ip;
@@ -84,13 +85,18 @@ bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
     // printf("src_ip: %s\n", strdup(inet_ntoa(src)));
     // printf("dst_ip: %s\n", strdup(inet_ntoa(dst)));
 
-    if (htonl(iph->src_ip.ip) < htonl(iph->dst_ip.ip)) {
-        out_hash_data.push_back(iph->src_ip.ip);
-        out_hash_data.push_back(iph->dst_ip.ip);
-    } else {
-        out_hash_data.push_back(iph->dst_ip.ip);
-        out_hash_data.push_back(iph->src_ip.ip);
-    }
+    // if (rss_conf.sort) {
+        if (rss_conf.sort && htonl(iph->src_ip.ip) < htonl(iph->dst_ip.ip)) {
+            out_hash_data.push_back(iph->src_ip.ip);
+            out_hash_data.push_back(iph->dst_ip.ip);
+        } else {
+            out_hash_data.push_back(iph->dst_ip.ip);
+            out_hash_data.push_back(iph->src_ip.ip);
+        }
+    // } else {
+    //     out_hash_data.push_back(iph->dst_ip.ip);
+    //     out_hash_data.push_back(iph->src_ip.ip);
+    // }
 
     auto h = ntoh(*iph);
     auto l4 = _l4[h.ip_proto];

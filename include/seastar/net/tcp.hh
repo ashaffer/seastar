@@ -990,17 +990,34 @@ bool tcp<InetTraits>::forward(forward_hash& out_hash_data, packet& p, size_t off
     auto th = p.get_header(off, tcp_hdr::len);
     if (th) {
         tcp_hdr *hdr = (tcp_hdr *)th;
-        if (htons(hdr->src_port) < htons(hdr->dst_port)) {
-            out_hash_data.push_back(uint8_t(th[0]));
-            out_hash_data.push_back(uint8_t(th[1]));
-            out_hash_data.push_back(uint8_t(th[2]));
-            out_hash_data.push_back(uint8_t(th[3]));
-        } else {
-            out_hash_data.push_back(uint8_t(th[2]));
-            out_hash_data.push_back(uint8_t(th[3]));
-            out_hash_data.push_back(uint8_t(th[0]));
-            out_hash_data.push_back(uint8_t(th[1]));
-        }
+        const auto& rss_conf = _inet._inet.netif()->rss_conf();
+
+        uint16_t src_port_h = htons(hdr->src_port);
+        uint16_t dst_port_h = htons(hdr->dst_port);
+        // if (rss_conf.sort) {
+            if (rss_conf.sort && src_port_h < dst_port_h) {
+                out_hash_data.push_back(src_port_h);
+                out_hash_data.push_back(dst_port_h);
+                // out_hash_data.push_back(uint8_t(th[0]));
+                // out_hash_data.push_back(uint8_t(th[1]));
+                // out_hash_data.push_back(uint8_t(th[2]));
+                // out_hash_data.push_back(uint8_t(th[3]));
+            } else {
+                out_hash_data.push_back(dst_port_h);
+                out_hash_data.push_back(src_port_h);
+                // out_hash_data.push_back(uint8_t(th[2]));
+                // out_hash_data.push_back(uint8_t(th[3]));
+                // out_hash_data.push_back(uint8_t(th[0]));
+                // out_hash_data.push_back(uint8_t(th[1]));
+            }
+        // } else {
+        //     out_hash_data.push_back(dst_port_h);
+        //     out_hash_data.push_back(src_port_h);
+            // out_hash_data.push_back(uint8_t(th[2]));
+            // out_hash_data.push_back(uint8_t(th[3]));
+            // out_hash_data.push_back(uint8_t(th[0]));
+            // out_hash_data.push_back(uint8_t(th[1]));
+        // }
     }
     return true;
 }

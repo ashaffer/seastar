@@ -653,7 +653,7 @@ private:
         void do_syn_sent() {
             _state = SYN_SENT;
             _snd.syn_tx_time = clock_type::now();
-            printf("do_syn_sent called\n");
+            printf("do_syn_sent called on %u\n", engine().cpu_id());
             // Send <SYN> to remote
             output();
         }
@@ -969,7 +969,8 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
              (_inet._inet.netif()->hash2cpu(id.hash(_inet._inet.netif()->rss_conf())) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
-    // printConnid(id, _inet);
+    printf("outer connect: %u\n", engine().cpu_id());
+    printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
     tcbp->connect();
@@ -1044,8 +1045,9 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     }
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
-    printf("tcp packet received\n");
+    printf("tcp packet received on %u\n", engine().cpu_id());
     h.print();
+    printConnid(id, _inet);
     auto tcbi = _tcbs.find(id);
 
     lw_shared_ptr<tcb> tcbp;

@@ -1016,7 +1016,7 @@ void printConnid (Connid &connid, Inet &inet) {
     char *foreign_addr = strdup(inet_ntoa(foreign));
 
     auto netif = inet._inet.netif();
-    auto conf = inet->rss_conf();
+    auto conf = netif->rss_conf();
     printf(
         "[tcp] %s:%u -> %s:%u (0x%x, 0x%x, %u)\n",
         local_addr,

@@ -1667,16 +1667,6 @@ int dpdk_device::init_port_start()
                 "Port %d: We support only 40 or 52 bytes RSS hash keys, %d bytes key requested",
                 _port_idx, _dev_info.hash_key_size);
         } else {
-            printf("Using default rss hash key (40 bytes): ");
-            for (uint i = 0; i < sizeof(default_rsskey_40bytes); i++) {
-                if (i == 0) {
-                    printf("%02x", (uint8_t)default_rsskey_40bytes[i]);
-                } else {
-                    printf(":%02x", (uint8_t)default_rsskey_40bytes[i]);
-                }
-            }
-            printf("\n");
-
             // _rss_key = rss_key_type(default_rsskey_40bytes, sizeof(default_rsskey_40bytes));
             _dev_info.hash_key_size = sizeof(default_rsskey_40bytes);
             _rss_conf.key = default_rsskey_40bytes;

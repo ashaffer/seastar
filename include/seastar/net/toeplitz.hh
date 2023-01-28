@@ -59,11 +59,12 @@ typedef struct {
 } rss_config;
 
 inline static void print_rss_conf (rss_config conf) {
-   printf("rss conf: %u key size, 0x%x initial value, %u full, %u sort\n", conf.keySize, conf.initial, (uint)conf.full, (uint)conf.sort);
-   printf("     key: ");
+   printf("\trss conf: %u key size, 0x%x initial value, %u full, %u sort\n", conf.keySize, conf.initial, (uint)conf.full, (uint)conf.sort);
+   printf("\t     key: ");
 
-   for (uint i = 0; i < conf.keySize; i++) {
-      printf(" %02.2x", (uint8_t)conf.key[i]);
+   printf("%02.2x", conf.key[0]);
+   for (uint i = 1; i < conf.keySize; i++) {
+      printf(":%02.2x", (uint8_t)conf.key[i]);
    }
 
    printf("\n");

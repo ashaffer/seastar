@@ -367,15 +367,19 @@ future<> interface::dispatch_packet(packet p) {
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
-                if (hwrss) {
-                    return hwrss.value();
-                } else {
+                // if (hwrss) {
+                //     return hwrss.value();
+                // } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
+                        printf("hwrss: 0x%x\n", hwrss.value());
+                        printf("toeplitz: 0x%x\n", toeplitz_hash(rss_conf(), data));
                         return toeplitz_hash(rss_conf(), data);
+                    } else {
+                        return hwrss.value();
                     }
-                    return 0u;
-                }
+                    // return 0u;
+                // }
             });
 
             if (fw != engine().cpu_id()) {

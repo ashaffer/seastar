@@ -373,6 +373,8 @@ future<> interface::dispatch_packet(packet p) {
                 // } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
+                        printf("net::");
+                        data.print();
                         printf("hwrss: 0x%x\n", hwrss.value());
                         auto conf = rss_conf();
                         print_rss_conf(conf);

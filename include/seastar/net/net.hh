@@ -65,6 +65,14 @@ public:
     const uint8_t& operator[](size_t idx) const {
         return data[idx];
     }
+
+    void print () const {
+        printf("forward hash data (%u):", (uint)size());
+        for (uint i = 0; i < end_idx; i++) {
+            printf(" %02.2x", data[i]);
+        }
+        printf("\n");
+    }
 };
 
 struct hw_features {

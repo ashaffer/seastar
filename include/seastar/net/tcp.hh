@@ -1029,6 +1029,10 @@ void printConnid (Connid &connid, Inet &inet) {
     );
 
     print_rss_conf(conf);
+    auto hash_data = connid.build_forward_hash(conf);
+    printf("connid::");
+    hash_data.print();
+
 
     free(local_addr);
     free(foreign_addr);

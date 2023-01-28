@@ -259,7 +259,7 @@ struct l4connid {
     //     return toeplitz_hash(rss_conf, hash_data);
     // }
 
-    uint32_t hash(const rss_config &rss_conf) const {
+    forward_hash build_forward_hash(const rss_config& rss_conf) const {
         forward_hash hash_data;
 
         if (rss_conf.sort) {
@@ -285,6 +285,11 @@ struct l4connid {
             hash_data.push_back(htons(local_port));
         }
 
+        return hash_data;
+    }
+
+    uint32_t hash(const rss_config &rss_conf) const {
+        auto hash_data = build_forward_hash(rss_conf);
         return toeplitz_hash(rss_conf, hash_data);
     }
 

@@ -362,6 +362,7 @@ future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
+        printf("packet received for proto 0x%x (%u)\n", (uint)ntoh(eh->eth_proto), (uint)engine().cpu_id());
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
 
@@ -376,6 +377,7 @@ future<> interface::dispatch_packet(packet p) {
                         printf("toeplitz: 0x%x\n", toeplitz_hash(rss_conf(), data));
                         return toeplitz_hash(rss_conf(), data);
                     } else {
+                        printf("else case: 0x%x\n", hwrss.value());
                         return hwrss.value();
                     }
                     // return 0u;

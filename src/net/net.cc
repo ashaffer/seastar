@@ -379,8 +379,10 @@ future<> interface::dispatch_packet(packet p) {
             });
 
             if (fw != engine().cpu_id()) {
+                printf("packet received on wrong cpu: %u vs %u\n", (uint)fw, (uint)engine().cpu_id());
                 forward(fw, std::move(p));
             } else {
+                printf("packet received on correct cpu: %u\n", (uint)fw);
                 auto h = ntoh(*eh);
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));

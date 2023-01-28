@@ -1694,6 +1694,9 @@ int dpdk_device::init_port_start()
         port_conf.rxmode.mq_mode = ETH_MQ_RX_NONE;
     }
 
+    printf("Device %u\n", _port_idx);
+    print_rss_conf(_rss_conf);
+
     if (_num_queues > 1) {
         if (_dev_info.reta_size) {
             // RETA size should be a power of 2

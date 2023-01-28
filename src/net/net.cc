@@ -362,7 +362,7 @@ future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
-        printf("packet received for proto 0x%x (%u)\n", (uint)ntoh(eh->eth_proto), (uint)engine().cpu_id());
+        printf("packet received for proto 0x%x (%u cpu, %u port)\n", (uint)ntoh(eh->eth_proto), (uint)engine().cpu_id(), port_idx());
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
 

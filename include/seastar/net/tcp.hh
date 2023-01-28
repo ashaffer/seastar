@@ -1053,7 +1053,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     }
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
-    printf("tcp packet received on %u\n", engine().cpu_id());
+    printf("tcp packet received on %u (0x%x)\n", engine().cpu_id(), id.hash(_inet._inet.rss_conf()));
     h.print();
     printConnid(id, _inet);
     auto tcbi = _tcbs.find(id);

@@ -1035,7 +1035,7 @@ void printConnid (Connid &connid, Inet &inet) {
     auto netif = inet._inet.netif();
     auto conf = netif->rss_conf();
     printf(
-        "[tcp] %s:%u -> %s:%u (0x%x, 0x%x, %u)\n",
+        "[tcp] %s:%u -> %s:%u (0x%x hash, 0x%x reverse hash, %u cpu)\n",
         local_addr,
         connid.local_port,
         foreign_addr,

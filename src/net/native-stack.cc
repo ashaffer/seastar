@@ -70,6 +70,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
     bool fullHash = opts["full-rss-hash"].as<bool>();
     bool rssSort = opts["rss-sort"].as<bool>();
+    print("RSS SORT LOADED: %u\n", (uint)rssSort);
     uint32_t initialHash = opts["rss-seed"].as<uint32_t>();
 
     if ( deprecated_config_used) {

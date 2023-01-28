@@ -243,6 +243,18 @@ struct tcp_hdr {
     uint16_t window;
     uint16_t checksum;
     uint16_t urgent;
+
+    void print () {
+        printf("tcp header: %u src port, %u dst port, %u seq, %u ack, %u window, %u checksum", src_port, dst_port, seq.raw, ack.raw, window, checksum);
+        if (f_fin) printf(", fin");
+        if (f_syn) printf(", syn");
+        if (f_rst) printf(", rst");
+        if (f_psh) printf(", psh");
+        if (f_ack) printf(", ack");
+        if (f_urg) printf(", urg");
+        printf("\n");
+    }
+
     static tcp_hdr read(const char* p) {
         tcp_hdr h;
         h.src_port = read_be<uint16_t>(p + 0);
@@ -1015,6 +1027,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     if (!th) {
         return;
     }
+
     // data_offset is correct even before ntoh()
     auto data_offset = uint8_t(th[12]) >> 4;
     if (size_t(data_offset * 4) < tcp_hdr::len) {
@@ -1032,7 +1045,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
     printf("tcp packet received\n");
-    printConnid(id, _inet);
+    h.print();
     auto tcbi = _tcbs.find(id);
 
     lw_shared_ptr<tcb> tcbp;

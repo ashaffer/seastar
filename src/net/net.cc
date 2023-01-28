@@ -362,37 +362,26 @@ future<> interface::dispatch_packet(packet p) {
     auto eh = p.get_header<eth_hdr>();
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
-        printf("packet received for proto 0x%x (%u cpu, %u port)\n", (uint)ntoh(eh->eth_proto), (uint)engine().cpu_id(), port_idx());
         if (i != _proto_map.end()) {
             l3_rx_stream& l3 = i->second;
 
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
-                // if (hwrss) {
-                //     return hwrss.value();
-                // } else {
+                if (hwrss) {
+                    return hwrss.value();
+                } else {
                     forward_hash data;
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
-                        printf("net::");
-                        data.print();
-                        printf("hwrss: 0x%x\n", hwrss.value());
-                        auto conf = rss_conf();
-                        print_rss_conf(conf);
-                        printf("toeplitz: 0x%x\n", toeplitz_hash(conf, data));
                         return toeplitz_hash(rss_conf(), data);
-                    } else {
-                        printf("else case: 0x%x\n", hwrss.value());
-                        return hwrss.value();
                     }
-                    // return 0u;
-                // }
+
+                    return 0u;
+                }
             });
 
             if (fw != engine().cpu_id()) {
-                printf("packet received on wrong cpu: %u vs %u\n", (uint)fw, (uint)engine().cpu_id());
                 forward(fw, std::move(p));
             } else {
-                printf("packet received on correct cpu: %u\n", (uint)fw);
                 auto h = ntoh(*eh);
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));

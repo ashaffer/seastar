@@ -643,7 +643,6 @@ public:
         }
         try {
             _connState = 2;
-            printf("gnutls_handshake: %u, %u\n", (uint)_shutdown, (uint)_shutdown_called);
             auto res = gnutls_handshake(*this);
             if (res < 0) {
                 switch (res) {

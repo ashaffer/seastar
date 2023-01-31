@@ -663,7 +663,6 @@ private:
             output();
         }
         void do_established() {
-            printf("do_established\n");
             _state = ESTABLISHED;
             update_rto(_snd.syn_tx_time);
             _connect_done.set_value();

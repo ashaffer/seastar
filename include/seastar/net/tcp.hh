@@ -663,6 +663,7 @@ private:
             output();
         }
         void do_established() {
+            printf("do_established\n");
             _state = ESTABLISHED;
             update_rto(_snd.syn_tx_time);
             _connect_done.set_value();
@@ -1071,6 +1072,8 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     }
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
+    printf("tcp packet received\n");
+    printConnid(id);
     auto tcbi = _tcbs.find(id);
 
     lw_shared_ptr<tcb> tcbp;

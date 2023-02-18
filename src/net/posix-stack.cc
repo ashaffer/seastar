@@ -636,14 +636,14 @@ std::vector<std::vector<std::string>> posix_network_stack::getLocalIps () {
     getifaddrs(&ifap);
 
     while (ifap) {
-        char *ip = strdup(inet_ntoa(((sockaddr_in *)ifap->ifa_addr)->sin_addr));
+        char ip[64] = {0};
+        inet_ntop(AF_INET, &((sockaddr_in *)ifap->ifa_addr)->sin_addr, ip, sizeof(ip) - 1);
 
         if (ifap->ifa_addr->sa_family == AF_INET && strcmp(ifap->ifa_name, "lo") != 0 && strcmp(ip, "127.0.0.1") != 0) {
             result.push_back({ifap->ifa_name, ip});
         }
 
         ifap = ifap->ifa_next;
-        free(ip);
     }
 
     freeifaddrs(ifap);

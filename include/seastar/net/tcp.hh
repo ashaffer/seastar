@@ -1022,16 +1022,19 @@ void printConnid (Connid &connid, Inet &inet) {
     local.s_addr = htonl(connid.local_ip.ip);
     foreign.s_addr = htonl(connid.foreign_ip.ip);
 
-    char *local_addr = strdup(inet_ntoa(local));
-    char *foreign_addr = strdup(inet_ntoa(foreign));
+    char local_ip[16] = {0};
+    char foreign_ip[16] = {0};
+
+    inet_ntop(AF_INET, &local, local_ip, sizeof(local_ip) - 1);
+    inet_ntop(AF_INET, &foreign, foreign_ip, sizeof(foreign_ip) - 1);
 
     auto netif = inet._inet.netif();
     auto conf = netif->rss_conf();
     printf(
         "[tcp] %s:%u -> %s:%u (0x%x hash, 0x%x reverse hash, %u cpu)\n",
-        local_addr,
+        local_ip,
         connid.local_port,
-        foreign_addr,
+        foreign_ip,
         connid.foreign_port,
         connid.hash(conf),
         connid.reverse_hash(conf),
@@ -1042,10 +1045,6 @@ void printConnid (Connid &connid, Inet &inet) {
     auto hash_data = connid.build_forward_hash(conf);
     printf("connid::");
     hash_data.print();
-
-
-    free(local_addr);
-    free(foreign_addr);
 }
 
 template <typename InetTraits>
@@ -1360,22 +1359,6 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
 
     // 3.2 second check the RST bit
     if (th->f_rst) {
-        // in_addr local;
-        // in_addr foreign;
-        // local.s_addr = htonl(_local_ip.ip);
-        // foreign.s_addr = htonl(_foreign_ip.ip);
-        // char *slocal = strdup(inet_ntoa(local));
-        // char *flocal = strdup(inet_ntoa(foreign));
-        // uint64_t now = __rdtsc();
-        // uint sincePenultimate = std::chrono::duration_cast<std::chrono::microseconds>(now - _penultimateSend).count();
-        // uint sinceSend = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSend).count();
-        // uint sinceRecv = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastRecv).count();
-        // uint sinceCreate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _createdAt).count();
-
-        // printf("[tcp] received an RST: %s, %u, %s, %u, %u, %u, %u, %u\n", slocal, _local_port, flocal, _foreign_port, sinceSend, sinceRecv, sinceCreate, sincePenultimate);
-        // free(slocal);
-        // free(flocal);
-
         // If the ACK was acceptable then signal the user "error: connection
         // reset", drop the segment, enter CLOSED state, delete TCB, and
         // return.  Otherwise (no ACK) drop the segment and return.
@@ -1459,18 +1442,6 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
 
     // 4.2 second check the RST bit
     if (th->f_rst) {
-        // in_addr local;
-        // in_addr foreign;
-        // local.s_addr = htonl(_local_ip.ip);
-        // foreign.s_addr = htonl(_foreign_ip.ip);
-        // char *slocal = strdup(inet_ntoa(local));
-        // char *flocal = strdup(inet_ntoa(foreign));
-        // auto now = std::chrono::high_resolution_clock::now();
-        // uint sincePenultimate = std::chrono::duration_cast<std::chrono::microseconds>(now - _penultimateSend).count();
-        // uint sinceSend = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSend).count();
-        // uint sinceRecv = std::chrono::duration_cast<std::chrono::microseconds>(now - _lastRecv).count();
-        // uint sinceCreate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _createdAt).count();
-
         if (in_state(SYN_RECEIVED)) {
             // If this connection was initiated with a passive OPEN (i.e.,
             // came from the LISTEN state), then return this connection to
@@ -2103,18 +2074,7 @@ void tcp<InetTraits>::tcb::close() {
         return;
     }
     this->closeCalled = 1;
-    // this->closeState = 0;
     // TODO: We should return a future to upper layer
-    // in_addr local;
-    // in_addr foreign;
-    // local.s_addr = htonl(_local_ip.ip);
-    // foreign.s_addr = htonl(_foreign_ip.ip);
-    // char *slocal = strdup(inet_ntoa(local));
-    // char *flocal = strdup(inet_ntoa(foreign));
-    // printf("[tcp] close(): %u, %u, %u, %s, %u, %s, %u\n", this->closeCalled, this->closeState, this->resetState, slocal, _local_port, flocal, _foreign_port);
-    // free(slocal);
-    // free(flocal);
-
     (void)wait_for_all_data_acked().then([this, zis = this->shared_from_this()] () mutable {
         this->closeState = 1;
         _snd.closed = true;
@@ -2151,11 +2111,11 @@ void tcp<InetTraits>::tcb::close() {
             in_addr foreign;
             local.s_addr = htonl(_local_ip.ip);
             foreign.s_addr = htonl(_foreign_ip.ip);
-            char *slocal = strdup(inet_ntoa(local));
-            char *flocal = strdup(inet_ntoa(foreign));
-            // printf("[tcp] tcb::close error2: %s (%u, %u, %u, %s,s %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, slocal, _local_port, flocal, _foreign_port);
-            free(slocal);
-            free(flocal);
+            char local_ip[16] = {0};
+            char foreign_ip[16] = {0};
+            inet_ntop(AF_INET, &local, local_ip, sizeof(local_ip) - 1);
+            inet_ntop(AF_INET, &foreign, foreign_ip, sizeof(foreign_ip) - 1);
+            printf("[tcp] tcb::close error2: %s (%u, %u, %u, %s,s %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, local_ip, _local_port, foreign_ip, _foreign_port);
 
         }
     });

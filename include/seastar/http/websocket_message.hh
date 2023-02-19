@@ -145,7 +145,7 @@ public:
         std::memcpy(wr + header_size, &mask, sizeof(uint32_t));
 
         header_size += sizeof(uint32_t);
-        un_mask(payload.get_write(), payload.get(), (char*)(&mask), payload.size());
+        // un_mask(payload.get_write(), payload.get(), (char*)(&mask), payload.size());
         header.trim(header_size);
         return header;
     }
@@ -166,7 +166,6 @@ public:
                             }))) {
         uint64_t k = 0;
         char* buf = payload.get_write();
-        printf("SERVER MESSAGE CONSTRUCTION 1\n");
         for (unsigned int j = 0; j < fragments.size(); ++j) {
             un_mask(buf + k, fragments[j].message.get(), (char*)(&fragments[j].header.mask_key),
                     fragments[j].message.size());
@@ -180,7 +179,6 @@ public:
     message(inbound_fragment <SERVER>& fragment) :
             message_base(fragment.header.opcode, temporary_buffer<char>(fragment.message.size())) {
         un_mask(payload.get_write(), fragment.message.get(), (char*)(&fragment.header.mask_key), payload.size());
-        printf("SERVER MESSAGE CONSTRUCTION 2\n");
         if (opcode == websocket::opcode::TEXT && !utf8_check((const unsigned char*)payload.get(), payload.size())) {
             throw websocket_exception(INCONSISTENT_DATA);
         }

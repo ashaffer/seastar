@@ -266,9 +266,9 @@ public:
         return *this;
     };
 
-    duplex_stream<type> stream() {
+    duplex_stream<type> stream(size_t buffer_size = 8192, bool batch_flushes = true) {
         return duplex_stream<type>(websocket::input_stream<type>(std::move(_socket.input())),
-                websocket::output_stream<type>(std::move(_socket.output())), this);
+                websocket::output_stream<type>(std::move(_socket.output(buffer_size, batch_flushes))), this);
     }
 
     void shutdown_output() { _socket.shutdown_output(); }

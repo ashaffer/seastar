@@ -1098,7 +1098,9 @@ small_pool::~small_pool() {
 // falls back to the emergency pool in case malloc() returns nullptr.
 void*
 small_pool::allocate() {
+    bool added = false;
     if (!_free) {
+        added = true;
         add_more_objects();
     }
     if (!_free) {
@@ -1107,7 +1109,7 @@ small_pool::allocate() {
     auto* obj = _free;
     _free = _free->next;
     if ((uint64_t)_free > 0x1000000000000) {
-        printf("Bad next pointer in allocate() 0x%lx (0x%lx, %lu)\n", (uint64_t)_free, (uint64_t)obj, _free_count);
+        printf("Bad next pointer in allocate() 0x%lx (%u, 0x%lx, %lu, %u)\n", (uint64_t)_free, engine().cpu_id(), (uint64_t)obj, _free_count, added);
         current_backtrace();
     }
     --_free_count;

@@ -228,7 +228,9 @@ constexpr size_t next_page_aligned(size_t size) {
 class small_pool;
 
 struct free_object {
+    uint canary1 = 0xDEADBEEF;
     free_object* next;
+    uint canary2 = 0xDEADBEEF;
 };
 
 struct page {
@@ -292,7 +294,9 @@ class small_pool {
     };
     size_t _object_size;
     span_sizes _span_sizes;
+    uint canary1 = 0xDEADBEEF;
     free_object* _free = nullptr;
+    uint canary2 = 0xDEADBEEF;
     size_t _free_count = 0;
     size_t _min_free;
     size_t _max_free;
@@ -1109,7 +1113,7 @@ small_pool::allocate() {
     auto* obj = _free;
     _free = _free->next;
     if ((uint64_t)_free > 0x1000000000000 || (uint64_t)obj > 0x1000000000000) {
-        printf("Bad next pointer in allocate() 0x%lx, 0x%lx (%u, 0x%lx, %lu, %u)\n", (uint64_t)_free, (uint64_t)obj, engine().cpu_id(), (uint64_t)obj, _free_count, added);
+        printf("Bad next pointer in allocate() 0x%lx, 0x%lx (%u, 0x%lx, %lu, %u, 0x%x, 0x%x, 0x%x, 0x%x)\n", (uint64_t)_free, (uint64_t)obj, engine().cpu_id(), (uint64_t)obj, _free_count, added, canary1, canary2, obj->canary1, obj->canary2);
         current_backtrace();
     }
     --_free_count;

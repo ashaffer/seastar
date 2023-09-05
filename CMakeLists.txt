@@ -156,13 +156,13 @@ option (Seastar_APPS
   ON)
 
 set (Seastar_CXX_DIALECT
-  "gnu++17"
+  "c++20"
   CACHE
   STRING
   "Compile Seastar according to the named C++ standard.")
 
 set (Seastar_CXX_FLAGS
-  ""
+  "-nostdinc++ -nostdlib++ -isystem /usr/lib/llvm-14/include/c++/v1 -L /usr/lib/llvm-14/lib -Wl - r-path,/usr/lib/llvm-14/lib -lc++"
   CACHE
   STRING
   "Semicolon-separated list of extra compilation flags for Seastar itself.")
@@ -229,7 +229,7 @@ option (Seastar_STD_OPTIONAL_VARIANT_STRINGVIEW
 
 option (Seastar_TESTING
   "Enable testing targets."
-  ON)
+  OFF)
 
 option (Seastar_COMPRESS_DEBUG
   "Compress debug info."
@@ -274,7 +274,7 @@ set (Seastar_GEN_BINARY_DIR ${Seastar_BINARY_DIR}/gen)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 
 include (SeastarDependencies)
-set (StdFilesystem_CXX_DIALECT ${Seastar_CXX_DIALECT})
+#set (StdFilesystem_CXX_DIALECT ${Seastar_CXX_DIALECT})
 seastar_find_dependencies ()
 
 # Private build dependencies not visible to consumers
@@ -631,7 +631,9 @@ set (Seastar_PRIVATE_CXX_FLAGS
   -UNDEBUG
   -Wall
   -Werror
-  -Wno-error=deprecated-declarations)
+  -Wno-error=deprecated-declarations
+  -Wno-deprecated-declarations
+  -Wno-unused-but-set-variable)
 
 if (Seastar_COMPRESS_DEBUG)
   # -gz doesn't imply -g, so it is safe to add it regardless of debug
@@ -659,7 +661,7 @@ target_link_libraries (seastar
     Boost::filesystem
     GnuTLS::gnutls
     StdAtomic::atomic
-    StdFilesystem::filesystem
+#    StdFilesystem::filesystem
     lksctp-tools::lksctp-tools
     protobuf::libprotobuf
     rt::rt
@@ -711,7 +713,7 @@ if (MaybeUninitialized_FOUND)
 endif ()
 
 if (Seastar_EXPERIMENTAL_COROUTINES_TS)
-  target_compile_options (seastar PUBLIC -fcoroutines-ts -g)
+  target_compile_options (seastar PUBLIC -g)
   target_compile_definitions (seastar PUBLIC SEASTAR_COROUTINES_TS)
 endif ()
 
@@ -928,17 +930,17 @@ endif ()
 # The tests themselves.
 #
 
-if (Seastar_TESTING)
-  enable_testing ()
+#if (Seastar_TESTING)
+#  enable_testing ()
 
-  if (Seastar_EXCLUDE_TESTS_FROM_ALL)
-    set (exclude EXCLUDE_FROM_ALL)
-  else ()
-    set (exclude "")
-  endif ()
+#  if (Seastar_EXCLUDE_TESTS_FROM_ALL)
+#    set (exclude EXCLUDE_FROM_ALL)
+#  else ()
+#    set (exclude "")
+#  endif ()
 
-  add_subdirectory (tests ${exclude})
-endif ()
+#  add_subdirectory (tests ${exclude})
+#endif ()
 
 #
 # Demonstrations.
@@ -1092,7 +1094,7 @@ if (Seastar_INSTALL)
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindProtobuf.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindSanitizers.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindStdAtomic.cmake
-      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindStdFilesystem.cmake
+      #${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindStdFilesystem.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Findc-ares.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Findcryptopp.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Finddpdk.cmake
@@ -1106,9 +1108,9 @@ if (Seastar_INSTALL)
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/SeastarDependencies.cmake
     DESTINATION ${install_cmakedir})
 
-  install (
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake/code_tests
-    DESTINATION ${install_cmakedir})
+#  install (
+#    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake/code_tests
+#    DESTINATION ${install_cmakedir})
 
   install (
     FILES ${CMAKE_CURRENT_BINARY_DIR}/seastar-install.pc

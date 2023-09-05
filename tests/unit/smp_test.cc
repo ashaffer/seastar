@@ -18,6 +18,8 @@
 /*
  * Copyright (C) 2014 Cloudius Systems, Ltd.
  */
+#include <format>
+#include <iostream>
 
 #include <seastar/core/reactor.hh>
 #include <seastar/core/app-template.hh>
@@ -36,14 +38,14 @@ future<bool> test_smp_call() {
 struct nasty_exception {};
 
 future<bool> test_smp_exception() {
-    fmt::print("1\n");
+    std:;cout << "1\n";
     return smp::submit_to(1, [] {
-        fmt::print("2\n");
+        std::cout << "2\n";
         auto x = make_exception_future<int>(nasty_exception());
-        fmt::print("3\n");
+        std::cout << "3\n";
         return x;
     }).then_wrapped([] (future<int> result) {
-        fmt::print("4\n");
+        std::cout "4\n";
         try {
             result.get();
             return make_ready_future<bool>(false); // expected an exception
@@ -62,7 +64,7 @@ int tests, fails;
 future<>
 report(sstring msg, future<bool>&& result) {
     return std::move(result).then([msg] (bool result) {
-        fmt::print("{}: {}\n", (result ? "PASS" : "FAIL"), msg);
+        std::cout << std::format("{}: {}\n", (result ? "PASS" : "FAIL"), msg);
         tests += 1;
         fails += !result;
     });
@@ -73,7 +75,7 @@ int main(int ac, char** av) {
        return report("smp call", test_smp_call()).then([] {
            return report("smp exception", test_smp_exception());
        }).then([] {
-           fmt::print("\n{:d} tests / {:d} failures\n", tests, fails);
+           std::cout << std::format("\n{:d} tests / {:d} failures\n", tests, fails);
            engine().exit(fails ? 1 : 0);
        });
     });

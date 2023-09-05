@@ -20,6 +20,9 @@
  * Copyright (C) 2014 Cloudius Systems, Ltd.
  */
 
+#include <format>
+#include <iostream>
+#include <seastar/util/std-compat.hh>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 #include <regex>
@@ -141,7 +144,7 @@ size_t calculate_memory(configuration c, size_t available_memory, float panic_fa
     }
     size_t mem = c.total_memory.value_or(available_memory);
     if (mem > available_memory) {
-        throw std::runtime_error(format("insufficient physical memory: needed {} available {}", mem, available_memory));
+        throw std::runtime_error(std::format("insufficient physical memory: needed {} available {}", mem, available_memory));
     }
     return mem;
 }
@@ -254,7 +257,7 @@ allocate_io_queues(hwloc_topology_t& topology, std::vector<cpu> cpus, unsigned n
     // User may be playing with --smp option, but num_io_queues was independently
     // determined by iotune, so adjust for any conflicts.
     if (num_io_queues > cpus.size()) {
-        fmt::print("Warning: number of IO queues ({:d}) greater than logical cores ({:d}). Adjusting downwards.\n", num_io_queues, cpus.size());
+        std::cout << std::format("Warning: number of IO queues ({:d}) greater than logical cores ({:d}). Adjusting downwards.\n", num_io_queues, cpus.size());
         num_io_queues = cpus.size();
     }
 

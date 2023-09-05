@@ -19,6 +19,8 @@
  * Copyright (C) 2014 Cloudius Systems, Ltd.
  */
 
+#include <iostream>
+#include <format>
 
 #include <seastar/core/reactor.hh>
 #include <seastar/core/app-template.hh>
@@ -69,7 +71,7 @@ int main(int ac, char** av) {
                 } else {
                     assert(sd.type == directory_entry_type::unknown);
                 }
-                fmt::print("{} (type={})\n", de.name, de_type_desc(sd.type));
+                std::cout << std::format("{} (type={})\n", de.name, de_type_desc(sd.type));
                 return make_ready_future<>();
             });
         }

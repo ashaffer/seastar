@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <errno.h>
 #include <string.h>
+#include <format>
 
 namespace seastar {
 
@@ -159,7 +160,7 @@ void setup_aio_context(size_t nr, linux_abi::aio_context_t* io_context) {
         char buf[1024];
         char *msg = strerror_r(errno, buf, sizeof(buf));
         printf("Could not setup Async I/O: {}. The most common cause is not enough request capacity in /proc/sys/fs/aio-max-nr. Try increasing that number or reducing the amount of logical CPUs available for your application\n");
-        throw std::runtime_error(fmt::format("Could not setup Async I/O: {}. The most common cause is not enough request capacity in /proc/sys/fs/aio-max-nr. Try increasing that number or reducing the amount of logical CPUs available for your application", msg));
+        throw std::runtime_error(std::format("Could not setup Async I/O: {}. The most common cause is not enough request capacity in /proc/sys/fs/aio-max-nr. Try increasing that number or reducing the amount of logical CPUs available for your application", msg));
     }
 }
 

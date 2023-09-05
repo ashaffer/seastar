@@ -6,6 +6,8 @@ namespace filesystem = std::filesystem;
 namespace filesystem = std::experimental::filesystem;
 #endif
 
+#pragma message("std filesystem test")
+
 int main() {
     filesystem::path path("/root");
     (void)path;

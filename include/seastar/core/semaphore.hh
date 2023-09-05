@@ -450,7 +450,7 @@ consume_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units) {
 /// \related semaphore
 template <typename ExceptionFactory, typename Func, typename Clock = typename timer<>::clock>
 inline
-futurize_t<std::result_of_t<Func()>>
+futurize_t<std::invoke_result_t<Func>>
 with_semaphore(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, Func&& func) {
     return get_units(sem, units).then([func = std::forward<Func>(func)] (auto units) mutable {
         return futurize_apply(std::forward<Func>(func)).finally([units = std::move(units)] {});
@@ -459,7 +459,7 @@ with_semaphore(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, Func
 
 template <typename ExceptionFactory, typename Func, typename Clock = typename timer<>::clock>
 inline
-futurize_t<std::result_of_t<Func()>>
+futurize_t<std::invoke_result_t<Func>>
 with_semaphore_sync(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, Func&& func) {
     return get_units(sem, units).then_sync([func = std::forward<Func>(func)] (auto units) mutable {
         return futurize_apply(std::forward<Func>(func)).finally([units = std::move(units)] {});
@@ -493,7 +493,7 @@ with_semaphore_sync(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units,
 /// \related semaphore
 template <typename ExceptionFactory, typename Clock, typename Func>
 inline
-futurize_t<std::result_of_t<Func()>>
+futurize_t<std::invoke_result_t<Func>>
 with_semaphore(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename basic_semaphore<ExceptionFactory, Clock>::duration timeout, Func&& func) {
     return get_units(sem, units, timeout).then([func = std::forward<Func>(func)] (auto units) mutable {
         return futurize_apply(std::forward<Func>(func)).finally([units = std::move(units)] {});

@@ -79,6 +79,8 @@
 #include <linux/types.h> // for xfs, below
 #include <sys/ioctl.h>
 #include <xfs/linux.h>
+#include <iostream>
+#include <format>
 #define min min    /* prevent xfs.h from defining min() as a macro */
 #include <xfs/xfs.h>
 #undef min
@@ -92,7 +94,6 @@
 #include <regex>
 #include <fstream>
 #ifdef __GNUC__
-#include <iostream>
 #include <system_error>
 #include <cxxabi.h>
 #endif
@@ -215,7 +216,7 @@ reactor::rename_priority_class(io_priority_class pc, sstring new_name) {
                    if (i == pc.id()) {
                        return make_ready_future();
                    } else {
-                       throw std::runtime_error(format("rename priority class: an attempt was made to rename a priority class to an"
+                       throw std::runtime_error(std::format("rename priority class: an attempt was made to rename a priority class to an"
                                " already existing name ({})", new_name));
                    }
                }
@@ -469,11 +470,11 @@ public:
         }
     }
     void print() const {
-        seastar::fmt::print("task histogram, {:d} task types {:d} tasks\n", _histogram.size(), max_countdown - _countdown_to_print);
+        std::cout << std::format("task histogram, {:d} task types {:d} tasks\n", _histogram.size(), max_countdown - _countdown_to_print);
         for (auto&& type_count : _histogram) {
             auto&& type = type_count.first;
             auto&& count = type_count.second;
-            seastar::fmt::print("  {:10d} {}\n", count, type.name());
+            std::cout << std::format("  {:10d} {}\n", count, type.name());
         }
     }
 };
@@ -880,9 +881,15 @@ public:
         ret.push_back(reactor_backend_selector("epoll"));
         return ret;
     }
+
+    std::string get_name () const {
+        return _name;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const reactor_backend_selector& rbs) {
         return os << rbs._name;
     }
+
     friend void validate(boost::any& v, const std::vector<std::string> values, reactor_backend_selector* rbs, int) {
         namespace bpo = boost::program_options;
         bpo::validators::check_first_occurrence(v);
@@ -912,7 +919,7 @@ reactor::reactor(unsigned id, reactor_backend_selector rbs, reactor_config cfg)
     , _cpu_stall_detector(std::make_unique<cpu_stall_detector>(this))
     , _io_context(0)
     , _reuseport(posix_reuseport_detect())
-    , _thread_pool(std::make_unique<thread_pool>(this, seastar::format("syscall-{}", id))) {
+    , _thread_pool(std::make_unique<thread_pool>(this, std::format("syscall-{}", id))) {
     _task_queues.push_back(std::make_unique<task_queue>(0, "main", 1000));
     _task_queues.push_back(std::make_unique<task_queue>(1, "atexit", 1000));
     _at_destroy_tasks = _task_queues.back().get();
@@ -1154,7 +1161,7 @@ void cpu_stall_detector::end_sleep() {
 
 void
 reactor::task_quota_timer_thread_fn() {
-    auto thread_name = seastar::format("timer-{}", _id);
+    auto thread_name = std::format("timer-{}", _id);
     pthread_setname_np(pthread_self(), thread_name.c_str());
 
     sigset_t mask;
@@ -1382,7 +1389,7 @@ reactor::posix_listen(socket_address sa, listen_options opts) {
         return result;
     }();
     if (somaxconn && *somaxconn < opts.listen_backlog) {
-        fmt::print(
+        std::cout << std::format(
             "Warning: /proc/sys/net/core/somaxconn is set to {:d} "
             "which is lower than the backlog parameter {:d} used for listen(), "
             "please change it with `sysctl -w net.core.somaxconn={:d}`\n",
@@ -1400,7 +1407,7 @@ reactor::posix_listen(socket_address sa, listen_options opts) {
         fd.bind(sa.u.sa, sa.length());
         fd.listen(opts.listen_backlog);
     } catch (const std::system_error& s) {
-        throw std::system_error(s.code(), fmt::format("posix_listen failed for address {}", sa));
+        throw std::system_error(s.code(), std::format("posix_listen failed for address {}", sa));
     }
 
     return pollable_fd(std::move(fd));
@@ -1720,7 +1727,7 @@ reactor::chmod(sstring name, file_permissions permissions) {
         return wrap_syscall<int>(::chmod(name.c_str(), mode));
     }).then([name, mode] (syscall_result<int> sr) {
         if (sr.result == -1) {
-            auto reason = format("chmod(0{:o}) failed", mode);
+            auto reason = std::format("chmod(0{:o}) failed", mode);
             sr.throw_fs_exception(reason, fs::path(name));
         }
         return make_ready_future<>();
@@ -3320,7 +3327,7 @@ network_stack_registry::create(options opts) {
 future<std::unique_ptr<network_stack>>
 network_stack_registry::create(sstring name, options opts) {
     if (!_map().count(name)) {
-        throw std::runtime_error(format("network stack {} not registered", name));
+        throw std::runtime_error(std::format("network stack {} not registered", name));
     }
     return _map()[name](opts);
 }
@@ -3329,15 +3336,29 @@ static bool kernel_supports_aio_fsync() {
     return kernel_uname().whitelisted({"4.18"});
 }
 
+
+
 boost::program_options::options_description
 reactor::get_options_description(reactor_config cfg) {
     namespace bpo = boost::program_options;
     bpo::options_description opts("Core options");
     auto net_stack_names = network_stack_registry::list();
+    std::ostringstream rbs{", "};
+
+    for (auto&& r : reactor_backend_selector::available()) {
+        rbs << r.get_name();
+    }
+
+    std::ostringstream nsn{", "};
+    for (auto&& n : net_stack_names) {
+        nsn << n;
+    }
+
+    auto net_stacks = std::format("select network stack (valid values: {})", nsn.str());
+    auto rx_backend_selectors = std::format("Internal reactor implementation ({})", rbs.str());
+
     opts.add_options()
-        ("network-stack", bpo::value<std::string>(),
-                format("select network stack (valid values: {})",
-                        format_separated(net_stack_names.begin(), net_stack_names.end(), ", ")).c_str())
+        ("network-stack", bpo::value<std::string>(), net_stacks.c_str())
         ("poll-mode", "poll continuously (100% cpu use)")
         ("idle-poll-time-us", bpo::value<unsigned>()->default_value(calculate_poll_time() / 1us),
                 "idle polling time in microseconds (reduce for overprovisioned environments or laptops)")
@@ -3357,8 +3378,11 @@ reactor::get_options_description(reactor_config cfg) {
         ("force-aio-syscalls", bpo::value<bool>()->default_value(false),
                 "Force io_getevents(2) to issue a system call, instead of bypassing the kernel when possible."
                 " This makes strace output more useful, but slows down the application")
-        ("reactor-backend", bpo::value<reactor_backend_selector>()->default_value(reactor_backend_selector::default_backend()),
-                format("Internal reactor implementation ({})", reactor_backend_selector::available()).c_str())
+        (
+            "reactor-backend",
+            bpo::value<reactor_backend_selector>()->default_value(reactor_backend_selector::default_backend()),
+            rx_backend_selectors.c_str()
+        )
         ("aio-fsync", bpo::value<bool>()->default_value(kernel_supports_aio_fsync()),
                 "Use Linux aio for fsync() calls. This reduces latency; requires Linux 4.18 or later.")
 #ifdef SEASTAR_HEAPPROF
@@ -3611,20 +3635,20 @@ public:
             for (auto&& section : *doc) {
                 auto sec_name = section.first.as<std::string>();
                 if (sec_name != "disks") {
-                    throw std::runtime_error(fmt::format("While parsing I/O options: section {} currently unsupported.", sec_name));
+                    throw std::runtime_error(std::format("While parsing I/O options: section {} currently unsupported.", sec_name));
                 }
                 auto disks = section.second.as<std::vector<mountpoint_params>>();
                 for (auto& d : disks) {
                     struct ::stat buf;
                     auto ret = stat(d.mountpoint.c_str(), &buf);
                     if (ret < 0) {
-                        throw std::runtime_error(fmt::format("Couldn't stat {}", d.mountpoint));
+                        throw std::runtime_error(std::format("Couldn't stat {}", d.mountpoint));
                     }
                     if (_mountpoints.count(buf.st_dev)) {
-                        throw std::runtime_error(fmt::format("Mountpoint {} already configured", d.mountpoint));
+                        throw std::runtime_error(std::format("Mountpoint {} already configured", d.mountpoint));
                     }
                     if (_mountpoints.size() >= reactor::max_queues) {
-                        throw std::runtime_error(fmt::format("Configured number of queues {} is larger than the maximum {}",
+                        throw std::runtime_error(std::format("Configured number of queues {} is larger than the maximum {}",
                                                  _mountpoints.size(), reactor::max_queues));
                     }
 
@@ -3737,7 +3761,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         thread_affinity = false;
     }
     if (!thread_affinity && _using_dpdk) {
-        fmt::print("warning: --thread-affinity 0 ignored in dpdk mode\n");
+        std::cout << "warning: --thread-affinity 0 ignored in dpdk mode\n";
     }
     auto mbind = configuration["mbind"].as<bool>();
     if (!thread_affinity) {
@@ -3822,7 +3846,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         auto r = mlockall(MCL_CURRENT | MCL_FUTURE);
         if (r) {
             // Don't hard fail for now, it's hard to get the configuration right
-            fmt::print("warning: failed to mlockall: {}\n", strerror(errno));
+            std::cout << std::format("warning: failed to mlockall: {}\n", strerror(errno));
         }
     }
 
@@ -3910,7 +3934,7 @@ void smp::configure(boost::program_options::variables_map configuration, reactor
         auto allocation = allocations[i];
         create_thread([configuration, &disk_config, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
           try {
-            auto thread_name = seastar::format("reactor-{}", i);
+            auto thread_name = std::format("reactor-{}", i);
             pthread_setname_np(pthread_self(), thread_name.c_str());
             if (thread_affinity) {
                 smp::pin(allocation.cpu_id);
@@ -4100,7 +4124,7 @@ future<> check_direct_io_support(sstring path) {
 
         static w parse(sstring path, compat::optional<directory_entry_type> type) {
             if (!type) {
-                throw std::invalid_argument(format("Could not open file at {}. Make sure it exists", path));
+                throw std::invalid_argument(std::format("Could not open file at {}. Make sure it exists", path));
             }
 
             if (type == directory_entry_type::directory) {
@@ -4109,7 +4133,7 @@ future<> check_direct_io_support(sstring path) {
             } else if ((type == directory_entry_type::regular) || (type == directory_entry_type::link)) {
                 return w{path, open_flags::ro, [] { return make_ready_future<>(); }};
             } else {
-                throw std::invalid_argument(format("{} neither a directory nor file. Can't be opened with O_DIRECT", path));
+                throw std::invalid_argument(std::format("{} neither a directory nor file. Can't be opened with O_DIRECT", path));
             }
         };
     };
@@ -4125,7 +4149,7 @@ future<> check_direct_io_support(sstring path) {
                 });
             } catch (std::system_error& e) {
                 if (e.code() == std::error_code(EINVAL, std::system_category())) {
-                    report_exception(format("Could not open file at {}. Does your filesystem support O_DIRECT?", path), std::current_exception());
+                    report_exception(std::format("Could not open file at {}. Does your filesystem support O_DIRECT?", path), std::current_exception());
                 }
                 throw;
             }
@@ -4423,7 +4447,7 @@ reactor::destroy_scheduling_group(scheduling_group sg) {
 
 void
 reactor::no_such_scheduling_group(scheduling_group sg) {
-    throw std::invalid_argument(format("The scheduling group does not exist ({})", sg._id));
+    throw std::invalid_argument(std::format("The scheduling group does not exist ({})", sg._id));
 }
 
 const sstring&
@@ -4560,14 +4584,7 @@ report_reactor_stalls(noncopyable_function<future<> ()> uut) {
         return p_reporter->report();
     });
 }
-
-std::ostream& operator<<(std::ostream& os, const stall_report& sr) {
-    auto to_ms = [] (FastClock::duration d) -> float {
-        return std::chrono::duration<float>(d) / 1ms;
-    };
-    return os << format("{} stalls, {} ms stall time, {} ms run time", sr.kernel_stalls, to_ms(sr.stall_time), to_ms(sr.run_wall_time));
+}
 }
 
-}
 
-}

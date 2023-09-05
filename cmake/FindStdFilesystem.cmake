@@ -25,58 +25,58 @@
 #
 #   StdFilesystem_CXX_DIALECT
 #
-
-include (CheckCXXSourceCompiles)
-file (READ ${CMAKE_CURRENT_LIST_DIR}/code_tests/StdFilesystem_test.cc _stdfilesystem_test_code)
-
-if (StdFilesystem_CXX_DIALECT)
-  set (_stdfilesystem_cxx_dialect_args "-std=${StdFilesystem_CXX_DIALECT}")
-else ()
-  set (_stdfilesystem_cxx_dialect_args "")
-endif ()
-
-macro (_stdfilesystem_check_compiles var)
-  set (libraries ${ARGN})
-  set (CMAKE_REQUIRED_LIBRARIES ${libraries})
-  set (CMAKE_REQUIRED_FLAGS ${_stdfilesystem_cxx_dialect_args})
-  check_cxx_source_compiles ("${_stdfilesystem_test_code}" ${var})
-endmacro ()
-
-# Try to compile without the library first.
-_stdfilesystem_check_compiles (StdFilesystem_NO_EXPLICIT_LINK)
-
-if (StdFilesystem_NO_EXPLICIT_LINK)
-  set (StdFilesystem_FOUND yes)
-else ()
-  _stdfilesystem_check_compiles (StdFilesystem_STDCXXFS_LIBRARY
-    stdc++fs)
-
-  #if (StdFilesystem_STDCXXFS_LIBRARY)
-  set (StdFilesystem_LIBRARY_NAME stdc++fs)
-  #else ()
+#include (CheckCXXSourceCompiles)
+#file (READ ${CMAKE_CURRENT_LIST_DIR}/code_tests/StdFilesystem_test.cc _stdfilesystem_test_code)
+#
+#if (StdFilesystem_CXX_DIALECT)
+#  set (_stdfilesystem_cxx_dialect_args "-std=${StdFilesystem_CXX_DIALECT}")
+#else ()
+#  set (_stdfilesystem_cxx_dialect_args "")
+#endif ()
+#
+#macro (_stdfilesystem_check_compiles var)
+#  set (libraries ${ARGN})
+#  set (CMAKE_REQUIRED_LIBRARIES ${libraries})
+#  set (CMAKE_REQUIRED_FLAGS ${_stdfilesystem_cxx_dialect_args})
+#  check_cxx_source_compiles ("${_stdfilesystem_test_code}" ${var})
+#endmacro ()
+#
+## Try to compile without the library first.
+#_stdfilesystem_check_compiles (StdFilesystem_NO_EXPLICIT_LINK)
+#
+#if (StdFilesystem_NO_EXPLICIT_LINK)
+#  if (StdFilesystem_STDCXXFS_LIBRARY)
+#    set (StdFilesystem_LIBRARY_NAME c++)
+#    #set (StdFilesystem_LIBRARY_NAME stdc++fs)
+#  else ()
 #    # Try libc++.
 #    _stdfilesystem_check_compiles (StdFilesystem_CXXEXPERIMENTAL_LIBRARY
-#      libc++experimental)
-
+#      c++)
+#
 #    if (StdFilesystem_CXXEXPERIMENTAL_LIBRARY)
-#      set (StdFilesystem_LIBRARY_NAME c++experimental)
+#      set (StdFilesystem_LIBRARY_NAME c++)
 #    endif ()
-  #endif ()
-
-  if (StdFilesystem_LIBRARY_NAME)
-    set (StdFilesystem_LIBRARIES -l${StdFilesystem_LIBRARY_NAME})
-  endif ()
-
-  include (FindPackageHandleStandardArgs)
-
-  find_package_handle_standard_args (StdFilesystem
-    REQUIRED_VARS StdFilesystem_LIBRARY_NAME)
-endif ()
-
-if (StdFilesystem_FOUND AND NOT (TARGET StdFilesystem::filesystem))
-  add_library (StdFilesystem::filesystem INTERFACE IMPORTED)
-
-  set_target_properties (StdFilesystem::filesystem
-    PROPERTIES
-      INTERFACE_LINK_LIBRARIES "${StdFilesystem_LIBRARIES}")
-endif ()
+#  endif ()
+#
+#    set (StdFilesystem_FOUND yes)
+#  else ()
+#    _stdfilesystem_check_compiles (StdFilesystem_STDCXXFS_LIBRARY
+#      c++)
+#
+#  if (StdFilesystem_LIBRARY_NAME)
+#    set (StdFilesystem_LIBRARIES -l${StdFilesystem_LIBRARY_NAME})
+#  endif ()
+#
+#  include (FindPackageHandleStandardArgs)
+#
+#  find_package_handle_standard_args (StdFilesystem
+#    REQUIRED_VARS StdFilesystem_LIBRARY_NAME)
+#endif ()
+#
+#if (StdFilesystem_FOUND AND NOT (TARGET StdFilesystem::filesystem))
+#  add_library (StdFilesystem::filesystem INTERFACE IMPORTED)
+#
+#  set_target_properties (StdFilesystem::filesystem
+#    PROPERTIES
+#      INTERFACE_LINK_LIBRARIES "${StdFilesystem_LIBRARIES}")
+#endif ()

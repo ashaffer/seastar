@@ -28,6 +28,7 @@
 #include <seastar/net/byteorder.hh>
 #include <seastar/net/unix_address.hh>
 #include <cassert>
+#include <seastar/core/sstring.hh>
 
 namespace seastar {
 
@@ -87,9 +88,9 @@ public:
     bool operator!=(const socket_address& a) const {
         return !(*this == a);
     }
-};
 
-std::ostream& operator<<(std::ostream&, const socket_address&);
+    friend std::ostream& operator<<(std::ostream&, const socket_address&);
+};
 
 enum class transport {
     TCP = IPPROTO_TCP,
@@ -115,6 +116,11 @@ struct ipv4_addr {
     bool is_port_unspecified() const {
         return port == 0;
     }
+
+
+    friend std::ostream& operator<<(std::ostream& os, const ipv4_addr&& a) {
+        return os << socket_address(a);
+    }
 };
 
 struct ipv6_addr {
@@ -136,16 +142,34 @@ struct ipv6_addr {
     bool is_port_unspecified() const {
         return port == 0;
     }
-};
 
-std::ostream& operator<<(std::ostream&, const ipv4_addr&);
-std::ostream& operator<<(std::ostream&, const ipv6_addr&);
+    friend std::ostream& operator<<(std::ostream& os, const ipv6_addr&& a) {
+        return os << socket_address(a);
+    }
+};
 
 inline bool operator==(const ipv4_addr &lhs, const ipv4_addr& rhs) {
     return lhs.ip == rhs.ip && lhs.port == rhs.port;
 }
 
+std::string unix_domain_addr_text(const socket_address& sa);
+std::ostream& operator<<(std::ostream&, const socket_address&);
 }
+
+template<>
+struct std::formatter<seastar::ipv4_addr> : public seastar::ostream_formatter {};
+template<>
+struct std::formatter<seastar::ipv6_addr> : public seastar::ostream_formatter {};
+template<>
+struct std::formatter<seastar::socket_address> : public std::formatter<std::string> {
+    template<class FormatContext>
+    auto format (const seastar::socket_address& sa, FormatContext& fc) const {
+        std::ostringstream os{};
+        os << sa;
+        return std::formatter<std::string>::format(os.str(), fc);
+    }
+};
+
 
 namespace std {
 template<>
@@ -164,5 +188,4 @@ template<>
 struct hash<::sockaddr_un> {
     size_t operator()(const ::sockaddr_un&) const;
 };
-
 }

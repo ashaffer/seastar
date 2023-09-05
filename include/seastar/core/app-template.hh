@@ -19,7 +19,7 @@
  * Copyright (C) 2014 Cloudius Systems, Ltd.
  */
 #pragma once
-
+#include <seastar/core/seastar.hh>
 #include <boost/program_options.hpp>
 #include <boost/optional.hpp>
 #include <functional>

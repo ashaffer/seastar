@@ -33,6 +33,7 @@
 #include <seastar/core/sleep.hh>
 #include <seastar/core/print.hh>
 #include <boost/range/irange.hpp>
+#include <format>
 #include <chrono>
 
 using namespace seastar;
@@ -104,7 +105,7 @@ struct test_env {
             assert(ratios.size() == r.size());
             auto str = name + ":";
             for (auto i = 0ul; i < r.size(); ++i) {
-                str += format(" r[{:d}] = {:d}", i, r[i]);
+                str += std::format(" r[{:d}] = {:d}", i, r[i]);
             }
             std::cout << str << std::endl;
             for (auto i = 0ul; i < ratios.size(); ++i) {
@@ -357,6 +358,6 @@ SEASTAR_TEST_CASE(test_fair_queue_random_run) {
     return sleep(reqs * 100us).then([env, reqs] {
         // Accept 5 % error.
         auto expected_error = std::max(1, int(round(reqs * 0.05)));
-       return env->verify(format("random_run ({:d} msec)", reqs / 10), {1, 1}, expected_error);
+       return env->verify(std::format("random_run ({:d} msec)", reqs / 10), {1, 1}, expected_error);
     }).then([env] {});
 }

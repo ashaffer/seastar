@@ -1,0 +1,2274 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeDetermineSystem.cmake:204 (message)"
+      - "CMakeLists.txt:39 (project)"
+    message: |
+      The system is: Linux - 5.19.0-46-generic - x86_64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:39 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /usr/bin/c++ 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is GNU, found in:
+        /home/andrew/seastar/CMakeFiles/3.26.3/CompilerIdCXX/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:39 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-9cDS8i"
+      binary: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-9cDS8i"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/andrew/seastar/cmake;/home/andrew/seastar"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-9cDS8i
+        
+        Run Build Command(s):/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_b9953/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_b9953.dir/build.make CMakeFiles/cmTC_b9953.dir/build
+        gmake[1]: Entering directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-9cDS8i'
+        Building CXX object CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o
+        /usr/bin/c++   -v -o CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o -c /home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeCXXCompilerABI.cpp
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/c++
+        OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
+        OFFLOAD_TARGET_DEFAULT=1
+        Target: x86_64-linux-gnu
+        Configured with: ../src/configure -v --with-pkgversion='Ubuntu 11.4.0-1ubuntu1~22.04' --with-bugurl=file:///usr/share/doc/gcc-11/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++,m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-11 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-11-XeT9lY/gcc-11-11.4.0/debian/tmp-nvptx/usr,amdgcn-amdhsa=/build/gcc-11-XeT9lY/gcc-11-11.4.0/debian/tmp-gcn/usr --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --with-build-config=bootstrap-lto-lean --enable-link-serialization=2
+        Thread model: posix
+        Supported LTO compression algorithms: zlib zstd
+        gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) 
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_b9953.dir/'
+         /usr/lib/gcc/x86_64-linux-gnu/11/cc1plus -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE /home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_b9953.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccLdPV4P.s
+        GNU C++17 (Ubuntu 11.4.0-1ubuntu1~22.04) version 11.4.0 (x86_64-linux-gnu)
+        	compiled by GNU C version 11.4.0, GMP version 6.2.1, MPFR version 4.1.0, MPC version 1.2.1, isl version isl-0.24-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        ignoring duplicate directory "/usr/include/x86_64-linux-gnu/c++/11"
+        ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"
+        ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/11/include-fixed"
+        ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/11/../../../../x86_64-linux-gnu/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /usr/lib/llvm-17/include/c++/v1
+         /home/andrew/rapidjson/include
+         /home/andrew/openssl/include
+         /usr/include/python3.11
+         /home/andrew/yaml-cpp/include
+         /usr/include/c++/11
+         /usr/include/x86_64-linux-gnu/c++/11
+         /usr/include/c++/11/backward
+         /usr/lib/gcc/x86_64-linux-gnu/11/include
+         /usr/local/include
+         /usr/include/x86_64-linux-gnu
+         /usr/include
+        End of search list.
+        GNU C++17 (Ubuntu 11.4.0-1ubuntu1~22.04) version 11.4.0 (x86_64-linux-gnu)
+        	compiled by GNU C version 11.4.0, GMP version 6.2.1, MPFR version 4.1.0, MPC version 1.2.1, isl version isl-0.24-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: d591828bb4d392ae8b7b160e5bb0b95f
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_b9953.dir/'
+         as -v --64 -o CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccLdPV4P.s
+        GNU assembler version 2.38 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.38
+        COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/
+        LIBRARY_PATH=/usr/local/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/home/andrew/openssl/:/usr/local/lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.'
+        Linking CXX executable cmTC_b9953
+        /home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b9953.dir/link.txt --verbose=1
+        /usr/bin/c++  -v CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_b9953 
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/c++
+        COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper
+        OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
+        OFFLOAD_TARGET_DEFAULT=1
+        Target: x86_64-linux-gnu
+        Configured with: ../src/configure -v --with-pkgversion='Ubuntu 11.4.0-1ubuntu1~22.04' --with-bugurl=file:///usr/share/doc/gcc-11/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++,m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-11 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-11-XeT9lY/gcc-11-11.4.0/debian/tmp-nvptx/usr,amdgcn-amdhsa=/build/gcc-11-XeT9lY/gcc-11-11.4.0/debian/tmp-gcn/usr --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --with-build-config=bootstrap-lto-lean --enable-link-serialization=2
+        Thread model: posix
+        Supported LTO compression algorithms: zlib zstd
+        gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) 
+        COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/
+        LIBRARY_PATH=/usr/local/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/home/andrew/openssl/:/usr/local/lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_b9953' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_b9953.'
+         /usr/lib/gcc/x86_64-linux-gnu/11/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper -plugin-opt=-fresolution=/tmp/ccetvz4N.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_b9953 /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o -L/usr/local/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/home/andrew/openssl -L/usr/local/lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.. CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_b9953' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_b9953.'
+        gmake[1]: Leaving directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-9cDS8i'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeDetermineCompilerABI.cmake:127 (message)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:39 (project)"
+    message: |
+      Parsed CXX implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/usr/lib/llvm-17/include/c++/v1]
+          add: [/home/andrew/rapidjson/include]
+          add: [/home/andrew/openssl/include]
+          add: [/usr/include/python3.11]
+          add: [/home/andrew/yaml-cpp/include]
+          add: [/usr/include/c++/11]
+          add: [/usr/include/x86_64-linux-gnu/c++/11]
+          add: [/usr/include/c++/11/backward]
+          add: [/usr/lib/gcc/x86_64-linux-gnu/11/include]
+          add: [/usr/local/include]
+          add: [/usr/include/x86_64-linux-gnu]
+          add: [/usr/include]
+        end of search list found
+        collapse include dir [/usr/lib/llvm-17/include/c++/v1] ==> [/usr/lib/llvm-17/include/c++/v1]
+        collapse include dir [/home/andrew/rapidjson/include] ==> [/home/andrew/rapidjson/include]
+        collapse include dir [/home/andrew/openssl/include] ==> [/home/andrew/openssl/include]
+        collapse include dir [/usr/include/python3.11] ==> [/usr/include/python3.11]
+        collapse include dir [/home/andrew/yaml-cpp/include] ==> [/home/andrew/yaml-cpp/include]
+        collapse include dir [/usr/include/c++/11] ==> [/usr/include/c++/11]
+        collapse include dir [/usr/include/x86_64-linux-gnu/c++/11] ==> [/usr/include/x86_64-linux-gnu/c++/11]
+        collapse include dir [/usr/include/c++/11/backward] ==> [/usr/include/c++/11/backward]
+        collapse include dir [/usr/lib/gcc/x86_64-linux-gnu/11/include] ==> [/usr/lib/gcc/x86_64-linux-gnu/11/include]
+        collapse include dir [/usr/local/include] ==> [/usr/local/include]
+        collapse include dir [/usr/include/x86_64-linux-gnu] ==> [/usr/include/x86_64-linux-gnu]
+        collapse include dir [/usr/include] ==> [/usr/include]
+        implicit include dirs: [/usr/lib/llvm-17/include/c++/v1;/home/andrew/rapidjson/include;/home/andrew/openssl/include;/usr/include/python3.11;/home/andrew/yaml-cpp/include;/usr/include/c++/11;/usr/include/x86_64-linux-gnu/c++/11;/usr/include/c++/11/backward;/usr/lib/gcc/x86_64-linux-gnu/11/include;/usr/local/include;/usr/include/x86_64-linux-gnu;/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeDetermineCompilerABI.cmake:152 (message)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:39 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        ignore line: [Change Dir: /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-9cDS8i]
+        ignore line: []
+        ignore line: [Run Build Command(s):/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_b9953/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_b9953.dir/build.make CMakeFiles/cmTC_b9953.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-9cDS8i']
+        ignore line: [Building CXX object CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o -c /home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/usr/bin/c++]
+        ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
+        ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+        ignore line: [Target: x86_64-linux-gnu]
+        ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 11.4.0-1ubuntu1~22.04' --with-bugurl=file:///usr/share/doc/gcc-11/README.Bugs --enable-languages=c ada c++ go brig d fortran objc obj-c++ m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-11 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32 m64 mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-11-XeT9lY/gcc-11-11.4.0/debian/tmp-nvptx/usr amdgcn-amdhsa=/build/gcc-11-XeT9lY/gcc-11-11.4.0/debian/tmp-gcn/usr --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --with-build-config=bootstrap-lto-lean --enable-link-serialization=2]
+        ignore line: [Thread model: posix]
+        ignore line: [Supported LTO compression algorithms: zlib zstd]
+        ignore line: [gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_b9953.dir/']
+        ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/11/cc1plus -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE /home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_b9953.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccLdPV4P.s]
+        ignore line: [GNU C++17 (Ubuntu 11.4.0-1ubuntu1~22.04) version 11.4.0 (x86_64-linux-gnu)]
+        ignore line: [	compiled by GNU C version 11.4.0  GMP version 6.2.1  MPFR version 4.1.0  MPC version 1.2.1  isl version isl-0.24-GMP]
+        ignore line: []
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [ignoring duplicate directory "/usr/include/x86_64-linux-gnu/c++/11"]
+        ignore line: [ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"]
+        ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/11/include-fixed"]
+        ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/11/../../../../x86_64-linux-gnu/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /usr/lib/llvm-17/include/c++/v1]
+        ignore line: [ /home/andrew/rapidjson/include]
+        ignore line: [ /home/andrew/openssl/include]
+        ignore line: [ /usr/include/python3.11]
+        ignore line: [ /home/andrew/yaml-cpp/include]
+        ignore line: [ /usr/include/c++/11]
+        ignore line: [ /usr/include/x86_64-linux-gnu/c++/11]
+        ignore line: [ /usr/include/c++/11/backward]
+        ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/11/include]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /usr/include/x86_64-linux-gnu]
+        ignore line: [ /usr/include]
+        ignore line: [End of search list.]
+        ignore line: [GNU C++17 (Ubuntu 11.4.0-1ubuntu1~22.04) version 11.4.0 (x86_64-linux-gnu)]
+        ignore line: [	compiled by GNU C version 11.4.0  GMP version 6.2.1  MPFR version 4.1.0  MPC version 1.2.1  isl version isl-0.24-GMP]
+        ignore line: []
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [Compiler executable checksum: d591828bb4d392ae8b7b160e5bb0b95f]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_b9953.dir/']
+        ignore line: [ as -v --64 -o CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccLdPV4P.s]
+        ignore line: [GNU assembler version 2.38 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.38]
+        ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/]
+        ignore line: [LIBRARY_PATH=/usr/local/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/home/andrew/openssl/:/usr/local/lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.']
+        ignore line: [Linking CXX executable cmTC_b9953]
+        ignore line: [/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b9953.dir/link.txt --verbose=1]
+        ignore line: [/usr/bin/c++  -v CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_b9953 ]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/usr/bin/c++]
+        ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper]
+        ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
+        ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+        ignore line: [Target: x86_64-linux-gnu]
+        ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 11.4.0-1ubuntu1~22.04' --with-bugurl=file:///usr/share/doc/gcc-11/README.Bugs --enable-languages=c ada c++ go brig d fortran objc obj-c++ m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-11 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32 m64 mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-11-XeT9lY/gcc-11-11.4.0/debian/tmp-nvptx/usr amdgcn-amdhsa=/build/gcc-11-XeT9lY/gcc-11-11.4.0/debian/tmp-gcn/usr --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --with-build-config=bootstrap-lto-lean --enable-link-serialization=2]
+        ignore line: [Thread model: posix]
+        ignore line: [Supported LTO compression algorithms: zlib zstd]
+        ignore line: [gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) ]
+        ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/]
+        ignore line: [LIBRARY_PATH=/usr/local/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/home/andrew/openssl/:/usr/local/lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_b9953' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_b9953.']
+        link line: [ /usr/lib/gcc/x86_64-linux-gnu/11/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper -plugin-opt=-fresolution=/tmp/ccetvz4N.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_b9953 /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o -L/usr/local/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/home/andrew/openssl -L/usr/local/lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.. CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o]
+          arg [/usr/lib/gcc/x86_64-linux-gnu/11/collect2] ==> ignore
+          arg [-plugin] ==> ignore
+          arg [/usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so] ==> ignore
+          arg [-plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccetvz4N.res] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [--build-id] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [-m] ==> ignore
+          arg [elf_x86_64] ==> ignore
+          arg [--hash-style=gnu] ==> ignore
+          arg [--as-needed] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+          arg [-pie] ==> ignore
+          arg [-znow] ==> ignore
+          arg [-zrelro] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_b9953] ==> ignore
+          arg [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o]
+          arg [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o]
+          arg [/usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o]
+          arg [-L/usr/local/lib/../lib] ==> dir [/usr/local/lib/../lib]
+          arg [-L/usr/lib/gcc/x86_64-linux-gnu/11] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/11]
+          arg [-L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu]
+          arg [-L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib]
+          arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+          arg [-L/lib/../lib] ==> dir [/lib/../lib]
+          arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+          arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
+          arg [-L/home/andrew/openssl] ==> dir [/home/andrew/openssl]
+          arg [-L/usr/local/lib] ==> dir [/usr/local/lib]
+          arg [-L/usr/lib/gcc/x86_64-linux-gnu/11/../../..] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/11/../../..]
+          arg [CMakeFiles/cmTC_b9953.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [-lstdc++] ==> lib [stdc++]
+          arg [-lm] ==> lib [m]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [-lc] ==> lib [c]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [/usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o]
+          arg [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o]
+        collapse obj [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o] ==> [/usr/lib/x86_64-linux-gnu/Scrt1.o]
+        collapse obj [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o] ==> [/usr/lib/x86_64-linux-gnu/crti.o]
+        collapse obj [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o] ==> [/usr/lib/x86_64-linux-gnu/crtn.o]
+        collapse library dir [/usr/local/lib/../lib] ==> [/usr/local/lib]
+        collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/11] ==> [/usr/lib/gcc/x86_64-linux-gnu/11]
+        collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+        collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib] ==> [/usr/lib]
+        collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+        collapse library dir [/lib/../lib] ==> [/lib]
+        collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+        collapse library dir [/usr/lib/../lib] ==> [/usr/lib]
+        collapse library dir [/home/andrew/openssl] ==> [/home/andrew/openssl]
+        collapse library dir [/usr/local/lib] ==> [/usr/local/lib]
+        collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/11/../../..] ==> [/usr/lib]
+        implicit libs: [stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+        implicit objs: [/usr/lib/x86_64-linux-gnu/Scrt1.o;/usr/lib/x86_64-linux-gnu/crti.o;/usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o;/usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o;/usr/lib/x86_64-linux-gnu/crtn.o]
+        implicit dirs: [/usr/local/lib;/usr/lib/gcc/x86_64-linux-gnu/11;/usr/lib/x86_64-linux-gnu;/usr/lib;/lib/x86_64-linux-gnu;/lib;/home/andrew/openssl]
+        implicit fwks: []
+      
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CheckCXXSourceCompiles.cmake:76 (cmake_check_source_compiles)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/FindThreads.cmake:99 (CHECK_CXX_SOURCE_COMPILES)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/FindThreads.cmake:163 (_threads_check_libc)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/boost_thread-1.74.0/boost_thread-config.cmake:116 (find_dependency)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake:141 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake:258 (boost_find_component)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/FindBoost.cmake:594 (find_package)"
+      - "cmake/SeastarDependencies.cmake:108 (find_package)"
+      - "CMakeLists.txt:278 (seastar_find_dependencies)"
+    directories:
+      source: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-NKZzY4"
+      binary: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-NKZzY4"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/andrew/seastar/cmake;/home/andrew/seastar"
+    buildResult:
+      variable: "CMAKE_HAVE_LIBC_PTHREAD"
+      cached: true
+      stdout: |
+        Change Dir: /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-NKZzY4
+        
+        Run Build Command(s):/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_0728c/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_0728c.dir/build.make CMakeFiles/cmTC_0728c.dir/build
+        gmake[1]: Entering directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-NKZzY4'
+        Building CXX object CMakeFiles/cmTC_0728c.dir/src.cxx.o
+        /usr/bin/c++ -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_0728c.dir/src.cxx.o -c /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-NKZzY4/src.cxx
+        Linking CXX executable cmTC_0728c
+        /home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0728c.dir/link.txt --verbose=1
+        /usr/bin/c++ CMakeFiles/cmTC_0728c.dir/src.cxx.o -o cmTC_0728c 
+        gmake[1]: Leaving directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-NKZzY4'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CheckSymbolExists.cmake:145 (try_compile)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CheckSymbolExists.cmake:75 (__CHECK_SYMBOL_EXISTS_IMPL)"
+      - "cmake/Findlz4.cmake:60 (check_symbol_exists)"
+      - "cmake/SeastarDependencies.cmake:108 (find_package)"
+      - "CMakeLists.txt:278 (seastar_find_dependencies)"
+    checks:
+      - "Looking for LZ4_compress_default"
+    directories:
+      source: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nyOkRi"
+      binary: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nyOkRi"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/andrew/seastar/cmake;/home/andrew/seastar"
+    buildResult:
+      variable: "lz4_HAVE_COMPRESS_DEFAULT"
+      cached: true
+      stdout: |
+        Change Dir: /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nyOkRi
+        
+        Run Build Command(s):/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_7476e/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_7476e.dir/build.make CMakeFiles/cmTC_7476e.dir/build
+        gmake[1]: Entering directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nyOkRi'
+        Building CXX object CMakeFiles/cmTC_7476e.dir/CheckSymbolExists.cxx.o
+        /usr/bin/c++    -o CMakeFiles/cmTC_7476e.dir/CheckSymbolExists.cxx.o -c /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nyOkRi/CheckSymbolExists.cxx
+        Linking CXX executable cmTC_7476e
+        /home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7476e.dir/link.txt --verbose=1
+        /usr/bin/c++ CMakeFiles/cmTC_7476e.dir/CheckSymbolExists.cxx.o -o cmTC_7476e  /usr/lib/x86_64-linux-gnu/liblz4.a 
+        gmake[1]: Leaving directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nyOkRi'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CheckCXXSourceCompiles.cmake:76 (cmake_check_source_compiles)"
+      - "cmake/FindConcepts.cmake:26 (check_cxx_source_compiles)"
+      - "cmake/SeastarDependencies.cmake:108 (find_package)"
+      - "CMakeLists.txt:278 (seastar_find_dependencies)"
+    checks:
+      - "Performing Test Concepts_FOUND"
+    directories:
+      source: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-wXd1x9"
+      binary: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-wXd1x9"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/andrew/seastar/cmake;/home/andrew/seastar"
+    buildResult:
+      variable: "Concepts_FOUND"
+      cached: true
+      stdout: |
+        Change Dir: /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-wXd1x9
+        
+        Run Build Command(s):/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_5b93c/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_5b93c.dir/build.make CMakeFiles/cmTC_5b93c.dir/build
+        gmake[1]: Entering directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-wXd1x9'
+        Building CXX object CMakeFiles/cmTC_5b93c.dir/src.cxx.o
+        /usr/bin/c++ -DConcepts_FOUND  -fconcepts -o CMakeFiles/cmTC_5b93c.dir/src.cxx.o -c /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-wXd1x9/src.cxx
+        /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-wXd1x9/src.cxx:3:32: note: ‘#pragma message: Concepts test’
+            3 | #pragma message("Concepts test")
+              |                                ^
+        Linking CXX executable cmTC_5b93c
+        /home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5b93c.dir/link.txt --verbose=1
+        /usr/bin/c++  -fconcepts CMakeFiles/cmTC_5b93c.dir/src.cxx.o -o cmTC_5b93c  /usr/lib/x86_64-linux-gnu/liblz4.a 
+        gmake[1]: Leaving directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-wXd1x9'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CheckCXXSourceCompiles.cmake:76 (cmake_check_source_compiles)"
+      - "cmake/FindLinuxMembarrier.cmake:28 (check_cxx_source_compiles)"
+      - "cmake/SeastarDependencies.cmake:108 (find_package)"
+      - "CMakeLists.txt:278 (seastar_find_dependencies)"
+    checks:
+      - "Performing Test LinuxMembarrier_FOUND"
+    directories:
+      source: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-tyx4of"
+      binary: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-tyx4of"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/andrew/seastar/cmake;/home/andrew/seastar"
+    buildResult:
+      variable: "LinuxMembarrier_FOUND"
+      cached: true
+      stdout: |
+        Change Dir: /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-tyx4of
+        
+        Run Build Command(s):/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_6780f/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_6780f.dir/build.make CMakeFiles/cmTC_6780f.dir/build
+        gmake[1]: Entering directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-tyx4of'
+        Building CXX object CMakeFiles/cmTC_6780f.dir/src.cxx.o
+        /usr/bin/c++ -DLinuxMembarrier_FOUND  -fconcepts -o CMakeFiles/cmTC_6780f.dir/src.cxx.o -c /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-tyx4of/src.cxx
+        /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-tyx4of/src.cxx:5:34: note: ‘#pragma message: membarrier test’
+            5 | #pragma message("membarrier test")
+              |                                  ^
+        Linking CXX executable cmTC_6780f
+        /home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6780f.dir/link.txt --verbose=1
+        /usr/bin/c++  -fconcepts CMakeFiles/cmTC_6780f.dir/src.cxx.o -o cmTC_6780f  /usr/lib/x86_64-linux-gnu/liblz4.a 
+        gmake[1]: Leaving directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-tyx4of'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CheckCXXSourceCompiles.cmake:76 (cmake_check_source_compiles)"
+      - "cmake/FindStdAtomic.cmake:27 (check_cxx_source_compiles)"
+      - "cmake/FindStdAtomic.cmake:30 (_stdatomic_can_link)"
+      - "cmake/SeastarDependencies.cmake:108 (find_package)"
+      - "CMakeLists.txt:278 (seastar_find_dependencies)"
+    checks:
+      - "Performing Test StdAtomic_EXPLICIT_LINK"
+    directories:
+      source: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-iQq3q9"
+      binary: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-iQq3q9"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/andrew/seastar/cmake;/home/andrew/seastar"
+    buildResult:
+      variable: "StdAtomic_EXPLICIT_LINK"
+      cached: true
+      stdout: |
+        Change Dir: /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-iQq3q9
+        
+        Run Build Command(s):/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_7a9b7/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_7a9b7.dir/build.make CMakeFiles/cmTC_7a9b7.dir/build
+        gmake[1]: Entering directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-iQq3q9'
+        Building CXX object CMakeFiles/cmTC_7a9b7.dir/src.cxx.o
+        /usr/bin/c++ -DStdAtomic_EXPLICIT_LINK  -fconcepts -o CMakeFiles/cmTC_7a9b7.dir/src.cxx.o -c /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-iQq3q9/src.cxx
+        Linking CXX executable cmTC_7a9b7
+        /home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7a9b7.dir/link.txt --verbose=1
+        /usr/bin/c++  -fconcepts CMakeFiles/cmTC_7a9b7.dir/src.cxx.o -o cmTC_7a9b7  -latomic 
+        gmake[1]: Leaving directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-iQq3q9'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CheckCXXSourceCompiles.cmake:76 (cmake_check_source_compiles)"
+      - "cmake/FindStdFilesystem.cmake:42 (check_cxx_source_compiles)"
+      - "cmake/FindStdFilesystem.cmake:46 (_stdfilesystem_check_compiles)"
+      - "cmake/SeastarDependencies.cmake:108 (find_package)"
+      - "CMakeLists.txt:278 (seastar_find_dependencies)"
+    checks:
+      - "Performing Test StdFilesystem_NO_EXPLICIT_LINK"
+    directories:
+      source: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5"
+      binary: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/andrew/seastar/cmake;/home/andrew/seastar"
+    buildResult:
+      variable: "StdFilesystem_NO_EXPLICIT_LINK"
+      cached: true
+      stdout: |
+        Change Dir: /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5
+        
+        Run Build Command(s):/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_6963e/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_6963e.dir/build.make CMakeFiles/cmTC_6963e.dir/build
+        gmake[1]: Entering directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5'
+        Building CXX object CMakeFiles/cmTC_6963e.dir/src.cxx.o
+        /usr/bin/c++ -DStdFilesystem_NO_EXPLICIT_LINK  -std=c++20 -o CMakeFiles/cmTC_6963e.dir/src.cxx.o -c /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx
+        In file included from /usr/lib/llvm-17/include/c++/v1/stdlib.h:94,
+                         from /usr/lib/llvm-17/include/c++/v1/cstdlib:87,
+                         from /usr/lib/llvm-17/include/c++/v1/new:99,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory/construct_at.h:23,
+                         from /usr/lib/llvm-17/include/c++/v1/__string/constexpr_c_functions.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/find.h:17,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/remove.h:12,
+                         from /usr/lib/llvm-17/include/c++/v1/string:569,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/include/c++/11/stdlib.h:38:12: error: ‘abort’ has not been declared in ‘std’
+           38 | using std::abort;
+              |            ^~~~~
+        /usr/include/c++/11/stdlib.h:39:12: error: ‘atexit’ has not been declared in ‘std’
+           39 | using std::atexit;
+              |            ^~~~~~
+        /usr/include/c++/11/stdlib.h:40:12: error: ‘exit’ has not been declared in ‘std’
+           40 | using std::exit;
+              |            ^~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/cstdlib:87,
+                         from /usr/lib/llvm-17/include/c++/v1/new:99,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory/construct_at.h:23,
+                         from /usr/lib/llvm-17/include/c++/v1/__string/constexpr_c_functions.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/find.h:17,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/remove.h:12,
+                         from /usr/lib/llvm-17/include/c++/v1/string:569,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/stdlib.h:148:34: error: ‘ldiv_t’ does not name a type
+          148 | inline _LIBCPP_INLINE_VISIBILITY ldiv_t div(long __x, long __y) _NOEXCEPT {
+              |                                  ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/stdlib.h:152:34: error: ‘lldiv_t’ does not name a type
+          152 | inline _LIBCPP_INLINE_VISIBILITY lldiv_t div(long long __x,
+              |                                  ^~~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/new:99,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory/construct_at.h:23,
+                         from /usr/lib/llvm-17/include/c++/v1/__string/constexpr_c_functions.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/find.h:17,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/remove.h:12,
+                         from /usr/lib/llvm-17/include/c++/v1/string:569,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:104:9: error: ‘div_t’ has not been declared in ‘::’
+          104 | using ::div_t _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:105:9: error: ‘ldiv_t’ has not been declared in ‘::’
+          105 | using ::ldiv_t _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:106:9: error: ‘lldiv_t’ has not been declared in ‘::’
+          106 | using ::lldiv_t _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:107:9: error: ‘atof’ has not been declared in ‘::’
+          107 | using ::atof _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:108:9: error: ‘atoi’ has not been declared in ‘::’
+          108 | using ::atoi _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:109:9: error: ‘atol’ has not been declared in ‘::’
+          109 | using ::atol _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:110:9: error: ‘atoll’ has not been declared in ‘::’
+          110 | using ::atoll _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:111:9: error: ‘strtod’ has not been declared in ‘::’
+          111 | using ::strtod _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:112:9: error: ‘strtof’ has not been declared in ‘::’
+          112 | using ::strtof _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:113:9: error: ‘strtold’ has not been declared in ‘::’
+          113 | using ::strtold _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:114:9: error: ‘strtol’ has not been declared in ‘::’
+          114 | using ::strtol _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:115:9: error: ‘strtoll’ has not been declared in ‘::’
+          115 | using ::strtoll _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:116:9: error: ‘strtoul’ has not been declared in ‘::’
+          116 | using ::strtoul _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:117:9: error: ‘strtoull’ has not been declared in ‘::’
+          117 | using ::strtoull _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:118:9: error: ‘rand’ has not been declared in ‘::’
+          118 | using ::rand _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:119:9: error: ‘srand’ has not been declared in ‘::’
+          119 | using ::srand _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:120:9: error: ‘calloc’ has not been declared in ‘::’
+          120 | using ::calloc _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:121:9: error: ‘free’ has not been declared in ‘::’
+          121 | using ::free _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:122:9: error: ‘malloc’ has not been declared in ‘::’
+          122 | using ::malloc _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:123:9: error: ‘realloc’ has not been declared in ‘::’
+          123 | using ::realloc _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:124:9: error: ‘abort’ has not been declared in ‘::’
+          124 | using ::abort _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:125:9: error: ‘atexit’ has not been declared in ‘::’
+          125 | using ::atexit _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:126:9: error: ‘exit’ has not been declared in ‘::’
+          126 | using ::exit _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:127:9: error: ‘_Exit’ has not been declared in ‘::’
+          127 | using ::_Exit _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:128:9: error: ‘getenv’ has not been declared in ‘::’
+          128 | using ::getenv _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:129:9: error: ‘system’ has not been declared in ‘::’
+          129 | using ::system _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:130:9: error: ‘bsearch’ has not been declared in ‘::’
+          130 | using ::bsearch _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:131:9: error: ‘qsort’ has not been declared in ‘::’
+          131 | using ::qsort _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:133:9: error: ‘labs’ has not been declared in ‘::’
+          133 | using ::labs _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:134:9: error: ‘llabs’ has not been declared in ‘::’
+          134 | using ::llabs _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:135:9: error: ‘div’ has not been declared in ‘::’
+          135 | using ::div _LIBCPP_USING_IF_EXISTS;
+              |         ^~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:136:9: error: ‘ldiv’ has not been declared in ‘::’
+          136 | using ::ldiv _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:137:9: error: ‘lldiv’ has not been declared in ‘::’
+          137 | using ::lldiv _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:138:9: error: ‘mblen’ has not been declared in ‘::’
+          138 | using ::mblen _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:139:9: error: ‘mbtowc’ has not been declared in ‘::’
+          139 | using ::mbtowc _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:140:9: error: ‘wctomb’ has not been declared in ‘::’
+          140 | using ::wctomb _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:141:9: error: ‘mbstowcs’ has not been declared in ‘::’
+          141 | using ::mbstowcs _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:142:9: error: ‘wcstombs’ has not been declared in ‘::’
+          142 | using ::wcstombs _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:144:9: error: ‘at_quick_exit’ has not been declared in ‘::’
+          144 | using ::at_quick_exit _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:145:9: error: ‘quick_exit’ has not been declared in ‘::’
+          145 | using ::quick_exit _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:148:9: error: ‘aligned_alloc’ has not been declared in ‘::’
+          148 | using ::aligned_alloc _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/__iterator/reverse_iterator.h:28,
+                         from /usr/lib/llvm-17/include/c++/v1/string:580,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/__iterator/segmented_iterator.h:72:46: error: template argument ‘(sizeof (_Tp) * 0)’ involves template parameter(s)
+           72 | struct __has_specialization<_Tp, sizeof(_Tp) * 0> : true_type {};
+              |                                  ~~~~~~~~~~~~^~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/math.h:301,
+                         from /usr/lib/llvm-17/include/c++/v1/cmath:318,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/strong_order.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/weak_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/partial_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/compare_partial_order_fallback.h:13,
+                         from /usr/lib/llvm-17/include/c++/v1/compare:145,
+                         from /usr/lib/llvm-17/include/c++/v1/tuple:268,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory_resource/polymorphic_allocator.h:21,
+                         from /usr/lib/llvm-17/include/c++/v1/string:590,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/include/c++/11/math.h:39:12: error: ‘acos’ has not been declared in ‘std’
+           39 | using std::acos;
+              |            ^~~~
+        /usr/include/c++/11/math.h:40:12: error: ‘asin’ has not been declared in ‘std’
+           40 | using std::asin;
+              |            ^~~~
+        /usr/include/c++/11/math.h:41:12: error: ‘atan’ has not been declared in ‘std’
+           41 | using std::atan;
+              |            ^~~~
+        /usr/include/c++/11/math.h:42:12: error: ‘atan2’ has not been declared in ‘std’
+           42 | using std::atan2;
+              |            ^~~~~
+        /usr/include/c++/11/math.h:43:12: error: ‘cos’ has not been declared in ‘std’
+           43 | using std::cos;
+              |            ^~~
+        /usr/include/c++/11/math.h:44:12: error: ‘sin’ has not been declared in ‘std’
+           44 | using std::sin;
+              |            ^~~
+        /usr/include/c++/11/math.h:45:12: error: ‘tan’ has not been declared in ‘std’
+           45 | using std::tan;
+              |            ^~~
+        /usr/include/c++/11/math.h:46:12: error: ‘cosh’ has not been declared in ‘std’
+           46 | using std::cosh;
+              |            ^~~~
+        /usr/include/c++/11/math.h:47:12: error: ‘sinh’ has not been declared in ‘std’
+           47 | using std::sinh;
+              |            ^~~~
+        /usr/include/c++/11/math.h:48:12: error: ‘tanh’ has not been declared in ‘std’
+           48 | using std::tanh;
+              |            ^~~~
+        /usr/include/c++/11/math.h:49:12: error: ‘exp’ has not been declared in ‘std’
+           49 | using std::exp;
+              |            ^~~
+        /usr/include/c++/11/math.h:50:12: error: ‘frexp’ has not been declared in ‘std’
+           50 | using std::frexp;
+              |            ^~~~~
+        /usr/include/c++/11/math.h:51:12: error: ‘ldexp’ has not been declared in ‘std’
+           51 | using std::ldexp;
+              |            ^~~~~
+        /usr/include/c++/11/math.h:52:12: error: ‘log’ has not been declared in ‘std’
+           52 | using std::log;
+              |            ^~~
+        /usr/include/c++/11/math.h:53:12: error: ‘log10’ has not been declared in ‘std’
+           53 | using std::log10;
+              |            ^~~~~
+        /usr/include/c++/11/math.h:54:12: error: ‘modf’ has not been declared in ‘std’
+           54 | using std::modf;
+              |            ^~~~
+        /usr/include/c++/11/math.h:55:12: error: ‘pow’ has not been declared in ‘std’
+           55 | using std::pow;
+              |            ^~~
+        /usr/include/c++/11/math.h:56:12: error: ‘sqrt’ has not been declared in ‘std’
+           56 | using std::sqrt;
+              |            ^~~~
+        /usr/include/c++/11/math.h:57:12: error: ‘ceil’ has not been declared in ‘std’
+           57 | using std::ceil;
+              |            ^~~~
+        /usr/include/c++/11/math.h:58:12: error: ‘fabs’ has not been declared in ‘std’
+           58 | using std::fabs;
+              |            ^~~~
+        /usr/include/c++/11/math.h:59:12: error: ‘floor’ has not been declared in ‘std’
+           59 | using std::floor;
+              |            ^~~~~
+        /usr/include/c++/11/math.h:60:12: error: ‘fmod’ has not been declared in ‘std’
+           60 | using std::fmod;
+              |            ^~~~
+        /usr/include/c++/11/math.h:183:12: error: ‘lerp’ has not been declared in ‘std’
+          183 | using std::lerp;
+              |            ^~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/cmath:318,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/strong_order.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/weak_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/partial_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/compare_partial_order_fallback.h:13,
+                         from /usr/lib/llvm-17/include/c++/v1/compare:145,
+                         from /usr/lib/llvm-17/include/c++/v1/tuple:268,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory_resource/polymorphic_allocator.h:21,
+                         from /usr/lib/llvm-17/include/c++/v1/string:590,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/math.h: In function ‘int fpclassify(_A1)’:
+        /usr/lib/llvm-17/include/c++/v1/math.h:388:31: error: ‘FP_NAN’ was not declared in this scope
+          388 |   return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __x);
+              |                               ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/math.h:388:39: error: ‘FP_INFINITE’ was not declared in this scope
+          388 |   return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __x);
+              |                                       ^~~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/math.h:388:52: error: ‘FP_NORMAL’ was not declared in this scope
+          388 |   return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __x);
+              |                                                    ^~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/math.h:388:63: error: ‘FP_SUBNORMAL’ was not declared in this scope
+          388 |   return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __x);
+              |                                                               ^~~~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/math.h:388:77: error: ‘FP_ZERO’ was not declared in this scope; did you mean ‘CPU_ZERO’?
+          388 |   return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __x);
+              |                                                                             ^~~~~~~
+              |                                                                             CPU_ZERO
+        /usr/lib/llvm-17/include/c++/v1/math.h: In function ‘int fpclassify(_A1)’:
+        /usr/lib/llvm-17/include/c++/v1/math.h:393:21: error: ‘FP_ZERO’ was not declared in this scope; did you mean ‘CPU_ZERO’?
+          393 |   return __x == 0 ? FP_ZERO : FP_NORMAL;
+              |                     ^~~~~~~
+              |                     CPU_ZERO
+        /usr/lib/llvm-17/include/c++/v1/math.h:393:31: error: ‘FP_NORMAL’ was not declared in this scope
+          393 |   return __x == 0 ? FP_ZERO : FP_NORMAL;
+              |                               ^~~~~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/__compare/strong_order.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/weak_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/partial_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/compare_partial_order_fallback.h:13,
+                         from /usr/lib/llvm-17/include/c++/v1/compare:145,
+                         from /usr/lib/llvm-17/include/c++/v1/tuple:268,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory_resource/polymorphic_allocator.h:21,
+                         from /usr/lib/llvm-17/include/c++/v1/string:590,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/cmath: At global scope:
+        /usr/lib/llvm-17/include/c++/v1/cmath:351:9: error: ‘float_t’ has not been declared in ‘::’
+          351 | using ::float_t _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:352:9: error: ‘double_t’ has not been declared in ‘::’
+          352 | using ::double_t _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:357:9: error: ‘acosf’ has not been declared in ‘::’
+          357 | using ::acosf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:359:9: error: ‘asinf’ has not been declared in ‘::’
+          359 | using ::asinf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:361:9: error: ‘atanf’ has not been declared in ‘::’
+          361 | using ::atanf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:363:9: error: ‘atan2f’ has not been declared in ‘::’
+          363 | using ::atan2f _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:365:9: error: ‘ceilf’ has not been declared in ‘::’
+          365 | using ::ceilf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:367:9: error: ‘cosf’ has not been declared in ‘::’
+          367 | using ::cosf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:369:9: error: ‘coshf’ has not been declared in ‘::’
+          369 | using ::coshf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:372:9: error: ‘expf’ has not been declared in ‘::’
+          372 | using ::expf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:375:9: error: ‘fabsf’ has not been declared in ‘::’
+          375 | using ::fabsf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:377:9: error: ‘floorf’ has not been declared in ‘::’
+          377 | using ::floorf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:380:9: error: ‘fmodf’ has not been declared in ‘::’
+          380 | using ::fmodf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:383:9: error: ‘frexpf’ has not been declared in ‘::’
+          383 | using ::frexpf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:385:9: error: ‘ldexpf’ has not been declared in ‘::’
+          385 | using ::ldexpf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:388:9: error: ‘logf’ has not been declared in ‘::’
+          388 | using ::logf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:391:9: error: ‘log10f’ has not been declared in ‘::’
+          391 | using ::log10f _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:393:9: error: ‘modff’ has not been declared in ‘::’
+          393 | using ::modff _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:396:9: error: ‘powf’ has not been declared in ‘::’
+          396 | using ::powf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:399:9: error: ‘sinf’ has not been declared in ‘::’
+          399 | using ::sinf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:401:9: error: ‘sinhf’ has not been declared in ‘::’
+          401 | using ::sinhf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:404:9: error: ‘sqrtf’ has not been declared in ‘::’
+          404 | using ::sqrtf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:406:9: error: ‘tanf’ has not been declared in ‘::’
+          406 | using ::tanf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:409:9: error: ‘tanhf’ has not been declared in ‘::’
+          409 | using ::tanhf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:412:9: error: ‘acoshf’ has not been declared in ‘::’
+          412 | using ::acoshf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:414:9: error: ‘asinhf’ has not been declared in ‘::’
+          414 | using ::asinhf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:416:9: error: ‘atanhf’ has not been declared in ‘::’
+          416 | using ::atanhf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:418:9: error: ‘cbrtf’ has not been declared in ‘::’
+          418 | using ::cbrtf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:421:9: error: ‘copysignf’ has not been declared in ‘::’
+          421 | using ::copysignf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:424:9: error: ‘erff’ has not been declared in ‘::’
+          424 | using ::erff _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:426:9: error: ‘erfcf’ has not been declared in ‘::’
+          426 | using ::erfcf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:428:9: error: ‘exp2f’ has not been declared in ‘::’
+          428 | using ::exp2f _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:430:9: error: ‘expm1f’ has not been declared in ‘::’
+          430 | using ::expm1f _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:432:9: error: ‘fdimf’ has not been declared in ‘::’
+          432 | using ::fdimf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:433:9: error: ‘fmaf’ has not been declared in ‘::’
+          433 | using ::fmaf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:436:9: error: ‘fmaxf’ has not been declared in ‘::’
+          436 | using ::fmaxf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:438:9: error: ‘fminf’ has not been declared in ‘::’
+          438 | using ::fminf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:440:9: error: ‘hypotf’ has not been declared in ‘::’
+          440 | using ::hypotf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:442:9: error: ‘ilogbf’ has not been declared in ‘::’
+          442 | using ::ilogbf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:444:9: error: ‘lgammaf’ has not been declared in ‘::’
+          444 | using ::lgammaf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:446:9: error: ‘llrintf’ has not been declared in ‘::’
+          446 | using ::llrintf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:448:9: error: ‘llroundf’ has not been declared in ‘::’
+          448 | using ::llroundf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:450:9: error: ‘log1pf’ has not been declared in ‘::’
+          450 | using ::log1pf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:452:9: error: ‘log2f’ has not been declared in ‘::’
+          452 | using ::log2f _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:454:9: error: ‘logbf’ has not been declared in ‘::’
+          454 | using ::logbf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:456:9: error: ‘lrintf’ has not been declared in ‘::’
+          456 | using ::lrintf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:458:9: error: ‘lroundf’ has not been declared in ‘::’
+          458 | using ::lroundf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:460:9: error: ‘nan’ has not been declared in ‘::’
+          460 | using ::nan _LIBCPP_USING_IF_EXISTS;
+              |         ^~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:461:9: error: ‘nanf’ has not been declared in ‘::’
+          461 | using ::nanf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:464:9: error: ‘nearbyintf’ has not been declared in ‘::’
+          464 | using ::nearbyintf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:466:9: error: ‘nextafterf’ has not been declared in ‘::’
+          466 | using ::nextafterf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:468:9: error: ‘nexttowardf’ has not been declared in ‘::’
+          468 | using ::nexttowardf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:470:9: error: ‘remainderf’ has not been declared in ‘::’
+          470 | using ::remainderf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:472:9: error: ‘remquof’ has not been declared in ‘::’
+          472 | using ::remquof _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:474:9: error: ‘rintf’ has not been declared in ‘::’
+          474 | using ::rintf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:476:9: error: ‘roundf’ has not been declared in ‘::’
+          476 | using ::roundf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:478:9: error: ‘scalblnf’ has not been declared in ‘::’
+          478 | using ::scalblnf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:480:9: error: ‘scalbnf’ has not been declared in ‘::’
+          480 | using ::scalbnf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:482:9: error: ‘tgammaf’ has not been declared in ‘::’
+          482 | using ::tgammaf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:484:9: error: ‘truncf’ has not been declared in ‘::’
+          484 | using ::truncf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:486:9: error: ‘acosl’ has not been declared in ‘::’
+          486 | using ::acosl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:487:9: error: ‘asinl’ has not been declared in ‘::’
+          487 | using ::asinl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:488:9: error: ‘atanl’ has not been declared in ‘::’
+          488 | using ::atanl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:489:9: error: ‘atan2l’ has not been declared in ‘::’
+          489 | using ::atan2l _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:490:9: error: ‘ceill’ has not been declared in ‘::’
+          490 | using ::ceill _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:491:9: error: ‘cosl’ has not been declared in ‘::’
+          491 | using ::cosl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:492:9: error: ‘coshl’ has not been declared in ‘::’
+          492 | using ::coshl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:493:9: error: ‘expl’ has not been declared in ‘::’
+          493 | using ::expl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:494:9: error: ‘fabsl’ has not been declared in ‘::’
+          494 | using ::fabsl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:495:9: error: ‘floorl’ has not been declared in ‘::’
+          495 | using ::floorl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:496:9: error: ‘fmodl’ has not been declared in ‘::’
+          496 | using ::fmodl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:497:9: error: ‘frexpl’ has not been declared in ‘::’
+          497 | using ::frexpl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:498:9: error: ‘ldexpl’ has not been declared in ‘::’
+          498 | using ::ldexpl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:499:9: error: ‘logl’ has not been declared in ‘::’
+          499 | using ::logl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:500:9: error: ‘log10l’ has not been declared in ‘::’
+          500 | using ::log10l _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:501:9: error: ‘modfl’ has not been declared in ‘::’
+          501 | using ::modfl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:502:9: error: ‘powl’ has not been declared in ‘::’
+          502 | using ::powl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:503:9: error: ‘sinl’ has not been declared in ‘::’
+          503 | using ::sinl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:504:9: error: ‘sinhl’ has not been declared in ‘::’
+          504 | using ::sinhl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:505:9: error: ‘sqrtl’ has not been declared in ‘::’
+          505 | using ::sqrtl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:506:9: error: ‘tanl’ has not been declared in ‘::’
+          506 | using ::tanl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:508:9: error: ‘tanhl’ has not been declared in ‘::’
+          508 | using ::tanhl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:509:9: error: ‘acoshl’ has not been declared in ‘::’
+          509 | using ::acoshl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:510:9: error: ‘asinhl’ has not been declared in ‘::’
+          510 | using ::asinhl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:511:9: error: ‘atanhl’ has not been declared in ‘::’
+          511 | using ::atanhl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:512:9: error: ‘cbrtl’ has not been declared in ‘::’
+          512 | using ::cbrtl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:514:9: error: ‘copysignl’ has not been declared in ‘::’
+          514 | using ::copysignl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:516:9: error: ‘erfl’ has not been declared in ‘::’
+          516 | using ::erfl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:517:9: error: ‘erfcl’ has not been declared in ‘::’
+          517 | using ::erfcl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:518:9: error: ‘exp2l’ has not been declared in ‘::’
+          518 | using ::exp2l _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:519:9: error: ‘expm1l’ has not been declared in ‘::’
+          519 | using ::expm1l _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:520:9: error: ‘fdiml’ has not been declared in ‘::’
+          520 | using ::fdiml _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:521:9: error: ‘fmal’ has not been declared in ‘::’
+          521 | using ::fmal _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:522:9: error: ‘fmaxl’ has not been declared in ‘::’
+          522 | using ::fmaxl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:523:9: error: ‘fminl’ has not been declared in ‘::’
+          523 | using ::fminl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:524:9: error: ‘hypotl’ has not been declared in ‘::’
+          524 | using ::hypotl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:525:9: error: ‘ilogbl’ has not been declared in ‘::’
+          525 | using ::ilogbl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:526:9: error: ‘lgammal’ has not been declared in ‘::’
+          526 | using ::lgammal _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:527:9: error: ‘llrintl’ has not been declared in ‘::’
+          527 | using ::llrintl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:528:9: error: ‘llroundl’ has not been declared in ‘::’
+          528 | using ::llroundl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:529:9: error: ‘log1pl’ has not been declared in ‘::’
+          529 | using ::log1pl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:530:9: error: ‘log2l’ has not been declared in ‘::’
+          530 | using ::log2l _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:531:9: error: ‘logbl’ has not been declared in ‘::’
+          531 | using ::logbl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:532:9: error: ‘lrintl’ has not been declared in ‘::’
+          532 | using ::lrintl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:533:9: error: ‘lroundl’ has not been declared in ‘::’
+          533 | using ::lroundl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:534:9: error: ‘nanl’ has not been declared in ‘::’
+          534 | using ::nanl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:535:9: error: ‘nearbyintl’ has not been declared in ‘::’
+          535 | using ::nearbyintl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:536:9: error: ‘nextafterl’ has not been declared in ‘::’
+          536 | using ::nextafterl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:537:9: error: ‘nexttowardl’ has not been declared in ‘::’
+          537 | using ::nexttowardl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:538:9: error: ‘remainderl’ has not been declared in ‘::’
+          538 | using ::remainderl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:539:9: error: ‘remquol’ has not been declared in ‘::’
+          539 | using ::remquol _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:540:9: error: ‘rintl’ has not been declared in ‘::’
+          540 | using ::rintl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:541:9: error: ‘roundl’ has not been declared in ‘::’
+          541 | using ::roundl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:542:9: error: ‘scalblnl’ has not been declared in ‘::’
+          542 | using ::scalblnl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:543:9: error: ‘scalbnl’ has not been declared in ‘::’
+          543 | using ::scalbnl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:544:9: error: ‘tgammal’ has not been declared in ‘::’
+          544 | using ::tgammal _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:545:9: error: ‘truncl’ has not been declared in ‘::’
+          545 | using ::truncl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/locale:229,
+                         from /usr/lib/llvm-17/include/c++/v1/ostream:180,
+                         from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h:32:10: error: ‘MB_CUR_MAX’ was not declared in this scope; did you mean ‘MB_LEN_MAX’?
+           32 | decltype(MB_CUR_MAX) __libcpp_mb_cur_max_l(locale_t __l)
+              |          ^~~~~~~~~~
+              |          MB_LEN_MAX
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h:32:10: error: ‘MB_CUR_MAX’ was not declared in this scope; did you mean ‘MB_LEN_MAX’?
+           32 | decltype(MB_CUR_MAX) __libcpp_mb_cur_max_l(locale_t __l)
+              |          ^~~~~~~~~~
+              |          MB_LEN_MAX
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h: In function ‘int std::__1::__libcpp_mb_cur_max_l(locale_t)’:
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h:35:12: error: ‘MB_CUR_MAX’ was not declared in this scope; did you mean ‘MB_LEN_MAX’?
+           35 |     return MB_CUR_MAX;
+              |            ^~~~~~~~~~
+              |            MB_LEN_MAX
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h: In function ‘int std::__1::__libcpp_mbtowc_l(wchar_t*, const char*, size_t, locale_t)’:
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h:88:12: error: ‘mbtowc’ was not declared in this scope; did you mean ‘mbrtowc’?
+           88 |     return mbtowc(__pwc, __pmb, __max);
+              |            ^~~~~~
+              |            mbrtowc
+        In file included from /usr/lib/llvm-17/include/c++/v1/ostream:180,
+                         from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_ForwardIterator std::__1::__scan_keyword(_InputIterator&, _InputIterator, _ForwardIterator, _ForwardIterator, const _Ctype&, std::__1::ios_base::iostate&, bool)’:
+        /usr/lib/llvm-17/include/c++/v1/locale:286:68: error: ‘free’ was not declared in this scope
+          286 |     unique_ptr<unsigned char, void(*)(void*)> __stat_hold(nullptr, free);
+              |                                                                    ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:238:1: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+          237 | #include <__undef_macros>
+          +++ |+#include <cstdlib>
+          238 | 
+        /usr/lib/llvm-17/include/c++/v1/locale:289:36: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+          289 |         __status = (unsigned char*)malloc(__nkw);
+              |                                    ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:289:36: note: (if you use ‘-fpermissive’, G++ will accept your code, but allowing the use of an undeclared name is deprecated)
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_Tp std::__1::__num_get_signed_integral(const char*, const char*, std::__1::ios_base::iostate&, int)’:
+        /usr/lib/llvm-17/include/c++/v1/locale:761:26: error: there are no arguments to ‘strtoll_l’ that depend on a template parameter, so a declaration of ‘strtoll_l’ must be available [-fpermissive]
+          761 |         long long __ll = strtoll_l(__a, &__p2, __base, _LIBCPP_GET_C_LOCALE);
+              |                          ^~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_Tp std::__1::__num_get_unsigned_integral(const char*, const char*, std::__1::ios_base::iostate&, int)’:
+        /usr/lib/llvm-17/include/c++/v1/locale:801:35: error: there are no arguments to ‘strtoull_l’ that depend on a template parameter, so a declaration of ‘strtoull_l’ must be available [-fpermissive]
+          801 |         unsigned long long __ll = strtoull_l(__a, &__p2, __base, _LIBCPP_GET_C_LOCALE);
+              |                                   ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_Tp std::__1::__do_strtod(const char*, char**) [with _Tp = float]’:
+        /usr/lib/llvm-17/include/c++/v1/locale:830:12: error: ‘strtof_l’ was not declared in this scope; did you mean ‘strtok_r’?
+          830 |     return strtof_l(__a, __p2, _LIBCPP_GET_C_LOCALE);
+              |            ^~~~~~~~
+              |            strtok_r
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_Tp std::__1::__do_strtod(const char*, char**) [with _Tp = double]’:
+        /usr/lib/llvm-17/include/c++/v1/locale:836:12: error: ‘strtod_l’ was not declared in this scope; did you mean ‘strtok_r’?
+          836 |     return strtod_l(__a, __p2, _LIBCPP_GET_C_LOCALE);
+              |            ^~~~~~~~
+              |            strtok_r
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_Tp std::__1::__do_strtod(const char*, char**) [with _Tp = long double]’:
+        /usr/lib/llvm-17/include/c++/v1/locale:842:12: error: ‘strtold_l’ was not declared in this scope; did you mean ‘strcoll_l’?
+          842 |     return strtold_l(__a, __p2, _LIBCPP_GET_C_LOCALE);
+              |            ^~~~~~~~~
+              |            strcoll_l
+        /usr/lib/llvm-17/include/c++/v1/locale: In member function ‘_OutputIterator std::__1::num_put<_CharT, _OutputIterator>::__do_put_floating_point(std::__1::num_put<_CharT, _OutputIterator>::iter_type, std::__1::ios_base&, std::__1::num_put<_CharT, _OutputIterator>::char_type, _Float, const char*) const’:
+        /usr/lib/llvm-17/include/c++/v1/locale:1564:53: error: ‘free’ was not declared in this scope
+         1564 |     unique_ptr<char, void(*)(void*)> __nbh(nullptr, free);
+              |                                                     ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:1564:53: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+        /usr/lib/llvm-17/include/c++/v1/locale:1584:28: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+         1584 |         __ob = (char_type*)malloc(2*static_cast<size_t>(__nc)*sizeof(char_type));
+              |                            ^~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/ostream:180,
+                         from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘void std::__1::__double_or_nothing(std::__1::unique_ptr<_CharT, void (*)(void*)>&, _Tp*&, _Tp*&)’:
+        /usr/lib/llvm-17/include/c++/v1/locale:2822:27: error: ‘realloc’ is not a member of ‘std’
+         2822 |     _Tp* __t = (_Tp*)std::realloc(__owns ? __b.get() : 0, __new_cap);
+              |                           ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:2827:48: error: ‘free’ was not declared in this scope
+         2827 |     __b = unique_ptr<_Tp, void(*)(void*)>(__t, free);
+              |                                                ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:2827:48: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+        /usr/lib/llvm-17/include/c++/v1/locale: In member function ‘virtual _InputIterator std::__1::money_get<_CharT, _InputIterator>::do_get(std::__1::money_get<_CharT, _InputIterator>::iter_type, std::__1::money_get<_CharT, _InputIterator>::iter_type, bool, std::__1::ios_base&, std::__1::ios_base::iostate&, long double&) const’:
+        /usr/lib/llvm-17/include/c++/v1/locale:3063:55: error: ‘free’ was not declared in this scope
+         3063 |         unique_ptr<char, void(*)(void*)> __h(nullptr, free);
+              |                                                       ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:3063:55: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+        /usr/lib/llvm-17/include/c++/v1/locale:3066:30: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+         3066 |             __h.reset((char*)malloc(static_cast<size_t>(__wn - __wb.get() + 2)));
+              |                              ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale: In member function ‘virtual _OutputIterator std::__1::money_put<_CharT, _OutputIterator>::do_put(std::__1::money_put<_CharT, _OutputIterator>::iter_type, bool, std::__1::ios_base&, std::__1::money_put<_CharT, _OutputIterator>::char_type, long double) const’:
+        /usr/lib/llvm-17/include/c++/v1/locale:3355:52: error: ‘free’ was not declared in this scope
+         3355 |     unique_ptr<char, void(*)(void*)> __hn(nullptr, free);
+              |                                                    ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:3355:52: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+        /usr/lib/llvm-17/include/c++/v1/locale:3364:32: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+         3364 |         __hd.reset((char_type*)malloc(static_cast<size_t>(__n) * sizeof(char_type)));
+              |                                ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:3392:32: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+         3392 |         __hw.reset((char_type*)malloc(__exn * sizeof(char_type)));
+              |                                ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale: In member function ‘virtual _OutputIterator std::__1::money_put<_CharT, _OutputIterator>::do_put(std::__1::money_put<_CharT, _OutputIterator>::iter_type, bool, std::__1::ios_base&, std::__1::money_put<_CharT, _OutputIterator>::char_type, const string_type&) const’:
+        /usr/lib/llvm-17/include/c++/v1/locale:3427:50: error: ‘free’ was not declared in this scope
+         3427 |     unique_ptr<char_type, void(*)(void*)> __h(0, free);
+              |                                                  ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:3427:50: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+        /usr/lib/llvm-17/include/c++/v1/locale:3434:31: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+         3434 |         __h.reset((char_type*)malloc(__exn * sizeof(char_type)));
+              |                               ^~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/ostream: In function ‘std::__1::basic_ostream<_CharT, _Traits>& std::__1::operator<<(std::__1::basic_ostream<_CharT, _Traits>&, const char*)’:
+        /usr/lib/llvm-17/include/c++/v1/ostream:875:55: error: ‘free’ was not declared in this scope
+          875 |             unique_ptr<_CharT, void(*)(void*)> __h(0, free);
+              |                                                       ^~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/ostream:181:1: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+          180 | #include <locale>
+          +++ |+#include <cstdlib>
+          181 | #include <new>
+        In file included from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/ostream:878:33: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+          878 |                 __wb = (_CharT*)malloc(__len*sizeof(_CharT));
+              |                                 ^~~~~~
+        /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx: At global scope:
+        /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:9:38: note: ‘#pragma message: std filesystem test’
+            9 | #pragma message("std filesystem test")
+              |                                      ^
+        In file included from /usr/lib/llvm-17/include/c++/v1/ostream:172,
+                         from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/__system_error/error_code.h: In instantiation of ‘std::__1::error_code::error_code(_Ep, typename std::__1::enable_if<std::__1::is_error_code_enum<_Ep>::value>::type*) [with _Ep = std::__1::io_errc; typename std::__1::enable_if<std::__1::is_error_code_enum<_Ep>::value>::type = void]’:
+        /usr/lib/llvm-17/include/c++/v1/ios:456:34:   required from here
+        /usr/lib/llvm-17/include/c++/v1/__system_error/error_code.h:56:28: error: use of deleted function ‘void std::__1::__adl_only::make_error_code()’
+           56 |     *this = make_error_code(__e);
+              |             ~~~~~~~~~~~~~~~^~~~~
+        /usr/lib/llvm-17/include/c++/v1/__system_error/error_code.h:40:6: note: declared here
+           40 | void make_error_code() = delete;
+              |      ^~~~~~~~~~~~~~~
+        gmake[1]: *** [CMakeFiles/cmTC_6963e.dir/build.make:78: CMakeFiles/cmTC_6963e.dir/src.cxx.o] Error 1
+        gmake[1]: Leaving directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-txyJQ5'
+        gmake: *** [Makefile:127: cmTC_6963e/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CheckCXXSourceCompiles.cmake:76 (cmake_check_source_compiles)"
+      - "cmake/FindStdFilesystem.cmake:42 (check_cxx_source_compiles)"
+      - "cmake/FindStdFilesystem.cmake:64 (_stdfilesystem_check_compiles)"
+      - "cmake/SeastarDependencies.cmake:108 (find_package)"
+      - "CMakeLists.txt:278 (seastar_find_dependencies)"
+    checks:
+      - "Performing Test StdFilesystem_STDCXXFS_LIBRARY"
+    directories:
+      source: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd"
+      binary: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/andrew/seastar/cmake;/home/andrew/seastar"
+    buildResult:
+      variable: "StdFilesystem_STDCXXFS_LIBRARY"
+      cached: true
+      stdout: |
+        Change Dir: /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd
+        
+        Run Build Command(s):/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_13cfb/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_13cfb.dir/build.make CMakeFiles/cmTC_13cfb.dir/build
+        gmake[1]: Entering directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd'
+        Building CXX object CMakeFiles/cmTC_13cfb.dir/src.cxx.o
+        /usr/bin/c++ -DStdFilesystem_STDCXXFS_LIBRARY  -std=c++20 -o CMakeFiles/cmTC_13cfb.dir/src.cxx.o -c /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx
+        In file included from /usr/lib/llvm-17/include/c++/v1/stdlib.h:94,
+                         from /usr/lib/llvm-17/include/c++/v1/cstdlib:87,
+                         from /usr/lib/llvm-17/include/c++/v1/new:99,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory/construct_at.h:23,
+                         from /usr/lib/llvm-17/include/c++/v1/__string/constexpr_c_functions.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/find.h:17,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/remove.h:12,
+                         from /usr/lib/llvm-17/include/c++/v1/string:569,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/include/c++/11/stdlib.h:38:12: error: ‘abort’ has not been declared in ‘std’
+           38 | using std::abort;
+              |            ^~~~~
+        /usr/include/c++/11/stdlib.h:39:12: error: ‘atexit’ has not been declared in ‘std’
+           39 | using std::atexit;
+              |            ^~~~~~
+        /usr/include/c++/11/stdlib.h:40:12: error: ‘exit’ has not been declared in ‘std’
+           40 | using std::exit;
+              |            ^~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/cstdlib:87,
+                         from /usr/lib/llvm-17/include/c++/v1/new:99,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory/construct_at.h:23,
+                         from /usr/lib/llvm-17/include/c++/v1/__string/constexpr_c_functions.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/find.h:17,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/remove.h:12,
+                         from /usr/lib/llvm-17/include/c++/v1/string:569,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/stdlib.h:148:34: error: ‘ldiv_t’ does not name a type
+          148 | inline _LIBCPP_INLINE_VISIBILITY ldiv_t div(long __x, long __y) _NOEXCEPT {
+              |                                  ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/stdlib.h:152:34: error: ‘lldiv_t’ does not name a type
+          152 | inline _LIBCPP_INLINE_VISIBILITY lldiv_t div(long long __x,
+              |                                  ^~~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/new:99,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory/construct_at.h:23,
+                         from /usr/lib/llvm-17/include/c++/v1/__string/constexpr_c_functions.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/find.h:17,
+                         from /usr/lib/llvm-17/include/c++/v1/__algorithm/remove.h:12,
+                         from /usr/lib/llvm-17/include/c++/v1/string:569,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:104:9: error: ‘div_t’ has not been declared in ‘::’
+          104 | using ::div_t _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:105:9: error: ‘ldiv_t’ has not been declared in ‘::’
+          105 | using ::ldiv_t _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:106:9: error: ‘lldiv_t’ has not been declared in ‘::’
+          106 | using ::lldiv_t _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:107:9: error: ‘atof’ has not been declared in ‘::’
+          107 | using ::atof _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:108:9: error: ‘atoi’ has not been declared in ‘::’
+          108 | using ::atoi _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:109:9: error: ‘atol’ has not been declared in ‘::’
+          109 | using ::atol _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:110:9: error: ‘atoll’ has not been declared in ‘::’
+          110 | using ::atoll _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:111:9: error: ‘strtod’ has not been declared in ‘::’
+          111 | using ::strtod _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:112:9: error: ‘strtof’ has not been declared in ‘::’
+          112 | using ::strtof _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:113:9: error: ‘strtold’ has not been declared in ‘::’
+          113 | using ::strtold _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:114:9: error: ‘strtol’ has not been declared in ‘::’
+          114 | using ::strtol _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:115:9: error: ‘strtoll’ has not been declared in ‘::’
+          115 | using ::strtoll _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:116:9: error: ‘strtoul’ has not been declared in ‘::’
+          116 | using ::strtoul _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:117:9: error: ‘strtoull’ has not been declared in ‘::’
+          117 | using ::strtoull _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:118:9: error: ‘rand’ has not been declared in ‘::’
+          118 | using ::rand _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:119:9: error: ‘srand’ has not been declared in ‘::’
+          119 | using ::srand _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:120:9: error: ‘calloc’ has not been declared in ‘::’
+          120 | using ::calloc _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:121:9: error: ‘free’ has not been declared in ‘::’
+          121 | using ::free _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:122:9: error: ‘malloc’ has not been declared in ‘::’
+          122 | using ::malloc _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:123:9: error: ‘realloc’ has not been declared in ‘::’
+          123 | using ::realloc _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:124:9: error: ‘abort’ has not been declared in ‘::’
+          124 | using ::abort _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:125:9: error: ‘atexit’ has not been declared in ‘::’
+          125 | using ::atexit _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:126:9: error: ‘exit’ has not been declared in ‘::’
+          126 | using ::exit _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:127:9: error: ‘_Exit’ has not been declared in ‘::’
+          127 | using ::_Exit _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:128:9: error: ‘getenv’ has not been declared in ‘::’
+          128 | using ::getenv _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:129:9: error: ‘system’ has not been declared in ‘::’
+          129 | using ::system _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:130:9: error: ‘bsearch’ has not been declared in ‘::’
+          130 | using ::bsearch _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:131:9: error: ‘qsort’ has not been declared in ‘::’
+          131 | using ::qsort _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:133:9: error: ‘labs’ has not been declared in ‘::’
+          133 | using ::labs _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:134:9: error: ‘llabs’ has not been declared in ‘::’
+          134 | using ::llabs _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:135:9: error: ‘div’ has not been declared in ‘::’
+          135 | using ::div _LIBCPP_USING_IF_EXISTS;
+              |         ^~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:136:9: error: ‘ldiv’ has not been declared in ‘::’
+          136 | using ::ldiv _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:137:9: error: ‘lldiv’ has not been declared in ‘::’
+          137 | using ::lldiv _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:138:9: error: ‘mblen’ has not been declared in ‘::’
+          138 | using ::mblen _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:139:9: error: ‘mbtowc’ has not been declared in ‘::’
+          139 | using ::mbtowc _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:140:9: error: ‘wctomb’ has not been declared in ‘::’
+          140 | using ::wctomb _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:141:9: error: ‘mbstowcs’ has not been declared in ‘::’
+          141 | using ::mbstowcs _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:142:9: error: ‘wcstombs’ has not been declared in ‘::’
+          142 | using ::wcstombs _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:144:9: error: ‘at_quick_exit’ has not been declared in ‘::’
+          144 | using ::at_quick_exit _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:145:9: error: ‘quick_exit’ has not been declared in ‘::’
+          145 | using ::quick_exit _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cstdlib:148:9: error: ‘aligned_alloc’ has not been declared in ‘::’
+          148 | using ::aligned_alloc _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/__iterator/reverse_iterator.h:28,
+                         from /usr/lib/llvm-17/include/c++/v1/string:580,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/__iterator/segmented_iterator.h:72:46: error: template argument ‘(sizeof (_Tp) * 0)’ involves template parameter(s)
+           72 | struct __has_specialization<_Tp, sizeof(_Tp) * 0> : true_type {};
+              |                                  ~~~~~~~~~~~~^~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/math.h:301,
+                         from /usr/lib/llvm-17/include/c++/v1/cmath:318,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/strong_order.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/weak_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/partial_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/compare_partial_order_fallback.h:13,
+                         from /usr/lib/llvm-17/include/c++/v1/compare:145,
+                         from /usr/lib/llvm-17/include/c++/v1/tuple:268,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory_resource/polymorphic_allocator.h:21,
+                         from /usr/lib/llvm-17/include/c++/v1/string:590,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/include/c++/11/math.h:39:12: error: ‘acos’ has not been declared in ‘std’
+           39 | using std::acos;
+              |            ^~~~
+        /usr/include/c++/11/math.h:40:12: error: ‘asin’ has not been declared in ‘std’
+           40 | using std::asin;
+              |            ^~~~
+        /usr/include/c++/11/math.h:41:12: error: ‘atan’ has not been declared in ‘std’
+           41 | using std::atan;
+              |            ^~~~
+        /usr/include/c++/11/math.h:42:12: error: ‘atan2’ has not been declared in ‘std’
+           42 | using std::atan2;
+              |            ^~~~~
+        /usr/include/c++/11/math.h:43:12: error: ‘cos’ has not been declared in ‘std’
+           43 | using std::cos;
+              |            ^~~
+        /usr/include/c++/11/math.h:44:12: error: ‘sin’ has not been declared in ‘std’
+           44 | using std::sin;
+              |            ^~~
+        /usr/include/c++/11/math.h:45:12: error: ‘tan’ has not been declared in ‘std’
+           45 | using std::tan;
+              |            ^~~
+        /usr/include/c++/11/math.h:46:12: error: ‘cosh’ has not been declared in ‘std’
+           46 | using std::cosh;
+              |            ^~~~
+        /usr/include/c++/11/math.h:47:12: error: ‘sinh’ has not been declared in ‘std’
+           47 | using std::sinh;
+              |            ^~~~
+        /usr/include/c++/11/math.h:48:12: error: ‘tanh’ has not been declared in ‘std’
+           48 | using std::tanh;
+              |            ^~~~
+        /usr/include/c++/11/math.h:49:12: error: ‘exp’ has not been declared in ‘std’
+           49 | using std::exp;
+              |            ^~~
+        /usr/include/c++/11/math.h:50:12: error: ‘frexp’ has not been declared in ‘std’
+           50 | using std::frexp;
+              |            ^~~~~
+        /usr/include/c++/11/math.h:51:12: error: ‘ldexp’ has not been declared in ‘std’
+           51 | using std::ldexp;
+              |            ^~~~~
+        /usr/include/c++/11/math.h:52:12: error: ‘log’ has not been declared in ‘std’
+           52 | using std::log;
+              |            ^~~
+        /usr/include/c++/11/math.h:53:12: error: ‘log10’ has not been declared in ‘std’
+           53 | using std::log10;
+              |            ^~~~~
+        /usr/include/c++/11/math.h:54:12: error: ‘modf’ has not been declared in ‘std’
+           54 | using std::modf;
+              |            ^~~~
+        /usr/include/c++/11/math.h:55:12: error: ‘pow’ has not been declared in ‘std’
+           55 | using std::pow;
+              |            ^~~
+        /usr/include/c++/11/math.h:56:12: error: ‘sqrt’ has not been declared in ‘std’
+           56 | using std::sqrt;
+              |            ^~~~
+        /usr/include/c++/11/math.h:57:12: error: ‘ceil’ has not been declared in ‘std’
+           57 | using std::ceil;
+              |            ^~~~
+        /usr/include/c++/11/math.h:58:12: error: ‘fabs’ has not been declared in ‘std’
+           58 | using std::fabs;
+              |            ^~~~
+        /usr/include/c++/11/math.h:59:12: error: ‘floor’ has not been declared in ‘std’
+           59 | using std::floor;
+              |            ^~~~~
+        /usr/include/c++/11/math.h:60:12: error: ‘fmod’ has not been declared in ‘std’
+           60 | using std::fmod;
+              |            ^~~~
+        /usr/include/c++/11/math.h:183:12: error: ‘lerp’ has not been declared in ‘std’
+          183 | using std::lerp;
+              |            ^~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/cmath:318,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/strong_order.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/weak_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/partial_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/compare_partial_order_fallback.h:13,
+                         from /usr/lib/llvm-17/include/c++/v1/compare:145,
+                         from /usr/lib/llvm-17/include/c++/v1/tuple:268,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory_resource/polymorphic_allocator.h:21,
+                         from /usr/lib/llvm-17/include/c++/v1/string:590,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/math.h: In function ‘int fpclassify(_A1)’:
+        /usr/lib/llvm-17/include/c++/v1/math.h:388:31: error: ‘FP_NAN’ was not declared in this scope
+          388 |   return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __x);
+              |                               ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/math.h:388:39: error: ‘FP_INFINITE’ was not declared in this scope
+          388 |   return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __x);
+              |                                       ^~~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/math.h:388:52: error: ‘FP_NORMAL’ was not declared in this scope
+          388 |   return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __x);
+              |                                                    ^~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/math.h:388:63: error: ‘FP_SUBNORMAL’ was not declared in this scope
+          388 |   return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __x);
+              |                                                               ^~~~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/math.h:388:77: error: ‘FP_ZERO’ was not declared in this scope; did you mean ‘CPU_ZERO’?
+          388 |   return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __x);
+              |                                                                             ^~~~~~~
+              |                                                                             CPU_ZERO
+        /usr/lib/llvm-17/include/c++/v1/math.h: In function ‘int fpclassify(_A1)’:
+        /usr/lib/llvm-17/include/c++/v1/math.h:393:21: error: ‘FP_ZERO’ was not declared in this scope; did you mean ‘CPU_ZERO’?
+          393 |   return __x == 0 ? FP_ZERO : FP_NORMAL;
+              |                     ^~~~~~~
+              |                     CPU_ZERO
+        /usr/lib/llvm-17/include/c++/v1/math.h:393:31: error: ‘FP_NORMAL’ was not declared in this scope
+          393 |   return __x == 0 ? FP_ZERO : FP_NORMAL;
+              |                               ^~~~~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/__compare/strong_order.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/weak_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/partial_order.h:14,
+                         from /usr/lib/llvm-17/include/c++/v1/__compare/compare_partial_order_fallback.h:13,
+                         from /usr/lib/llvm-17/include/c++/v1/compare:145,
+                         from /usr/lib/llvm-17/include/c++/v1/tuple:268,
+                         from /usr/lib/llvm-17/include/c++/v1/__memory_resource/polymorphic_allocator.h:21,
+                         from /usr/lib/llvm-17/include/c++/v1/string:590,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:27,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/cmath: At global scope:
+        /usr/lib/llvm-17/include/c++/v1/cmath:351:9: error: ‘float_t’ has not been declared in ‘::’
+          351 | using ::float_t _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:352:9: error: ‘double_t’ has not been declared in ‘::’
+          352 | using ::double_t _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:357:9: error: ‘acosf’ has not been declared in ‘::’
+          357 | using ::acosf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:359:9: error: ‘asinf’ has not been declared in ‘::’
+          359 | using ::asinf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:361:9: error: ‘atanf’ has not been declared in ‘::’
+          361 | using ::atanf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:363:9: error: ‘atan2f’ has not been declared in ‘::’
+          363 | using ::atan2f _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:365:9: error: ‘ceilf’ has not been declared in ‘::’
+          365 | using ::ceilf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:367:9: error: ‘cosf’ has not been declared in ‘::’
+          367 | using ::cosf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:369:9: error: ‘coshf’ has not been declared in ‘::’
+          369 | using ::coshf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:372:9: error: ‘expf’ has not been declared in ‘::’
+          372 | using ::expf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:375:9: error: ‘fabsf’ has not been declared in ‘::’
+          375 | using ::fabsf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:377:9: error: ‘floorf’ has not been declared in ‘::’
+          377 | using ::floorf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:380:9: error: ‘fmodf’ has not been declared in ‘::’
+          380 | using ::fmodf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:383:9: error: ‘frexpf’ has not been declared in ‘::’
+          383 | using ::frexpf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:385:9: error: ‘ldexpf’ has not been declared in ‘::’
+          385 | using ::ldexpf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:388:9: error: ‘logf’ has not been declared in ‘::’
+          388 | using ::logf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:391:9: error: ‘log10f’ has not been declared in ‘::’
+          391 | using ::log10f _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:393:9: error: ‘modff’ has not been declared in ‘::’
+          393 | using ::modff _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:396:9: error: ‘powf’ has not been declared in ‘::’
+          396 | using ::powf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:399:9: error: ‘sinf’ has not been declared in ‘::’
+          399 | using ::sinf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:401:9: error: ‘sinhf’ has not been declared in ‘::’
+          401 | using ::sinhf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:404:9: error: ‘sqrtf’ has not been declared in ‘::’
+          404 | using ::sqrtf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:406:9: error: ‘tanf’ has not been declared in ‘::’
+          406 | using ::tanf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:409:9: error: ‘tanhf’ has not been declared in ‘::’
+          409 | using ::tanhf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:412:9: error: ‘acoshf’ has not been declared in ‘::’
+          412 | using ::acoshf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:414:9: error: ‘asinhf’ has not been declared in ‘::’
+          414 | using ::asinhf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:416:9: error: ‘atanhf’ has not been declared in ‘::’
+          416 | using ::atanhf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:418:9: error: ‘cbrtf’ has not been declared in ‘::’
+          418 | using ::cbrtf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:421:9: error: ‘copysignf’ has not been declared in ‘::’
+          421 | using ::copysignf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:424:9: error: ‘erff’ has not been declared in ‘::’
+          424 | using ::erff _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:426:9: error: ‘erfcf’ has not been declared in ‘::’
+          426 | using ::erfcf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:428:9: error: ‘exp2f’ has not been declared in ‘::’
+          428 | using ::exp2f _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:430:9: error: ‘expm1f’ has not been declared in ‘::’
+          430 | using ::expm1f _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:432:9: error: ‘fdimf’ has not been declared in ‘::’
+          432 | using ::fdimf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:433:9: error: ‘fmaf’ has not been declared in ‘::’
+          433 | using ::fmaf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:436:9: error: ‘fmaxf’ has not been declared in ‘::’
+          436 | using ::fmaxf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:438:9: error: ‘fminf’ has not been declared in ‘::’
+          438 | using ::fminf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:440:9: error: ‘hypotf’ has not been declared in ‘::’
+          440 | using ::hypotf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:442:9: error: ‘ilogbf’ has not been declared in ‘::’
+          442 | using ::ilogbf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:444:9: error: ‘lgammaf’ has not been declared in ‘::’
+          444 | using ::lgammaf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:446:9: error: ‘llrintf’ has not been declared in ‘::’
+          446 | using ::llrintf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:448:9: error: ‘llroundf’ has not been declared in ‘::’
+          448 | using ::llroundf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:450:9: error: ‘log1pf’ has not been declared in ‘::’
+          450 | using ::log1pf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:452:9: error: ‘log2f’ has not been declared in ‘::’
+          452 | using ::log2f _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:454:9: error: ‘logbf’ has not been declared in ‘::’
+          454 | using ::logbf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:456:9: error: ‘lrintf’ has not been declared in ‘::’
+          456 | using ::lrintf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:458:9: error: ‘lroundf’ has not been declared in ‘::’
+          458 | using ::lroundf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:460:9: error: ‘nan’ has not been declared in ‘::’
+          460 | using ::nan _LIBCPP_USING_IF_EXISTS;
+              |         ^~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:461:9: error: ‘nanf’ has not been declared in ‘::’
+          461 | using ::nanf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:464:9: error: ‘nearbyintf’ has not been declared in ‘::’
+          464 | using ::nearbyintf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:466:9: error: ‘nextafterf’ has not been declared in ‘::’
+          466 | using ::nextafterf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:468:9: error: ‘nexttowardf’ has not been declared in ‘::’
+          468 | using ::nexttowardf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:470:9: error: ‘remainderf’ has not been declared in ‘::’
+          470 | using ::remainderf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:472:9: error: ‘remquof’ has not been declared in ‘::’
+          472 | using ::remquof _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:474:9: error: ‘rintf’ has not been declared in ‘::’
+          474 | using ::rintf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:476:9: error: ‘roundf’ has not been declared in ‘::’
+          476 | using ::roundf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:478:9: error: ‘scalblnf’ has not been declared in ‘::’
+          478 | using ::scalblnf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:480:9: error: ‘scalbnf’ has not been declared in ‘::’
+          480 | using ::scalbnf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:482:9: error: ‘tgammaf’ has not been declared in ‘::’
+          482 | using ::tgammaf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:484:9: error: ‘truncf’ has not been declared in ‘::’
+          484 | using ::truncf _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:486:9: error: ‘acosl’ has not been declared in ‘::’
+          486 | using ::acosl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:487:9: error: ‘asinl’ has not been declared in ‘::’
+          487 | using ::asinl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:488:9: error: ‘atanl’ has not been declared in ‘::’
+          488 | using ::atanl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:489:9: error: ‘atan2l’ has not been declared in ‘::’
+          489 | using ::atan2l _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:490:9: error: ‘ceill’ has not been declared in ‘::’
+          490 | using ::ceill _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:491:9: error: ‘cosl’ has not been declared in ‘::’
+          491 | using ::cosl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:492:9: error: ‘coshl’ has not been declared in ‘::’
+          492 | using ::coshl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:493:9: error: ‘expl’ has not been declared in ‘::’
+          493 | using ::expl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:494:9: error: ‘fabsl’ has not been declared in ‘::’
+          494 | using ::fabsl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:495:9: error: ‘floorl’ has not been declared in ‘::’
+          495 | using ::floorl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:496:9: error: ‘fmodl’ has not been declared in ‘::’
+          496 | using ::fmodl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:497:9: error: ‘frexpl’ has not been declared in ‘::’
+          497 | using ::frexpl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:498:9: error: ‘ldexpl’ has not been declared in ‘::’
+          498 | using ::ldexpl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:499:9: error: ‘logl’ has not been declared in ‘::’
+          499 | using ::logl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:500:9: error: ‘log10l’ has not been declared in ‘::’
+          500 | using ::log10l _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:501:9: error: ‘modfl’ has not been declared in ‘::’
+          501 | using ::modfl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:502:9: error: ‘powl’ has not been declared in ‘::’
+          502 | using ::powl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:503:9: error: ‘sinl’ has not been declared in ‘::’
+          503 | using ::sinl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:504:9: error: ‘sinhl’ has not been declared in ‘::’
+          504 | using ::sinhl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:505:9: error: ‘sqrtl’ has not been declared in ‘::’
+          505 | using ::sqrtl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:506:9: error: ‘tanl’ has not been declared in ‘::’
+          506 | using ::tanl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:508:9: error: ‘tanhl’ has not been declared in ‘::’
+          508 | using ::tanhl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:509:9: error: ‘acoshl’ has not been declared in ‘::’
+          509 | using ::acoshl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:510:9: error: ‘asinhl’ has not been declared in ‘::’
+          510 | using ::asinhl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:511:9: error: ‘atanhl’ has not been declared in ‘::’
+          511 | using ::atanhl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:512:9: error: ‘cbrtl’ has not been declared in ‘::’
+          512 | using ::cbrtl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:514:9: error: ‘copysignl’ has not been declared in ‘::’
+          514 | using ::copysignl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:516:9: error: ‘erfl’ has not been declared in ‘::’
+          516 | using ::erfl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:517:9: error: ‘erfcl’ has not been declared in ‘::’
+          517 | using ::erfcl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:518:9: error: ‘exp2l’ has not been declared in ‘::’
+          518 | using ::exp2l _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:519:9: error: ‘expm1l’ has not been declared in ‘::’
+          519 | using ::expm1l _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:520:9: error: ‘fdiml’ has not been declared in ‘::’
+          520 | using ::fdiml _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:521:9: error: ‘fmal’ has not been declared in ‘::’
+          521 | using ::fmal _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:522:9: error: ‘fmaxl’ has not been declared in ‘::’
+          522 | using ::fmaxl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:523:9: error: ‘fminl’ has not been declared in ‘::’
+          523 | using ::fminl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:524:9: error: ‘hypotl’ has not been declared in ‘::’
+          524 | using ::hypotl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:525:9: error: ‘ilogbl’ has not been declared in ‘::’
+          525 | using ::ilogbl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:526:9: error: ‘lgammal’ has not been declared in ‘::’
+          526 | using ::lgammal _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:527:9: error: ‘llrintl’ has not been declared in ‘::’
+          527 | using ::llrintl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:528:9: error: ‘llroundl’ has not been declared in ‘::’
+          528 | using ::llroundl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:529:9: error: ‘log1pl’ has not been declared in ‘::’
+          529 | using ::log1pl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:530:9: error: ‘log2l’ has not been declared in ‘::’
+          530 | using ::log2l _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:531:9: error: ‘logbl’ has not been declared in ‘::’
+          531 | using ::logbl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:532:9: error: ‘lrintl’ has not been declared in ‘::’
+          532 | using ::lrintl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:533:9: error: ‘lroundl’ has not been declared in ‘::’
+          533 | using ::lroundl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:534:9: error: ‘nanl’ has not been declared in ‘::’
+          534 | using ::nanl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:535:9: error: ‘nearbyintl’ has not been declared in ‘::’
+          535 | using ::nearbyintl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:536:9: error: ‘nextafterl’ has not been declared in ‘::’
+          536 | using ::nextafterl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:537:9: error: ‘nexttowardl’ has not been declared in ‘::’
+          537 | using ::nexttowardl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:538:9: error: ‘remainderl’ has not been declared in ‘::’
+          538 | using ::remainderl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:539:9: error: ‘remquol’ has not been declared in ‘::’
+          539 | using ::remquol _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:540:9: error: ‘rintl’ has not been declared in ‘::’
+          540 | using ::rintl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:541:9: error: ‘roundl’ has not been declared in ‘::’
+          541 | using ::roundl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:542:9: error: ‘scalblnl’ has not been declared in ‘::’
+          542 | using ::scalblnl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:543:9: error: ‘scalbnl’ has not been declared in ‘::’
+          543 | using ::scalbnl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:544:9: error: ‘tgammal’ has not been declared in ‘::’
+          544 | using ::tgammal _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/cmath:545:9: error: ‘truncl’ has not been declared in ‘::’
+          545 | using ::truncl _LIBCPP_USING_IF_EXISTS;
+              |         ^~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/locale:229,
+                         from /usr/lib/llvm-17/include/c++/v1/ostream:180,
+                         from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h:32:10: error: ‘MB_CUR_MAX’ was not declared in this scope; did you mean ‘MB_LEN_MAX’?
+           32 | decltype(MB_CUR_MAX) __libcpp_mb_cur_max_l(locale_t __l)
+              |          ^~~~~~~~~~
+              |          MB_LEN_MAX
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h:32:10: error: ‘MB_CUR_MAX’ was not declared in this scope; did you mean ‘MB_LEN_MAX’?
+           32 | decltype(MB_CUR_MAX) __libcpp_mb_cur_max_l(locale_t __l)
+              |          ^~~~~~~~~~
+              |          MB_LEN_MAX
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h: In function ‘int std::__1::__libcpp_mb_cur_max_l(locale_t)’:
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h:35:12: error: ‘MB_CUR_MAX’ was not declared in this scope; did you mean ‘MB_LEN_MAX’?
+           35 |     return MB_CUR_MAX;
+              |            ^~~~~~~~~~
+              |            MB_LEN_MAX
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h: In function ‘int std::__1::__libcpp_mbtowc_l(wchar_t*, const char*, size_t, locale_t)’:
+        /usr/lib/llvm-17/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h:88:12: error: ‘mbtowc’ was not declared in this scope; did you mean ‘mbrtowc’?
+           88 |     return mbtowc(__pwc, __pmb, __max);
+              |            ^~~~~~
+              |            mbrtowc
+        In file included from /usr/lib/llvm-17/include/c++/v1/ostream:180,
+                         from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_ForwardIterator std::__1::__scan_keyword(_InputIterator&, _InputIterator, _ForwardIterator, _ForwardIterator, const _Ctype&, std::__1::ios_base::iostate&, bool)’:
+        /usr/lib/llvm-17/include/c++/v1/locale:286:68: error: ‘free’ was not declared in this scope
+          286 |     unique_ptr<unsigned char, void(*)(void*)> __stat_hold(nullptr, free);
+              |                                                                    ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:238:1: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+          237 | #include <__undef_macros>
+          +++ |+#include <cstdlib>
+          238 | 
+        /usr/lib/llvm-17/include/c++/v1/locale:289:36: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+          289 |         __status = (unsigned char*)malloc(__nkw);
+              |                                    ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:289:36: note: (if you use ‘-fpermissive’, G++ will accept your code, but allowing the use of an undeclared name is deprecated)
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_Tp std::__1::__num_get_signed_integral(const char*, const char*, std::__1::ios_base::iostate&, int)’:
+        /usr/lib/llvm-17/include/c++/v1/locale:761:26: error: there are no arguments to ‘strtoll_l’ that depend on a template parameter, so a declaration of ‘strtoll_l’ must be available [-fpermissive]
+          761 |         long long __ll = strtoll_l(__a, &__p2, __base, _LIBCPP_GET_C_LOCALE);
+              |                          ^~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_Tp std::__1::__num_get_unsigned_integral(const char*, const char*, std::__1::ios_base::iostate&, int)’:
+        /usr/lib/llvm-17/include/c++/v1/locale:801:35: error: there are no arguments to ‘strtoull_l’ that depend on a template parameter, so a declaration of ‘strtoull_l’ must be available [-fpermissive]
+          801 |         unsigned long long __ll = strtoull_l(__a, &__p2, __base, _LIBCPP_GET_C_LOCALE);
+              |                                   ^~~~~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_Tp std::__1::__do_strtod(const char*, char**) [with _Tp = float]’:
+        /usr/lib/llvm-17/include/c++/v1/locale:830:12: error: ‘strtof_l’ was not declared in this scope; did you mean ‘strtok_r’?
+          830 |     return strtof_l(__a, __p2, _LIBCPP_GET_C_LOCALE);
+              |            ^~~~~~~~
+              |            strtok_r
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_Tp std::__1::__do_strtod(const char*, char**) [with _Tp = double]’:
+        /usr/lib/llvm-17/include/c++/v1/locale:836:12: error: ‘strtod_l’ was not declared in this scope; did you mean ‘strtok_r’?
+          836 |     return strtod_l(__a, __p2, _LIBCPP_GET_C_LOCALE);
+              |            ^~~~~~~~
+              |            strtok_r
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘_Tp std::__1::__do_strtod(const char*, char**) [with _Tp = long double]’:
+        /usr/lib/llvm-17/include/c++/v1/locale:842:12: error: ‘strtold_l’ was not declared in this scope; did you mean ‘strcoll_l’?
+          842 |     return strtold_l(__a, __p2, _LIBCPP_GET_C_LOCALE);
+              |            ^~~~~~~~~
+              |            strcoll_l
+        /usr/lib/llvm-17/include/c++/v1/locale: In member function ‘_OutputIterator std::__1::num_put<_CharT, _OutputIterator>::__do_put_floating_point(std::__1::num_put<_CharT, _OutputIterator>::iter_type, std::__1::ios_base&, std::__1::num_put<_CharT, _OutputIterator>::char_type, _Float, const char*) const’:
+        /usr/lib/llvm-17/include/c++/v1/locale:1564:53: error: ‘free’ was not declared in this scope
+         1564 |     unique_ptr<char, void(*)(void*)> __nbh(nullptr, free);
+              |                                                     ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:1564:53: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+        /usr/lib/llvm-17/include/c++/v1/locale:1584:28: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+         1584 |         __ob = (char_type*)malloc(2*static_cast<size_t>(__nc)*sizeof(char_type));
+              |                            ^~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/ostream:180,
+                         from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/locale: In function ‘void std::__1::__double_or_nothing(std::__1::unique_ptr<_CharT, void (*)(void*)>&, _Tp*&, _Tp*&)’:
+        /usr/lib/llvm-17/include/c++/v1/locale:2822:27: error: ‘realloc’ is not a member of ‘std’
+         2822 |     _Tp* __t = (_Tp*)std::realloc(__owns ? __b.get() : 0, __new_cap);
+              |                           ^~~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:2827:48: error: ‘free’ was not declared in this scope
+         2827 |     __b = unique_ptr<_Tp, void(*)(void*)>(__t, free);
+              |                                                ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:2827:48: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+        /usr/lib/llvm-17/include/c++/v1/locale: In member function ‘virtual _InputIterator std::__1::money_get<_CharT, _InputIterator>::do_get(std::__1::money_get<_CharT, _InputIterator>::iter_type, std::__1::money_get<_CharT, _InputIterator>::iter_type, bool, std::__1::ios_base&, std::__1::ios_base::iostate&, long double&) const’:
+        /usr/lib/llvm-17/include/c++/v1/locale:3063:55: error: ‘free’ was not declared in this scope
+         3063 |         unique_ptr<char, void(*)(void*)> __h(nullptr, free);
+              |                                                       ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:3063:55: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+        /usr/lib/llvm-17/include/c++/v1/locale:3066:30: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+         3066 |             __h.reset((char*)malloc(static_cast<size_t>(__wn - __wb.get() + 2)));
+              |                              ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale: In member function ‘virtual _OutputIterator std::__1::money_put<_CharT, _OutputIterator>::do_put(std::__1::money_put<_CharT, _OutputIterator>::iter_type, bool, std::__1::ios_base&, std::__1::money_put<_CharT, _OutputIterator>::char_type, long double) const’:
+        /usr/lib/llvm-17/include/c++/v1/locale:3355:52: error: ‘free’ was not declared in this scope
+         3355 |     unique_ptr<char, void(*)(void*)> __hn(nullptr, free);
+              |                                                    ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:3355:52: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+        /usr/lib/llvm-17/include/c++/v1/locale:3364:32: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+         3364 |         __hd.reset((char_type*)malloc(static_cast<size_t>(__n) * sizeof(char_type)));
+              |                                ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:3392:32: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+         3392 |         __hw.reset((char_type*)malloc(__exn * sizeof(char_type)));
+              |                                ^~~~~~
+        /usr/lib/llvm-17/include/c++/v1/locale: In member function ‘virtual _OutputIterator std::__1::money_put<_CharT, _OutputIterator>::do_put(std::__1::money_put<_CharT, _OutputIterator>::iter_type, bool, std::__1::ios_base&, std::__1::money_put<_CharT, _OutputIterator>::char_type, const string_type&) const’:
+        /usr/lib/llvm-17/include/c++/v1/locale:3427:50: error: ‘free’ was not declared in this scope
+         3427 |     unique_ptr<char_type, void(*)(void*)> __h(0, free);
+              |                                                  ^~~~
+        /usr/lib/llvm-17/include/c++/v1/locale:3427:50: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+        /usr/lib/llvm-17/include/c++/v1/locale:3434:31: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+         3434 |         __h.reset((char_type*)malloc(__exn * sizeof(char_type)));
+              |                               ^~~~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/ostream: In function ‘std::__1::basic_ostream<_CharT, _Traits>& std::__1::operator<<(std::__1::basic_ostream<_CharT, _Traits>&, const char*)’:
+        /usr/lib/llvm-17/include/c++/v1/ostream:875:55: error: ‘free’ was not declared in this scope
+          875 |             unique_ptr<_CharT, void(*)(void*)> __h(0, free);
+              |                                                       ^~~~
+        In file included from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/ostream:181:1: note: ‘free’ is defined in header ‘<cstdlib>’; did you forget to ‘#include <cstdlib>’?
+          180 | #include <locale>
+          +++ |+#include <cstdlib>
+          181 | #include <new>
+        In file included from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/ostream:878:33: error: there are no arguments to ‘malloc’ that depend on a template parameter, so a declaration of ‘malloc’ must be available [-fpermissive]
+          878 |                 __wb = (_CharT*)malloc(__len*sizeof(_CharT));
+              |                                 ^~~~~~
+        /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx: At global scope:
+        /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:9:38: note: ‘#pragma message: std filesystem test’
+            9 | #pragma message("std filesystem test")
+              |                                      ^
+        In file included from /usr/lib/llvm-17/include/c++/v1/ostream:172,
+                         from /usr/lib/llvm-17/include/c++/v1/istream:170,
+                         from /usr/lib/llvm-17/include/c++/v1/iomanip:47,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/path.h:31,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/filesystem_error.h:15,
+                         from /usr/lib/llvm-17/include/c++/v1/__filesystem/directory_entry.h:20,
+                         from /usr/lib/llvm-17/include/c++/v1/filesystem:539,
+                         from /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd/src.cxx:2:
+        /usr/lib/llvm-17/include/c++/v1/__system_error/error_code.h: In instantiation of ‘std::__1::error_code::error_code(_Ep, typename std::__1::enable_if<std::__1::is_error_code_enum<_Ep>::value>::type*) [with _Ep = std::__1::io_errc; typename std::__1::enable_if<std::__1::is_error_code_enum<_Ep>::value>::type = void]’:
+        /usr/lib/llvm-17/include/c++/v1/ios:456:34:   required from here
+        /usr/lib/llvm-17/include/c++/v1/__system_error/error_code.h:56:28: error: use of deleted function ‘void std::__1::__adl_only::make_error_code()’
+           56 |     *this = make_error_code(__e);
+              |             ~~~~~~~~~~~~~~~^~~~~
+        /usr/lib/llvm-17/include/c++/v1/__system_error/error_code.h:40:6: note: declared here
+           40 | void make_error_code() = delete;
+              |      ^~~~~~~~~~~~~~~
+        gmake[1]: *** [CMakeFiles/cmTC_13cfb.dir/build.make:78: CMakeFiles/cmTC_13cfb.dir/src.cxx.o] Error 1
+        gmake[1]: Leaving directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-nUJsgd'
+        gmake: *** [Makefile:127: cmTC_13cfb/fast] Error 2
+        
+      exitCode: 2
+...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/Internal/CheckSourceCompiles.cmake:102 (try_compile)"
+      - "/home/andrew/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.26/Modules/CheckCXXSourceCompiles.cmake:76 (cmake_check_source_compiles)"
+      - "CMakeLists.txt:699 (check_cxx_source_compiles)"
+      - "CMakeLists.txt:703 (seastar_supports_flag)"
+    checks:
+      - "Performing Test result"
+    directories:
+      source: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-JcH4KV"
+      binary: "/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-JcH4KV"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/andrew/seastar/cmake;/home/andrew/seastar"
+    buildResult:
+      variable: "result"
+      cached: true
+      stdout: |
+        Change Dir: /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-JcH4KV
+        
+        Run Build Command(s):/home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_aad37/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_aad37.dir/build.make CMakeFiles/cmTC_aad37.dir/build
+        gmake[1]: Entering directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-JcH4KV'
+        Building CXX object CMakeFiles/cmTC_aad37.dir/src.cxx.o
+        /usr/bin/c++ -Dresult  -Wno-maybe-uninitialized -Werror -o CMakeFiles/cmTC_aad37.dir/src.cxx.o -c /home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-JcH4KV/src.cxx
+        Linking CXX executable cmTC_aad37
+        /home/andrew/.local/lib/python3.10/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_aad37.dir/link.txt --verbose=1
+        /usr/bin/c++  -Wno-maybe-uninitialized -Werror CMakeFiles/cmTC_aad37.dir/src.cxx.o -o cmTC_aad37  -lc++ 
+        gmake[1]: Leaving directory '/home/andrew/seastar/CMakeFiles/CMakeScratch/TryCompile-JcH4KV'
+        
+      exitCode: 0
+...

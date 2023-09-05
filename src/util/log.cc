@@ -18,9 +18,7 @@
 /*
  * Copyright (C) 2015 Cloudius Systems, Ltd.
  */
-
-#include <fmt/time.h>
-
+#include <format>
 #include <seastar/util/log.hh>
 #include <seastar/util/log-cli.hh>
 
@@ -83,7 +81,7 @@ static void print_no_timestamp(std::ostream& os) {
 
 static void print_space_and_boot_timestamp(std::ostream& os) {
     auto n = std::chrono::steady_clock::now().time_since_epoch() / 1us;
-    fmt::print(os, " {:10d}.{:06d}", n / 1000000, n % 1000000);
+    os << std::format(" {:10d}.{:06d}", n / 1000000, n % 1000000);
 }
 
 static void print_space_and_real_timestamp(std::ostream& os) {
@@ -96,11 +94,14 @@ static void print_space_and_real_timestamp(std::ostream& os) {
     auto n = clock::now();
     auto t = clock::to_time_t(n);
     if (this_second.t != t) {
-        this_second.s = fmt::format("{:%Y-%m-%d %T}", fmt::localtime(t));
+        auto tm = std::localtime(&t);
+        char tmp[64];
+        strftime(tmp, 64, "%Y-%m-%d %T", tm);
+        this_second.s = std::string{tmp}; //std::format("{:%Y-%m-%d %T}", tm);
         this_second.t = t;
     }
     auto ms = (n - clock::from_time_t(t)) / 1ms;
-    fmt::print(os, " {},{:03d}", this_second.s, ms);
+    os << std::format(" {},{:03d}", this_second.s, ms);
 }
 
 static void (*print_timestamp)(std::ostream&) = print_no_timestamp;
@@ -278,7 +279,7 @@ void
 logger_registry::register_logger(logger* l) {
     std::lock_guard<std::mutex> g(_mutex);
     if (_loggers.find(l->name()) != _loggers.end()) {
-        throw std::runtime_error(format("Logger '{}' registered twice", l->name()));
+        throw std::runtime_error(std::format("Logger '{}' registered twice", l->name()));
     }
     _loggers[l->name()] = l;
 }
@@ -303,7 +304,7 @@ void apply_logging_settings(const logging_settings& s) {
             global_logger_registry().set_logger_level(pair.first, pair.second);
         } catch (const std::out_of_range&) {
             throw std::runtime_error(
-                        seastar::format("Unknown logger '{}'. Use --help-loggers to list available loggers.",
+                        std::format("Unknown logger '{}'. Use --help-loggers to list available loggers.",
                                         pair.first));
         }
     }
@@ -350,7 +351,7 @@ log_level parse_log_level(const sstring& s) {
     try {
         return boost::lexical_cast<log_level>(s.c_str());
     } catch (const boost::bad_lexical_cast&) {
-        throw std::runtime_error(format("Unknown log level '{}'", s));
+        throw std::runtime_error(std::format("Unknown log level '{}'", s));
     }
 }
 

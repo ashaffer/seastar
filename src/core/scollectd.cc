@@ -27,7 +27,7 @@
 #include <map>
 #include <iostream>
 #include <unordered_map>
-
+#include <format>
 #include <seastar/core/future-util.hh>
 #include <seastar/core/scollectd_api.hh>
 #include <seastar/core/metrics_api.hh>
@@ -41,7 +41,7 @@ namespace seastar {
 void scollectd::type_instance_id::truncate(sstring& field, const char* field_desc) {
     if (field.size() > max_collectd_field_text_len) {
         auto suffix_len = std::ceil(std::log10(++_next_truncated_idx)) + 1;
-        sstring new_field(seastar::format(
+        sstring new_field(std::format(
             "{}~{:d}", sstring(field.data(), max_collectd_field_text_len - suffix_len), _next_truncated_idx));
 
         logger.warn("Truncating \"{}\" to {} chars: \"{}\" -> \"{}\"", field_desc, max_collectd_field_text_len, field,

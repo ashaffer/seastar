@@ -57,6 +57,7 @@ using shard_id = unsigned;
 
 class io_priority_class;
 
+
 class io_queue {
 private:
     struct priority_class_data {

@@ -25,5 +25,5 @@ seastar_add_app (iotune
 
 target_link_libraries (app_iotune
   PRIVATE
-    StdFilesystem::filesystem
+#    StdFilesystem::filesystem
     yaml-cpp::yaml-cpp)

@@ -69,6 +69,8 @@ struct ipv4_address {
     template <typename Adjuster>
     auto adjust_endianness(Adjuster a) { return a(ip); }
 
+    friend std::ostream& operator<<(std::ostream& os, const ipv4_address&& addr);
+
     friend bool operator==(ipv4_address x, ipv4_address y) {
         return x.ip == y.ip;
     }
@@ -112,7 +114,8 @@ struct ipv4_address {
 
 static inline bool is_unspecified(ipv4_address addr) { return addr.ip == 0; }
 
-std::ostream& operator<<(std::ostream& os, const ipv4_address& a);
+
+
 
 // IPv6
 struct ipv6_address {
@@ -146,6 +149,8 @@ struct ipv6_address {
         return ip;
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const ipv6_address&& a);
+
     bool is_unspecified() const;
 
     static ipv6_address read(const char*);
@@ -157,10 +162,7 @@ struct ipv6_address {
     }
 } __attribute__((packed));
 
-std::ostream& operator<<(std::ostream&, const ipv6_address&);
-
 }
-
 }
 
 namespace std {
@@ -508,6 +510,7 @@ private:
     circular_buffer<l3_protocol::l3packet> _packetq;
     unsigned _pkt_provider_idx = 0;
     metrics::metric_groups _metrics;
+
 private:
     future<> handle_received_packet(packet p, ethernet_address from);
     bool forward(forward_hash& out_hash_data, packet& p, size_t off);
@@ -638,6 +641,9 @@ inline
 void ipv4_l4<ProtoNum>::flush() {
     _inet.flush();
 }
+
+std::ostream& operator<<(std::ostream& os, const ipv4_address&);
+std::ostream& operator<<(std::ostream& os, const ipv6_address&);
 
 }
 }

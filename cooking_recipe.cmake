@@ -253,7 +253,7 @@ cooking_ingredient (cryptopp
 
 
 # Use the "native" profile that DPDK defines in `dpdk/config`, but in `dpdk_configure.cmake` we override
-# CONFIG_RTE_MACHINE with `Seastar_DPDK_MACHINE`.
+# CONFIG_RTE_MACHINE with `Seastar_DPDK_MACHINE`.P
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
   set (dpdk_quadruple arm64-armv8a-linuxapp-gcc)
 else()
@@ -261,7 +261,7 @@ else()
 endif()
 
 set (dpdk_args
-  EXTRA_CFLAGS=-Wno-error
+  EXTRA_CFLAGS=-Wno-error -Wno-deprecated-declarations
   O=<BINARY_DIR>
   DESTDIR=<INSTALL_DIR>
   T=${dpdk_quadruple})
@@ -285,18 +285,22 @@ cooking_ingredient (dpdk
       ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
       ${make_command} ${dpdk_args} install)
 
-cooking_ingredient (fmt
-  EXTERNAL_PROJECT_ARGS
-    URL https://github.com/fmtlib/fmt/archive/5.2.1.tar.gz
-    URL_MD5 eaf6e3c1b2f4695b9a612cedf17b509d
-  CMAKE_ARGS
-    -DFMT_DOC=OFF
-    -DFMT_TEST=OFF)
+#cooking_ingredient (fmt
+#  EXTERNAL_PROJECT_ARGS
+#     URL https://github.com/fmtlib/fmt/archive/10.1.1.tar.gz
+#     URL_MD5 0d41a16f1b3878d44e6fd7ff1f6cc45a
+#    URL https://github.com/fmtlib/fmt/archive/5.2.1.tar.gz
+#    URL_MD5 eaf6e3c1b2f4695b9a612cedf17b509d
+#  CMAKE_ARGS
+#    -DFMT_DOC=OFF
+#    -DFMT_TEST=OFF)
 
 cooking_ingredient (lz4
   EXTERNAL_PROJECT_ARGS
-    URL https://github.com/lz4/lz4/archive/v1.8.0.tar.gz
-    URL_MD5 6247bf0e955899969d1600ff34baed6b
+     URL https://github.com/lz4/lz4/archive/v1.9.0.tar.gz
+     URL_MD5 732b4d05d8825b1e3ca72e9ce88a39ad
+#    URL https://github.com/lz4/lz4/archive/v1.8.0.tar.gz
+#    URL_MD5 6247bf0e955899969d1600ff34baed6b
     # This is upsetting.
     BUILD_IN_SOURCE ON
     CONFIGURE_COMMAND <DISABLE>

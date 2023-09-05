@@ -26,25 +26,37 @@
 #include <boost/lexical_cast.hpp>
 
 #include <ostream>
+#include <format>
 #include <seastar/util/std-compat.hh>
 #include <seastar/net/inet_address.hh>
 
 namespace seastar {
+    // NOTE: Should be prior to <seastar/util/log.hh> include because
+    // logger::stringer_for<T> needs to see the corresponding `operator <<`
+    // declaration at the call site
+    // std::ostream& operator<<(std::ostream& os, const net::inet_address::family& f) {
+    //     switch (f) {
+    //     case net::inet_address::family::INET:
+    //         os << "INET";
+    //         break;
+    //     case net::inet_address::family::INET6:
+    //         os << "INET6";
+    //         break;
+    //     default:
+    //         break;
+    //     }
+    //     return os;
+    // }
 
-// NOTE: Should be prior to <seastar/util/log.hh> include because
-// logger::stringer_for<T> needs to see the corresponding `operator <<`
-// declaration at the call site
-//
+    // std::ostream& operator<<(std::ostream& os, const std::optional<net::inet_address::family>& f) {
+    //     if (f) {
+    //         return os << *f;
+    //     } else {
+    //         return os << "ANY";
+    //     }
+    // }
 // This doesn't need to be in the public API, so leave it there instead of placing into `inet_address.hh`
-std::ostream& operator<<(std::ostream& os, const compat::optional<net::inet_address::family>& f) {
-    if (f) {
-        return os << *f;
-    } else {
-        return os << "ANY";
-    }
-}
-
-}
+};
 
 #include <seastar/net/ip.hh>
 #include <seastar/net/api.hh>
@@ -237,7 +249,7 @@ public:
             sstring name;
         };
 
-        dns_log.debug("Query name {} ({})", name, family);
+        // dns_log.debug("Query name {} ({})", name, family);
 
         if (!family) {
             ::in_addr in;
@@ -264,7 +276,7 @@ public:
 
             switch (status) {
             default:
-                dns_log.debug("Query failed: {}", status);
+                // dns_log.debug("Query failed: {}", status);
                 p->set_exception(std::system_error(status, ares_errorc, p->name));
                 break;
             case ARES_SUCCESS:
@@ -329,7 +341,7 @@ public:
         auto p = std::make_unique<promise<srv_records>>();
         auto f = p->get_future();
 
-        const auto query = format("_{}._{}.{}",
+        const auto query = std::format("_{}._{}.{}",
                                   service,
                                   proto == srv_proto::tcp ? "tcp" : "udp",
                                   domain);

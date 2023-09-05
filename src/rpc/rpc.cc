@@ -1,3 +1,5 @@
+#include <iostream>
+#include <format>
 #include <seastar/rpc/rpc.hh>
 #include <seastar/core/print.hh>
 #include <boost/range/adaptor/map.hpp>
@@ -7,7 +9,7 @@ namespace seastar {
 namespace rpc {
 
     void logger::operator()(const client_info& info, id_type msg_id, const sstring& str) const {
-        log(format("client {} msg_id {}:  {}", info.addr, msg_id, str));
+        log(std::format("client {} msg_id {}:  {}", info.addr, msg_id, str));
     }
 
     void logger::operator()(const client_info& info, const sstring& str) const {
@@ -15,7 +17,7 @@ namespace rpc {
     }
 
     void logger::operator()(const socket_address& addr, const sstring& str) const {
-        log(format("client {}: {}", addr, str));
+        log(std::format("client {}: {}", addr, str));
     }
 
   no_wait_type no_wait;
@@ -324,7 +326,7 @@ namespace rpc {
       return in.read_exactly(header_size).then([this, header_size, info, &in] (temporary_buffer<char> header) {
           if (header.size() != header_size) {
               if (header.size() != 0) {
-                  _logger(info, format("unexpected eof on a {} while reading header: expected {:d} got {:d}", FrameType::role(), header_size, header.size()));
+                  _logger(info, std::format("unexpected eof on a {} while reading header: expected {:d} got {:d}", FrameType::role(), header_size, header.size()));
               }
               return FrameType::empty_value();
           }
@@ -335,7 +337,7 @@ namespace rpc {
           } else {
               return read_rcv_buf(in, size).then([this, info, h = std::move(h), size] (rcv_buf rb) {
                   if (rb.size != size) {
-                      _logger(info, format("unexpected eof on a {} while reading data: expected {:d} got {:d}", FrameType::role(), size, rb.size));
+                      _logger(info, std::format("unexpected eof on a {} while reading data: expected {:d} got {:d}", FrameType::role(), size, rb.size));
                       return FrameType::empty_value();
                   } else {
                       return FrameType::make_value(h, std::move(rb));
@@ -352,7 +354,7 @@ namespace rpc {
           return in.read_exactly(4).then([&] (temporary_buffer<char> compress_header) {
               if (compress_header.size() != 4) {
                   if (compress_header.size() != 0) {
-                      _logger(info, format("unexpected eof on a {} while reading compression header: expected 4 got {:d}", FrameType::role(), compress_header.size()));
+                      _logger(info, std::format("unexpected eof on a {} while reading compression header: expected 4 got {:d}", FrameType::role(), compress_header.size()));
                   }
                   return FrameType::empty_value();
               }
@@ -360,7 +362,7 @@ namespace rpc {
               auto size = read_le<uint32_t>(ptr);
               return read_rcv_buf(in, size).then([this, size, &compressor, info] (rcv_buf compressed_data) {
                   if (compressed_data.size != size) {
-                      _logger(info, format("unexpected eof on a {} while reading compressed data: expected {:d} got {:d}", FrameType::role(), size, compressed_data.size));
+                      _logger(info, std::format("unexpected eof on a {} while reading compressed data: expected {:d} got {:d}", FrameType::role(), size, compressed_data.size));
                       return FrameType::empty_value();
                   }
                   auto eb = compressor->decompress(std::move(compressed_data));
@@ -479,7 +481,7 @@ namespace rpc {
   xshard_connection_ptr connection::get_stream(connection_id id) const {
       auto it = _streams.find(id);
       if (it == _streams.end()) {
-          throw std::logic_error(format("rpc stream id {:d} not found", id).c_str());
+          throw std::logic_error(std::format("rpc stream id {:d} not found", id));
       }
       return it->second;
   }
@@ -493,7 +495,7 @@ namespace rpc {
       } catch (...) {
           s = "unknown exception";
       }
-      c.get_logger()(c.peer_address(), format("{}: {}", log, s));
+      c.get_logger()(c.peer_address(), std::format("{}: {}", log, s));
   }
 
 
@@ -673,7 +675,7 @@ namespace rpc {
                           } catch(const unknown_verb_error& ex) {
                               // if this is unknown verb exception with unknown id ignore it
                               // can happen if unknown verb was used by no_wait client
-                              get_logger()(peer_address(), format("unknown verb exception {:d} ignored", ex.type));
+                              get_logger()(peer_address(), std::format("unknown verb exception {:d} ignored", ex.type));
                           } catch(...) {
                               // We've got error response but handler is no longer waiting, could be timed out.
                               log_exception(*this, "ignoring error response", std::current_exception());
@@ -758,12 +760,12 @@ namespace rpc {
                   f = smp::submit_to(_parent_id.shard(), [this, c = make_foreign(static_pointer_cast<rpc::connection>(shared_from_this()))] () mutable {
                       auto sit = _servers.find(*_server._options.streaming_domain);
                       if (sit == _servers.end()) {
-                          throw std::logic_error(format("Shard {:d} does not have server with streaming domain {:x}", engine().cpu_id(), *_server._options.streaming_domain).c_str());
+                          throw std::logic_error(std::format("Shard {:d} does not have server with streaming domain {:x}", engine().cpu_id(), *_server._options.streaming_domain));
                       }
                       auto s = sit->second;
                       auto it = s->_conns.find(_parent_id);
                       if (it == s->_conns.end()) {
-                          throw std::logic_error(format("Unknown parent connection {:d} on shard {:d}", _parent_id, engine().cpu_id()).c_str());
+                          throw std::logic_error(std::format("Unknown parent connection {:d} on shard {:d}", _parent_id, engine().cpu_id()));
                       }
                       auto id = c->get_connection_id();
                       it->second->register_stream(id, make_lw_shared(std::move(c)));
@@ -922,7 +924,8 @@ future<> server::connection::send_unknown_verb_reply(compat::optional<rpc_clock_
         });
       }).then_wrapped([this] (future<> f) {
           if (f.failed()) {
-              log_exception(*this, format("server{} connection dropped", is_stream() ? " stream" : "").c_str(), f.get_exception());
+              auto msg = std::format("server{} connection dropped", is_stream() ? " stream" : "");
+              log_exception(*this, msg.c_str(), f.get_exception());
           }
           _fd.shutdown_input();
           _error = true;
@@ -979,7 +982,7 @@ future<> server::connection::send_unknown_verb_reply(compat::optional<rpc_clock_
   {
       if (_options.streaming_domain) {
           if (_servers.find(*_options.streaming_domain) != _servers.end()) {
-              throw std::runtime_error(format("An RPC server with the streaming domain {} is already exist", *_options.streaming_domain));
+              throw std::runtime_error(std::format("An RPC server with the streaming domain {} is already exist", *_options.streaming_domain));
           }
           _servers[*_options.streaming_domain] = this;
       }
@@ -1033,11 +1036,11 @@ future<> server::connection::send_unknown_verb_reply(compat::optional<rpc_clock_
   }
 
   std::ostream& operator<<(std::ostream& os, const connection_id& id) {
-      return fmt_print(os, "{:x}", id.id);
+    return os << std::format("{:x}", id.id);
   }
 
   std::ostream& operator<<(std::ostream& os, const streaming_domain_type& domain) {
-      return fmt_print(os, "{:d}", domain._id);
+    return os << std::format("{:d}", domain._id);
   }
 
   isolation_config default_isolate_connection(sstring isolation_cookie) {

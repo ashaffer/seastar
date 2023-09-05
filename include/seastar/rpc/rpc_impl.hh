@@ -567,7 +567,7 @@ auto recv_helper(signature<Ret (InArgs...)> sig, Func&& func, WantClientInfo wci
                                                            rcv_buf data) mutable {
         auto memory_consumed = client->estimate_request_size(data.size);
         if (memory_consumed > client->max_request_size()) {
-            auto err = format("request size {:d} large than memory limit {:d}", memory_consumed, client->max_request_size());
+            auto err = std::format("request size {:d} large than memory limit {:d}", memory_consumed, client->max_request_size());
             client->get_logger()(client->peer_address(), err);
             // FIXME: future is discarded
             (void)with_gate(client->get_server().reply_gate(), [client, timeout, msg_id, err = std::move(err)] {
@@ -584,11 +584,11 @@ auto recv_helper(signature<Ret (InArgs...)> sig, Func&& func, WantClientInfo wci
                         auto args = unmarshall<Serializer, InArgs...>(*client, std::move(data));
                         return apply(func, client->info(), timeout, WantClientInfo(), WantTimePoint(), signature(), std::move(args)).then_wrapped([client, timeout, msg_id, permit = std::move(permit)] (futurize_t<Ret> ret) mutable {
                             return reply<Serializer>(wait_style(), std::move(ret), msg_id, client, timeout).handle_exception([permit = std::move(permit), client, msg_id] (std::exception_ptr eptr) {
-                                client->get_logger()(client->info(), msg_id, format("got exception while processing a message: {}", eptr));
+                                client->get_logger()(client->info(), msg_id, std::format("got exception while processing a message: {}", eptr));
                             });
                         });
                     } catch (...) {
-                        client->get_logger()(client->info(), msg_id, format("got exception while processing a message: {}", std::current_exception()));
+                        client->get_logger()(client->info(), msg_id, std::format("got exception while processing a message: {}", std::current_exception()));
                         return make_ready_future();
                     }
                 });

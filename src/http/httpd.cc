@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <queue>
+#include <format>
 #include <bitset>
 #include <limits>
 #include <cctype>
@@ -61,7 +62,7 @@ http_stats::http_stats(http_server& server, const sstring& name)
 
 sstring http_server_control::generate_server_name() {
     static thread_local uint16_t idgen;
-    return seastar::format("http-{}", idgen++);
+    return std::format("http-{}", idgen++);
 }
 
 future<> connection::do_response_loop() {

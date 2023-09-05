@@ -374,3 +374,14 @@ struct tuple_element<I, seastar::rpc::tuple<T...>> : tuple_element<I, tuple<T...
 };
 
 }
+
+template<class CharT>
+struct std::formatter<seastar::rpc::connection_id, CharT> : public std::formatter<uint64_t, CharT> {
+  using parent = std::formatter<uint64_t, CharT>;
+
+  template<class FormatContext>
+  auto format (const seastar::rpc::connection_id& id, FormatContext& fc) const {
+    return parent::format(id.id, fc);
+  }
+};
+

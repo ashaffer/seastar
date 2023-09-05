@@ -28,6 +28,7 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <format>
 #include <seastar/http/reply.hh>
 #include <seastar/core/print.hh>
 #include <seastar/http/httpd.hh>
@@ -106,7 +107,7 @@ class http_chunked_data_sink_impl : public data_sink_impl {
     output_stream<char>& _out;
 
     future<> write_size(size_t s) {
-        auto req = format("{:x}\r\n", s);
+        auto req = std::format("{:x}\r\n", s);
         return _out.write(req);
     }
 public:

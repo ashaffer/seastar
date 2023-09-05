@@ -121,6 +121,9 @@ public:
     }
     friend struct std::hash<streaming_domain_type>;
     friend std::ostream& operator<<(std::ostream&, const streaming_domain_type&);
+    inline auto get_id () const noexcept {
+        return _id;
+    }
 };
 
 struct server_options {
@@ -662,5 +665,17 @@ private:
 }
 
 }
+
+template<class CharT>
+struct std::formatter<seastar::rpc::streaming_domain_type, CharT> :  public std::formatter<uint64_t, CharT> {
+  using parent = std::formatter<uint64_t, CharT>;
+
+  template<class FormatContext>
+  auto format (const seastar::rpc::streaming_domain_type& id, FormatContext& fc) const {
+    return parent::format(id.get_id(), fc);
+  }
+};
+
+
 
 #include "rpc_impl.hh"

@@ -23,6 +23,7 @@
 #include <link.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <format>
 
 #include <errno.h>
 #include <string.h>
@@ -107,10 +108,11 @@ std::ostream& operator<<(std::ostream& out, const saved_backtrace& b) {
         if (!f.so->name.empty()) {
             out << f.so->name << "+";
         }
-        out << format("0x{:x}", f.addr) << "\n";
+        out << std::format("0x{:x}", f.addr) << "\n";
     }
     return out;
 }
 
 
 } // namespace seastar
+

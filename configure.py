@@ -132,7 +132,7 @@ def identify_best_dialect(dialects, compiler):
     return d
 
 if args.cpp_dialect == '':
-    cpp_dialects = ['gnu++17', 'gnu++1z', 'gnu++14', 'gnu++1y']
+    cpp_dialects = ['c++20', 'gnu++17', 'gnu++1z', 'gnu++14', 'gnu++1y']
     args.cpp_dialect = identify_best_dialect(cpp_dialects, compiler=args.cxx)
 
 def infer_dpdk_machine(user_cflags):
@@ -166,7 +166,6 @@ MODES = seastar_cmake.SUPPORTED_MODES if args.mode == 'all' else [args.mode]
 tr = seastar_cmake.translate_arg
 
 MODE_TO_CMAKE_BUILD_TYPE = {'release' : 'RelWithDebInfo', 'debug' : 'Debug', 'dev' : 'Dev', 'sanitize' : 'Sanitize' }
-
 def configure_mode(mode):
     BUILD_PATH = seastar_cmake.BUILD_PATHS[mode]
 
@@ -199,7 +198,6 @@ def configure_mode(mode):
         tr(args.coroutines_ts, 'EXPERIMENTAL_COROUTINES_TS'),
         tr(args.unused_result_error, 'UNUSED_RESULT_ERROR'),
     ]
-
     ingredients_to_cook = set(args.cook)
 
     if args.dpdk:

@@ -283,7 +283,7 @@ public:
     struct async_work_item : work_item {
         smp_message_queue& _queue;
         Func _func;
-        using futurator = futurize<std::result_of_t<Func()>>;
+        using futurator = futurize<std::invoke_result_t<Func>>;
         using future_type = typename futurator::type;
         using value_type = typename future_type::value_type;
         compat::optional<value_type> _result;
@@ -333,7 +333,7 @@ public:
     smp_message_queue(reactor* from, reactor* to);
     ~smp_message_queue();
     template <typename Func>
-    futurize_t<std::result_of_t<Func()>> submit(shard_id t, smp_service_group ssg, Func&& func, bool ignoreLimits = false) {
+    futurize_t<std::invoke_result_t<Func>> submit(shard_id t, smp_service_group ssg, Func&& func, bool ignoreLimits = false) {
         auto wi = std::make_unique<async_work_item<Func>>(*this, ssg, std::forward<Func>(func), ignoreLimits);
         auto fut = wi->get_future();
         submit_item(t, std::move(wi), ignoreLimits);
@@ -986,9 +986,9 @@ public:
     static bool _using_dpdk;
 
     template <typename Func>
-    using returns_future = is_future<std::result_of_t<Func()>>;
+    using returns_future = is_future<std::invoke_result_t<Func>>;
     template <typename Func>
-    using returns_void = std::is_same<std::result_of_t<Func()>, void>;
+    using returns_void = std::is_same<std::invoke_result_t<Func>, void>;
     static boost::program_options::options_description get_options_description();
     static void register_network_stacks();
     static void configure(boost::program_options::variables_map vm, reactor_config cfg = {});
@@ -1015,8 +1015,8 @@ public:
     /// \return whatever \c func returns, as a future<> (if \c func does not return a future,
     ///         submit_to() will wrap it in a future<>).
     template <typename Func>
-    static futurize_t<std::result_of_t<Func()>> submit_to(unsigned t, smp_service_group ssg, Func&& func, bool ignoreLimits = false, bool preempt = false) {
-        using ret_type = std::result_of_t<Func()>;
+    static futurize_t<std::invoke_result_t<Func>> submit_to(unsigned t, smp_service_group ssg, Func&& func, bool ignoreLimits = false, bool preempt = false) {
+        using ret_type = std::invoke_result_t<Func>;
         if (t == engine().cpu_id()) {
             try {
                 if (!is_future<ret_type>::value) {
@@ -1033,7 +1033,7 @@ public:
                 }
             } catch (...) {
                 // Consistently return a failed future rather than throwing, to simplify callers
-                return futurize<std::result_of_t<Func()>>::make_exception_future(std::current_exception());
+                return futurize<std::invoke_result_t<Func>>::make_exception_future(std::current_exception());
             }
         } else {
             auto f = _qs[t][engine().cpu_id()].submit(t, ssg, std::forward<Func>(func), ignoreLimits);
@@ -1058,7 +1058,7 @@ public:
     /// \return whatever \c func returns, as a future<> (if \c func does not return a future,
     ///         submit_to() will wrap it in a future<>).
     template <typename Func>
-    static futurize_t<std::result_of_t<Func()>> submit_to(unsigned t, Func&& func, bool ignoreLimits = false, bool preempt = false) {
+    static futurize_t<std::invoke_result_t<Func>> submit_to(unsigned t, Func&& func, bool ignoreLimits = false, bool preempt = false) {
         return submit_to(t, default_smp_service_group(), std::forward<Func>(func), ignoreLimits, preempt);
     }
     static bool poll_queues();
@@ -1072,7 +1072,7 @@ public:
     // Each async invocation will work with a separate copy of func.
     template<typename Func>
     static future<> invoke_on_all(Func&& func) {
-        static_assert(std::is_same<future<>, typename futurize<std::result_of_t<Func()>>::type>::value, "bad Func signature");
+        static_assert(std::is_same<future<>, typename futurize<std::invoke_result_t<Func>>::type>::value, "bad Func signature");
         return parallel_for_each(all_cpus(), [&func] (unsigned id) {
             return smp::submit_to(id, Func(func));
         });
@@ -1083,7 +1083,7 @@ public:
     // Each async invocation will work with a separate copy of func.
     template<typename Func>
     static future<> invoke_on_others(unsigned cpu_id, Func func) {
-        static_assert(std::is_same<future<>, typename futurize<std::result_of_t<Func()>>::type>::value, "bad Func signature");
+        static_assert(std::is_same<future<>, typename futurize<std::invoke_result_t<Func>>::type>::value, "bad Func signature");
         return parallel_for_each(all_cpus(), [cpu_id, func = std::move(func)] (unsigned id) {
             return id != cpu_id ? smp::submit_to(id, func) : make_ready_future<>();
         });
@@ -1133,3 +1133,12 @@ inline int alarm_signal() {
 extern logger seastar_logger;
 
 }
+
+// template<class T>
+// struct ostream_formatter () {
+//     template<class FormatContext>
+//     auto format (const T& t, std::format_context& ctx) {
+//         return std::cout << t;
+//     }
+// };
+

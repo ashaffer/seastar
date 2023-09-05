@@ -90,7 +90,7 @@ inline tcp_state operator|(tcp_state s1, tcp_state s2) {
 template <typename... Args>
 void tcp_debug(const char* fmt, Args&&... args) {
 #if TCP_DEBUG
-    print(fmt, std::forward<Args>(args)...);
+    std::cout << std::format(fmt, std::forward<decltype(args)>(args)...);
 #endif
 }
 

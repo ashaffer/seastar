@@ -27,27 +27,29 @@
 
 #include <chrono>
 #include <iosfwd>
+#include <format>
 
 // Instrumentation to detect context switches during reactor execution
 // and associated stall time, intended for use in tests
 
 namespace seastar {
 
-namespace internal {
+    namespace internal {
+        struct stall_report {
+            uint64_t kernel_stalls;
+            std::chrono::steady_clock::duration run_wall_time;  // excludes sleeps
+            std::chrono::steady_clock::duration stall_time;
+        };
 
-struct stall_report {
-    uint64_t kernel_stalls;
-    std::chrono::steady_clock::duration run_wall_time;  // excludes sleeps
-    std::chrono::steady_clock::duration stall_time;
-};
-
-/// Run the unit-under-test (uut) function until completion, and report on any
-/// reactor stalls it generated.
-future<stall_report> report_reactor_stalls(noncopyable_function<future<> ()> uut);
-
-std::ostream& operator<<(std::ostream& os, const stall_report& sr);
-
+        /// Run the unit-under-test (uut) function until completion, and report on any
+        /// reactor stalls it generated.
+        future<stall_report> report_reactor_stalls(noncopyable_function<future<> ()> uut);
+    }
 }
 
+std::ostream& operator<<(std::ostream& os, const seastar::internal::stall_report&& sr) {
+    auto to_ms = [] (seastar::FastClock::duration d) -> float {
+        return std::chrono::duration<float>(d) / std::chrono::milliseconds(1);
+    };
+    return os << std::format("{} stalls, {} ms stall time, {} ms run time", sr.kernel_stalls, to_ms(sr.stall_time), to_ms(sr.run_wall_time));
 }
-

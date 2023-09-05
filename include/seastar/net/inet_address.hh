@@ -26,7 +26,8 @@
 #include <netinet/in.h>
 #include <stdexcept>
 #include <vector>
-
+#include <arpa/inet.h>
+#include <seastar/util/std-compat.hh>
 #include <seastar/core/future.hh>
 #include <seastar/core/sstring.hh>
 
@@ -97,17 +98,59 @@ public:
     future<sstring> hostname() const;
     future<std::vector<sstring>> aliases() const;
 
+    // friend std::ostream& operator<<(std::ostream&, const inet_address &);
+    // friend std::ostream& operator<<(std::ostream&, inet_address const &);
+    friend std::ostream& operator<<(std::ostream&, const family &);
+    friend std::ostream& operator<<(std::ostream& os, const std::optional<const net::inet_address::family>& f);
+
     static future<inet_address> find(const sstring&);
     static future<inet_address> find(const sstring&, family);
     static future<std::vector<inet_address>> find_all(const sstring&);
     static future<std::vector<inet_address>> find_all(const sstring&, family);
 };
 
-std::ostream& operator<<(std::ostream&, const inet_address&);
-std::ostream& operator<<(std::ostream&, const inet_address::family&);
+// std::ostream& operator<<(std::ostream&, const inet_address &);
+// std::ostream& operator<<(std::ostream&, inet_address const &);
+//
+inline std::ostream& operator<<(std::ostream& os, inet_address const& addr) {
+    char buffer[64];
+    os << inet_ntop(int(addr.in_family()), addr.data(), buffer, sizeof(buffer));
+    // if (addr.scope() != seastar::net::inet_address::invalid_scope) {
+    //     os << "%" << addr.scope();
+    // }
+    return os;
+}
 
+inline std::ostream& operator<<(std::ostream& os, const inet_address::family& f) {
+    switch (f) {
+    case inet_address::family::INET:
+        os << "INET";
+        break;
+    case inet_address::family::INET6:
+        os << "INET6";
+        break;
+    default:
+        break;
+    }
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const std::optional<const inet_address::family>& f) {
+    if (f) {
+        return os << (*f);
+    } else {
+        return os << "ANY";
+    }
 }
 }
+}
+
+template<>
+struct std::formatter<seastar::net::inet_address::family> : seastar::ostream_formatter {};
+template<>
+struct std::formatter<std::optional<const seastar::net::inet_address::family>> : seastar::ostream_formatter {};
+template<>
+struct std::formatter<seastar::net::inet_address> : seastar::ostream_formatter {};
 
 namespace std {
 template<>

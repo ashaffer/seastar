@@ -69,6 +69,14 @@ struct ethernet_address {
         return 6;
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const ethernet_address&& ea) {
+        const auto& m = ea.mac;
+        using u = const uint32_t;
+        return os << std::format("{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
+                u(m[0]), u(m[1]), u(m[2]), u(m[3]), u(m[4]), u(m[5]));
+    }
+
+
     std::string to_string () {
         char s[32] = {0};
 
@@ -85,8 +93,6 @@ struct ethernet_address {
     }
 
 } __attribute__((packed));
-
-std::ostream& operator<<(std::ostream& os, ethernet_address ea);
 
 struct ethernet {
     using address = ethernet_address;

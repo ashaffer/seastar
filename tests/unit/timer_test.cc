@@ -24,6 +24,7 @@
 #include <seastar/core/print.hh>
 #include <chrono>
 #include <iostream>
+#include <format>
 
 using namespace seastar;
 using namespace std::chrono_literals;
@@ -50,7 +51,7 @@ struct timer_test {
     future<> run() {
         t1.set_callback([this] {
             OK();
-            fmt::print(" 500ms timer expired\n");
+            std::cout << " 500ms timer expired\n";
             if (!t4.cancel()) {
                 BUG();
             }
@@ -59,10 +60,10 @@ struct timer_test {
             }
             t5.arm(1100ms);
         });
-        t2.set_callback([] { OK(); fmt::print(" 900ms timer expired\n"); });
-        t3.set_callback([] { OK(); fmt::print("1000ms timer expired\n"); });
-        t4.set_callback([] { OK(); fmt::print("  BAD cancelled timer expired\n"); });
-        t5.set_callback([this] { OK(); fmt::print("1600ms rearmed timer expired\n"); pr1.set_value(); });
+        t2.set_callback([] { OK(); std::cout << " 900ms timer expired\n"; });
+        t3.set_callback([] { OK(); std::cout << "1000ms timer expired\n"; });
+        t4.set_callback([] { OK(); std::cout << "  BAD cancelled timer expired\n"; });
+        t5.set_callback([this] { OK(); sd::cout << "1600ms rearmed timer expired\n"; pr1.set_value(); });
 
         t1.arm(500ms);
         t2.arm(900ms);
@@ -93,12 +94,12 @@ int main(int ac, char** av) {
     timer_test<steady_clock_type> t1;
     timer_test<lowres_clock> t2;
     return app.run_deprecated(ac, av, [&t1, &t2] {
-        fmt::print("=== Start High res clock test\n");
+        std::cout << "=== Start High res clock test\n";
         return t1.run().then([&t2] {
-            fmt::print("=== Start Low  res clock test\n");
+            std::cout << "=== Start Low  res clock test\n";
             return t2.run();
         }).then([] {
-            fmt::print("Done\n");
+            std::cout << "Done\n";
             engine().exit(0);
         });
     });

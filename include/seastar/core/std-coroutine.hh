@@ -21,18 +21,12 @@
 
 #pragma once
 
-#if !SEASTAR_COROUTINES_TS
-#error Coroutines TS support disabled.
-#endif
-
-#if __has_include(<experimental/coroutine>)
-#include <experimental/coroutine>
-#else
+#include <coroutine>
 
 // We are not exactly allowed to defined anything in the std namespace, but this
 // makes coroutines work with libstdc++. All of this is experimental anyway.
 
-namespace std::experimental {
+namespace std {
 
 template<typename Promise>
 class coroutine_handle {

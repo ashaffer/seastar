@@ -22,6 +22,7 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 #include <system_error>
+#include <format>
 
 #include <seastar/core/reactor.hh>
 #include <seastar/core/thread.hh>
@@ -129,7 +130,7 @@ class tls::dh_params::impl : gnutlsobj {
             case level::HIGH: return GNUTLS_SEC_PARAM_HIGH;
             case level::ULTRA: return GNUTLS_SEC_PARAM_ULTRA;
             default:
-                throw std::runtime_error(format("Unknown value of dh_params::level: {:d}", static_cast<std::underlying_type_t<level>>(l)));
+                throw std::runtime_error(std::format("Unknown value of dh_params::level: {:d}", static_cast<std::underlying_type_t<level>>(l)));
         }
     }
 public:

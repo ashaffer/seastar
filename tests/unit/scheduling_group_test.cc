@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <vector>
 #include <chrono>
+#include <format>
 
 #include <seastar/core/thread.hh>
 #include <seastar/testing/test_case.hh>
@@ -44,7 +45,7 @@ SEASTAR_THREAD_TEST_CASE(sg_specific_values_define_after_sg_create) {
     const int num_scheduling_groups = 4;
     std::vector<scheduling_group> sgs;
     for (int i = 0; i < num_scheduling_groups; i++) {
-        sgs.push_back(create_scheduling_group(format("sg{}", i).c_str(), 100).get0());
+        sgs.push_back(create_scheduling_group(std::format("sg{}", i).c_str(), 100).get0());
     }
 
     const auto destroy_scheduling_groups = defer([&sgs] () {
@@ -113,7 +114,7 @@ SEASTAR_THREAD_TEST_CASE(sg_specific_values_define_before_sg_create) {
     scheduling_group_key key2 = scheduling_group_key_create(key2_conf).get0();
 
     for (int i = 0; i < num_scheduling_groups; i++) {
-        sgs.push_back(create_scheduling_group(format("sg{}", i).c_str(), 100).get0());
+        sgs.push_back(create_scheduling_group(std::format("sg{}", i).c_str(), 100).get0());
     }
 
     smp::invoke_on_all([key1, key2, &sgs] () {
@@ -166,7 +167,7 @@ SEASTAR_THREAD_TEST_CASE(sg_specific_values_define_before_and_after_sg_create) {
     });
 
     for (int i = 0; i < num_scheduling_groups/2; i++) {
-        sgs.push_back(create_scheduling_group(format("sg{}", i).c_str(), 100).get0());
+        sgs.push_back(create_scheduling_group(std::format("sg{}", i).c_str(), 100).get0());
     }
     scheduling_group_key_config key1_conf = make_scheduling_group_key_config<int>();
     scheduling_group_key key1 = scheduling_group_key_create(key1_conf).get0();
@@ -175,7 +176,7 @@ SEASTAR_THREAD_TEST_CASE(sg_specific_values_define_before_and_after_sg_create) {
     scheduling_group_key key2 = scheduling_group_key_create(key2_conf).get0();
 
     for (int i = num_scheduling_groups/2; i < num_scheduling_groups; i++) {
-        sgs.push_back(create_scheduling_group(format("sg{}", i).c_str(), 100).get0());
+        sgs.push_back(create_scheduling_group(std::format("sg{}", i).c_str(), 100).get0());
     }
 
     smp::invoke_on_all([key1, key2, &sgs] () {

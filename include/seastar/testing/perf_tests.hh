@@ -23,8 +23,7 @@
 
 #include <atomic>
 #include <memory>
-
-#include <fmt/format.h>
+#include <format>
 
 #include <seastar/core/future.hh>
 #include <seastar/core/future-util.hh>
@@ -71,7 +70,7 @@ public:
 
     const std::string& test_case() const { return _test_case; }
     const std::string& test_group() const { return _test_group; }
-    std::string name() const { return fmt::format("{}.{}", test_group(), test_case()); }
+    std::string name() const { return std::format("{}.{}", test_group(), test_case()); }
 
     void run(const config&);
 public:

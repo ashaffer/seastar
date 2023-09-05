@@ -26,6 +26,7 @@
 #include <seastar/core/sleep.hh>
 #include <seastar/core/thread.hh>
 #include <seastar/core/print.hh>
+#include <format>
 
 using namespace seastar;
 using namespace std::chrono_literals;
@@ -104,7 +105,7 @@ future<> test_constructor_argument_is_passed_to_each_core() {
         return y.start(sstring("hello")).then([&y] {
             return y.invoke_on_all([] (Y& y) {
                 if (y.s != "hello") {
-                    throw std::runtime_error(format("expected message mismatch, is \"%s\"", y.s));
+                    throw std::runtime_error(std::format("expected message mismatch, is \"%s\"", y.s));
                 }
             });
         });

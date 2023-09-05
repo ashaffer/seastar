@@ -25,6 +25,8 @@
 #include <istream>
 #include <string>
 #include <unordered_map>
+#include <vector>
+#include <string>
 
 namespace seastar {
 namespace net {

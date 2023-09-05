@@ -53,47 +53,4 @@ socket_address::socket_address(const unix_domain_addr& s) {
     memcpy(u.un.sun_path, s.path_bytes(), path_length);
     addr_length = path_length + ((size_t) (((struct ::sockaddr_un *) 0)->sun_path));
 }
-
-std::string unix_domain_addr_text(const socket_address& sa) {
-    if (sa.length() <= ((size_t) (((struct ::sockaddr_un *) 0)->sun_path))) {
-        return "{unnamed}"s;
-    }
-    if (sa.u.un.sun_path[0]) {
-        // regular (filesystem-namespace) path
-        return std::string{sa.u.un.sun_path};
-    }
-
-    const size_t  path_length{sa.length() - ((size_t) (((struct ::sockaddr_un *) 0)->sun_path))};
-    char ud_path[1 + path_length];
-    char* targ = ud_path;
-    *targ++ = '@';
-    const char* src = sa.u.un.sun_path + 1;
-    int k = (int)path_length;
-
-    for (; --k > 0; src++) {
-        *targ++ = std::isprint(*src) ? *src : '_';
-    }
-    return std::string{ud_path, path_length};
-}
-
-std::ostream& operator<<(std::ostream& os, const socket_address& a) {
-    if (a.is_af_unix()) {
-        return os << unix_domain_addr_text(a);
-    }
-
-    auto addr = a.addr();
-    // CMH. maybe skip brackets for ipv4-mapped
-    auto bracket = addr.in_family() == seastar::net::inet_address::family::INET6;
-
-    if (bracket) {
-        os << '[';
-    }
-    os << addr;
-    if (bracket) {
-        os << ']';
-    }
-
-    return os << ':' << ntohs(a.u.in.sin_port);
-}
-
 } // namespace seastar

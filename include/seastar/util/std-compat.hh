@@ -301,3 +301,12 @@ using string_view = basic_string_view<char>;
 #else
 #define SEASTAR_COPY_ELISION(x) std::move(x)
 #endif
+
+namespace std {
+    template<class ArgumentType, class ResultType>
+    struct unary_function
+    {
+        typedef ArgumentType argument_type;
+        typedef ResultType result_type;
+    };
+}

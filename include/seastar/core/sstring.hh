@@ -31,66 +31,66 @@
 #include <initializer_list>
 #include <istream>
 #include <ostream>
+#include <sstream>
 #include <functional>
 #include <cstdio>
 #include <type_traits>
+#include <format>
 #include <seastar/util/std-compat.hh>
 #include <seastar/core/temporary_buffer.hh>
 
 namespace seastar {
+  template <typename char_type, typename Size, Size max_size, bool NulTerminate = true>
+  class basic_sstring;
 
-template <typename char_type, typename Size, Size max_size, bool NulTerminate = true>
-class basic_sstring;
+  using sstring = basic_sstring<char, uint32_t, 15>;
 
-using sstring = basic_sstring<char, uint32_t, 15>;
-
-template <typename string_type = sstring, typename T>
-inline string_type to_sstring(T value);
-
-template <typename char_type, typename Size, Size max_size, bool NulTerminate>
-class basic_sstring {
+  template <typename char_type, typename Size, Size max_size, bool NulTerminate>
+  class basic_sstring {
     static_assert(
-            (std::is_same<char_type, char>::value
-             || std::is_same<char_type, signed char>::value
-             || std::is_same<char_type, unsigned char>::value),
-            "basic_sstring only supports single byte char types");
+      (std::is_same<char_type, char>::value
+       || std::is_same<char_type, signed char>::value
+       || std::is_same<char_type, unsigned char>::value),
+      "basic_sstring only supports single byte char types");
+
     union contents {
-        struct external_type {
-            char_type* str;
-            Size size;
-            int8_t pad;
-        } external;
-        struct internal_type {
-            char_type str[max_size];
-            int8_t size;
-        } internal;
-        static_assert(sizeof(external_type) <= sizeof(internal_type), "max_size too small");
-        static_assert(max_size <= 127, "max_size too large");
+      struct external_type {
+          char_type* str;
+          Size size;
+          int8_t pad;
+      } external;
+      struct internal_type {
+          char_type str[max_size];
+          int8_t size;
+      } internal;
+      static_assert(sizeof(external_type) <= sizeof(internal_type), "max_size too small");
+      static_assert(max_size <= 127, "max_size too large");
     } u;
+
     bool is_internal() const noexcept {
-        return u.internal.size >= 0;
+      return u.internal.size >= 0;
     }
     bool is_external() const noexcept {
-        return !is_internal();
+      return !is_internal();
     }
     const char_type* str() const {
-        return is_internal() ? u.internal.str : u.external.str;
+      return is_internal() ? u.internal.str : u.external.str;
     }
     char_type* str() {
-        return is_internal() ? u.internal.str : u.external.str;
+      return is_internal() ? u.internal.str : u.external.str;
     }
 
     template <typename string_type, typename T>
     static inline string_type to_sstring_sprintf(T value, const char* fmt) {
-        char tmp[sizeof(value) * 3 + 2];
-        auto len = std::sprintf(tmp, fmt, value);
-        using ch_type = typename string_type::value_type;
-        return string_type(reinterpret_cast<ch_type*>(tmp), len);
+      char tmp[sizeof(value) * 3 + 2];
+      auto len = std::sprintf(tmp, fmt, value);
+      using ch_type = typename string_type::value_type;
+      return string_type(reinterpret_cast<ch_type*>(tmp), len);
     }
 
     template <typename string_type>
     static inline string_type to_sstring(int value) {
-        return to_sstring_sprintf<string_type>(value, "%d");
+      return to_sstring_sprintf<string_type>(value, "%d");
     }
 
     template <typename string_type>
@@ -147,7 +147,7 @@ class basic_sstring {
     static inline string_type to_sstring(const temporary_buffer<char>& buf) {
         return string_type(buf.get(), buf.size());
     }
-public:
+  public:
     using value_type = char_type;
     using traits_type = std::char_traits<char_type>;
     using allocator_type = std::allocator<char_type>;
@@ -216,29 +216,29 @@ public:
             }
         }
     }
-    basic_sstring(const char_type* x, size_t size) {
-        if (size_type(size) != size) {
-            throw std::overflow_error("sstring overflow");
-        }
-        if (size + padding() <= sizeof(u.internal.str)) {
-            std::copy(x, x + size, u.internal.str);
-            if (NulTerminate) {
-                u.internal.str[size] = '\0';
-            }
-            u.internal.size = size;
-        } else {
-            u.internal.size = -1;
-            u.external.str = reinterpret_cast<char_type*>(std::malloc(size + padding()));
-            if (!u.external.str) {
-                throw std::bad_alloc();
-            }
-            u.external.size = size;
-            std::copy(x, x + size, u.external.str);
-            if (NulTerminate) {
-                u.external.str[size] = '\0';
-            }
-        }
-    }
+  basic_sstring(const char_type* x, size_t size) {
+      if (size_type(size) != size) {
+          throw std::overflow_error("sstring overflow");
+      }
+      if (size + padding() <= sizeof(u.internal.str)) {
+          std::copy(x, x + size, u.internal.str);
+          if (NulTerminate) {
+              u.internal.str[size] = '\0';
+          }
+          u.internal.size = size;
+      } else {
+          u.internal.size = -1;
+          u.external.str = reinterpret_cast<char_type*>(std::malloc(size + padding()));
+          if (!u.external.str) {
+              throw std::bad_alloc();
+          }
+          u.external.size = size;
+          std::copy(x, x + size, u.external.str);
+          if (NulTerminate) {
+              u.external.str[size] = '\0';
+          }
+      }
+   }
 
     basic_sstring(size_t size, char_type x) : basic_sstring(initialized_later(), size) {
         memset(begin(), x, size);
@@ -321,7 +321,7 @@ public:
     }
 
     /**
-     * find_last_of find the last occurrence of c in the string.
+     * find_last_of find the last occurrence of c in the string.ybub
      * When pos is specified, the search only includes characters
      * at or before position pos.
      *
@@ -609,151 +609,284 @@ public:
 
     template <typename string_type, typename T>
     friend inline string_type to_sstring(T value);
-};
-template <typename char_type, typename Size, Size max_size, bool NulTerminate>
-constexpr Size basic_sstring<char_type, Size, max_size, NulTerminate>::npos;
+  };
 
-template <typename char_type, typename size_type, size_type Max, size_type N, bool NulTerminate>
-inline
-basic_sstring<char_type, size_type, Max, NulTerminate>
-operator+(const char(&s)[N], const basic_sstring<char_type, size_type, Max, NulTerminate>& t) {
+  template <typename char_type, typename Size, Size max_size, bool NulTerminate>
+  constexpr Size basic_sstring<char_type, Size, max_size, NulTerminate>::npos;
+
+  namespace internal {
+    template <class T> struct is_sstring : std::false_type {};
+    template <typename char_type, typename Size, Size max_size, bool NulTerminate>
+    struct is_sstring<seastar::basic_sstring<char_type, Size, max_size, NulTerminate>> : std::true_type {};
+  }
+
+  template <typename string_type = sstring>
+  string_type uninitialized_string(size_t size) {
+    if constexpr (internal::is_sstring<string_type>::value) {
+        return string_type(typename string_type::initialized_later(), size);
+    } else {
+      string_type ret;
+  #ifdef __cpp_lib_string_resize_and_overwrite
+      ret.resize_and_overwrite(size, [](string_type::value_type*, string_type::size_type n) { return n; });
+  #else
+      ret.resize(size);
+  #endif
+      return ret;
+    }
+  }
+
+  template <typename char_type, typename size_type, size_type Max, size_type N, bool NulTerminate>
+  inline
+  basic_sstring<char_type, size_type, Max, NulTerminate>
+  operator+(const char(&s)[N], const basic_sstring<char_type, size_type, Max, NulTerminate>& t) {
     using sstring = basic_sstring<char_type, size_type, Max, NulTerminate>;
     // don't copy the terminating NUL character
     sstring ret(typename sstring::initialized_later(), N-1 + t.size());
     auto p = std::copy(std::begin(s), std::end(s)-1, ret.begin());
     std::copy(t.begin(), t.end(), p);
     return ret;
-}
+  }
 
-template <size_t N>
-static inline
-size_t str_len(const char(&s)[N]) { return N - 1; }
+  template <typename char_type, typename Size, Size max_size, bool NulTerminate>
+  constexpr Size basic_sstring<char_type, Size, max_size, NulTerminate>::npos;
 
-template <size_t N>
-static inline
-const char* str_begin(const char(&s)[N]) { return s; }
+  template <size_t N>
+  static inline
+  size_t str_len(const char(&s)[N]) { return N - 1; }
 
-template <size_t N>
-static inline
-const char* str_end(const char(&s)[N]) { return str_begin(s) + str_len(s); }
+  template <size_t N>
+  static inline
+  const char* str_begin(const char(&s)[N]) { return s; }
 
-template <typename char_type, typename size_type, size_type max_size, bool NulTerminate>
-static inline
-const char_type* str_begin(const basic_sstring<char_type, size_type, max_size, NulTerminate>& s) { return s.begin(); }
+  template <size_t N>
+  static inline
+  const char* str_end(const char(&s)[N]) { return str_begin(s) + str_len(s); }
 
-template <typename char_type, typename size_type, size_type max_size, bool NulTerminate>
-static inline
-const char_type* str_end(const basic_sstring<char_type, size_type, max_size, NulTerminate>& s) { return s.end(); }
+  template <typename char_type, typename size_type, size_type max_size, bool NulTerminate>
+  static inline
+  const char_type* str_begin(const basic_sstring<char_type, size_type, max_size, NulTerminate>& s) { return s.begin(); }
 
-template <typename char_type, typename size_type, size_type max_size, bool NulTerminate>
-static inline
-size_type str_len(const basic_sstring<char_type, size_type, max_size, NulTerminate>& s) { return s.size(); }
+  template <typename char_type, typename size_type, size_type max_size, bool NulTerminate>
+  static inline
+  const char_type* str_end(const basic_sstring<char_type, size_type, max_size, NulTerminate>& s) { return s.end(); }
 
-template <typename First, typename Second, typename... Tail>
-static inline
-size_t str_len(const First& first, const Second& second, const Tail&... tail) {
-    return str_len(first) + str_len(second, tail...);
-}
+  template <typename char_type, typename size_type, size_type max_size, bool NulTerminate>
+  static inline
+  size_type str_len(const basic_sstring<char_type, size_type, max_size, NulTerminate>& s) { return s.size(); }
 
-template <typename char_type, typename size_type, size_type max_size>
-inline
-void swap(basic_sstring<char_type, size_type, max_size>& x,
-          basic_sstring<char_type, size_type, max_size>& y) noexcept
-{
-    return x.swap(y);
-}
+  template <typename First, typename Second, typename... Tail>
+  static inline
+  size_t str_len(const First& first, const Second& second, const Tail&... tail) {
+      return str_len(first) + str_len(second, tail...);
+  }
 
-template <typename char_type, typename size_type, size_type max_size, bool NulTerminate, typename char_traits>
-inline
-std::basic_ostream<char_type, char_traits>&
-operator<<(std::basic_ostream<char_type, char_traits>& os,
-        const basic_sstring<char_type, size_type, max_size, NulTerminate>& s) {
-    return os.write(s.begin(), s.size());
-}
+  template <typename char_type, typename size_type, size_type max_size>
+  inline
+  void swap(basic_sstring<char_type, size_type, max_size>& x,
+            basic_sstring<char_type, size_type, max_size>& y) noexcept
+  {
+      return x.swap(y);
+  }
 
-template <typename char_type, typename size_type, size_type max_size, bool NulTerminate, typename char_traits>
-inline
-std::basic_istream<char_type, char_traits>&
-operator>>(std::basic_istream<char_type, char_traits>& is,
-        basic_sstring<char_type, size_type, max_size, NulTerminate>& s) {
-    std::string tmp;
-    is >> tmp;
-    s = tmp;
-    return is;
-}
+  template <typename char_type, typename size_type, size_type max_size, bool NulTerminate, typename char_traits>
+  inline
+  std::basic_ostream<char_type, char_traits>&
+  operator<<(std::basic_ostream<char_type, char_traits>& os,
+          const basic_sstring<char_type, size_type, max_size, NulTerminate>& s) {
+      return os.write(s.begin(), s.size());
+  }
 
+  template <typename char_type, typename size_type, size_type max_size, bool NulTerminate, typename char_traits>
+  inline
+  std::basic_istream<char_type, char_traits>&
+  operator>>(std::basic_istream<char_type, char_traits>& is,
+          basic_sstring<char_type, size_type, max_size, NulTerminate>& s) {
+      std::string tmp;
+      is >> tmp;
+      s = tmp;
+      return is;
+  }
+
+  template<class>
+  struct osstringstream;
+
+  template<class Str>
+  struct osstringstream : std::basic_ostringstream<typename Str::value_type, typename Str::traits_type, typename Str::allocator_type> {};
+
+  template<class...Args>
+  struct osstringstream<seastar::basic_sstring<Args...>>;
 }
 
 namespace std {
-
-template <typename char_type, typename size_type, size_type max_size, bool NulTerminate>
-struct hash<seastar::basic_sstring<char_type, size_type, max_size, NulTerminate>> {
-    size_t operator()(const seastar::basic_sstring<char_type, size_type, max_size, NulTerminate>& s) const {
-        return std::hash<seastar::compat::basic_string_view<char_type>>()(s);
-    }
-};
-
+  template <typename char_type, typename size_type, size_type max_size, bool NulTerminate>
+  struct hash<seastar::basic_sstring<char_type, size_type, max_size, NulTerminate>> {
+      size_t operator()(const seastar::basic_sstring<char_type, size_type, max_size, NulTerminate>& s) const {
+          return std::hash<seastar::compat::basic_string_view<char_type>>()(s);
+      }
+  };
 }
 
 namespace seastar {
+  static inline
+  char* copy_str_to(char* dst) {
+      return dst;
+  }
 
-static inline
-char* copy_str_to(char* dst) {
-    return dst;
-}
+  template <typename Head, typename... Tail>
+  static inline
+  char* copy_str_to(char* dst, const Head& head, const Tail&... tail) {
+      return copy_str_to(std::copy(str_begin(head), str_end(head), dst), tail...);
+  }
 
-template <typename Head, typename... Tail>
-static inline
-char* copy_str_to(char* dst, const Head& head, const Tail&... tail) {
-    return copy_str_to(std::copy(str_begin(head), str_end(head), dst), tail...);
-}
+  template <typename String = sstring, typename... Args>
+  static String make_sstring(Args&&... args)
+  {
+      String ret(sstring::initialized_later(), str_len(std::forward<decltype(args)>(args)...));
+      copy_str_to(ret.begin(), std::forward<decltype(args)>(args)...);
+      return ret;
+  }
 
-template <typename String = sstring, typename... Args>
-static String make_sstring(Args&&... args)
-{
-    String ret(sstring::initialized_later(), str_len(args...));
-    copy_str_to(ret.begin(), args...);
-    return ret;
-}
+  namespace internal {
+    template <typename string_type, typename T>
+    string_type to_sstring(T &&value) {
+        auto size = std::formatted_size("{}", std::forward<decltype(value)>(value));
+        auto formatted = uninitialized_string<string_type>(size);
+        std::format_to(formatted.begin(), "{}", std::forward<decltype(value)>(value));
+        return formatted;
+    }
 
-template <typename string_type, typename T>
-inline string_type to_sstring(T value) {
-    return sstring::to_sstring<string_type>(value);
-}
 
+    template<typename string_type>
+    string_type to_sstring(temporary_buffer<char> &&value) {
+      std::size_t size = value.size();
+      auto formatted = uninitialized_string<string_type>(size);
+      formatted.append(value.get(), size);
+      return formatted;
+    }
+
+    // template <typename sring_type, typename T>
+    // inline string_type to_sstring(T value) {
+    //     return sstring::to_sstring<string_type>(value);
+    // }
+  }
+
+  template <typename string_type = sstring, typename T>
+  string_type to_sstring(T&& value) {
+      return internal::to_sstring<string_type>(std::forward<decltype(value)>(value));
+  }
 }
 
 namespace std {
-template <typename T>
-inline
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
-    bool first = true;
-    os << "{";
-    for (auto&& elem : v) {
-        if (!first) {
-            os << ", ";
-        } else {
-            first = false;
-        }
-        os << elem;
+    template <typename T>
+    inline
+    ostream& operator<<(ostream& os, const vector<T>&& v) {
+      bool first = true;
+      os << "{";
+      for (auto&& elem : v) {
+          if (!first) {
+              os << ", ";
+          } else {
+              first = false;
+          }
+          os << elem;
+      }
+      os << "}";
+      return os;
     }
-    os << "}";
-    return os;
+
+    template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+    ostream& operator<<(ostream& os, const unordered_map<Key, T, Hash, KeyEqual, Allocator>&& v) {
+      bool first = true;
+      os << "{";
+      for (auto&& elem : v) {
+          if (!first) {
+              os << ", ";
+          } else {
+              first = false;
+          }
+          os << "{ " << elem.first << " -> " << elem.second << "}";
+      }
+      os << "}";
+      return os;
+    }
+
+    template <typename CharType>
+    inline basic_ostream<CharType>& operator<<(basic_ostream<CharType>& os, seastar::temporary_buffer<CharType>&& buf) {
+        return os.write(buf.get(), buf.size());
+    }
 }
 
-template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-std::ostream& operator<<(std::ostream& os, const std::unordered_map<Key, T, Hash, KeyEqual, Allocator>& v) {
-    bool first = true;
-    os << "{";
-    for (auto&& elem : v) {
-        if (!first) {
-            os << ", ";
-        } else {
-            first = false;
-        }
-        os << "{ " << elem.first << " -> " << elem.second << "}";
+
+template<>
+struct std::formatter<seastar::temporary_buffer<char>> : std::formatter<std::string_view> {
+  template <typename FormatContext>
+  constexpr auto format(const seastar::temporary_buffer<char>&& buf, FormatContext& ctx) {
+    return std::format_to(ctx.out(), "{:.{}}", buf.get(), buf.size());
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const seastar::temporary_buffer<char>& buf, FormatContext& ctx) {
+    return std::format_to(ctx.out(), "{:.{}}", buf.get(), buf.size());
+  }
+};
+
+
+template <typename char_type, typename Size, Size max_size, bool NulTerminate>
+struct std::formatter<seastar::basic_sstring<char_type, Size, max_size, NulTerminate>> : std::formatter<std::basic_string_view<char_type>> {
+    using sstr = seastar::basic_sstring<char_type, Size, max_size, NulTerminate>;
+
+    template <typename FormatContext>
+    decltype(auto) format(sstr&& s, FormatContext& ctx) const {
+        return formatter<std::basic_string_view<char_type>>::format(s.c_str(), ctx);
     }
-    os << "}";
-    return os;
+
+    template <typename FormatContext>
+    decltype(auto) format(const sstr& s, FormatContext& ctx) const {
+        return formatter<std::basic_string_view<char_type>>::format(s.c_str(), ctx);
+    }
+};
+
+namespace seastar {
+  struct ostream_formatter : public std::formatter<std::string> {
+    template<class T, class FormatContext>
+    auto format (T&& t, FormatContext& fc) const {
+      std::ostringstream os{};
+      operator<<(os, t);
+      return std::formatter<std::string>::format(os.str(), fc);
+    }
+  };
 }
-}
+
+
+template<>
+struct std::formatter<std::exception_ptr> : public std::formatter<std::string> {
+  template<class FormatContext>
+  auto format (std::exception_ptr eptr, FormatContext& fc) {
+    try {
+      std::rethrow_exception(eptr);
+    } catch (std::exception err) {
+      return std::format_to(fc.out(), "Exception: {}", err.what());
+    }
+  }
+};
+
+template<class>
+struct vector_formatter;
+
+template<class T>
+struct vector_formatter<std::vector<T, std::allocator<T>>> : public std::formatter<T> {
+    template<class FormatContext>
+    auto format (std::vector<T, std::allocator<T>> vec, FormatContext& fc) const {
+        auto out = fc.out();
+        auto it = vec.begin();
+        out = std::formatter<T>::format(*it, fc);
+
+        for (++it; it != vec.end(); ++it) {
+            out = std::formatter<T>::format(*it, fc);
+            *(out++) = ',';
+            *(out++) = ' ';
+        }
+
+        return out;
+    }
+};

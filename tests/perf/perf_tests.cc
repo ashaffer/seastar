@@ -23,21 +23,25 @@
 
 #include <fstream>
 #include <regex>
+#include <iostream>
+#include <format>
 
 #include <boost/range.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm.hpp>
 
-#include <fmt/ostream.h>
-
 #include <seastar/core/app-template.hh>
 #include <seastar/core/thread.hh>
 #include <seastar/json/formatter.hh>
 
+namespace perf_tests::internal {
+    struct duration;
+}
+
 namespace perf_tests {
 namespace internal {
-
 namespace {
+
 
 // We need to use signal-based timer instead of seastar ones so that
 // tests that do not suspend can be interrupted.
@@ -132,44 +136,56 @@ struct result {
     double max;
 };
 
-namespace {
 
 struct duration {
     double value;
 };
 
-static inline std::ostream& operator<<(std::ostream& os, duration d)
+static inline std::ostream& operator<<(std::ostream& os, const duration& d)
 {
     auto value = d.value;
     if (value < 1'000) {
-        os << fmt::format("{:.3f}ns", value);
+        os << std::format("{:.3f}ns", value);
     } else if (value < 1'000'000) {
         // fmt hasn't discovered unicode yet so we are stuck with uicroseconds
         // See: https://github.com/fmtlib/fmt/issues/628
-        os << fmt::format("{:.3f}us", value / 1'000);
+        os << std::format("{:.3f}us", value / 1'000);
     } else if (value < 1'000'000'000) {
-        os << fmt::format("{:.3f}ms", value / 1'000'000);
+        os << std::format("{:.3f}ms", value / 1'000'000);
     } else {
-        os << fmt::format("{:.3f}s", value / 1'000'000'000);
+        os << std::format("{:.3f}s", value / 1'000'000'000);
     }
     return os;
 }
 
 }
+}
 
+template <>
+struct std::formatter<perf_tests::internal::duration> : public std::formatter<std::string> {
+    template<class FormatContext>
+    auto format (const perf_tests::internal::duration& d, FormatContext& fc) const {
+        std::ostringstream os{};
+        operator<<(os, d);
+        return std::formatter<std::string>::format(os.str(), fc);
+    }
+};
+
+namespace perf_tests {
+namespace internal {
 static constexpr auto format_string = "{:<40} {:>11} {:>11} {:>11} {:>11} {:>11}\n";
 
 struct stdout_printer final : result_printer {
   virtual void print_configuration(const config& c) override {
-    fmt::print("{:<25} {}\n{:<25} {}\n{:<25} {}\n\n",
+    std::cout << std::format("{:<25} {}\n{:<25} {}\n{:<25} {}\n\n",
                "single run iterations:", c.single_run_iterations,
                "single run duration:", duration { double(c.single_run_duration.count()) },
                "number of runs:", c.number_of_runs);
-    fmt::print(format_string, "test", "iterations", "median", "mad", "min", "max");
+    std::cout << std::format(format_string, "test", "iterations", "median", "mad", "min", "max");
   }
 
   virtual void print_result(const result& r) override {
-    fmt::print(format_string, r.test_name, r.total_iterations / r.runs, duration { r.median },
+    std::cout << std::format(format_string, r.test_name, r.total_iterations / r.runs, duration { r.median },
                duration { r.mad }, duration { r.min }, duration { r.max });
   }
 };
@@ -301,7 +317,6 @@ void run_all(const std::vector<std::string>& tests, const config& conf)
         test->run(conf);
     }
 }
-
 }
 }
 
@@ -339,9 +354,9 @@ int main(int ac, char** av)
             }
 
             if (app.configuration().count("list")) {
-                fmt::print("available tests:\n");
+                std::cout << "available tests:\n";
                 for (auto&& t : all_tests()) {
-                    fmt::print("\t{}\n", t->name());
+                    std::cout << std::format("\t{}\n", t->name());
                 }
                 return;
             }

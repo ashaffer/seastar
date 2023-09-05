@@ -63,6 +63,8 @@ public:
 };
 
 }
+
+
 /// \endcond
 
 /// \addtogroup future-util
@@ -90,7 +92,7 @@ public:
 template<typename T, typename F>
 inline
 auto do_with(T&& rvalue, F&& f) {
-    auto task = std::make_unique<internal::do_with_state<T, std::result_of_t<F(T&)>>>(std::forward<T>(rvalue));
+    auto task = std::make_unique<internal::do_with_state<T, std::invoke_result_t<F, T&>>>(std::forward<T>(rvalue));
     auto fut = f(task->data());
     if (fut.available()) {
         return fut;

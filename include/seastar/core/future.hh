@@ -1063,26 +1063,26 @@ public:
     ///               unless it has failed.
     /// \return a \c future representing the return value of \c func, applied
     ///         to the eventual value of this future.
-    template <typename Func, typename Result = futurize_t<std::result_of_t<Func(T&&...)>>>
+    template <typename Func, typename Result = futurize_t<std::invoke_result_t<Func, T&&...>>>
     GCC6_CONCEPT( requires ::seastar::CanApply<Func, T...> )
     Result
     then(Func&& func) noexcept {
 #ifndef SEASTAR_TYPE_ERASE_MORE
         return then_impl(std::move(func));
 #else
-        using futurator = futurize<std::result_of_t<Func(T&&...)>>;
+        using futurator = futurize<std::invoke_result_t<Func, T&&...>>;
         return then_impl(noncopyable_function<Result (T&&...)>([func = std::forward<Func>(func)] (T&&... args) mutable {
             return futurator::apply(func, std::forward_as_tuple(std::move(args)...));
         }));
 #endif
     }
 
-    template <typename Func, typename Result = futurize_t<std::result_of_t<Func(T&&...)>>>
+    template <typename Func, typename Result = futurize_t<std::invoke_result_t<Func, T&&...>>>
     GCC6_CONCEPT( requires ::seastar::CanApply<Func, T...> )
     Result
     then_sync(Func&& func) noexcept {
         if (available()) {
-            using futurator = futurize<std::result_of_t<Func(T&&...)>>;
+            using futurator = futurize<std::invoke_result_t<Func, T&&...>>;
 
             if (failed()) {
                 return futurator::make_exception_future(get_available_state().get_exception());
@@ -1096,10 +1096,10 @@ public:
 
 private:
 
-    template <typename Func, typename Result = futurize_t<std::result_of_t<Func(T&&...)>>>
+    template <typename Func, typename Result = futurize_t<std::invoke_result_t<Func, T&&...>>>
     Result
     then_impl(Func&& func) noexcept {
-        using futurator = futurize<std::result_of_t<Func(T&&...)>>;
+        using futurator = futurize<std::invoke_result_t<Func, T&&...>>;
         if (available() && !need_preempt()) {
             if (failed()) {
                 return futurator::make_exception_future(get_available_state().get_exception());
@@ -1140,14 +1140,14 @@ public:
     /// \param func - function to be called when the future becomes available,
     /// \return a \c future representing the return value of \c func, applied
     ///         to the eventual value of this future.
-    template <typename Func, typename Result = futurize_t<std::result_of_t<Func(future)>>>
+    template <typename Func, typename Result = futurize_t<std::invoke_result_t<Func, future>>>
     GCC6_CONCEPT( requires ::seastar::CanApply<Func, future> )
     Result
     then_wrapped(Func&& func) noexcept {
 #ifndef SEASTAR_TYPE_ERASE_MORE
         return then_wrapped_impl(std::move(func));
 #else
-        using futurator = futurize<std::result_of_t<Func(future)>>;
+        using futurator = futurize<std::invoke_result_t<Func, future>>;
         return then_wrapped_impl(noncopyable_function<Result (future)>([func = std::forward<Func>(func)] (future f) mutable {
             return futurator::apply(std::forward<Func>(func), std::move(f));
         }));
@@ -1156,10 +1156,10 @@ public:
 
 private:
 
-    template <typename Func, typename Result = futurize_t<std::result_of_t<Func(future)>>>
+    template <typename Func, typename Result = futurize_t<std::invoke_result_t<Func, future>>>
     Result
     then_wrapped_impl(Func&& func) noexcept {
-        using futurator = futurize<std::result_of_t<Func(future)>>;
+        using futurator = futurize<std::invoke_result_t<Func, future>>;
         if (available() && !need_preempt()) {
             return futurator::apply(std::forward<Func>(func), future(get_available_state()));
         }
@@ -1227,7 +1227,7 @@ public:
     template <typename Func>
     GCC6_CONCEPT( requires ::seastar::CanApply<Func> )
     future<T...> finally(Func&& func) noexcept {
-        return then_wrapped(finally_body<Func, is_future<std::result_of_t<Func()>>::value>(std::forward<Func>(func)));
+        return then_wrapped(finally_body<Func, is_future<std::invoke_result_t<Func>>::value>(std::forward<Func>(func)));
     }
 
 
@@ -1242,7 +1242,7 @@ public:
         { }
 
         future<T...> operator()(future<T...>&& result) {
-            using futurator = futurize<std::result_of_t<Func()>>;
+            using futurator = futurize<std::invoke_result_t<Func>>;
             return futurator::apply(_func).then_wrapped([result = std::move(result)](auto f_res) mutable {
                 if (!f_res.failed()) {
                     return std::move(result);
@@ -1317,7 +1317,7 @@ public:
                     || (sizeof...(T) == 1 && ::seastar::ApplyReturns<Func, T..., std::exception_ptr>)
     ) */
     future<T...> handle_exception(Func&& func) noexcept {
-        using func_ret = std::result_of_t<Func(std::exception_ptr)>;
+        using func_ret = std::invoke_result_t<Func, std::exception_ptr>;
         return then_wrapped([func = std::forward<Func>(func)]
                              (auto&& fut) mutable -> future<T...> {
             if (!fut.failed()) {
@@ -1534,7 +1534,7 @@ struct do_void_futurize_helper<future<>> {
 };
 
 template <typename Func, typename... FuncArgs>
-using void_futurize_helper = do_void_futurize_helper<std::result_of_t<Func(FuncArgs&&...)>>;
+using void_futurize_helper = do_void_futurize_helper<std::invoke_result_t<Func, FuncArgs&&...>>;
 
 template<typename Func, typename... FuncArgs>
 typename futurize<void>::type futurize<void>::apply(Func&& func, std::tuple<FuncArgs...>&& args) noexcept {
@@ -1631,7 +1631,7 @@ futurize<future<Args...>>::from_tuple(const std::tuple<Args...>& value) {
 
 template<typename Func, typename... Args>
 auto futurize_apply(Func&& func, Args&&... args) {
-    using futurator = futurize<std::result_of_t<Func(Args&&...)>>;
+    using futurator = futurize<std::invoke_result_t<Func, Args&&...>>;
     return futurator::apply(std::forward<Func>(func), std::forward<Args>(args)...);
 }
 

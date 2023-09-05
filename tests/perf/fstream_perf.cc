@@ -23,7 +23,8 @@
 #include <seastar/core/fstream.hh>
 #include <seastar/core/file.hh>
 #include <seastar/core/app-template.hh>
-#include <fmt/printf.h>
+#include <format>
+#include <iostream>
 
 using namespace seastar;
 using namespace std::chrono_literals;
@@ -68,8 +69,8 @@ int main(int ac, char** av) {
                     auto end = std::chrono::steady_clock::now();
                     using fseconds = std::chrono::duration<float, std::ratio<1, 1>>;
                     auto iops = total_ops / std::chrono::duration_cast<fseconds>(end - start).count();
-                    fmt::print("{:10} {:10} {:10} {:12}\n", "bufsize", "ops", "iodepth", "IOPS");
-                    fmt::print("{:10d} {:10d} {:10d} {:12.0f}\n", buffer_size, total_ops, concurrency, iops);
+                    cout << std::format("{:10} {:10} {:10} {:12}\n", "bufsize", "ops", "iodepth", "IOPS");
+                    cout << std::format("{:10d} {:10d} {:10d} {:12.0f}\n", buffer_size, total_ops, concurrency, iops);
                     return os.flush();
                 }).then([&os] {
                     return os.close();

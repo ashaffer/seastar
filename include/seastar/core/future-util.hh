@@ -270,7 +270,7 @@ namespace internal {
 
 template <typename AsyncAction>
 class repeater final : public continuation_base<stop_iteration> {
-    using futurator = futurize<std::result_of_t<AsyncAction()>>;
+    using futurator = futurize<std::invoke_result_t<AsyncAction>>;
     promise<> _promise;
     AsyncAction _action;
 public:
@@ -329,7 +329,7 @@ template<typename AsyncAction>
 GCC6_CONCEPT( requires seastar::ApplyReturns<AsyncAction, stop_iteration> || seastar::ApplyReturns<AsyncAction, future<stop_iteration>> )
 inline
 future<> repeat(AsyncAction action) {
-    using futurator = futurize<std::result_of_t<AsyncAction()>>;
+    using futurator = futurize<std::invoke_result_t<AsyncAction>>;
     static_assert(std::is_same<future<stop_iteration>, typename futurator::type>::value, "bad AsyncAction signature");
     try {
         do {
@@ -381,13 +381,13 @@ struct repeat_until_value_type_helper<future<compat::optional<T>>> {
 /// Return value of repeat_until_value()
 template <typename AsyncAction>
 using repeat_until_value_return_type
-        = typename repeat_until_value_type_helper<typename futurize<std::result_of_t<AsyncAction()>>::type>::future_type;
+        = typename repeat_until_value_type_helper<typename futurize<std::invoke_result_t<AsyncAction>>::type>::future_type;
 
 namespace internal {
 
 template <typename AsyncAction, typename T>
 class repeat_until_value_state final : public continuation_base<compat::optional<T>> {
-    using futurator = futurize<std::result_of_t<AsyncAction()>>;
+    using futurator = futurize<std::invoke_result_t<AsyncAction>>;
     promise<T> _promise;
     AsyncAction _action;
 public:
@@ -446,12 +446,12 @@ public:
 ///         a call to to \c action failed.  The \c optional's value is returned.
 template<typename AsyncAction>
 GCC6_CONCEPT( requires requires (AsyncAction aa) {
-    bool(futurize<std::result_of_t<AsyncAction()>>::apply(aa).get0());
-    futurize<std::result_of_t<AsyncAction()>>::apply(aa).get0().value();
+    bool(futurize<std::invoke_result_t<AsyncAction>>::apply(aa).get0());
+    futurize<std::invoke_result_t<AsyncAction>>::apply(aa).get0().value();
 } )
 repeat_until_value_return_type<AsyncAction>
 repeat_until_value(AsyncAction action) {
-    using futurator = futurize<std::result_of_t<AsyncAction()>>;
+    using futurator = futurize<std::invoke_result_t<AsyncAction>>;
     using type_helper = repeat_until_value_type_helper<typename futurator::type>;
     // the "T" in the documentation
     using value_type = typename type_helper::value_type;
@@ -978,7 +978,7 @@ struct reducer_traits {
 };
 
 template <typename T>
-struct reducer_traits<T, decltype(std::declval<T>().get(), void())> : public reducer_with_get_traits<T, is_future<std::result_of_t<decltype(&T::get)(T)>>::value> {};
+struct reducer_traits<T, decltype(std::declval<T>().get(), void())> : public reducer_with_get_traits<T, is_future<std::invoke_result_t<decltype(&T::get), T>>::value> {};
 
 // @Mapper is a callable which transforms values from the iterator range
 // into a future<T>. @Reducer is an object which can be called with T as

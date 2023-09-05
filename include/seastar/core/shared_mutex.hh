@@ -128,7 +128,7 @@ private:
 /// \relates shared_mutex
 template <typename Func>
 inline
-futurize_t<std::result_of_t<Func ()>>
+futurize_t<std::invoke_result_t<Func>>
 with_shared(shared_mutex& sm, Func&& func) {
     return sm.lock_shared().then([func = std::forward<Func>(func)] () mutable {
         return func();
@@ -149,7 +149,7 @@ with_shared(shared_mutex& sm, Func&& func) {
 /// \relates shared_mutex
 template <typename Func>
 inline
-futurize_t<std::result_of_t<Func ()>>
+futurize_t<std::invoke_result_t<Func>>
 with_lock(shared_mutex& sm, Func&& func) {
     return sm.lock().then([func = std::forward<Func>(func)] () mutable {
         return func();

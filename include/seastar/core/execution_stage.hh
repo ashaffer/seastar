@@ -33,8 +33,7 @@
 #include <seastar/util/tuple_utils.hh>
 #include <seastar/util/defer.hh>
 #include <seastar/util/std-compat.hh>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
+#include <format>
 #include <vector>
 #include <boost/range/irange.hpp>
 #include <boost/range/adaptor/transformed.hpp>
@@ -328,7 +327,7 @@ private:
         auto wrapped_function = [&_function = _function] (Args... args) {
             return _function(std::forward<Args>(args)...);
         };
-        auto name = fmt::format("{}.{}", _name, sg.name());
+        auto name = std::format("{}.{}", (std::string)_name, (std::string)sg.name());
         return per_group_stage_type(name, sg, wrapped_function);
     }
 public:
@@ -509,7 +508,5 @@ concrete_execution_stage<Ret, const Object*, Args...>
 make_execution_stage(const sstring& name, Ret (Object::*fn)(Args...) const) {
     return make_execution_stage(name, scheduling_group(), fn);
 }
-
-/// @}
 
 }

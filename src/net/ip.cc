@@ -19,7 +19,7 @@
  * Copyright (C) 2014 Cloudius Systems, Ltd.
  *
  */
-
+#include <format>
 #include <seastar/net/ip.hh>
 #include <seastar/core/print.hh>
 #include <seastar/core/future-util.hh>
@@ -36,7 +36,7 @@ ipv4_address::ipv4_address(const std::string& addr) {
     auto ipv4 = boost::asio::ip::address_v4::from_string(addr, ec);
     if (ec) {
         throw std::runtime_error(
-            format("Wrong format for IPv4 address {}. Please ensure it's in dotted-decimal format", addr));
+            std::format("Wrong format for IPv4 address {}. Please ensure it's in dotted-decimal format", addr));
     }
     ip = static_cast<uint32_t>(std::move(ipv4).to_ulong());
 }
@@ -553,6 +553,24 @@ void icmp::received(packet p, ipaddr from, ipaddr to) {
     }
 }
 
+std::ostream& operator<<(std::ostream& os, const ipv4_address &a) {
+    auto ip = a.ip;
+    return os << std::format("{:d}.{:d}.{:d}.{:d}",
+            (ip >> 24) & 0xff,
+            (ip >> 16) & 0xff,
+            (ip >> 8) & 0xff,
+            (ip >> 0) & 0xff);
+}
+
+std::ostream& operator<<(std::ostream& os, const ipv6_address &a) {
+    char buffer[64];
+    return os << ::inet_ntop(AF_INET6, a.ip.data(), buffer, sizeof(buffer));
+}
+
+
+
 }
 
 }
+
+

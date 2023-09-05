@@ -361,7 +361,7 @@ public:
     ///
     /// \tparam  Mapper unary function taking `Service&` and producing some result.
     /// \return  Result vector of applying `map` to each instance in parallel
-    template <typename Mapper, typename Future = futurize_t<std::result_of_t<Mapper(Service&)>>, typename return_type = decltype(internal::untuple(std::declval<typename Future::value_type>()))>
+    template <typename Mapper, typename Future = futurize_t<std::invoke_result_t<Mapper, Service&>>, typename return_type = decltype(internal::untuple(std::declval<typename Future::value_type>()))>
     inline future<std::vector<return_type>> map(Mapper mapper) {
         return do_with(std::vector<return_type>(),
                 [&mapper, this] (std::vector<return_type>& vec) mutable {
@@ -417,7 +417,7 @@ public:
     /// \param func a callable with signature `Value (Service&)` or
     ///        `future<Value> (Service&)` (for some `Value` type)
     /// \return result of calling `func(instance)` on the designated instance
-    template <typename Func, typename Ret = futurize_t<std::result_of_t<Func(Service&)>>>
+    template <typename Func, typename Ret = futurize_t<std::invoke_result_t<Func, Service&>>>
     Ret
     invoke_on(unsigned id, smp_service_group ssg, Func&& func) {
         return smp::submit_to(id, ssg, [this, func = std::forward<Func>(func)] () mutable {
@@ -432,7 +432,7 @@ public:
     /// \param func a callable with signature `Value (Service&)` or
     ///        `future<Value> (Service&)` (for some `Value` type)
     /// \return result of calling `func(instance)` on the designated instance
-    template <typename Func, typename Ret = futurize_t<std::result_of_t<Func(Service&)>>>
+    template <typename Func, typename Ret = futurize_t<std::invoke_result_t<Func, Service&>>>
     Ret
     invoke_on(unsigned id, Func&& func) {
         return invoke_on(id, default_smp_service_group(), std::forward<Func>(func));
@@ -682,7 +682,7 @@ template <typename Func>
 inline
 future<>
 sharded<Service>::invoke_on_all(smp_service_group ssg, Func&& func) {
-    static_assert(std::is_same<futurize_t<std::result_of_t<Func(Service&)>>, future<>>::value,
+    static_assert(std::is_same<futurize_t<std::invoke_result_t<Func, Service&>>, future<>>::value,
                   "invoke_on_all()'s func must return void or future<>");
     return invoke_on_all(ssg, invoke_on_all_func_type([func] (Service& service) mutable {
         return futurize<void>::apply(func, service);
@@ -694,7 +694,7 @@ template <typename Func>
 inline
 future<>
 sharded<Service>::invoke_on_others(smp_service_group ssg, Func&& func) {
-    static_assert(std::is_same<futurize_t<std::result_of_t<Func(Service&)>>, future<>>::value,
+    static_assert(std::is_same<futurize_t<std::invoke_result_t<Func, Service&>>, future<>>::value,
                   "invoke_on_others()'s func must return void or future<>");
     return invoke_on_all(ssg, [orig = engine().cpu_id(), func = std::forward<Func>(func)] (auto& s) -> future<> {
         return engine().cpu_id() == orig ? make_ready_future<>() : futurize_apply(func, s);

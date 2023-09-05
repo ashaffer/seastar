@@ -81,7 +81,7 @@ connect(socket_address sa, socket_address local) {
                 return in.read().then([nonce, &fd](temporary_buffer<char> response) {
                     if (!response)
                         throw std::exception(); //FIXME : proper failure
-                    if (std::experimental::string_view(response.begin(), response.size())
+                    if (std::string_view(response.begin(), response.size())
                             .find(encode_handshake_key(nonce)) != std::string::npos) {
                         return std::move(fd);
                     } else {

@@ -4,7 +4,7 @@ jobs:
     parameters:
       dialect:
         description: C++ dialect to build with
-        default: gnu++17
+        default: c++20
         type: string
     docker:
       - image: scylladb/seastar-toolchain

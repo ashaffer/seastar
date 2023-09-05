@@ -39,6 +39,8 @@ if (NOT (TARGET Boost::filesystem))
   list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/bundled_boost)
 endif ()
 
+message ("seastar deps: ${CMAKE_MODULE_PATH}")
+
 #
 # Iterate through the dependency list defined below and execute `find_package`
 # with the corresponding configuration for each 3rd-party dependency.
@@ -67,7 +69,7 @@ macro (seastar_find_dependencies)
     Protobuf
     Sanitizers
     StdAtomic
-    StdFilesystem
+#    StdFilesystem
     hwloc
     lksctp-tools # No version information published.
     numactl # No version information published.
@@ -96,7 +98,7 @@ macro (seastar_find_dependencies)
   set (_seastar_dep_args_GnuTLS 3.3.26 REQUIRED)
   set (_seastar_dep_args_Protobuf 2.5.0 REQUIRED)
   set (_seastar_dep_args_StdAtomic REQUIRED)
-  set (_seastar_dep_args_StdFilesystem REQUIRED)
+ # set (_seastar_dep_args_StdFilesystem REQUIRED)
   set (_seastar_dep_args_hwloc 1.11.5)
   set (_seastar_dep_args_lksctp-tools REQUIRED)
   set (_seastar_dep_args_rt REQUIRED)

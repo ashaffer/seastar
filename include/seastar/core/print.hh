@@ -21,24 +21,13 @@
 
 #pragma once
 
-#include <fmt/ostream.h>
-#include <fmt/printf.h>
+#include <format>
 #include <iostream>
 #include <iomanip>
 #include <chrono>
 #include <sstream>
+#include <stdio.h>
 #include <seastar/core/sstring.hh>
-
-#if 0
-inline
-std::ostream&
-operator<<(std::ostream& os, const void* ptr) {
-    auto flags = os.flags();
-    os << "0x" << std::hex << reinterpret_cast<uintptr_t>(ptr);
-    os.flags(flags);
-    return os;
-}
-#endif
 
 inline
 std::ostream&
@@ -49,32 +38,10 @@ operator<<(std::ostream&& os, const void* ptr) {
 namespace seastar {
 
 template <typename... A>
-std::ostream&
-fprint(std::ostream& os, const char* fmt, A&&... a) {
-    ::fmt::fprintf(os, fmt, std::forward<A>(a)...);
-    return os;
-}
-
-template <typename... A>
+[[deprecated("use std::format_to() or std::cout << std::format()")]]
 void
 print(const char* fmt, A&&... a) {
-    ::fmt::printf(fmt, std::forward<A>(a)...);
-}
-
-template <typename... A>
-std::string
-sprint(const char* fmt, A&&... a) {
-    std::ostringstream os;
-    ::fmt::fprintf(os, fmt, std::forward<A>(a)...);
-    return os.str();
-}
-
-template <typename... A>
-std::string
-sprint(const sstring& fmt, A&&... a) {
-    std::ostringstream os;
-    ::fmt::fprintf(os, fmt.c_str(), std::forward<A>(a)...);
-    return os.str();
+    printf(fmt, std::forward<decltype(a)>(a)...);
 }
 
 template <typename Iterator>
@@ -117,7 +84,7 @@ template <typename... A>
 void
 log(A&&... a) {
     std::cout << usecfmt(std::chrono::high_resolution_clock::now()) << " ";
-    print(std::forward<A>(a)...);
+    print(std::forward<decltype(a)>(a)...);
 }
 
 /**
@@ -129,19 +96,18 @@ log(A&&... a) {
  * @return sstring object with the result of applying the given positional
  *         parameters on a given format string.
  */
-template <typename... A>
-sstring
-format(const char* fmt, A&&... a) {
-    fmt::memory_buffer out;
-    fmt::format_to(out, fmt, std::forward<A>(a)...);
-    return sstring{out.data(), out.size()};
-}
+// template <typename... A>
+// sstring
+// format(const char* fmt, A&&... a) {
+//     return std::format_to(sstring::str_begin(), fmt, std::forward<decltype(a)>(a)...);
+// }
 
-// temporary, use fmt::print() instead
+// temporary, use std::cout << std:;format instead
 template <typename... A>
+[[deprecated("use std::format() or std::cout << std::format()")]]
 std::ostream&
 fmt_print(std::ostream& os, const char* format, A&&... a) {
-    fmt::print(os, format, std::forward<A>(a)...);
+    std::format_to(std::ostream_iterator<std::ostream::char_type>{os}, format, std::forward<decltype(a)>(a)...);
     return os;
 }
 

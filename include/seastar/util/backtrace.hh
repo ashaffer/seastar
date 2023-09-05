@@ -24,7 +24,7 @@
 #include <execinfo.h>
 #include <iosfwd>
 #include <boost/container/static_vector.hpp>
-
+#include <format>
 #include <seastar/core/sstring.hh>
 
 namespace seastar {
@@ -61,6 +61,8 @@ void backtrace(Func&& func) noexcept(noexcept(func(frame()))) {
 
 void print_backtrace ();
 
+
+
 class saved_backtrace {
 public:
     using vector_type = boost::container::static_vector<frame, 64>;
@@ -73,12 +75,27 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const saved_backtrace&);
 
+
     bool operator==(const saved_backtrace& o) const {
         return _frames == o._frames;
     }
 
     bool operator!=(const saved_backtrace& o) const {
         return !(*this == o);
+    }
+
+    auto format_frame (auto&& out, const auto& f) const {
+        static const std::string_view plus_or_empty[]{"","+"};
+        auto prefix = f.so->name.size()  > 0 ? plus_or_empty[1] : plus_or_empty[0];
+        return std::format_to(out, " {}+0x{:x}{}\n", prefix, f.so->name, f.addr);
+    }
+
+    auto format_to (auto&& out) const {
+        for (const auto& f : _frames) {
+            out = format_frame(out, f);
+        }
+
+        return out;
     }
 };
 
@@ -95,6 +112,26 @@ struct hash<seastar::saved_backtrace> {
 
 }
 
+template<>
+struct std::formatter<seastar::saved_backtrace> {
+    template<class ParseContext>
+    constexpr auto parse (ParseContext& pc) {
+        auto it = pc.begin();
+
+        while (it != pc.end() && *it != '}') {
+            ++it;
+        }
+
+        return it;
+    }
+
+    template<class FormatContext>
+    constexpr auto format (const seastar::saved_backtrace& sb, FormatContext& fc) const {
+        return sb.format_to(fc.out());
+    }
+};
+
+
 namespace seastar {
 
 saved_backtrace current_backtrace() noexcept;
@@ -107,9 +144,9 @@ class backtraced : public Exc {
     std::shared_ptr<sstring> _backtrace;
 public:
     template<typename... Args>
-    backtraced(Args&&... args)
+    constexpr backtraced(Args&&... args)
             : Exc(std::forward<Args>(args)...)
-            , _backtrace(std::make_shared<sstring>(format("{} Backtrace: {}", Exc::what(), current_backtrace()))) {}
+            , _backtrace(std::make_shared<sstring>(std::format("{} Backtrace: {}", Exc::what(), "asdf"))) {}
 
     /**
      * Returns the original exception message with a backtrace appended to it

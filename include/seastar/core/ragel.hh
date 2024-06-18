@@ -20,14 +20,14 @@
  */
 
 #pragma once
-
+#include <optional>
 #include <seastar/core/sstring.hh>
 #include <seastar/core/temporary_buffer.hh>
 #include <seastar/util/eclipse.hh>
 #include <algorithm>
 #include <memory>
 #include <cassert>
-#include <seastar/util/std-compat.hh>
+// #include <seastar/util/std-compat.hh>
 #include <seastar/core/future.hh>
 
 namespace seastar {
@@ -110,9 +110,9 @@ protected:
     }
     void prepush() {
         if (_fsm_top == _fsm_stack_size) {
-            auto old = _fsm_stack_size;
+            // auto old = _fsm_stack_size;
             _fsm_stack_size = std::max(_fsm_stack_size * 2, 16);
-            assert(_fsm_stack_size > old);
+            // assert(_fsm_stack_size > old);
             std::unique_ptr<int[]> new_stack{new int[_fsm_stack_size]};
             std::copy(_fsm_stack.get(), _fsm_stack.get() + _fsm_top, new_stack.get());
             std::swap(_fsm_stack, new_stack);
@@ -123,7 +123,7 @@ protected:
         return std::move(_builder).get();
     }
 public:
-    using unconsumed_remainder = compat::optional<temporary_buffer<char>>;
+    using unconsumed_remainder = std::optional<temporary_buffer<char>>;
     future<unconsumed_remainder> operator()(temporary_buffer<char> buf) {
         char* p = buf.get_write();
         char* pe = p + buf.size();

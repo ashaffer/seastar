@@ -24,6 +24,7 @@
 #include <seastar/core/reactor.hh>
 #include <seastar/core/app-template.hh>
 #include <seastar/core/sleep.hh>
+#include <seastar/util/counterator.hh>
 #include <seastar/net/dns.hh>
 #include "tls_echo_server.hh"
 
@@ -94,7 +95,7 @@ int main(int ac, char** av) {
                 }
                 return tls::connect(certs, ia, name).then([=](::connected_socket s) {
                     auto strms = ::make_lw_shared<streams>(std::move(s));
-                    auto range = boost::irange(size_t(0), i);
+                    auto range = counterator{i};
                     return do_for_each(range, [=](auto) {
                         auto f = strms->out.write(*msg);
                         if (!do_read) {

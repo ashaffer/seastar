@@ -27,6 +27,7 @@
 #include <chrono>
 #include <sstream>
 #include <stdio.h>
+#include <iterator>
 #include <seastar/core/sstring.hh>
 
 inline

@@ -22,7 +22,7 @@
 
 #include <format>
 #include <iostream>
-#include <seastar/util/std-compat.hh>
+#include <optional>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 #include <regex>
@@ -30,6 +30,7 @@
 #include <seastar/core/align.hh>
 #include <seastar/core/print.hh>
 #include <seastar/util/read_first_line.hh>
+#include <seastar/util/counterator.hh>
 #include <stdlib.h>
 #include <limits>
 #include "cgroup.hh"
@@ -44,7 +45,7 @@ extern logger seastar_logger;
 
 // This function was made optional because of validate. It needs to
 // throw an error when a non parseable input is given.
-compat::optional<resource::cpuset> parse_cpuset(std::string value) {
+std::optional<resource::cpuset> parse_cpuset(std::string value) {
     static std::regex r("(\\d+-)?(\\d+)(,(\\d+-)?(\\d+))*");
 
     std::smatch match;
@@ -64,7 +65,7 @@ compat::optional<resource::cpuset> parse_cpuset(std::string value) {
             auto e = boost::lexical_cast<unsigned>(end);
 
             if (b > e) {
-                return seastar::compat::nullopt;
+                return std::nullopt;
             }
 
             for (auto i = b; i <= e; ++i) {
@@ -73,7 +74,7 @@ compat::optional<resource::cpuset> parse_cpuset(std::string value) {
         }
         return ret;
     }
-    return seastar::compat::nullopt;
+    return std::nullopt;
 }
 
 // Overload for boost program options parsing/validation
@@ -100,24 +101,24 @@ void validate(boost::any& v,
 namespace cgroup {
 
 
-optional<cpuset> cpu_set() {
+std::optional<cpuset> cpu_set() {
     auto cpuset = read_setting_as<std::string>("/sys/fs/cgroup/cpuset/cpuset.cpus");
     if (cpuset) {
         return seastar::parse_cpuset(*cpuset);
     }
 
     seastar_logger.warn("Unable to parse cgroup's cpuset. Ignoring.");
-    return seastar::compat::nullopt;
+    return std::nullopt;
 }
 
-size_t memory_limit() {
-    return read_setting_as<size_t>("/sys/fs/cgroup/memory/memory.limit_in_bytes")
-        .value_or(std::numeric_limits<size_t>::max());
+std::size_t memory_limit() {
+    return read_setting_as<std::size_t>("/sys/fs/cgroup/memory/memory.limit_in_bytes")
+        .value_or(std::numeric_limits<std::size_t>::max());
 }
 
 
 template <typename T>
-optional<T> read_setting_as(std::string path) {
+std::optional<T> read_setting_as(std::string path) {
     try {
         auto line = read_first_line(path);
         return boost::lexical_cast<T>(line);
@@ -125,24 +126,24 @@ optional<T> read_setting_as(std::string path) {
         seastar_logger.warn("Couldn't read cgroup file {}.", path);
     }
 
-    return seastar::compat::nullopt;
+    return std::nullopt;
 }
 
 }
 
 namespace resource {
 
-size_t calculate_memory(configuration c, size_t available_memory, float panic_factor = 1) {
-    size_t default_reserve_memory = std::max<size_t>(1536 * 1024 * 1024, 0.07 * available_memory) * panic_factor;
+std::size_t calculate_memory(configuration c, std::size_t available_memory, float panic_factor = 1) {
+    std::size_t default_reserve_memory = std::max<std::size_t>(1536 * 1024 * 1024, 0.07 * available_memory) * panic_factor;
     auto reserve = c.reserve_memory.value_or(default_reserve_memory);
-    size_t min_memory = 500'000'000;
+    std::size_t min_memory = 500'000'000;
     if (available_memory >= reserve + min_memory) {
         available_memory -= reserve;
     } else {
         // Allow starting up even in low memory configurations (e.g. 2GB boot2docker VM)
         available_memory = min_memory;
     }
-    size_t mem = c.total_memory.value_or(available_memory);
+    std::size_t mem = c.total_memory.value_or(available_memory);
     if (mem > available_memory) {
         throw std::runtime_error(std::format("insufficient physical memory: needed {} available {}", mem, available_memory));
     }
@@ -172,7 +173,7 @@ cpu_set_t cpuid_to_cpuset(unsigned cpuid) {
 
 namespace resource {
 
-size_t div_roundup(size_t num, size_t denom) {
+std::size_t div_roundup(std::size_t num, std::size_t denom) {
     return (num + denom - 1) / denom;
 }
 
@@ -180,15 +181,15 @@ static unsigned find_memory_depth(hwloc_topology_t& topology) {
     auto depth = hwloc_get_type_depth(topology, HWLOC_OBJ_PU);
     auto obj = hwloc_get_next_obj_by_depth(topology, depth, nullptr);
 
-    while (!obj->memory.local_memory && obj) {
+    while (!obj->total_memory && obj) {
         obj = hwloc_get_ancestor_obj_by_depth(topology, --depth, obj);
     }
     assert(obj);
     return depth;
 }
 
-static size_t alloc_from_node(cpu& this_cpu, hwloc_obj_t node, std::unordered_map<hwloc_obj_t, size_t>& used_mem, size_t alloc) {
-    auto taken = std::min(node->memory.local_memory - used_mem[node], alloc);
+static std::size_t alloc_from_node(cpu& this_cpu, hwloc_obj_t node, std::unordered_map<hwloc_obj_t, std::size_t>& used_mem, std::size_t alloc) {
+    auto taken = std::min(node->total_memory - used_mem[node], alloc);
     if (taken) {
         used_mem[node] += taken;
         auto node_id = hwloc_bitmap_first(node->nodeset);
@@ -202,7 +203,7 @@ struct distribute_objects {
     std::vector<hwloc_cpuset_t> cpu_sets;
     hwloc_obj_t root;
 
-    distribute_objects(hwloc_topology_t& topology, size_t nobjs) : cpu_sets(nobjs), root(hwloc_get_root_obj(topology)) {
+    distribute_objects(hwloc_topology_t& topology, std::size_t nobjs) : cpu_sets(nobjs), root(hwloc_get_root_obj(topology)) {
 #if HWLOC_API_VERSION >= 0x00010900
         hwloc_distrib(topology, &root, 1, cpu_sets.data(), cpu_sets.size(), INT_MAX, 0);
 #else
@@ -240,7 +241,7 @@ allocate_io_queues(hwloc_topology_t& topology, std::vector<cpu> cpus, unsigned n
     // above, hwloc won't do us any good here. Later on, we will use this information to assign
     // shards to coordinators that are node-local to themselves.
     std::unordered_map<unsigned, std::set<unsigned>> numa_nodes;
-    for (auto shard: boost::irange(0, int(cpus.size()))) {
+    for (auto shard : counterator<unsigned>{(unsigned)cpus.size()}) {
         auto node_id = node_of_shard(shard);
 
         if (numa_nodes.count(node_id) == 0) {
@@ -269,7 +270,8 @@ allocate_io_queues(hwloc_topology_t& topology, std::vector<cpu> cpus, unsigned n
             }
             idx++;
         }
-        assert(0);
+        // assert(0);
+        return 0u;
     };
 
     auto cpu_sets = distribute_objects(topology, num_io_queues);
@@ -332,8 +334,7 @@ resources allocate(configuration c) {
             hwloc_bitmap_set(bm, idx);
         }
         auto r = hwloc_topology_restrict(topology, bm,
-                HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES
-                | HWLOC_RESTRICT_FLAG_ADAPT_MISC
+                  HWLOC_RESTRICT_FLAG_ADAPT_MISC
                 | HWLOC_RESTRICT_FLAG_ADAPT_IO);
         if (r == -1) {
             if (errno == ENOMEM) {
@@ -348,8 +349,8 @@ resources allocate(configuration c) {
     auto machine_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_MACHINE);
     assert(hwloc_get_nbobjs_by_depth(topology, machine_depth) == 1);
     auto machine = hwloc_get_obj_by_depth(topology, machine_depth, 0);
-    auto available_memory = machine->memory.total_memory;
-    size_t mem = calculate_memory(c, std::min(available_memory,
+    auto available_memory = machine->total_memory;
+    std::size_t mem = calculate_memory(c, std::min(available_memory,
                                               cgroup::memory_limit()));
     unsigned available_procs = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
     unsigned procs = c.cpus.value_or(available_procs);
@@ -357,13 +358,13 @@ resources allocate(configuration c) {
         printf("procs > available_procs: %u > %u\n", procs, available_procs);
         throw std::runtime_error("insufficient processing units");
     }
-    auto mem_per_proc = align_down<size_t>(mem / procs, 2 << 20);
+    auto mem_per_proc = align_down<std::size_t>(mem / procs, 2 << 20);
     printf("Allocating %lu, %lu bytes across %u cpus, for %lu bytes/cpu\n", mem, available_memory, available_procs, mem_per_proc);
 
     resources ret;
-    std::unordered_map<hwloc_obj_t, size_t> topo_used_mem;
-    std::vector<std::pair<cpu, size_t>> remains;
-    size_t remain;
+    std::unordered_map<hwloc_obj_t, std::size_t> topo_used_mem;
+    std::vector<std::pair<cpu, std::size_t>> remains;
+    std::size_t remain;
     unsigned depth = find_memory_depth(topology);
 
     auto cpu_sets = distribute_objects(topology, procs);
@@ -384,7 +385,7 @@ resources allocate(configuration c) {
     // Divide the rest of the memory
     for (auto&& r : remains) {
         cpu this_cpu;
-        size_t remain;
+        std::size_t remain;
         std::tie(this_cpu, remain) = r;
         auto pu = hwloc_get_pu_obj_by_os_index(topology, this_cpu.cpu_id);
         auto node = hwloc_get_ancestor_obj_by_depth(topology, depth, pu);
@@ -456,7 +457,7 @@ allocate_io_queues(configuration c, std::vector<cpu> cpus) {
 resources allocate(configuration c) {
     resources ret;
 
-    auto available_memory = ::sysconf(_SC_PAGESIZE) * size_t(::sysconf(_SC_PHYS_PAGES));
+    auto available_memory = ::sysconf(_SC_PAGESIZE) * std::size_t(::sysconf(_SC_PHYS_PAGES));
     auto mem = calculate_memory(c, available_memory);
     auto cpuset_procs = c.cpu_set ? c.cpu_set->size() : nr_processing_units();
     auto procs = c.cpus.value_or(cpuset_procs);

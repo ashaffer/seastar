@@ -26,12 +26,15 @@
 #include <string>
 #include <boost/any.hpp>
 #include <boost/type.hpp>
-#include <seastar/util/std-compat.hh>
+#include <optional>
+#include <variant>
+#include <string_view>
+// #include <seastar/util/std-compat.hh>
 #include <seastar/util/variant_utils.hh>
 #include <seastar/core/timer.hh>
 #include <seastar/core/simple-stream.hh>
 #include <seastar/core/lowres_clock.hh>
-#include <boost/functional/hash.hpp>
+#include <seastar/util/hash.hh>
 #include <seastar/core/sharded.hh>
 
 namespace seastar {
@@ -120,17 +123,17 @@ struct no_wait_type {};
 // return this from a callback if client does not want to waiting for a reply
 extern no_wait_type no_wait;
 
-template <typename T>
-class optional : public compat::optional<T> {
-public:
-     using compat::optional<T>::optional;
-};
+// template <typename T>
+// class optional : public std::optional<T> {
+// public:
+//      using std::optional<T>::optional;
+// };
 
-class opt_time_point : public compat::optional<rpc_clock_type::time_point> {
+class opt_time_point : public std::optional<rpc_clock_type::time_point> {
 public:
-     using compat::optional<rpc_clock_type::time_point>::optional;
-     opt_time_point(compat::optional<rpc_clock_type::time_point> time_point) {
-         static_cast<compat::optional<rpc_clock_type::time_point>&>(*this) = time_point;
+     using std::optional<rpc_clock_type::time_point>::optional;
+     opt_time_point(std::optional<rpc_clock_type::time_point> time_point) {
+         static_cast<std::optional<rpc_clock_type::time_point>&>(*this) = time_point;
      }
 };
 
@@ -172,8 +175,8 @@ struct cancellable {
 
 struct rcv_buf {
     uint32_t size = 0;
-    compat::optional<semaphore_units<>> su;
-    compat::variant<std::vector<temporary_buffer<char>>, temporary_buffer<char>> bufs;
+    std::optional<semaphore_units<>> su;
+    std::variant<std::vector<temporary_buffer<char>>, temporary_buffer<char>> bufs;
     using iterator = std::vector<temporary_buffer<char>>::iterator;
     rcv_buf() {}
     explicit rcv_buf(size_t size_) : size(size_) {}
@@ -186,7 +189,7 @@ struct snd_buf {
     // Preferred, but not required, chunk size.
     static constexpr size_t chunk_size = 128*1024;
     uint32_t size = 0;
-    compat::variant<std::vector<temporary_buffer<char>>, temporary_buffer<char>> bufs;
+    std::variant<std::vector<temporary_buffer<char>>, temporary_buffer<char>> bufs;
     using iterator = std::vector<temporary_buffer<char>>::iterator;
     snd_buf() {}
     explicit snd_buf(size_t size_);
@@ -199,11 +202,11 @@ struct snd_buf {
 };
 
 static inline memory_input_stream<rcv_buf::iterator> make_deserializer_stream(rcv_buf& input) {
-    auto* b = compat::get_if<temporary_buffer<char>>(&input.bufs);
+    auto* b = std::get_if<temporary_buffer<char>>(&input.bufs);
     if (b) {
         return memory_input_stream<rcv_buf::iterator>(memory_input_stream<rcv_buf::iterator>::simple(b->begin(), b->size()));
     } else {
-        auto& ar = compat::get<std::vector<temporary_buffer<char>>>(input.bufs);
+        auto& ar = std::get<std::vector<temporary_buffer<char>>>(input.bufs);
         return memory_input_stream<rcv_buf::iterator>(memory_input_stream<rcv_buf::iterator>::fragmented(ar.begin(), input.size));
     }
 }
@@ -308,7 +311,7 @@ public:
         }
     public:
         virtual ~impl() {}
-        virtual future<compat::optional<std::tuple<In...>>> operator()() = 0;
+        virtual future<std::optional<std::tuple<In...>>> operator()() = 0;
         friend source;
     };
 private:
@@ -316,7 +319,7 @@ private:
 
 public:
     source(shared_ptr<impl> impl) : _impl(std::move(impl)) {}
-    future<compat::optional<std::tuple<In...>>> operator()() {
+    future<std::optional<std::tuple<In...>>> operator()() {
         return _impl->operator()();
     };
     connection_id get_id() const;
@@ -360,7 +363,7 @@ template<>
 struct hash<seastar::rpc::connection_id> {
     size_t operator()(const seastar::rpc::connection_id& id) const {
         size_t h = 0;
-        boost::hash_combine(h, std::hash<uint64_t>{}(id.id));
+        seastar::hash_combine(h, std::hash<uint64_t>{}(id.id));
         return h;
     }
 };

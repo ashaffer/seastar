@@ -20,7 +20,7 @@
  *
  */
 
-#include <seastar/net/virtio.hh>
+//#include <seastar/net/virtio.hh>
 #include <seastar/net/dpdk.hh>
 #include <seastar/core/reactor.hh>
 #include <seastar/net/ip.hh>
@@ -81,8 +81,8 @@ future<> echo_packet(net::qp& netif, packet p) {
 #ifdef SEASTAR_HAVE_DPDK
 void usage()
 {
-    std::cout<<"Usage: echotest [-virtio|-dpdk]"<<std::endl;
-    std::cout<<"   -virtio - use virtio backend (default)"<<std::endl;
+    // std::cout<<"Usage: echotest [-virtio|-dpdk]"<<std::endl;
+    // std::cout<<"   -virtio - use virtio backend (default)"<<std::endl;
     std::cout<<"   -dpdk   - use dpdk-pmd backend"<<std::endl;
 }
 #endif
@@ -94,23 +94,23 @@ int main(int ac, char** av) {
     boost::program_options::variables_map opts;
     opts.insert(std::make_pair("tap-device", boost::program_options::variable_value(std::string("tap0"), false)));
 
-#ifdef SEASTAR_HAVE_DPDK
+// #ifdef SEASTAR_HAVE_DPDK
     if (ac > 2) {
         usage();
         return -1;
     }
 
-    if ((ac == 1) || !std::strcmp(av[1], "-virtio")) {
-        dnet = create_virtio_net_device(opts);
-    } else if (!std::strcmp(av[1], "-dpdk")) {
+    // if ((ac == 1) || !std::strcmp(av[1], "-virtio")) {
+    //     dnet = create_virtio_net_device(opts);
+    if (!std::strcmp(av[1], "-dpdk")) {
         dnet = create_dpdk_net_device();
     } else {
         usage();
         return -1;
     }
-#else
-    dnet = create_virtio_net_device(opts);
-#endif // SEASTAR_HAVE_DPDK
+// #else
+//     dnet = create_virtio_net_device(opts);
+// #endif // SEASTAR_HAVE_DPDK
 
     auto qp = dnet->init_local_queue(opts, 0);
     vnet = qp.get();

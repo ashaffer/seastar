@@ -26,13 +26,13 @@ find_program (
 
 mark_as_advanced (ragel_RAGEL_EXECUTABLE)
 
-set (_ragel_version_pattern "[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?")
+set (_ragel_version_pattern "[0-9]+\\.[0-9]+([\\.\\-][0-9]+)?")
 
 if (ragel_RAGEL_EXECUTABLE)
   set (ragel_FOUND ON)
 
-  exec_program (${ragel_RAGEL_EXECUTABLE}
-    ARGS -v
+#  exec_program (${ragel_RAGEL_EXECUTABLE}
+   execute_process (COMMAND ${ragel_RAGEL_EXECUTABLE} -v
     OUTPUT_VARIABLE _ragel_version_output)
 
   if (${_ragel_version_output} MATCHES "version (${_ragel_version_pattern})")

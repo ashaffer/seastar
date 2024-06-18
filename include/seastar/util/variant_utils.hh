@@ -20,8 +20,8 @@
  */
 
 #pragma once
-
-#include <seastar/util/std-compat.hh>
+#include <variant>
+// #include <seastar/util/std-compat.hh>
 #include <boost/version.hpp>
 
 #if (BOOST_VERSION < 105800)
@@ -119,10 +119,10 @@ inline auto visit(Variant&& variant, Args&&... args)
 namespace internal {
 template<typename... Args>
 struct castable_variant {
-    compat::variant<Args...> var;
+    std::variant<Args...> var;
 
     template<typename... SuperArgs>
-    operator compat::variant<SuperArgs...>() && {
+    operator std::variant<SuperArgs...>() && {
         return std::visit([] (auto&& x) {
             return std::variant<SuperArgs...>(std::move(x));
         }, var);
@@ -131,12 +131,12 @@ struct castable_variant {
 }
 
 template<typename... Args>
-internal::castable_variant<Args...> variant_cast(compat::variant<Args...>&& var) {
+internal::castable_variant<Args...> variant_cast(std::variant<Args...>&& var) {
     return {std::move(var)};
 }
 
 template<typename... Args>
-internal::castable_variant<Args...> variant_cast(const compat::variant<Args...>& var) {
+internal::castable_variant<Args...> variant_cast(const std::variant<Args...>& var) {
     return {var};
 }
 

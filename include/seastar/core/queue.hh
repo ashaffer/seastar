@@ -24,7 +24,6 @@
 #include <seastar/core/circular_buffer.hh>
 #include <seastar/core/future.hh>
 #include <queue>
-#include <seastar/util/std-compat.hh>
 
 namespace seastar {
 
@@ -33,26 +32,78 @@ namespace seastar {
 /// Operations returning a future are considered to be active until the future resolves.
 template <typename T>
 class queue {
-    std::queue<T, circular_buffer<T>> _q;
+    using queue_type = std::queue<T, circular_buffer<T>>;
+
+    queue_type _q;
     size_t _max;
-    compat::optional<promise<>> _not_empty;
-    compat::optional<promise<>> _not_full;
+    std::optional<promise<>> _not_empty;
+    std::optional<promise<>> _not_full;
     std::exception_ptr _ex = nullptr;
 private:
     void notify_not_empty();
     void notify_not_full();
 public:
+    using value_type = queue_type::value_type;
+    using reference = queue_type::reference;
+    using size_type = queue_type::size_type;
+    using const_reference = const value_type&;
+    using pointer = value_type *;
+    using const_pointer = value_type * const;
+    using iterator = pointer;
+    using const_iterator = const_pointer;
+
     explicit queue(size_t size);
+
+    /// Returns true when the queue is empty.
+    bool empty() const;
+
+    /// Returns true when the queue is full.
+    bool full() const;
 
     /// \brief Push an item.
     ///
     /// Returns false if the queue was full and the item was not pushed.
-    bool push(T&& a);
+    inline bool push (T&& data) {
+        if (_q.size() < _max) {
+            _q.push(std::move(data));
+            notify_not_empty();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    inline bool push (const_reference data) {
+        if (_q.size() < _max) {
+            _q.push(data);
+            notify_not_empty();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    template<std::forward_iterator ConstIt>
+    inline ConstIt push (ConstIt begin, ConstIt end) {
+        while (begin != end && !full()) {
+            push(*begin);
+            ++begin;
+        }
+
+        return begin;
+    }
 
     /// \brief Pop an item.
     ///
     /// Popping from an empty queue will result in undefined behavior.
-    T pop();
+    bool pop();
+    bool pop (T& t);
+    std::size_t pop (T *t, std::size_t n);
+
+    template<std::size_t N>
+    std::size_t pop(T (&t)[N]);
+
+    future<T> pop_ready ();
 
     /// Consumes items from the queue, passing them to @func, until @func
     /// returns false or the queue it empty
@@ -60,12 +111,17 @@ public:
     /// Returns false if func returned false.
     template <typename Func>
     bool consume(Func&& func);
+    
+    template<typename Func>
+    inline bool consume_all (Func&& func) { return consume(func); }
 
-    /// Returns true when the queue is empty.
-    bool empty() const;
+    constexpr reference front () noexcept {
+        return _q.front();
+    }
 
-    /// Returns true when the queue is full.
-    bool full() const;
+    constexpr const_reference front () const noexcept {
+        return _q.front();
+    }
 
     /// Returns a future<> that becomes available when pop() or consume()
     /// can be called.
@@ -117,11 +173,11 @@ public:
         _ex = ex;
         if (_not_full) {
             _not_full->set_exception(ex);
-            _not_full= compat::nullopt;
+            _not_full= std::nullopt;
         }
         if (_not_empty) {
             _not_empty->set_exception(std::move(ex));
-            _not_empty = compat::nullopt;
+            _not_empty = std::nullopt;
         }
     }
 };
@@ -137,7 +193,7 @@ inline
 void queue<T>::notify_not_empty() {
     if (_not_empty) {
         _not_empty->set_value();
-        _not_empty = compat::optional<promise<>>();
+        _not_empty = std::optional<promise<>>();
     }
 }
 
@@ -146,31 +202,69 @@ inline
 void queue<T>::notify_not_full() {
     if (_not_full) {
         _not_full->set_value();
-        _not_full = compat::optional<promise<>>();
+        _not_full = std::optional<promise<>>();
     }
 }
 
 template <typename T>
 inline
-bool queue<T>::push(T&& data) {
-    if (_q.size() < _max) {
-        _q.push(std::move(data));
-        notify_not_empty();
-        return true;
-    } else {
-        return false;
-    }
-}
-
-template <typename T>
-inline
-T queue<T>::pop() {
+bool queue<T>::pop() {
     if (_q.size() == _max) {
         notify_not_full();
     }
-    T data = std::move(_q.front());
+    if (_q.size() == 0) {
+        return false;
+    }
+
     _q.pop();
-    return data;
+    return true;
+}
+
+template <typename T>
+inline
+bool queue<T>::pop (T& t) {
+    if (_q.size() == _max) {
+        notify_not_full();
+    }
+    if (_q.size() == 0) {
+        return false;
+    }
+
+    t = std::move(_q.front());
+    _q.pop();
+    return true;
+}
+
+template<typename T>
+inline std::size_t queue<T>::pop (T *t, std::size_t n) {
+    n = std::min(_q.size(), n);
+    for (std::size_t i = 0; i < n; i++) {
+        t[i] = std::move(_q.front());
+        _q.pop();
+    }
+
+    return n;
+}
+
+template<typename T>
+template<std::size_t N>
+inline std::size_t queue<T>::pop(T (&t)[N]) {
+    return pop(t, N);
+}
+
+template<typename T>
+inline
+future<T> queue<T>::pop_ready () {
+    if (_q.size() == _max) {
+        notify_not_full();
+    }
+    if (_q.size() == 0) {
+        return make_exception_future<T>(_ex);
+    }
+
+    T t{std::move(_q.front())};
+    _q.pop();
+    return make_ready_future<T>(std::move(t));
 }
 
 template <typename T>
@@ -184,11 +278,11 @@ future<T> queue<T>::pop_eventually() {
             if (_ex) {
                 return make_exception_future<T>(_ex);
             } else {
-                return make_ready_future<T>(pop());
+                return pop_ready();
             }
         });
     } else {
-        return make_ready_future<T>(pop());
+        return pop_ready();
     }
 }
 

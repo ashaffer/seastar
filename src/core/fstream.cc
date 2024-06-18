@@ -18,7 +18,7 @@
 /*
  * Copyright (C) 2015 Cloudius Systems, Ltd.
  */
-
+#include <optional>
 #include <seastar/core/fstream.hh>
 #include <seastar/core/align.hh>
 #include <seastar/core/circular_buffer.hh>
@@ -48,7 +48,7 @@ class file_data_source_impl : public data_source_impl {
     unsigned _reads_in_progress = 0;
     unsigned _current_read_ahead;
     future<> _dropped_reads = make_ready_future<>();
-    compat::optional<promise<>> _done;
+    std::optional<promise<>> _done;
     size_t _current_buffer_size;
     bool _in_slow_start = false;
     using unused_ratio_target = std::ratio<25, 100>;

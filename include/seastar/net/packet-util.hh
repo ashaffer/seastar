@@ -20,9 +20,8 @@
  */
 
 #pragma once
-
-#include <seastar/net/packet.hh>
 #include <map>
+#include <seastar/net/packet.hh>
 #include <iostream>
 
 namespace seastar {
@@ -37,13 +36,13 @@ private:
         return linearization_count;
     }
 public:
-    std::map<Offset, packet> map;
+    std::map<Offset, ::seastar::net::packet> map;
 
     static uint64_t linearizations() {
         return linearizations_ref();
     }
 
-    void merge(Offset offset, packet p) {
+    void merge(Offset offset, ::seastar::net::packet p) {
         bool insert = true;
         auto beg = offset;
         auto end = beg + p.len();

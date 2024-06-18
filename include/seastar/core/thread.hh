@@ -33,7 +33,8 @@
 #include <setjmp.h>
 #include <type_traits>
 #include <chrono>
-#include <seastar/util/std-compat.hh>
+#include <optional>
+// #include <seastar/util/std-compat.hh>
 #include <ucontext.h>
 #include <boost/intrusive/list.hpp>
 
@@ -79,7 +80,7 @@ class thread_attributes;
 /// Class that holds attributes controling the behavior of a thread.
 class thread_attributes {
 public:
-    compat::optional<seastar::scheduling_group> sched_group;
+    std::optional<seastar::scheduling_group> sched_group;
 };
 
 

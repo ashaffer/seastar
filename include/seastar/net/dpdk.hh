@@ -29,29 +29,27 @@
 #include <seastar/core/sstring.hh>
 
 namespace seastar {
+    std::unique_ptr<net::device> create_dpdk_net_device(
+                                        uint16_t port_idx = 0,
+                                        uint16_t num_queues = 1,
+                                        bool use_lro = true,
+                                        bool enable_fc = true,
+                                        bool fullHash = false,
+                                        uint32_t initialHash = 0xFFFFFFFF,
+                                        bool rssSort = false);
 
-std::unique_ptr<net::device> create_dpdk_net_device(
-                                    uint16_t port_idx = 0,
-                                    uint16_t num_queues = 1,
-                                    bool use_lro = true,
-                                    bool enable_fc = true,
-                                    bool fullHash = false,
-                                    uint32_t initialHash = 0xFFFFFFFF,
-                                    bool rssSort = false);
-
-std::unique_ptr<net::device> create_dpdk_net_device(
-                                    const net::hw_config& hw_cfg, uint16_t num_queues, bool fullHash = false, uint32_t initialHash = 0xFFFFFFFF, bool rssSort = false);
+    std::unique_ptr<net::device> create_dpdk_net_device(
+                                        const net::hw_config& hw_cfg, uint16_t num_queues, bool fullHash = false, uint32_t initialHash = 0xFFFFFFFF, bool rssSort = false);
 
 
-boost::program_options::options_description get_dpdk_net_options_description();
+    boost::program_options::options_description get_dpdk_net_options_description();
 
-namespace dpdk {
-/**
- * @return Number of bytes needed for mempool objects of each QP.
- */
-uint32_t qp_mempool_obj_size(bool hugetlbfs_membackend);
-}
-
-}
+    namespace dpdk {
+        /**
+         * @return Number of bytes needed for mempool objects of each QP.
+         */
+        uint32_t qp_mempool_obj_size(bool hugetlbfs_membackend);
+    };
+};
 
 #endif // SEASTAR_HAVE_DPDK

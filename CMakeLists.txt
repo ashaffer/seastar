@@ -156,20 +156,20 @@ option (Seastar_APPS
   ON)
 
 set (Seastar_CXX_DIALECT
-  "c++20"
+  "c++23"
   CACHE
   STRING
   "Compile Seastar according to the named C++ standard.")
 
 set (Seastar_CXX_FLAGS
-  "-nostdinc++ -nostdlib++ -isystem /usr/lib/llvm-14/include/c++/v1 -L /usr/lib/llvm-14/lib -Wl - r-path,/usr/lib/llvm-14/lib -lc++"
+  "-isystem /usr/lib/llvm-17/include/c++/v1 -L /usr/lib/llvm-17/lib -Wl - r-path,/usr/lib/llvm-17/lib -lc++ -llc"
   CACHE
   STRING
   "Semicolon-separated list of extra compilation flags for Seastar itself.")
 
 option (Seastar_DEMOS
   "Enable demonstration targets."
-  ON)
+  OFF)
 
 option (Seastar_DOCS
   "Enable documentation targets."
@@ -274,7 +274,7 @@ set (Seastar_GEN_BINARY_DIR ${Seastar_BINARY_DIR}/gen)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 
 include (SeastarDependencies)
-#set (StdFilesystem_CXX_DIALECT ${Seastar_CXX_DIALECT})
+set (StdFilesystem_CXX_DIALECT ${Seastar_CXX_DIALECT})
 seastar_find_dependencies ()
 
 # Private build dependencies not visible to consumers
@@ -374,7 +374,7 @@ add_library (seastar STATIC
   ${http_request_parser_file}
   ${proto_metrics2_files}
   ${seastar_dpdk_obj}
-  include/seastar/core/abort_source.hh
+#  include/seastar/core/abort_source.hh
   include/seastar/core/alien.hh
   include/seastar/core/align.hh
   include/seastar/core/aligned_buffer.hh
@@ -504,8 +504,8 @@ add_library (seastar STATIC
   include/seastar/net/toeplitz.hh
   include/seastar/net/udp.hh
   include/seastar/net/unix_address.hh
-  include/seastar/net/virtio-interface.hh
-  include/seastar/net/virtio.hh
+#  include/seastar/net/virtio-interface.hh
+#  include/seastar/net/virtio.hh
   include/seastar/rpc/lz4_compressor.hh
   include/seastar/rpc/lz4_fragmented_compressor.hh
   include/seastar/rpc/multi_algo_compressor_factory.hh
@@ -532,7 +532,7 @@ add_library (seastar STATIC
   include/seastar/util/read_first_line.hh
   include/seastar/util/reference_wrapper.hh
   include/seastar/util/spinlock.hh
-  include/seastar/util/std-compat.hh
+#  include/seastar/util/std-compat.hh
   include/seastar/util/transform_iterator.hh
   include/seastar/util/tuple_utils.hh
   include/seastar/util/variant_utils.hh
@@ -559,6 +559,7 @@ add_library (seastar STATIC
   src/core/sharded.cc
   src/core/scollectd.cc
   src/core/scollectd-impl.hh
+  src/core/sstring.cc
   src/core/systemwide_memory_barrier.cc
   src/core/thread.cc
   src/core/uname.cc
@@ -597,7 +598,7 @@ add_library (seastar STATIC
   src/net/tls.cc
   src/net/udp.cc
   src/net/unix_address.cc
-  src/net/virtio.cc
+ # src/net/virtio.cc
   src/rpc/lz4_compressor.cc
   src/rpc/lz4_fragmented_compressor.cc
   src/rpc/rpc.cc
@@ -627,8 +628,7 @@ target_include_directories (seastar
     ${Seastar_GEN_BINARY_DIR}/src)
 
 set (Seastar_PRIVATE_CXX_FLAGS
-  -fvisibility=hidden
-  -UNDEBUG
+  -DNDEBUG
   -Wall
   -Werror
   -Wno-error=deprecated-declarations
@@ -652,13 +652,12 @@ target_link_libraries (seastar
     Boost::boost
     Boost::program_options
     Boost::thread
-    c-ares::c-ares
+    c-ares::cares
     cryptopp::cryptopp
-    fmt::fmt
     lz4::lz4
   PRIVATE
     ${CMAKE_DL_LIBS}
-    Boost::filesystem
+#    Boost::filesystem
     GnuTLS::gnutls
     StdAtomic::atomic
 #    StdFilesystem::filesystem
@@ -717,20 +716,20 @@ if (Seastar_EXPERIMENTAL_COROUTINES_TS)
   target_compile_definitions (seastar PUBLIC SEASTAR_COROUTINES_TS)
 endif ()
 
-if (Seastar_GCC6_CONCEPTS OR Concepts_FOUND)
-  target_compile_definitions (seastar
-    PUBLIC SEASTAR_HAVE_GCC6_CONCEPTS)
+#if (Seastar_GCC6_CONCEPTS OR Concepts_FOUND)
+#  target_compile_definitions (seastar
+#    PUBLIC SEASTAR_HAVE_GCC6_CONCEPTS)
 
-  target_link_libraries (seastar
-    PUBLIC Concepts::concepts)
-endif ()
+#  target_link_libraries (seastar
+#    PUBLIC Concepts::concepts)
+#endif ()
 
-if (LinuxMembarrier_FOUND)
-  list (APPEND Seastar_PRIVATE_COMPILE_DEFINITIONS SEASTAR_HAS_MEMBARRIER)
-
-  target_link_libraries (seastar
-    PRIVATE LinuxMembarrier::membarrier)
-endif ()
+#if (LinuxMembarrier_FOUND)
+#  list (APPEND Seastar_PRIVATE_COMPILE_DEFINITIONS SEASTAR_HAS_MEMBARRIER)
+#
+#  target_link_libraries (seastar
+#    PRIVATE LinuxMembarrier::membarrier)
+#endif ()
 
 if (Seastar_ALLOC_FAILURE_INJECTION)
   target_compile_definitions (seastar
@@ -796,9 +795,10 @@ if (Seastar_DPDK)
   # No pmd driver code will be pulled in without "--whole-archive". To
   # avoid exposing that to seastar users, combine dpdk into a single
   # .o file.
+  string (REPLACE ";" " " dpdk_LIBRARIES_STR "${dpdk_LIBRARIES}")
   add_custom_command (
     OUTPUT seastar-dpdk.o
-    COMMAND ld -r -o seastar-dpdk.o --whole-archive ${dpdk_LIBRARIES} --no-whole-archive
+    COMMAND clang-17 -r -o seastar-dpdk.o -Wl,-fuse-ld=lld,-L/usr/lib/llvm-17/lib,-L/usr/lib/x86_64-linux-gnu,-lunwind,-lc,-lrt,-ldl,-lc++,-lm,-lc++abi,-lnuma,--whole-archive,-L./_cooking/installed/lib,-lrte_bbdev,-lrte_bitratestats,-lrte_bus_dpaa,-lrte_bus_fslmc,-lrte_bus_ifpga,-lrte_bus_pci,-lrte_bus_vdev,-lrte_bus_vmbus,-lrte_cfgfile,-lrte_cmdline,-lrte_common_cpt,-lrte_common_dpaax,-lrte_common_octeontx,-lrte_compressdev,-lrte_cryptodev,-lrte_eal,-lrte_ethdev,-lrte_eventdev,-lrte_gro,-lrte_gso,-lrte_hash,-lrte_ipsec,-lrte_kvargs,-lrte_latencystats,-lrte_mbuf,-lrte_mempool,-lrte_mempool_bucket,-lrte_mempool_dpaa,-lrte_mempool_dpaa2,-lrte_mempool_octeontx,-lrte_mempool_ring,-lrte_mempool_stack,-lrte_meter,-lrte_metrics,-lrte_net,-lrte_pci,-lrte_pdump,-lrte_pmd_af_packet,-lrte_pmd_ark,-lrte_pmd_atlantic,-lrte_pmd_avp,-lrte_pmd_axgbe,-lrte_pmd_bbdev_null,-lrte_pmd_bnxt,-lrte_pmd_caam_jr,-lrte_pmd_cxgbe,-lrte_pmd_dpaa,-lrte_pmd_dpaa2,-lrte_pmd_dpaa2_cmdif,-lrte_pmd_dpaa2_event,-lrte_pmd_dpaa2_qdma,-lrte_pmd_dpaa2_sec,-lrte_pmd_dpaa_event,-lrte_pmd_dpaa_sec,-lrte_pmd_dsw_event,-lrte_pmd_e1000,-lrte_pmd_ena,-lrte_pmd_enetc,-lrte_pmd_enic,-lrte_pmd_failsafe,-lrte_pmd_fm10k,-lrte_pmd_i40e,-lrte_pmd_iavf,-lrte_pmd_ice,-lrte_pmd_ifc,-lrte_pmd_ifpga_rawdev,-lrte_pmd_ipn3ke,-lrte_pmd_ixgbe,-lrte_pmd_lio,-lrte_pmd_netvsc,-lrte_pmd_nfp,-lrte_pmd_null,-lrte_pmd_null_crypto,-lrte_pmd_octeontx,-lrte_pmd_octeontx_crypto,-lrte_pmd_octeontx_ssovf,-lrte_pmd_octeontx_zip,-lrte_pmd_opdl_event,-lrte_pmd_qat,-lrte_pmd_qede,-lrte_pmd_ring,-lrte_pmd_sfc_efx,-lrte_pmd_skeleton_event,-lrte_pmd_skeleton_rawdev,-lrte_pmd_sw_event,-lrte_pmd_tap,-lrte_pmd_thunderx_nicvf,-lrte_pmd_vdev_netvsc,-lrte_pmd_vhost,-lrte_pmd_virtio,-lrte_pmd_virtio_crypto,-lrte_pmd_vmxnet3_uio,-lrte_rawdev,-lrte_rcu,-lrte_ring,-lrte_sched,-lrte_security,-lrte_stack,-lrte_timer,-lrte_vhost,--no-whole-archive
   )
 
   # This just provides the include path to cmake
@@ -886,45 +886,45 @@ target_link_libraries (seastar_private
 # The testing library.
 #
 
-if (Seastar_INSTALL OR Seastar_TESTING)
-  add_library (seastar_testing
-    include/seastar/testing/entry_point.hh
-    include/seastar/testing/exchanger.hh
-    include/seastar/testing/seastar_test.hh
-    include/seastar/testing/test_case.hh
-    include/seastar/testing/test_runner.hh
-    include/seastar/testing/thread_test_case.hh
-    src/testing/entry_point.cc
-    src/testing/seastar_test.cc
-    src/testing/test_runner.cc)
-
-  add_library (Seastar::seastar_testing ALIAS seastar_testing)
-
-  target_compile_definitions (seastar_testing
-    PUBLIC BOOST_TEST_DYN_LINK
-    PRIVATE ${Seastar_PRIVATE_COMPILE_DEFINITIONS})
-
-  target_compile_options (seastar_testing
-    PRIVATE ${Seastar_PRIVATE_CXX_FLAGS})
-
-  target_link_libraries (seastar_testing
-    PUBLIC
-      Boost::unit_test_framework
-      seastar)
-
-  add_library(seastar_perf_testing
-    include/seastar/testing/perf_tests.hh
-    tests/perf/perf_tests.cc)
-  add_library (Seastar::seastar_perf_testing ALIAS seastar_perf_testing)
-  target_compile_definitions (seastar_perf_testing
-    PRIVATE ${Seastar_PRIVATE_COMPILE_DEFINITIONS})
-  target_compile_options (seastar_perf_testing
-    PRIVATE ${Seastar_PRIVATE_CXX_FLAGS})
-  target_link_libraries (seastar_perf_testing
-    PUBLIC
-    seastar)
-
-endif ()
+#if (Seastar_INSTALL OR Seastar_TESTING)
+#  add_library (seastar_testing
+#    include/seastar/testing/entry_point.hh
+#    include/seastar/testing/exchanger.hh
+#    include/seastar/testing/seastar_test.hh
+#    include/seastar/testing/test_case.hh
+#    include/seastar/testing/test_runner.hh
+#    include/seastar/testing/thread_test_case.hh
+#    src/testing/entry_point.cc
+#    src/testing/seastar_test.cc
+#    src/testing/test_runner.cc)
+#
+#  add_library (Seastar::seastar_testing ALIAS seastar_testing)
+#
+#  target_compile_definitions (seastar_testing
+#    PUBLIC BOOST_TEST_DYN_LINK
+#    PRIVATE ${Seastar_PRIVATE_COMPILE_DEFINITIONS})
+#
+#  target_compile_options (seastar_testing
+#    PRIVATE ${Seastar_PRIVATE_CXX_FLAGS})
+#
+#  target_link_libraries (seastar_testing
+#    PUBLIC
+#      Boost::unit_test_framework
+#      seastar)
+#
+#  add_library(seastar_perf_testing
+#    include/seastar/testing/perf_tests.hh
+#    tests/perf/perf_tests.cc)
+#  add_library (Seastar::seastar_perf_testing ALIAS seastar_perf_testing)
+#  target_compile_definitions (seastar_perf_testing
+#    PRIVATE ${Seastar_PRIVATE_COMPILE_DEFINITIONS})
+#  target_compile_options (seastar_perf_testing
+#    PRIVATE ${Seastar_PRIVATE_CXX_FLAGS})
+#  target_link_libraries (seastar_perf_testing
+#    PUBLIC
+#    seastar)
+#
+#endif ()
 
 #
 # The tests themselves.
@@ -1003,10 +1003,10 @@ if (Seastar_INSTALL)
     ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar-install.pc.in
     @ONLY)
 
-  configure_file (
-    ${CMAKE_CURRENT_SOURCE_DIR}/pkgconfig/seastar-testing.pc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar-testing-install.pc.in
-    @ONLY)
+#  configure_file (
+#    ${CMAKE_CURRENT_SOURCE_DIR}/pkgconfig/seastar-testing.pc.in
+#    ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar-testing-install.pc.in
+#    @ONLY)
 
   # Set paths in pkg-config files for direct use in the build directory.
   set (Seastar_PKG_CONFIG_PREFIX ${CMAKE_CURRENT_BINARY_DIR})
@@ -1018,26 +1018,26 @@ if (Seastar_INSTALL)
     ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar.pc.in
     @ONLY)
 
-  configure_file (
-    ${CMAKE_CURRENT_SOURCE_DIR}/pkgconfig/seastar-testing.pc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar-testing.pc.in
-    @ONLY)
+#  configure_file (
+#    ${CMAKE_CURRENT_SOURCE_DIR}/pkgconfig/seastar-testing.pc.in
+#    ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar-testing.pc.in
+#    @ONLY)
 
   file (GENERATE
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/seastar.pc
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar.pc.in)
 
-  file (GENERATE
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/seastar-testing.pc
-    INPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar-testing.pc.in)
+ # file (GENERATE
+ #   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/seastar-testing.pc
+ #   INPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar-testing.pc.in)
 
   file (GENERATE
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/seastar-install.pc
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar-install.pc.in)
 
-  file (GENERATE
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/seastar-testing-install.pc
-    INPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar-testing-install.pc.in)
+ # file (GENERATE
+ #  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/seastar-testing-install.pc
+ #  INPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgconfig/seastar-testing-install.pc.in)
 
   include (CMakePackageConfigHelpers)
   set (install_cmakedir ${CMAKE_INSTALL_LIBDIR}/cmake/Seastar)
@@ -1057,8 +1057,8 @@ if (Seastar_INSTALL)
   install (
     TARGETS
       seastar
-      seastar_testing
-      seastar_perf_testing
+#      seastar_testing
+#      seastar_perf_testing
     EXPORT seastar-export
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -1087,10 +1087,10 @@ if (Seastar_INSTALL)
 
   install (
     FILES
-      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/bundled_boost/FindBoost.cmake
-      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindConcepts.cmake
+#      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/bundled_boost/FindBoost.cmake
+      #${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindConcepts.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindGnuTLS.cmake
-      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindLinuxMembarrier.cmake
+      #${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindLinuxMembarrier.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindProtobuf.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindSanitizers.cmake
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindStdAtomic.cmake
@@ -1117,10 +1117,10 @@ if (Seastar_INSTALL)
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     RENAME seastar.pc)
 
-  install (
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/seastar-testing-install.pc
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-    RENAME seastar-testing.pc)
+#  install (
+#    FILES ${CMAKE_CURRENT_BINARY_DIR}/seastar-testing-install.pc
+#    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+#    RENAME seastar-testing.pc)
 
   #
   # Export targets from the build tree for the user package registry.

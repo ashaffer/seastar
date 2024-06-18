@@ -38,8 +38,8 @@ void thread_pool::work(sstring name) {
     std::array<syscall_work_queue::work_item*, syscall_work_queue::queue_length> tmp_buf;
     while (true) {
         uint64_t count;
-        auto r = ::read(inter_thread_wq._start_eventfd.get_read_fd(), &count, sizeof(count));
-        assert(r == sizeof(count));
+        ::read(inter_thread_wq._start_eventfd.get_read_fd(), &count, sizeof(count));
+        // assert(r == sizeof(count));
         if (_stopped.load(std::memory_order_relaxed)) {
             break;
         }

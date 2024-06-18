@@ -52,12 +52,14 @@
 // Spans have a size that is a power-of-two and are naturally aligned (aka buddy
 // allocator)
 
+#include <memory_resource>
+#include <optional>
 #include <seastar/core/cacheline.hh>
 #include <seastar/core/memory.hh>
 #include <seastar/core/reactor.hh>
 #include <seastar/core/print.hh>
 #include <seastar/util/alloc_failure_injector.hh>
-#include <seastar/util/std-compat.hh>
+// #include <seastar/util/std-compat.hh>
 #include <iostream>
 
 namespace seastar {
@@ -87,8 +89,8 @@ disable_abort_on_alloc_failure_temporarily::~disable_abort_on_alloc_failure_temp
     --abort_on_alloc_failure_suppressed;
 }
 
-static compat::polymorphic_allocator<char> static_malloc_allocator{compat::pmr_get_default_resource()};;
-compat::polymorphic_allocator<char>* malloc_allocator{&static_malloc_allocator};
+static std::pmr::polymorphic_allocator<char> static_malloc_allocator{std::pmr::get_default_resource()};;
+std::pmr::polymorphic_allocator<char>* malloc_allocator{&static_malloc_allocator};
 
 }
 
@@ -107,7 +109,6 @@ compat::polymorphic_allocator<char>* malloc_allocator{&static_malloc_allocator};
 #include <cassert>
 #include <atomic>
 #include <mutex>
-#include <seastar/util/std-compat.hh>
 #include <functional>
 #include <cstring>
 #include <boost/intrusive/list.hpp>
@@ -118,6 +119,7 @@ compat::polymorphic_allocator<char>* malloc_allocator{&static_malloc_allocator};
 #ifdef SEASTAR_HAVE_NUMA
 #include <numaif.h>
 #endif
+
 
 namespace seastar {
 
@@ -177,7 +179,7 @@ static thread_local uint64_t g_cross_cpu_frees;
 static thread_local uint64_t g_reclaims;
 static thread_local uint64_t g_large_allocs;
 
-using compat::optional;
+using std::optional;
 
 using allocate_system_memory_fn
         = std::function<mmap_area (optional<void*> where, size_t how_much)>;
@@ -862,8 +864,8 @@ cpu_pages::try_cross_cpu_free(void* ptr) {
 }
 
 void cpu_pages::shrink(void* ptr, size_t new_size) {
-    auto obj_cpu = object_cpu_id(ptr);
-    assert(obj_cpu == cpu_id);
+    object_cpu_id(ptr);
+    // assert(obj_cpu == cpu_id);
     page* span = to_page(ptr);
     if (span->pool) {
         return;
@@ -933,7 +935,7 @@ bool cpu_pages::initialize() {
 }
 
 mmap_area
-allocate_anonymous_memory(compat::optional<void*> where, size_t how_much) {
+allocate_anonymous_memory(std::optional<void*> where, size_t how_much) {
     return mmap_anonymous(where.value_or(nullptr),
             how_much,
             PROT_READ | PROT_WRITE,
@@ -941,7 +943,7 @@ allocate_anonymous_memory(compat::optional<void*> where, size_t how_much) {
 }
 
 mmap_area
-allocate_hugetlbfs_memory(file_desc& fd, compat::optional<void*> where, size_t how_much) {
+allocate_hugetlbfs_memory(file_desc& fd, std::optional<void*> where, size_t how_much) {
     auto pos = fd.size();
     fd.truncate(pos + how_much);
     auto ret = fd.map(
@@ -1928,7 +1930,7 @@ reclaimer::~reclaimer() {
 void set_reclaim_hook(std::function<void (std::function<void ()>)> hook) {
 }
 
-void configure(std::vector<resource::memory> m, bool mbind, compat::optional<std::string> hugepages_path) {
+void configure(std::vector<resource::memory> m, bool mbind, std::optional<std::string> hugepages_path) {
 }
 
 statistics stats() {

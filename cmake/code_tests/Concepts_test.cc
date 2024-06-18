@@ -1,4 +1,4 @@
-#if __cpp_concepts == 201507
+#if __cpp_concepts >= 201507
 
 #pragma message("Concepts test")
 

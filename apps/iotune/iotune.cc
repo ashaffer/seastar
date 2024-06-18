@@ -47,12 +47,12 @@
 #include <seastar/core/fsqual.hh>
 #include <seastar/util/defer.hh>
 #include <seastar/util/log.hh>
-#include <seastar/util/std-compat.hh>
+// #include <seastar/util/std-compat.hh>
 #include <seastar/util/read_first_line.hh>
 
 using namespace seastar;
 using namespace std::chrono_literals;
-namespace fs = seastar::compat::filesystem;
+// namespace fs = seastar::compat::filesystem;
 
 logger iotune_logger("iotune");
 
@@ -544,7 +544,7 @@ void write_property_file(sstring conf_file, std::vector<disk_descriptor> disk_de
 // (absolute, with symlinks resolved), until we find a point that crosses a device ID.
 fs::path mountpoint_of(sstring filename) {
     fs::path mnt_candidate = fs::canonical(fs::path(filename));
-    compat::optional<dev_t> candidate_id = {};
+    std::optional<dev_t> candidate_id = {};
     auto current = mnt_candidate;
     do {
         auto f = open_directory(current.string()).get0();

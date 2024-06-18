@@ -114,6 +114,7 @@ arg_parser.add_argument('--split-dwarf', dest='split_dwarf', action='store_true'
 arg_parser.add_argument('--use-std-optional-variant-stringview', dest='cpp17_goodies', action='store', type=int, default=0,
                         help='Use C++17 std types for optional, variant, and string_view. Requires C++17 dialect and GCC >= 8.1.1-5')
 arg_parser.add_argument('--prefix', dest='install_prefix', default='/usr/local', help='Root installation path of Seastar files')
+arg_parser.add_argument('--dpdk-quad', dest='dpdk_quad', default='', help='DPDK build style')
 args = arg_parser.parse_args()
 
 def identify_best_dialect(dialects, compiler):
@@ -132,7 +133,7 @@ def identify_best_dialect(dialects, compiler):
     return d
 
 if args.cpp_dialect == '':
-    cpp_dialects = ['c++20', 'gnu++17', 'gnu++1z', 'gnu++14', 'gnu++1y']
+    cpp_dialects = ['c++23', 'c++20', 'gnu++17', 'gnu++1z', 'gnu++14', 'gnu++1y']
     args.cpp_dialect = identify_best_dialect(cpp_dialects, compiler=args.cxx)
 
 def infer_dpdk_machine(user_cflags):
@@ -188,6 +189,7 @@ def configure_mode(mode):
         tr(LDFLAGS, 'LD_FLAGS'),
         tr(args.cpp_dialect, 'CXX_DIALECT'),
         tr(args.dpdk, 'DPDK'),
+        tr(args.dpdk_quad, 'DPDK_QUAD'),
         tr(infer_dpdk_machine(args.user_cflags), 'DPDK_MACHINE'),
         tr(args.hwloc, 'HWLOC', value_when_none='yes'),
         tr(args.gcc6_concepts, 'GCC6_CONCEPTS'),
@@ -196,7 +198,7 @@ def configure_mode(mode):
         tr(args.cpp17_goodies, 'STD_OPTIONAL_VARIANT_STRINGVIEW'),
         tr(args.split_dwarf, 'SPLIT_DWARF'),
         tr(args.coroutines_ts, 'EXPERIMENTAL_COROUTINES_TS'),
-        tr(args.unused_result_error, 'UNUSED_RESULT_ERROR'),
+        tr(args.unused_result_error, 'UNUSED_RESULT_ERROR')
     ]
     ingredients_to_cook = set(args.cook)
 

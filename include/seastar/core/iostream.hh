@@ -34,11 +34,12 @@
 //
 
 #pragma once
-
+#include <optional>
+#include <variant>
 #include <seastar/core/future.hh>
 #include <seastar/core/temporary_buffer.hh>
 #include <seastar/core/scattered_message.hh>
-#include <seastar/util/std-compat.hh>
+// #include <seastar/util/std-compat.hh>
 
 namespace seastar {
 
@@ -143,10 +144,10 @@ template <typename CharType>
 class consumption_result {
 public:
     using stop_consuming_type = stop_consuming<CharType>;
-    using consumption_variant = compat::variant<continue_consuming, stop_consuming_type, skip_bytes>;
+    using consumption_variant = std::variant<continue_consuming, stop_consuming_type, skip_bytes>;
     using tmp_buf = typename stop_consuming_type::tmp_buf;
 
-    /*[[deprecated]]*/ consumption_result(compat::optional<tmp_buf> opt_buf) {
+    /*[[deprecated]]*/ consumption_result(std::optional<tmp_buf> opt_buf) {
         if (opt_buf) {
             _result = stop_consuming_type{std::move(opt_buf.value())};
         }
@@ -190,7 +191,7 @@ concept bool InputStreamConsumer = requires (Consumer c) {
 
 template <typename Consumer, typename CharType>
 concept bool ObsoleteInputStreamConsumer = requires (Consumer c) {
-    { c(temporary_buffer<CharType>{}) } -> future<compat::optional<temporary_buffer<CharType>>>;
+    { c(temporary_buffer<CharType>{}) } -> future<std::optional<temporary_buffer<CharType>>>;
 };
 )
 
@@ -213,7 +214,7 @@ protected:
 public:
     using consumption_result_type = consumption_result<CharType>;
     // unconsumed_remainder is mapped for compatibility only; new code should use consumption_result_type
-    using unconsumed_remainder = compat::optional<tmp_buf>;
+    using unconsumed_remainder = std::optional<tmp_buf>;
     using char_type = CharType;
     input_stream() = default;
     explicit input_stream(data_source fd) : _fd(std::move(fd)), _buf(0) {}
@@ -286,7 +287,7 @@ class output_stream final {
     size_t _end = 0;
     bool _trim_to_size = false;
     bool _batch_flushes = false;
-    compat::optional<promise<>> _in_batch;
+    std::optional<promise<>> _in_batch;
     bool _flush = false;
     bool _flushing = false;
     std::exception_ptr _ex;

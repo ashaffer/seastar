@@ -31,6 +31,7 @@
 #include <seastar/net/ip.hh>
 #include <seastar/net/const.hh>
 #include <seastar/net/packet-util.hh>
+#include <optional>
 #include <seastar/util/std-compat.hh>
 #include <unordered_map>
 #include <map>
@@ -355,12 +356,12 @@ private:
             bool closed = false;
             promise<> _window_opened;
             // Wait for all data are acked
-            compat::optional<promise<>> _all_data_acked_promise;
+            std::optional<promise<>> _all_data_acked_promise;
             // Limit number of data queued into send queue
             size_t max_queue_space = 212992;
             size_t current_queue_space = 0;
             // wait for there is at least one byte available in the queue
-            compat::optional<promise<>> _send_available_promise;
+            std::optional<promise<>> _send_available_promise;
             // Round-trip time variation
             std::chrono::milliseconds rttvar;
             // Smoothed round-trip time
@@ -393,7 +394,7 @@ private:
             // The total size of data stored in std::deque<packet> data
             size_t data_size = 0;
             tcp_packet_merger out_of_order;
-            compat::optional<promise<>> _data_received_promise;
+            std::optional<promise<>> _data_received_promise;
             // The maximun memory buffer size allowed for receiving
             // Currently, it is the same as default receive window size when window scaling is enabled
             size_t max_receive_buf_size = 3737600;
@@ -483,7 +484,7 @@ private:
                 p.notifyTransmitted(t, 1);
             }
         }
-        compat::optional<typename InetTraits::l4packet> get_packet();
+        std::optional<typename InetTraits::l4packet> get_packet();
 
         void output() {
             if (!_poll_active) {
@@ -677,19 +678,19 @@ private:
                 printf("do_reset: %u\n", resetState);
                 // printf("[tcp] connection reset: _data_received_promise\n");
                 _rcv._data_received_promise->set_exception(tcp_reset_error());
-                _rcv._data_received_promise = compat::nullopt;
+                _rcv._data_received_promise = std::nullopt;
             }
             if (_snd._all_data_acked_promise) {
                 this->closeState = 21;                
                 // printf("[tcp] connection reset: _all_data_acked_promise\n");
                 _snd._all_data_acked_promise->set_exception(tcp_reset_error());
-                _snd._all_data_acked_promise = compat::nullopt;
+                _snd._all_data_acked_promise = std::nullopt;
             }
             if (_snd._send_available_promise) {
                 this->closeState = 22;                
                 // printf("[tcp] connection reset: _send_available_promise\n");
                 _snd._send_available_promise->set_exception(tcp_reset_error());
-                _snd._send_available_promise = compat::nullopt;
+                _snd._send_available_promise = std::nullopt;
             }
         }
         void do_time_wait() {
@@ -861,7 +862,7 @@ public:
         }
         future<connection> accept() {
             return _q.not_empty().then([this] {
-                return make_ready_future<connection>(_q.pop());
+                return _q.pop_ready();
             });
         }
         void abort_accept() {
@@ -914,7 +915,7 @@ tcp<InetTraits>::tcp(inet_type& inet)
     });
 
     _inet.register_packet_provider([this, tcb_polled = 0u] () mutable {
-        compat::optional<typename InetTraits::l4packet> l4p;
+        std::optional<typename InetTraits::l4packet> l4p;
         auto c = _poll_tcbs.size();
         if (!_packetq.empty() && (!(tcb_polled % 128) || c == 0)) {
             l4p = std::move(_packetq.front());
@@ -1966,7 +1967,7 @@ tcp<InetTraits>::tcb::abort_reader() {
         printf("abort_reader called\n");
         _rcv._data_received_promise->set_exception(
                 std::make_exception_ptr(std::system_error(ECONNABORTED, std::system_category())));
-        _rcv._data_received_promise = compat::nullopt;
+        _rcv._data_received_promise = std::nullopt;
     }
 }
 
@@ -2365,14 +2366,14 @@ tcp_seq tcp<InetTraits>::tcb::get_isn() {
 }
 
 template <typename InetTraits>
-compat::optional<typename InetTraits::l4packet> tcp<InetTraits>::tcb::get_packet() {
+std::optional<typename InetTraits::l4packet> tcp<InetTraits>::tcb::get_packet() {
     _poll_active = false;
     if (_packetq.empty()) {
         output_one();
     }
 
     if (in_state(CLOSED)) {
-        return compat::optional<typename InetTraits::l4packet>();
+        return std::optional<typename InetTraits::l4packet>();
     }
 
     assert(!_packetq.empty());

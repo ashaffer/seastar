@@ -82,7 +82,7 @@ frame decorate(uintptr_t addr) {
 
 saved_backtrace current_backtrace() noexcept {
     saved_backtrace::vector_type v;
-    backtrace([&] (frame f) {
+    back_trace([&] (frame f) {
         if (v.size() < v.capacity()) {
             v.emplace_back(std::move(f));
         }

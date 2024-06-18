@@ -60,7 +60,7 @@ uint16_t checksummer::get() const {
     return htons(~csum);
 }
 
-void checksummer::sum(const packet& p) {
+void checksummer::sum(const ::seastar::net::packet& p) {
     for (auto&& f : p.fragments()) {
         sum(f.base, f.size);
     }

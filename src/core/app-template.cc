@@ -27,7 +27,9 @@
 #include <seastar/util/log.hh>
 #include <seastar/util/log-cli.hh>
 #include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
 #include <boost/make_shared.hpp>
+#include <exception>
 #include <fstream>
 #include <cstdlib>
 #include <iostream>
@@ -48,7 +50,7 @@ reactor_config_from_app_config(app_template::config cfg) {
 
 app_template::app_template(app_template::config cfg)
     : _cfg(std::move(cfg))
-    , _opts(_cfg.name + " options")
+    , _opts{} //(_cfg.name + " options")
     , _conf_reader(get_default_configuration_reader()) {
         _opts.add_options()
                 ("help,h", "show help message")
@@ -68,13 +70,16 @@ app_template::configuration_reader app_template::get_default_configuration_reade
     return [this] (bpo::variables_map& configuration) {
         auto home = std::getenv("HOME");
         if (home) {
-            std::ifstream ifs(std::string(home) + "/.config/seastar/seastar.conf");
+            std::string ifs_name{std::string(home) + "/.config/seastar/seastar.conf"};
+            std::ifstream ifs(ifs_name);
             if (ifs) {
-                bpo::store(bpo::parse_config_file(ifs, _opts_conf_file), configuration);
+                bpo::store(bpo::parse_config_file(ifs_name.c_str(), _opts_conf_file), configuration);
             }
-            std::ifstream ifs_io(std::string(home) + "/.config/seastar/io.conf");
+
+            std::string ifs_io_name{std::string(home) + "/.config/seastar/io.conf"};
+            std::ifstream ifs_io(ifs_io_name);
             if (ifs_io) {
-                bpo::store(bpo::parse_config_file(ifs_io, _opts_conf_file), configuration);
+                bpo::store(bpo::parse_config_file(ifs_io_name.c_str(), _opts_conf_file), configuration);
             }
         }
     };
@@ -112,8 +117,8 @@ app_template::configuration() {
 }
 
 int
-app_template::run(int ac, char ** av, std::function<future<int> ()>&& func) {
-    return run_deprecated(ac, av, [func = std::move(func)] () mutable {
+app_template::run(int argc, const char * const * argv, std::function<future<int> ()>&& func) {
+    return run_deprecated(argc, argv, [func = std::move(func)] () mutable {
         auto func_done = make_lw_shared<promise<>>();
         engine().at_exit([func_done] { return func_done->get_future(); });
         // No need to wait for this future.
@@ -127,8 +132,8 @@ app_template::run(int ac, char ** av, std::function<future<int> ()>&& func) {
 }
 
 int
-app_template::run(int ac, char ** av, std::function<future<> ()>&& func) {
-    return run(ac, av, [func = std::move(func)] {
+app_template::run(int argc, const char * const *argv, std::function<future<> ()>&& func) {
+    return run(argc, argv, [func = std::move(func)] {
         return func().then([] () {
             return 0;
         });
@@ -136,27 +141,28 @@ app_template::run(int ac, char ** av, std::function<future<> ()>&& func) {
 }
 
 int
-app_template::run_deprecated(int ac, char ** av, std::function<void ()>&& func) {
+app_template::run_deprecated(int argc, const char * const * const argv, std::function<void ()>&& func) {
 #ifdef SEASTAR_DEBUG
     std::cout << "WARNING: debug mode. Not for benchmarking or production\n";
 #endif
     bpo::variables_map configuration;
     try {
-        bpo::store(bpo::command_line_parser(ac, av)
-                    .options(_opts)
-                    .positional(_pos_opts)
-                    .run()
-            , configuration);
+        bpo::command_line_parser(argc, argv);
+        // bpo::store(bpo::command_line_parser(argc, argv)
+        //             .options(_opts)
+        //             .positional(_pos_opts)
+        //             .run()
+        //     , configuration);
         _conf_reader(configuration);
     } catch (bpo::error& e) {
         std::cout << std::format("error: {}\n\nTry --help.\n", e.what());
         return 2;
     }
     if (configuration.count("help")) {
-        std::cout << _opts << "\n";
+        // std::cout << _opts << "\n";
         return 1;
     }
-    if (configuration["help-loggers"].as<bool>()) {
+    if (configuration.find("help-loggers")->second.as<bool>()) {
         log_cli::print_available_loggers(std::cout);
         return 1;
     }
@@ -171,7 +177,7 @@ app_template::run_deprecated(int ac, char ** av, std::function<void ()>&& func) 
         return 1;
     }
 
-    configuration.emplace("argv0", boost::program_options::variable_value(std::string(av[0]), false));
+    configuration.emplace("argv0", bpo::variable_value(std::string(argv[0]), false));
     try {
         smp::configure(configuration, reactor_config_from_app_config(_cfg));
     } catch (...) {

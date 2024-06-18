@@ -22,15 +22,28 @@
 #pragma once
 
 #include <atomic>
-#include <boost/mpl/range_c.hpp>
-#include <boost/mpl/for_each.hpp>
 #include <seastar/core/align.hh>
 #include <seastar/core/cacheline.hh>
 
 namespace seastar {
 
+// template<std::size_t C, typename Func> 
+// void static_foreach (Func fn) {
+//     if constexpr (C > 0) {
+//         static_foreach<C - 1, Func>(fn);
+//         fn(C - 1);
+//     }
+// }
+
 template <size_t N, int RW, int LOC>
 struct prefetcher;
+
+template<std::size_t C, typename Func> 
+void static_foreach (Func&& fn) {
+    ([fn = std::move(fn)] <auto ...Is> (std::index_sequence<Is...>) {
+        (fn(Is), ...);
+    })(std::make_index_sequence<C>{});
+}
 
 template<int RW, int LOC>
 struct prefetcher<0, RW, LOC> {
@@ -59,12 +72,16 @@ void prefetch(T* ptr) {
 
 template<typename Iterator, int LOC = 3>
 void prefetch(Iterator begin, Iterator end) {
-    std::for_each(begin, end, [] (auto v) { prefetch<decltype(*v), LOC>(v); });
+    std::for_each(begin, end, [] (auto v) { 
+        prefetch<decltype(*v), LOC>(v); 
+    });
 }
 
 template<size_t C, typename T, int LOC = 3>
 void prefetch_n(T** pptr) {
-    boost::mpl::for_each< boost::mpl::range_c<size_t,0,C> >( [pptr] (size_t x) { prefetch<T, LOC>(*(pptr + x)); } );
+    static_foreach(C, [pptr] (std::size_t x) {
+        prefetch<T, LOC>(*(pptr + x)); 
+    });
 }
 
 template<size_t L, int LOC = 3>
@@ -74,12 +91,16 @@ void prefetch(void* ptr) {
 
 template<size_t L, typename Iterator, int LOC = 3>
 void prefetch_n(Iterator begin, Iterator end) {
-    std::for_each(begin, end, [] (auto v) { prefetch<L, LOC>(v); });
+    std::for_each(begin, end, [] (auto v) { 
+        prefetch<L, LOC>(v); 
+    });
 }
 
 template<size_t L, size_t C, typename T, int LOC = 3>
 void prefetch_n(T** pptr) {
-    boost::mpl::for_each< boost::mpl::range_c<size_t,0,C> >( [pptr] (size_t x) { prefetch<L, LOC>(*(pptr + x)); } );
+    static_foreach<C>([pptr] (std::size_t x) {
+        prefetch<L, LOC>(*(pptr + x)); 
+    });
 }
 
 template<typename T, int LOC = 3>
@@ -89,12 +110,16 @@ void prefetchw(T* ptr) {
 
 template<typename Iterator, int LOC = 3>
 void prefetchw_n(Iterator begin, Iterator end) {
-    std::for_each(begin, end, [] (auto v) { prefetchw<decltype(*v), LOC>(v); });
+    std::for_each(begin, end, [] (auto v) { 
+        prefetchw<decltype(*v), LOC>(v); 
+    });
 }
 
 template<size_t C, typename T, int LOC = 3>
 void prefetchw_n(T** pptr) {
-    boost::mpl::for_each< boost::mpl::range_c<size_t,0,C> >( [pptr] (size_t x) { prefetchw<T, LOC>(*(pptr + x)); } );
+    static_foreach<C>([pptr] (std::size_t x) { 
+        prefetchw<T, LOC>(*(pptr + x)); 
+    });
 }
 
 template<size_t L, int LOC = 3>
@@ -109,7 +134,9 @@ void prefetchw_n(Iterator begin, Iterator end) {
 
 template<size_t L, size_t C, typename T, int LOC = 3>
 void prefetchw_n(T** pptr) {
-    boost::mpl::for_each< boost::mpl::range_c<size_t,0,C> >( [pptr] (size_t x) { prefetchw<L, LOC>(*(pptr + x)); } );
+    static_foreach<C>([pptr] (std::size_t x) {
+        prefetchw<L, LOC>(*(pptr + x)); 
+    });
 }
 
 }

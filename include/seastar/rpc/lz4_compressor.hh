@@ -20,7 +20,8 @@
  */
 
 #pragma once
-
+#include <variant>
+#include <optional>
 #include <seastar/core/sstring.hh>
 #include <seastar/rpc/rpc_types.hh>
 #include <lz4.h>

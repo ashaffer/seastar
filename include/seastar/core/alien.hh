@@ -21,14 +21,14 @@
  */
 
 #pragma once
-
+#include <typeindex>
 #include <atomic>
 #include <deque>
 #include <future>
 #include <memory>
 
-#include <boost/lockfree/queue.hpp>
-
+// #include <boost/lockfree/queue.hpp>
+#include <seastar/core/queue.hh>
 #include <seastar/core/cacheline.hh>
 #include <seastar/core/sstring.hh>
 #include <seastar/core/metrics_registration.hh>
@@ -48,7 +48,8 @@ class message_queue {
     struct lf_queue_remote {
         reactor* remote;
     };
-    using lf_queue_base = boost::lockfree::queue<work_item*>;
+    // using lf_queue_base = boost::lockfree::queue<work_item*>;
+    using lf_queue_base = queue<work_item *>;
     // use inheritence to control placement order
     struct lf_queue : lf_queue_remote, lf_queue_base {
         lf_queue(reactor* remote)

@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(test_signal_mask_is_preserved_on_unwinding) {
     // Check backtrace()
     {
         size_t count = 0;
-        backtrace([&count] (auto) { ++count; });
+        back_trace([&count] (auto) { ++count; });
         BOOST_REQUIRE(count > 0);
     }
 

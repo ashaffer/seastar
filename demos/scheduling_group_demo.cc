@@ -27,6 +27,7 @@
 #include <seastar/core/future-util.hh>
 #include <seastar/core/reactor.hh>
 #include <seastar/util/defer.hh>
+#include <seastar/util/counterator.hhs>
 #include <fmt/printf.h>
 #include <chrono>
 #include <cmath>
@@ -75,7 +76,7 @@ future<>
 run_compute_intensive_tasks(seastar::scheduling_group sg, done_func done, unsigned concurrency, unsigned& counter, std::function<future<> (unsigned& counter)> task) {
     return seastar::async([task, sg, concurrency, done, &counter] {
         while (!done()) {
-            parallel_for_each(boost::irange(0u, concurrency), [task, sg, &counter] (unsigned i) {
+            parallel_for_each(counterator<unsigned>{concurrency}, [task, sg, &counter] (unsigned i) {
                 return with_scheduling_group(sg, [task, &counter] {
                     return task(counter);
                 });
@@ -89,7 +90,7 @@ future<>
 run_compute_intensive_tasks_in_threads(seastar::scheduling_group sg, done_func done, unsigned concurrency, unsigned& counter, std::function<future<> (unsigned& counter)> task) {
     auto attr = seastar::thread_attributes();
     attr.sched_group = sg;
-    return parallel_for_each(boost::irange(0u, concurrency), [attr, done, &counter, task] (unsigned i) {
+    return parallel_for_each(counterator<unsigned>{concurrency}, [attr, done, &counter, task] (unsigned i) {
         return seastar::async(attr, [done, &counter, task] {
             while (!done()) {
                 task(counter).get();

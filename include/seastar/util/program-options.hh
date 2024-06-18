@@ -25,7 +25,7 @@
 
 #include <boost/any.hpp>
 #include <boost/program_options.hpp>
-
+#include <boost/program_options/errors.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>

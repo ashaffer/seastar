@@ -44,7 +44,7 @@ namespace dpdk {
 // DPDK Environment Abstraction Layer
 class eal {
 public:
-    using cpuset = std::bitset<RTE_MAX_LCORE>;
+    using cpuset = ::std::bitset<RTE_MAX_LCORE>;
 
     static void init(cpuset cpus, boost::program_options::variables_map opts);
     /**

@@ -24,7 +24,8 @@
 #include <seastar/core/metrics.hh>
 #include <unordered_map>
 #include <seastar/core/sharded.hh>
-#include <boost/functional/hash.hpp>
+#include <seastar/util/hash.hh>
+
 /*!
  * \file metrics_api.hh
  * \brief header file for metric API layer (like promehteus or collectd)
@@ -42,20 +43,18 @@ using labels_type = std::map<sstring, sstring>;
 }
 
 namespace std {
-
-template<>
-struct hash<seastar::metrics::impl::labels_type> {
-    using argument_type = seastar::metrics::impl::labels_type;
-    using result_type = ::std::size_t;
-    result_type operator()(argument_type const& s) const {
-        result_type h = 0;
-        for (auto&& i : s) {
-            boost::hash_combine(h, std::hash<seastar::sstring>{}(i.second));
+    template<>
+    struct hash<seastar::metrics::impl::labels_type> {
+        using argument_type = seastar::metrics::impl::labels_type;
+        using result_type = ::std::size_t;
+        result_type operator()(argument_type const& s) const {
+            result_type h = 0;
+            for (auto&& i : s) {
+                ::seastar::hash_combine(h, std::hash<seastar::sstring>{}(i.second));
+            }
+            return h;
         }
-        return h;
-    }
-};
-
+    };
 }
 
 namespace seastar {
@@ -135,7 +134,7 @@ struct hash<seastar::metrics::impl::metric_id>
     {
         result_type const h1 ( std::hash<seastar::sstring>{}(s.group_name()) );
         result_type const h2 ( std::hash<seastar::sstring>{}(s.instance_id()) );
-        return h1 ^ (h2 << 1); // or use boost::hash_combine
+        return h1 ^ (h2 << 1); // or use hash_combine
     }
 };
 

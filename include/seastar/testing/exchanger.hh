@@ -23,7 +23,8 @@
 
 #include <mutex>
 #include <condition_variable>
-#include <seastar/util/std-compat.hh>
+#include <optional>
+// #include <seastar/util/std-compat.hh>
 
 namespace seastar {
 
@@ -35,7 +36,7 @@ class exchanger {
 private:
     std::mutex _mutex;
     std::condition_variable _cv;
-    seastar::compat::optional<T> _element;
+    std::optional<T> _element;
     std::exception_ptr _exception;
 private:
     void interrupt_ptr(std::exception_ptr e) {

@@ -20,7 +20,8 @@
  */
 
 #pragma once
-
+#include <optional>
+#include <memory_resource>
 #include <seastar/core/resource.hh>
 #include <seastar/core/bitops.hh>
 #include <new>
@@ -76,7 +77,7 @@ static constexpr size_t huge_page_size =
 #endif
 
 void configure(std::vector<resource::memory> m, bool mbind,
-        compat::optional<std::string> hugetlbfs_path = {});
+        std::optional<std::string> hugetlbfs_path = {});
 
 void enable_abort_on_allocation_failure();
 
@@ -134,7 +135,7 @@ public:
     reclaimer_scope scope() const { return _scope; }
 };
 
-extern compat::polymorphic_allocator<char>* malloc_allocator;
+extern std::pmr::polymorphic_allocator<char>* malloc_allocator;
 
 // Call periodically to recycle objects that were freed
 // on cpu other than the one they were allocated on.

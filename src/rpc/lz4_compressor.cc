@@ -18,7 +18,9 @@
 /*
  * Copyright (C) 2016 Scylladb, Ltd.
  */
-
+#include <variant>
+#include <optional>
+#include <vector>
 #include <seastar/rpc/lz4_compressor.hh>
 #include <seastar/core/byteorder.hh>
 
@@ -47,13 +49,13 @@ private:
 public:
     // Returns a pointer to a contiguous buffer containing all data stored in input.
     // The pointer remains valid until next call to this.
-    const char* prepare(const compat::variant<std::vector<temporary_buffer<char>>, temporary_buffer<char>>& input, size_t size) {
-        if (const auto single = compat::get_if<temporary_buffer<char>>(&input)) {
+    const char* prepare(const std::variant<std::vector<temporary_buffer<char>>, temporary_buffer<char>>& input, size_t size) {
+        if (const auto single = std::get_if<temporary_buffer<char>>(&input)) {
             return single->get();
         }
         reserve(size);
         auto dst = _data.get();
-        for (const auto& fragment : compat::get<std::vector<temporary_buffer<char>>>(input)) {
+        for (const auto& fragment : std::get<std::vector<temporary_buffer<char>>>(input)) {
             dst = std::copy_n(fragment.begin(), fragment.size(), dst);
         }
         return _data.get();

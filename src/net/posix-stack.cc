@@ -20,11 +20,14 @@
  */
 
 #include <random>
+#include <memory_resource>
 #include <seastar/net/posix-stack.hh>
 #include <seastar/net/net.hh>
 #include <seastar/net/packet.hh>
 #include <seastar/net/api.hh>
-#include <seastar/util/std-compat.hh>
+#include <memory_resource>
+#include <optional>
+// #include <seastar/util/std-compat.hh>
 #include <netinet/tcp.h>
 #include <netinet/sctp.h>
 #include <netinet/in.h>
@@ -68,7 +71,7 @@ public:
         return _fd.getsockopt<int>(SOL_SOCKET, SO_KEEPALIVE);
     }
     void set_keepalive_parameters(file_desc& _fd, const keepalive_params& params) {
-        const tcp_keepalive_params& pms = compat::get<tcp_keepalive_params>(params);
+        const tcp_keepalive_params& pms = std::get<tcp_keepalive_params>(params);
         _fd.setsockopt(IPPROTO_TCP, TCP_KEEPCNT, pms.count);
         _fd.setsockopt(IPPROTO_TCP, TCP_KEEPIDLE, int(pms.idle.count()));
         _fd.setsockopt(IPPROTO_TCP, TCP_KEEPINTVL, int(pms.interval.count()));
@@ -104,7 +107,7 @@ public:
         return _fd.getsockopt<sctp_paddrparams>(SOL_SCTP, SCTP_PEER_ADDR_PARAMS).spp_flags & SPP_HB_ENABLE;
     }
     void set_keepalive_parameters(file_desc& _fd, const keepalive_params& kpms) {
-        const sctp_keepalive_params& pms = compat::get<sctp_keepalive_params>(kpms);
+        const sctp_keepalive_params& pms = std::get<sctp_keepalive_params>(kpms);
         auto params = _fd.getsockopt<sctp_paddrparams>(SOL_SCTP, SCTP_PEER_ADDR_PARAMS);
         params.spp_hbinterval = pms.interval.count() * 1000; // in milliseconds
         params.spp_pathmaxrxt = pms.count;
@@ -124,12 +127,12 @@ class posix_connected_socket_impl final : public connected_socket_impl, posix_co
     lw_shared_ptr<pollable_fd> _fd;
     using _ops = posix_connected_socket_operations<Transport>;
     conntrack::handle _handle;
-    compat::polymorphic_allocator<char>* _allocator;
+    std::pmr::polymorphic_allocator<char>* _allocator;
 private:
-    explicit posix_connected_socket_impl(lw_shared_ptr<pollable_fd> fd, compat::polymorphic_allocator<char>* allocator=memory::malloc_allocator) :
+    explicit posix_connected_socket_impl(lw_shared_ptr<pollable_fd> fd, std::pmr::polymorphic_allocator<char>* allocator=memory::malloc_allocator) :
         _fd(std::move(fd)), _allocator(allocator) {}
     explicit posix_connected_socket_impl(lw_shared_ptr<pollable_fd> fd, conntrack::handle&& handle,
-        compat::polymorphic_allocator<char>* allocator=memory::malloc_allocator) : _fd(std::move(fd)), _handle(std::move(handle)), _allocator(allocator) {}
+        std::pmr::polymorphic_allocator<char>* allocator=memory::malloc_allocator) : _fd(std::move(fd)), _handle(std::move(handle)), _allocator(allocator) {}
 public:
     virtual data_source source() override {
         return data_source(std::make_unique< posix_data_source_impl>(_fd, _allocator));
@@ -204,11 +207,11 @@ using posix_connected_sctp_socket_impl = posix_connected_socket_impl<transport::
 class posix_connected_unix_socket_impl final : public connected_socket_impl {
     lw_shared_ptr<pollable_fd> _fd;
     conntrack::handle _handle;
-    compat::polymorphic_allocator<char>* _allocator;
-    explicit posix_connected_unix_socket_impl(lw_shared_ptr<pollable_fd> fd, compat::polymorphic_allocator<char>* allocator=memory::malloc_allocator) :
+    std::pmr::polymorphic_allocator<char>* _allocator;
+    explicit posix_connected_unix_socket_impl(lw_shared_ptr<pollable_fd> fd, std::pmr::polymorphic_allocator<char>* allocator=memory::malloc_allocator) :
         _fd(std::move(fd)), _allocator(allocator) {}
     explicit posix_connected_unix_socket_impl(lw_shared_ptr<pollable_fd> fd, conntrack::handle&& handle,
-        compat::polymorphic_allocator<char>* allocator=memory::malloc_allocator) : _fd(std::move(fd)), _handle(std::move(handle)), _allocator(allocator) {}
+        std::pmr::polymorphic_allocator<char>* allocator=memory::malloc_allocator) : _fd(std::move(fd)), _handle(std::move(handle)), _allocator(allocator) {}
 public:
     virtual data_source source() override {
         return data_source(std::make_unique< posix_data_source_impl>(_fd, _allocator));
@@ -275,7 +278,7 @@ public:
 
 class posix_socket_impl final : public socket_impl {
     lw_shared_ptr<pollable_fd> _fd;
-    compat::polymorphic_allocator<char>* _allocator;
+    std::pmr::polymorphic_allocator<char>* _allocator;
     bool _reuseaddr = false;
 
     future<> find_port_and_connect(socket_address sa, socket_address local, transport proto = transport::TCP) {
@@ -319,7 +322,7 @@ class posix_socket_impl final : public socket_impl {
     }
 
 public:
-    explicit posix_socket_impl(compat::polymorphic_allocator<char>* allocator=memory::malloc_allocator) : _allocator(allocator) {}
+    explicit posix_socket_impl(std::pmr::polymorphic_allocator<char>* allocator=memory::malloc_allocator) : _allocator(allocator) {}
 
     virtual future<connected_socket> connect(socket_address sa, socket_address local, transport proto = transport::TCP) override {
         if (sa.is_af_unix()) {
@@ -529,7 +532,7 @@ socket_address posix_reuseport_server_socket_impl<Transport>::local_address() co
 
 template <transport Transport>
 void
-posix_ap_server_socket_impl<Transport>::move_connected_socket(socket_address sa, pollable_fd fd, socket_address addr, conntrack::handle cth, compat::polymorphic_allocator<char>* allocator) {
+posix_ap_server_socket_impl<Transport>::move_connected_socket(socket_address sa, pollable_fd fd, socket_address addr, conntrack::handle cth, std::pmr::polymorphic_allocator<char>* allocator) {
     auto i = sockets.find(sa);
     if (i != sockets.end()) {
         try {
@@ -545,7 +548,7 @@ posix_ap_server_socket_impl<Transport>::move_connected_socket(socket_address sa,
 }
 
 void
-posix_ap_server_unix_socket_impl::move_connected_unix_socket(socket_address sa, pollable_fd fd, socket_address addr, conntrack::handle cth, compat::polymorphic_allocator<char>* allocator) {
+posix_ap_server_unix_socket_impl::move_connected_unix_socket(socket_address sa, pollable_fd fd, socket_address addr, conntrack::handle cth, std::pmr::polymorphic_allocator<char>* allocator) {
     auto i = sockets.find(sa);
     if (i != sockets.end()) {
         try {
@@ -774,15 +777,15 @@ public:
 
 future<> posix_udp_channel::send(const socket_address& dst, const char *message) {
     auto len = strlen(message);
-    return _fd->sendto(dst, message, len)
-            .then([len] (size_t size) { assert(size == len); });
+    return _fd->sendto(dst, message, len).then([](size_t size) {});
+            // .then([len] (size_t size) { assert(size == len); });
 }
 
 future<> posix_udp_channel::send(const socket_address& dst, packet p) {
-    auto len = p.len();
+    // auto len = p.len();
     _send.prepare(dst, std::move(p));
-    return _fd->sendmsg(&_send._hdr)
-            .then([len] (size_t size) { assert(size == len); });
+    return _fd->sendmsg(&_send._hdr).then([](size_t size) {});
+            // .then([len] (size_t size) { assert(size == len); });
 }
 
 udp_channel

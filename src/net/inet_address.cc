@@ -19,7 +19,7 @@
  * Copyright (C) 2016 ScyllaDB.
  */
 
-#include <seastar/util/std-compat.hh>
+// #include <seastar/util/std-compat.hh>
 #include <ostream>
 #include <format>
 #include <arpa/inet.h>
@@ -264,7 +264,7 @@ bool seastar::socket_address::is_wildcard() const {
     }
 }
 
-size_t std::hash<seastar::net::inet_address>::operator()(const seastar::net::inet_address& a) const {
+size_t std::hash<seastar::net::inet_address>::operator()(const seastar::net::inet_address& a) const noexcept {
     switch (a.in_family()) {
     case seastar::net::inet_address::family::INET:
         return std::hash<seastar::net::ipv4_address>()(a.as_ipv4_address());
@@ -275,35 +275,55 @@ size_t std::hash<seastar::net::inet_address>::operator()(const seastar::net::ine
     }
 }
 
-size_t std::hash<seastar::net::ipv6_address>::operator()(const seastar::net::ipv6_address& a) const {
+size_t std::hash<seastar::net::ipv6_address>::operator()(const seastar::net::ipv6_address& a) const noexcept {
     return boost::hash_range(a.ip.begin(), a.ip.end());
 }
 
-size_t std::hash<seastar::ipv4_addr>::operator()(const seastar::ipv4_addr& x) const {
+size_t std::hash<seastar::ipv4_addr>::operator()(const seastar::ipv4_addr& x) const noexcept {
     size_t h = x.ip;
     boost::hash_combine(h, x.port);
     return h;
 }
 
-// std::ostream& operator<<(std::ostream& os, const seastar::net::inet_address& addr) {
-//     char buffer[64];
-//     os << inet_ntop(int(addr.in_family()), addr.data(), buffer, sizeof(buffer));
-//     // if (addr.scope() != seastar::net::inet_address::invalid_scope) {
-//     //     os << "%" << addr.scope();
-//     // }
-//     return os;
-// }
+std::ostream& seastar::net::operator<<(std::ostream& os, const inet_address& addr) {
+    char buffer[64];
+    return os << inet_ntop(int(addr.in_family()), addr.data(), buffer, sizeof(buffer));
+}
 
-namespace seastar {
+std::ostream& seastar::net::operator<<(std::ostream& os, const inet_address::family& f) {
+    switch (f) {
+    case inet_address::family::INET:
+        os << "INET";
+        break;
+    case inet_address::family::INET6:
+        os << "INET6";
+        break;
+    default:
+        break;
+    }
+    return os;
+}
 
-};
+std::ostream& seastar::operator<<(std::ostream& os, const socket_address& a) {
+    auto addr = a.addr();
+    // CMH. maybe skip brackets for ipv4-mapped
+    auto bracket = addr.in_family() == seastar::net::inet_address::family::INET6;
 
-// namespace seastar {
-//     std::ostream& operator<<(std::ostream& os, const std::optional<net::inet_address::family>& f) {
-//         if (f) {
-//             return os << *f;
-//         } else {
-//             return os << "ANY";
-//         }
-//     }
-// };
+    if (bracket) {
+        os << '[';
+    }
+    os << addr;
+    if (bracket) {
+        os << ']';
+    }
+
+    return os << ':' << ntohs(a.u.in.sin_port);
+}
+
+std::ostream& seastar::operator<<(std::ostream& os, const ipv4_addr& a) {
+    return os << seastar::socket_address(a);
+}
+
+std::ostream& seastar::operator<<(std::ostream& os, const ipv6_addr& a) {
+    return os << seastar::socket_address(a);
+}

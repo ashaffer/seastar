@@ -24,13 +24,14 @@
 #include <memory>
 #include <vector>
 #include <cstring>
+#include <variant>
 #include <seastar/core/future.hh>
 #include <seastar/net/byteorder.hh>
 #include <seastar/net/socket_defs.hh>
 #include <seastar/net/packet.hh>
 #include <seastar/core/temporary_buffer.hh>
 #include <seastar/core/iostream.hh>
-#include <seastar/util/std-compat.hh>
+// #include <seastar/util/std-compat.hh>
 #include "../core/internal/api-level.hh"
 #include <gnutls/gnutls.h>
 #include <sys/types.h>
@@ -72,7 +73,7 @@ struct sctp_keepalive_params {
     unsigned count; // spp_pathmaxrt
 };
 
-using keepalive_params = compat::variant<tcp_keepalive_params, sctp_keepalive_params>;
+using keepalive_params = std::variant<tcp_keepalive_params, sctp_keepalive_params>;
 
 /// \cond internal
 class connected_socket_impl;

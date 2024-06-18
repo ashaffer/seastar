@@ -27,7 +27,8 @@
 #include <seastar/core/sstring.hh>
 #include <memory>
 #include <vector>
-#include <seastar/util/std-compat.hh>
+#include <string_view>
+// #include <seastar/util/std-compat.hh>
 
 namespace seastar {
 
@@ -63,7 +64,7 @@ public:
         append_static(s.begin(), s.size());
     }
 
-    void append_static(const compat::string_view& s) {
+    void append_static(const std::string_view& s) {
         append_static(s.data(), s.size());
     }
 

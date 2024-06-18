@@ -1,41 +1,39 @@
-prefix=@Seastar_PKG_CONFIG_PREFIX@
+prefix=/home/andrew/seastar
 exec_prefix=${prefix}
-seastar_include_flags=@Seastar_PKG_CONFIG_SEASTAR_INCLUDE_FLAGS@
-libdir=@Seastar_PKG_CONFIG_LIBDIR@
+seastar_include_flags=-I/home/andrew/seastar/include -I/home/andrew/seastar/gen/include
+libdir=/home/andrew/seastar
 
 Name: Seastar
 Url: http://seastar-project.org
 Description: Advanced C++ framework for high-performance server applications on modern hardware.
-Version: @PROJECT_VERSION@
+Version: 1.0
 
 # Platform dependencies.
-stdatomic_libs=$<JOIN:@StdAtomic_LIBRARIES@, >
-stdfilesystem_libs=$<JOIN:@StdFilesystem_LIBRARIES@, >
-dl_libs=-l$<JOIN:@CMAKE_DL_LIBS@,-l>
-rt_libs=$<JOIN:@rt_LIBRARIES@, >
+stdatomic_libs=$<JOIN:, >
+stdfilesystem_libs=$<JOIN:, >
+dl_libs=-l$<JOIN:dl,-l>
+rt_libs=$<JOIN:, >
 
 # Dependencies of dependencies.
-boost_system_libs=@Boost_SYSTEM_LIBRARY@
+boost_system_libs=
 
 # Dependencies.
-boost_cflags=-I$<JOIN:@Boost_INCLUDE_DIRS@, -I>
-boost_filesystem_libs=@Boost_FILESYSTEM_LIBRARY@
-boost_program_options_libs=@Boost_PROGRAM_OPTIONS_LIBRARY@
-boost_thread_libs=${boost_system_libs} @Boost_THREAD_LIBRARY@
-c_ares_cflags=-I$<JOIN:@c-ares_INCLUDE_DIRS@, -I>
-c_ares_libs=$<JOIN:@c-ares_LIBRARIES@, >
-cryptopp_cflags=-I$<JOIN:@cryptopp_INCLUDE_DIRS@, -I>
-cryptopp_libs=$<JOIN:@cryptopp_LIBRARIES@, >
-#fmt_cflags=-I$<JOIN:$<TARGET_PROPERTY:fmt::fmt,INTERFACE_INCLUDE_DIRECTORIES>, -I>
-#fmt_libs=$<TARGET_LINKER_FILE:fmt::fmt>
-lksctp_tools_cflags=-I$<JOIN:@lksctp-tools_INCLUDE_DIRS@, -I>
-lksctp_tools_libs=$<JOIN:@lksctp-tools_LIBRARIES@, >
-numactl_cflags=-I$<JOIN:@numactl_INCLUDE_DIRS@, -I>
-numactl_libs=$<JOIN:@numactl_LIBRARIES@, >
+boost_cflags=-I$<JOIN:/usr/include, -I>
+boost_filesystem_libs=
+boost_program_options_libs=
+boost_thread_libs=${boost_system_libs} 
+c_ares_cflags=-I$<JOIN:/usr/include, -I>
+c_ares_libs=$<JOIN:/usr/lib/x86_64-linux-gnu/libcares.a, >
+cryptopp_cflags=-I$<JOIN:/usr/include, -I>
+cryptopp_libs=$<JOIN:/usr/lib/x86_64-linux-gnu/libcryptopp.a, >
+lksctp_tools_cflags=-I$<JOIN:/usr/include, -I>
+lksctp_tools_libs=$<JOIN:/usr/lib/x86_64-linux-gnu/libsctp.a, >
+numactl_cflags=-I$<JOIN:/usr/include, -I>
+numactl_libs=$<JOIN:/usr/lib/x86_64-linux-gnu/libnuma.a, >
 
 # Us.
 seastar_cflags=${seastar_include_flags} $<JOIN:$<TARGET_PROPERTY:seastar,INTERFACE_COMPILE_OPTIONS>, > -D$<JOIN:$<TARGET_PROPERTY:seastar,INTERFACE_COMPILE_DEFINITIONS>, -D>
-seastar_libs=${libdir}/$<TARGET_FILE_NAME:seastar> @Seastar_SPLIT_DWARF_FLAG@ $<JOIN:@Seastar_Sanitizers_OPTIONS@, >
+seastar_libs=${libdir}/$<TARGET_FILE_NAME:seastar>  $<JOIN:, >
 
 Requires: liblz4 >= 1.7.3
 Requires.private: gnutls >= 3.2.26, protobuf >= 2.5.0, 2 > hwloc >= 1.11.2, yaml-cpp >= 0.5.1

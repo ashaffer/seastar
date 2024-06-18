@@ -38,6 +38,8 @@
 #include <string>
 #include <system_error>
 #include <chrono>
+#include <boost/program_options/errors.hpp>
+#include <exception>
 
 using namespace std::chrono_literals;
 
@@ -356,7 +358,8 @@ log_level parse_log_level(const sstring& s) {
 }
 
 bpo::options_description get_options_description() {
-    bpo::options_description opts("Logging options");
+    bpo::options_description opts{};
+    // bpo::options_description opts("Logging options");
 
     opts.add_options()
             ("default-log-level",
@@ -392,17 +395,17 @@ void print_available_loggers(std::ostream& os) {
 }
 
 logging_settings extract_settings(const boost::program_options::variables_map& vars) {
-    const auto& raw_levels = vars["logger-log-level"].as<program_options::string_map>();
+    const auto& raw_levels = vars.find("logger-log-level")->second.as<program_options::string_map>();
 
     std::unordered_map<sstring, log_level> levels;
     parse_logger_levels(raw_levels, std::inserter(levels, levels.begin()));
 
     return logging_settings{
         std::move(levels),
-        parse_log_level(vars["default-log-level"].as<sstring>()),
-        vars["log-to-stdout"].as<bool>(),
-        vars["log-to-syslog"].as<bool>(),
-        vars["logger-stdout-timestamps"].as<logger_timestamp_style>()
+        parse_log_level(vars.find("default-log-level")->second.as<sstring>()),
+        vars.find("log-to-stdout")->second.as<bool>(),
+        vars.find("log-to-syslog")->second.as<bool>(),
+        vars.find("logger-stdout-timestamps")->second.as<logger_timestamp_style>()
     };
 
 }

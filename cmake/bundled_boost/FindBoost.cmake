@@ -232,6 +232,7 @@
 # the Boost CMake package configuration for details on what it provides.
 #
 # Set Boost_NO_BOOST_CMAKE to ON to disable the search for boost-cmake.
+message("Running FindBoost")
 
 # Save project's policies
 cmake_policy(PUSH)
@@ -575,7 +576,7 @@ function(_Boost_COMPONENT_DEPENDENCIES component _ret)
   # required only if the BoostScanDeps.cmake script logic is changed.
   # The addition of a new release should only require it to be run
   # against the new release.
-
+  message("inside deps ${component} ${_ret}")
   # Handle Python version suffixes
   if(component MATCHES "^(python|mpi_python|numpy)([0-9][0-9]?|[0-9]\\.[0-9])\$")
     set(component "${CMAKE_MATCH_1}")
@@ -877,24 +878,24 @@ function(_Boost_COMPONENT_HEADERS component _hdrs)
   set(_Boost_DATE_TIME_HEADERS           "boost/date_time/date.hpp")
   set(_Boost_EXCEPTION_HEADERS           "boost/exception/exception.hpp")
   set(_Boost_FIBER_HEADERS               "boost/fiber/all.hpp")
-  set(_Boost_FILESYSTEM_HEADERS          "boost/filesystem/path.hpp")
-  set(_Boost_GRAPH_HEADERS               "boost/graph/adjacency_list.hpp")
-  set(_Boost_GRAPH_PARALLEL_HEADERS      "boost/graph/adjacency_list.hpp")
+#  set(_Boost_FILESYSTEM_HEADERS          "boost/filesystem/path.hpp")
+#  set(_Boost_GRAPH_HEADERS               "boost/graph/adjacency_list.hpp")
+#  set(_Boost_GRAPH_PARALLEL_HEADERS      "boost/graph/adjacency_list.hpp")
   set(_Boost_IOSTREAMS_HEADERS           "boost/iostreams/stream.hpp")
   set(_Boost_LOCALE_HEADERS              "boost/locale.hpp")
   set(_Boost_LOG_HEADERS                 "boost/log/core.hpp")
   set(_Boost_LOG_SETUP_HEADERS           "boost/log/detail/setup_config.hpp")
   set(_Boost_MATH_HEADERS                "boost/math_fwd.hpp")
-  set(_Boost_MATH_C99_HEADERS            "boost/math/tr1.hpp")
-  set(_Boost_MATH_C99F_HEADERS           "boost/math/tr1.hpp")
-  set(_Boost_MATH_C99L_HEADERS           "boost/math/tr1.hpp")
+#  set(_Boost_MATH_C99_HEADERS            "boost/math/tr1.hpp")
+ # set(_Boost_MATH_C99F_HEADERS           "boost/math/tr1.hpp")
+ # set(_Boost_MATH_C99L_HEADERS           "boost/math/tr1.hpp")
   set(_Boost_MATH_TR1_HEADERS            "boost/math/tr1.hpp")
   set(_Boost_MATH_TR1F_HEADERS           "boost/math/tr1.hpp")
   set(_Boost_MATH_TR1L_HEADERS           "boost/math/tr1.hpp")
   set(_Boost_MPI_HEADERS                 "boost/mpi.hpp")
   set(_Boost_MPI_PYTHON_HEADERS          "boost/mpi/python/config.hpp")
   set(_Boost_NUMPY_HEADERS               "boost/python/numpy.hpp")
-  set(_Boost_PRG_EXEC_MONITOR_HEADERS    "boost/test/prg_exec_monitor.hpp")
+#  set(_Boost_PRG_EXEC_MONITOR_HEADERS    "boost/test/prg_exec_monitor.hpp")
   set(_Boost_PROGRAM_OPTIONS_HEADERS     "boost/program_options.hpp")
   set(_Boost_PYTHON_HEADERS              "boost/python.hpp")
   set(_Boost_RANDOM_HEADERS              "boost/random.hpp")
@@ -902,11 +903,11 @@ function(_Boost_COMPONENT_HEADERS component _hdrs)
   set(_Boost_SERIALIZATION_HEADERS       "boost/serialization/serialization.hpp")
   set(_Boost_SIGNALS_HEADERS             "boost/signals.hpp")
   set(_Boost_SYSTEM_HEADERS              "boost/system/config.hpp")
-  set(_Boost_TEST_EXEC_MONITOR_HEADERS   "boost/test/test_exec_monitor.hpp")
+#  set(_Boost_TEST_EXEC_MONITOR_HEADERS   "boost/test/test_exec_monitor.hpp")
   set(_Boost_THREAD_HEADERS              "boost/thread.hpp")
   set(_Boost_TIMER_HEADERS               "boost/timer.hpp")
   set(_Boost_TYPE_ERASURE_HEADERS        "boost/type_erasure/config.hpp")
-  set(_Boost_UNIT_TEST_FRAMEWORK_HEADERS "boost/test/framework.hpp")
+#  set(_Boost_UNIT_TEST_FRAMEWORK_HEADERS "boost/test/framework.hpp")
   set(_Boost_WAVE_HEADERS                "boost/wave.hpp")
   set(_Boost_WSERIALIZATION_HEADERS      "boost/archive/text_wiarchive.hpp")
   if(WIN32)
@@ -947,10 +948,13 @@ function(_Boost_MISSING_DEPENDENCIES componentvar extravar)
     foreach(component ${_boost_unprocessed_components})
       string(TOUPPER ${component} uppercomponent)
       set(${_ret} ${_Boost_${uppercomponent}_DEPENDENCIES} PARENT_SCOPE)
+      message("Boost component ${component}")
       _Boost_COMPONENT_DEPENDENCIES("${component}" _Boost_${uppercomponent}_DEPENDENCIES)
+      message("deps ${_Boost_${uppercomponent}_DEPENDENCIES}")
       set(_Boost_${uppercomponent}_DEPENDENCIES ${_Boost_${uppercomponent}_DEPENDENCIES} PARENT_SCOPE)
       set(_Boost_IMPORTED_TARGETS ${_Boost_IMPORTED_TARGETS} PARENT_SCOPE)
       foreach(componentdep ${_Boost_${uppercomponent}_DEPENDENCIES})
+        message("componentdep ${componentdep}")
         if (NOT ("${componentdep}" IN_LIST _boost_processed_components OR "${componentdep}" IN_LIST _boost_new_components))
           list(APPEND _boost_new_components ${componentdep})
         endif()
@@ -975,7 +979,7 @@ endfunction()
 #
 function(_Boost_COMPILER_FEATURES component _ret)
   # Boost >= 1.62 and < 1.67
-  if(NOT Boost_VERSION VERSION_LESS 106200 AND Boost_VERSION VERSION_LESS 106700)
+  if(NOT Boost_VERSION VERSION_LESS 106200 AND Boost_VERSION VERSION_LESS 108400)
     set(_Boost_FIBER_COMPILER_FEATURES
         cxx_alias_templates
         cxx_auto_type
@@ -989,8 +993,10 @@ function(_Boost_COMPILER_FEATURES component _ret)
         cxx_thread_local
         cxx_variadic_templates
     )
+    message("inside if")
   endif()
   string(TOUPPER ${component} uppercomponent)
+  message("outside if ${_ret}")
   set(${_ret} ${_Boost_${uppercomponent}_COMPILER_FEATURES} PARENT_SCOPE)
 endfunction()
 
@@ -1864,6 +1870,7 @@ endif()
 # The above setting of Boost_FOUND was based only on the header files.
 # Update it for the requested component libraries.
 if(Boost_FOUND)
+  message("Boost found")
   # The headers were found.  Check for requested component libs.
   set(_boost_CHECKED_COMPONENT FALSE)
   set(_Boost_MISSING_COMPONENTS "")
@@ -1943,6 +1950,7 @@ if(Boost_FOUND)
 
   endif()
 else()
+  message("Boost not found")
   # Boost headers were not found so no components were found.
   foreach(COMPONENT ${Boost_FIND_COMPONENTS})
     string(TOUPPER ${COMPONENT} UPPERCOMPONENT)

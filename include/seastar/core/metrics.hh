@@ -25,10 +25,11 @@
 #include <seastar/core/sstring.hh>
 #include <seastar/core/shared_ptr.hh>
 #include <seastar/core/metrics_registration.hh>
-#include <boost/lexical_cast.hpp>
 #include <map>
+#include <optional>
+#include <variant>
 #include <seastar/core/metrics_types.hh>
-#include <seastar/util/std-compat.hh>
+// #include <seastar/util/std-compat.hh>
 
 /*! \file metrics.hh
  *  \brief header for metrics creation.
@@ -162,7 +163,7 @@ public:
      * label_instance a("internal_id", -1)
      */
     template<typename T>
-    label_instance(const sstring& key, T v) : _key(key), _value(boost::lexical_cast<std::string>(v)){}
+    label_instance(const sstring& key, T v) : _key(key), _value(std::format("{}", v)) {}//boost::lexical_cast<std::string>(v)){}
 
     /*!
      * \brief returns the label key
@@ -261,22 +262,22 @@ enum class data_type : uint8_t {
  * Do not use directly @see metrics_creation
  */
 struct metric_value {
-    compat::variant<double, histogram> u;
+    std::variant<double, histogram> u;
     data_type _type;
     data_type type() const {
         return _type;
     }
 
     double d() const {
-        return compat::get<double>(u);
+        return std::get<double>(u);
     }
 
     uint64_t ui() const {
-        return compat::get<double>(u);
+        return std::get<double>(u);
     }
 
     int64_t i() const {
-        return compat::get<double>(u);
+        return std::get<double>(u);
     }
 
     metric_value()
@@ -303,7 +304,7 @@ struct metric_value {
 
     metric_value operator+(const metric_value& c);
     const histogram& get_histogram() const {
-        return compat::get<histogram>(u);
+        return std::get<histogram>(u);
     }
 };
 

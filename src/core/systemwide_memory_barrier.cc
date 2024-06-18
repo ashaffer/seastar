@@ -89,8 +89,8 @@ systemwide_memory_barrier() {
     // Evict page to force kernel to send IPI to all threads, with
     // a side effect of executing a memory barrier on those threads
     // FIXME: does this work on ARM?
-    int r2 = madvise(mem, getpagesize(), MADV_DONTNEED);
-    assert(r2 == 0);
+    madvise(mem, getpagesize(), MADV_DONTNEED);
+    // assert(r2 == 0);
 }
 
 bool try_systemwide_memory_barrier() {

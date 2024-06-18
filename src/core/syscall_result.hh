@@ -18,10 +18,13 @@
 /*
  * Copyright 2019 ScyllaDB
  */
+#include <utility>
+#include <filesystem>
+#include <seastar/core/sstring.hh>
 
 namespace seastar {
 
-namespace fs = seastar::compat::filesystem;
+namespace fs = std::filesystem;
 
 #pragma once
 template <typename T>

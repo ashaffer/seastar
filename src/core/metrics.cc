@@ -18,7 +18,7 @@
 /*
  * Copyright (C) 2016 ScyllaDB.
  */
-
+#include <optional>
 #include <seastar/core/metrics.hh>
 #include <seastar/core/metrics_api.hh>
 #include <boost/range/algorithm.hpp>
@@ -94,7 +94,7 @@ namespace seastar {
 
         boost::program_options::options_description get_options_description() {
             namespace bpo = boost::program_options;
-            bpo::options_description opts("Metrics options");
+            bpo::options_description opts{};
             opts.add_options()(
                     "metrics-hostname",
                     bpo::value<std::string>()->default_value(get_hostname()),
@@ -104,7 +104,7 @@ namespace seastar {
 
         future<> configure(const boost::program_options::variables_map & opts) {
             impl::config c;
-            c.hostname = opts["metrics-hostname"].as<std::string>();
+            c.hostname = opts.find("metrics-hostname")->second.as<std::string>();
             return smp::invoke_on_all([c] {
                 impl::get_local_impl()->set_config(c);
             });
@@ -130,10 +130,10 @@ namespace seastar {
             metric_value res(*this);
             switch (_type) {
             case data_type::HISTOGRAM:
-                compat::get<histogram>(res.u) += compat::get<histogram>(c.u);
+                std::get<histogram>(res.u) += std::get<histogram>(c.u);
                 break;
             default:
-                compat::get<double>(res.u) += compat::get<double>(c.u);
+                std::get<double>(res.u) += std::get<double>(c.u);
                 break;
             }
             return res;

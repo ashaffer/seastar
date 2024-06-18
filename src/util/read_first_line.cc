@@ -1,9 +1,10 @@
+#include <filesystem>
 #include <seastar/core/posix.hh>
 #include <seastar/util/read_first_line.hh>
 
 namespace seastar {
 
-sstring read_first_line(compat::filesystem::path sys_file) {
+sstring read_first_line(std::filesystem::path sys_file) {
     auto file = file_desc::open(sys_file.string(), O_RDONLY | O_CLOEXEC);
     sstring buf;
     size_t n = 0;

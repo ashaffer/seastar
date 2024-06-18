@@ -25,7 +25,8 @@
 #include <seastar/core/reactor.hh>
 #include <seastar/core/thread.hh>
 #include <seastar/util/log.hh>
-#include <seastar/util/std-compat.hh>
+#include <optional>
+// #include <seastar/util/std-compat.hh>
 
 using namespace seastar;
 using std::string;
@@ -35,7 +36,7 @@ static logger iplog("unix_domain");
 
 class ud_server_client {
 public:
-    ud_server_client(string server_path, compat::optional<string> client_path, int rounds) :
+    ud_server_client(string server_path, std::optional<string> client_path, int rounds) :
         server_addr{unix_domain_addr{server_path}}, client_path{client_path}, rounds{rounds},
         rounds_left{rounds} {}
 
@@ -50,7 +51,7 @@ private:
     //future<> wait_for_data();
     const socket_address server_addr;
 
-    const compat::optional<string> client_path;
+    const std::optional<string> client_path;
     api_v2::server_socket server;
     const int rounds;
     int rounds_left;
@@ -131,7 +132,7 @@ future<> ud_server_client::run() {
 
 SEASTAR_TEST_CASE(unixdomain_server) {
     system("rm -f /tmp/ry");
-    ud_server_client uds("/tmp/ry", compat::nullopt, 3);
+    ud_server_client uds("/tmp/ry", std::nullopt, 3);
     return do_with(std::move(uds), [](auto& uds){
         return uds.run();
     });
@@ -141,7 +142,7 @@ SEASTAR_TEST_CASE(unixdomain_server) {
 SEASTAR_TEST_CASE(unixdomain_abs) {
     char sv_name[]{'\0', '1', '1', '1'};
     //ud_server_client uds(string{"\0111",4}, string{"\0112",4}, 1);
-    ud_server_client uds(string{sv_name,4}, compat::nullopt, 4);
+    ud_server_client uds(string{sv_name,4}, std::nullopt, 4);
     return do_with(std::move(uds), [](auto& uds){
         return uds.run();
     });
@@ -176,7 +177,7 @@ SEASTAR_TEST_CASE(unixdomain_bind) {
 
 SEASTAR_TEST_CASE(unixdomain_short) {
     system("rm -f 3");
-    ud_server_client uds("3"s, compat::nullopt, 10);
+    ud_server_client uds("3"s, std::nullopt, 10);
     return do_with(std::move(uds), [](auto& uds){
         return uds.run();
     });

@@ -20,7 +20,7 @@
  */
 
 #pragma once
-
+#include <string_view>
 #include <seastar/http/request_parser.hh>
 #include <seastar/http/request.hh>
 #include <seastar/core/reactor.hh>
@@ -31,7 +31,7 @@
 #include <seastar/core/queue.hh>
 #include <seastar/core/future-util.hh>
 #include <seastar/core/metrics_registration.hh>
-#include <seastar/util/std-compat.hh>
+// #include <seastar/util/std-compat.hh>
 #include <iostream>
 #include <algorithm>
 #include <unordered_map>
@@ -135,7 +135,7 @@ public:
     /**
      * Convert a hex encoded 2 bytes substring to char
      */
-    static char hexstr_to_char(const compat::string_view& in, size_t from) {
+    static char hexstr_to_char(const std::string_view& in, size_t from) {
 
         return static_cast<char>(hex_to_byte(in[from]) * 16 + hex_to_byte(in[from + 1]));
     }
@@ -143,7 +143,7 @@ public:
     /**
      * URL_decode a substring and place it in the given out sstring
      */
-    static bool url_decode(const compat::string_view& in, sstring& out) {
+    static bool url_decode(const std::string_view& in, sstring& out) {
         size_t pos = 0;
         char buff[in.length()];
         for (size_t i = 0; i < in.length(); ++i) {
@@ -167,7 +167,7 @@ public:
     /**
      * Add a single query parameter to the parameter list
      */
-    static void add_param(request& req, const compat::string_view& param) {
+    static void add_param(request& req, const std::string_view& param) {
         size_t split = param.find('=');
 
         if (split >= param.length() - 1) {
@@ -198,7 +198,7 @@ public:
         }
         size_t curr = pos + 1;
         size_t end_param;
-        compat::string_view url = req._url;
+        std::string_view url = req._url;
         while ((end_param = req._url.find('&', curr)) != sstring::npos) {
             add_param(req, url.substr(curr, end_param - curr) );
             curr = end_param + 1;

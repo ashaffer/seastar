@@ -32,13 +32,14 @@ namespace seastar {
 namespace net {
 
 ipv4_address::ipv4_address(const std::string& addr) {
-    boost::system::error_code ec;
-    auto ipv4 = boost::asio::ip::address_v4::from_string(addr, ec);
+    std::error_code ec;
+    auto ipv4 = ipv4_addr::from_string(addr, ec);
+    
     if (ec) {
-        throw std::runtime_error(
-            std::format("Wrong format for IPv4 address {}. Please ensure it's in dotted-decimal format", addr));
+        throw std::runtime_error(std::format("Wrong format for IPv4 address {}. Please ensure it's in dotted-decimal format", addr));
     }
-    ip = static_cast<uint32_t>(std::move(ipv4).to_ulong());
+
+    ip = ipv4.ip;
 }
 
 constexpr std::chrono::seconds ipv4::_frag_timeout;
@@ -369,7 +370,7 @@ void ipv4::send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num pr
     }
 }
 
-compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
+std::optional<l3_protocol::l3packet> ipv4::get_packet() {
     // _packetq will be mostly empty here unless it hold remnants of previously
     // fragmented packet
     if (_packetq.empty()) {
@@ -386,7 +387,7 @@ compat::optional<l3_protocol::l3packet> ipv4::get_packet() {
         }
     }
 
-    compat::optional<l3_protocol::l3packet> p;
+    std::optional<l3_protocol::l3packet> p;
     if (!_packetq.empty()) {
         p = std::move(_packetq.front());
         _packetq.pop_front();

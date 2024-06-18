@@ -1,15 +1,15 @@
-prefix=@Seastar_PKG_CONFIG_PREFIX@
+prefix=/home/andrew/seastar
 exec_prefix=${prefix}
-libdir=@Seastar_PKG_CONFIG_LIBDIR@
+libdir=/home/andrew/seastar
 
 Name: Seastar testing
 Url: http://seastar-project.org
 Description: Testing tools for libraries and applications built with Seastar
-Version: @PROJECT_VERSION@
+Version: 1.0
 
 # Dependencies.
-boost_cflags=-I$<JOIN:@Boost_INCLUDE_DIRS@, -I>
-boost_unit_test_libs=@Boost_UNIT_TEST_FRAMEWORK_LIBRARY@
+boost_cflags=-I$<JOIN:/usr/include, -I>
+boost_unit_test_libs=
 
 # Us.
 seastar_testing_cflags=-DBoost_TEST_DYN_LINK

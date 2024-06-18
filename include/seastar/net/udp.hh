@@ -35,10 +35,10 @@ namespace seastar {
 namespace net {
 
 struct udp_hdr {
-    packed<uint16_t> src_port;
-    packed<uint16_t> dst_port;
-    packed<uint16_t> len;
-    packed<uint16_t> cksum;
+    ::seastar::net::packed<uint16_t> src_port;
+    ::seastar::net::packed<uint16_t> dst_port;
+    ::seastar::net::packed<uint16_t> len;
+    ::seastar::net::packed<uint16_t> cksum;
 
     template<typename Adjuster>
     auto adjust_endianness(Adjuster a) {
@@ -47,7 +47,7 @@ struct udp_hdr {
 } __attribute__((packed));
 
 struct udp_channel_state {
-    queue<udp_datagram> _queue;
+    queue<::seastar::net::udp_datagram> _queue;
     // Limit number of data queued into send queue
     semaphore _user_queue_space = {212992};
     udp_channel_state(size_t queue_size) : _queue(queue_size) {}

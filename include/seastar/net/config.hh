@@ -21,7 +21,8 @@
 
 #pragma once
 
-#include <seastar/util/std-compat.hh>
+//#include <seastar/util/std-compat.hh>
+#include <optional>
 #include <istream>
 #include <string>
 #include <unordered_map>
@@ -29,42 +30,41 @@
 #include <string>
 
 namespace seastar {
-namespace net {
+    namespace net {
+        struct ipv4_config {
+            std::vector<::std::string> ip;
+            std::string netmask;
+            std::string gateway;
+            bool dhcp{ false };
+        };
 
-    struct ipv4_config {
-        std::vector<std::string> ip;
-        std::string netmask;
-        std::string gateway;
-        bool dhcp{ false };
+        struct hw_config {
+            std::string pci_address;
+            std::optional<unsigned> port_index;
+            bool lro{ true };
+            bool tso{ true };
+            bool ufo{ true };
+            bool hw_fc{ true };
+            bool event_index{ true };
+            bool csum_offload{ true };
+            std::optional<unsigned> ring_size;
+            std::string mac_address;
+        };
+
+        struct device_config {
+            ipv4_config ip_cfg;
+            hw_config hw_cfg;
+        };
+
+        using device_configs = std::unordered_map<::std::string, device_config>;
+
+        device_configs parse_config(std::istream& input);
+
+        class config_exception : public ::std::runtime_error {
+        public:
+            config_exception(const std::string& msg)
+                : std::runtime_error(msg) {
+            }
+        };
     };
-
-    struct hw_config {
-        std::string pci_address;
-        compat::optional<unsigned> port_index;
-        bool lro{ true };
-        bool tso{ true };
-        bool ufo{ true };
-        bool hw_fc{ true };
-        bool event_index{ true };
-        bool csum_offload{ true };
-        compat::optional<unsigned> ring_size;
-        std::string mac_address;
-    };
-
-    struct device_config {
-        ipv4_config ip_cfg;
-        hw_config hw_cfg;
-    };
-
-    typedef std::unordered_map<std::string, device_config> device_configs;
-
-    device_configs parse_config(std::istream& input);
-
-    class config_exception : public std::runtime_error {
-    public:
-        config_exception(const std::string& msg)
-            : std::runtime_error(msg) {
-        }
-    };
-}
-}
+};

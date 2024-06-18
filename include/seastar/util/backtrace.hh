@@ -20,146 +20,143 @@
  */
 
 #pragma once
-
+#include <typeindex>
+#include <type_traits>
+#include <memory>
+#include <utility>
 #include <execinfo.h>
 #include <iosfwd>
-#include <boost/container/static_vector.hpp>
 #include <format>
+#include <seastar/util/static_vector.hh>
 #include <seastar/core/sstring.hh>
 
 namespace seastar {
+    struct shared_object {
+        sstring name;
+        uintptr_t begin;
+        uintptr_t end; // C++-style, last addr + 1
+    };
 
-struct shared_object {
-    sstring name;
-    uintptr_t begin;
-    uintptr_t end; // C++-style, last addr + 1
-};
+    struct frame {
+        const shared_object* so;
+        uintptr_t addr;
+    };
 
-struct frame {
-    const shared_object* so;
-    uintptr_t addr;
-};
-
-bool operator==(const frame& a, const frame& b);
-
-
-// If addr doesn't seem to belong to any of the provided shared objects, it
-// will be considered as part of the executable.
-frame decorate(uintptr_t addr);
-
-// Invokes func for each frame passing it as argument.
-template<typename Func>
-void backtrace(Func&& func) noexcept(noexcept(func(frame()))) {
-    constexpr size_t max_backtrace = 100;
-    void* buffer[max_backtrace];
-    int n = ::backtrace(buffer, max_backtrace);
-    for (int i = 0; i < n; ++i) {
-        auto ip = reinterpret_cast<uintptr_t>(buffer[i]);
-        func(decorate(ip - 1));
-    }
-}
-
-void print_backtrace ();
+    bool operator==(const frame& a, const frame& b);
 
 
+    // If addr doesn't seem to belong to any of the provided shared objects, it
+    // will be considered as part of the executable.
+    frame decorate(uintptr_t addr);
 
-class saved_backtrace {
-public:
-    using vector_type = boost::container::static_vector<frame, 64>;
-private:
-    vector_type _frames;
-public:
-    saved_backtrace() = default;
-    saved_backtrace(vector_type f) : _frames(std::move(f)) {}
-    size_t hash() const;
-
-    friend std::ostream& operator<<(std::ostream& out, const saved_backtrace&);
-
-
-    bool operator==(const saved_backtrace& o) const {
-        return _frames == o._frames;
+    // Invokes func for each frame passing it as argument.
+    template<typename Func>
+    void back_trace(Func&& func) noexcept(noexcept(func(frame()))) {
+        constexpr size_t max_backtrace = 100;
+        void* buffer[max_backtrace];
+        int n = backtrace(buffer, max_backtrace);
+        for (int i = 0; i < n; ++i) {
+            auto ip = reinterpret_cast<uintptr_t>(buffer[i]);
+            func(decorate(ip - 1));
+        }
     }
 
-    bool operator!=(const saved_backtrace& o) const {
-        return !(*this == o);
-    }
+    void print_backtrace ();
 
-    auto format_frame (auto&& out, const auto& f) const {
-        static const std::string_view plus_or_empty[]{"","+"};
-        auto prefix = f.so->name.size()  > 0 ? plus_or_empty[1] : plus_or_empty[0];
-        return std::format_to(out, " {}+0x{:x}{}\n", prefix, f.so->name, f.addr);
-    }
 
-    auto format_to (auto&& out) const {
-        for (const auto& f : _frames) {
-            out = format_frame(out, f);
+
+    class saved_backtrace {
+    public:
+        using vector_type = static_vector<frame, 64>;
+    // private:
+        vector_type _frames;
+    public:
+        saved_backtrace() = default;
+        saved_backtrace(vector_type f) : _frames(std::move(f)) {}
+        size_t hash() const;
+
+        friend std::ostream& operator<<(std::ostream& out, const saved_backtrace&);
+
+
+        bool operator==(const saved_backtrace& o) const {
+            return _frames == o._frames;
         }
 
-        return out;
-    }
-};
+        bool operator!=(const saved_backtrace& o) const {
+            return !(*this == o);
+        }
 
-}
+        auto format_frame (auto&& out, const auto& f) const {
+            static const std::string_view plus_or_empty[]{"","+"};
+            auto prefix = f.so->name.size()  > 0 ? plus_or_empty[1] : plus_or_empty[0];
+            return std::format_to(out, " {}+0x{:x}{}\n", prefix, f.so->name, f.addr);
+        }
+
+        auto format_to (auto&& out) const {
+            for (const auto& f : _frames) {
+                out = format_frame(out, f);
+            }
+
+            return out;
+        }
+    };
+};
 
 namespace std {
+    template<>
+    struct hash<seastar::saved_backtrace> {
+        size_t operator()(const seastar::saved_backtrace& b) const {
+            return b.hash();
+        }
+    };
 
-template<>
-struct hash<seastar::saved_backtrace> {
-    size_t operator()(const seastar::saved_backtrace& b) const {
-        return b.hash();
-    }
-};
+    template<>
+    struct formatter<seastar::saved_backtrace> {
+        template<class ParseContext>
+        constexpr auto parse (ParseContext& pc) {
+            auto it = pc.begin();
 
-}
+            while (it != pc.end() && *it != '}') {
+                ++it;
+            }
 
-template<>
-struct std::formatter<seastar::saved_backtrace> {
-    template<class ParseContext>
-    constexpr auto parse (ParseContext& pc) {
-        auto it = pc.begin();
-
-        while (it != pc.end() && *it != '}') {
-            ++it;
+            return it;
         }
 
-        return it;
-    }
-
-    template<class FormatContext>
-    constexpr auto format (const seastar::saved_backtrace& sb, FormatContext& fc) const {
-        return sb.format_to(fc.out());
-    }
+        template<class FormatContext>
+        constexpr auto format (const seastar::saved_backtrace& sb, FormatContext& fc) const {
+            return sb.format_to(fc.out());
+        }
+    };
 };
-
 
 namespace seastar {
+    saved_backtrace current_backtrace() noexcept;
+    std::ostream& operator<<(std::ostream& out, const saved_backtrace& b);
 
-saved_backtrace current_backtrace() noexcept;
-std::ostream& operator<<(std::ostream& out, const saved_backtrace& b);
+    namespace internal {
+        template<class Exc>
+        class backtraced : public Exc {
+            std::shared_ptr<sstring> _backtrace;
+        public:
+            template<typename... Args>
+            constexpr backtraced(Args&&... args)
+                    : Exc(std::forward<Args>(args)...)
+                    , _backtrace(std::make_shared<sstring>(static_cast<sstring>(std::format("{} Backtrace", Exc::what())))) {
 
-namespace internal {
+                    }
 
-template<class Exc>
-class backtraced : public Exc {
-    std::shared_ptr<sstring> _backtrace;
-public:
-    template<typename... Args>
-    constexpr backtraced(Args&&... args)
-            : Exc(std::forward<Args>(args)...)
-            , _backtrace(std::make_shared<sstring>(std::format("{} Backtrace: {}", Exc::what(), "asdf"))) {}
-
-    /**
-     * Returns the original exception message with a backtrace appended to it
-     *
-     * @return original exception message followed by a backtrace
-     */
-    virtual const char* what() const noexcept override {
-        assert(_backtrace);
-        return _backtrace->c_str();
-    }
-};
-
-}
+            /**
+             * Returns the original exception message with a backtrace appended to it
+             *
+             * @return original exception message followed by a backtrace
+             */
+            virtual const char* what() const noexcept override {
+                assert(_backtrace);
+                return _backtrace->c_str();
+            }
+        };
+    };
 
     /**
      * Throws an exception of unspecified type that is derived from the Exc type
@@ -170,14 +167,12 @@ public:
      * @param args arguments forwarded to the constructor of Exc
      * @return never returns (throws an exception)
      */
-template <class Exc, typename... Args>
-[[noreturn]]
-void
-throw_with_backtrace(Args&&... args) {
-    using exc_type = std::decay_t<Exc>;
-    static_assert(std::is_base_of<std::exception, exc_type>::value,
-            "throw_with_backtrace only works with exception types");
-    throw internal::backtraced<exc_type>(std::forward<Args>(args)...);
+    template <class Exc, typename... Args>
+    [[noreturn]]
+    void
+    throw_with_backtrace(Args&&... args) {
+        using exc_type = std::decay_t<Exc>;
+        static_assert(std::is_base_of_v<std::exception, exc_type>, "throw_with_backtrace only works with exception types");
+        throw internal::backtraced<exc_type>(std::forward<Args>(args)...);
+    };
 };
-
-}

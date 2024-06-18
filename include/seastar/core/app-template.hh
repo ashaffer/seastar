@@ -21,7 +21,6 @@
 #pragma once
 #include <seastar/core/seastar.hh>
 #include <boost/program_options.hpp>
-#include <boost/optional.hpp>
 #include <functional>
 #include <seastar/core/future.hh>
 #include <seastar/core/sstring.hh>
@@ -54,7 +53,7 @@ private:
     boost::program_options::options_description _opts;
     boost::program_options::options_description _opts_conf_file;
     boost::program_options::positional_options_description _pos_opts;
-    boost::optional<boost::program_options::variables_map> _configuration;
+    std::optional<boost::program_options::variables_map> _configuration;
     configuration_reader _conf_reader;
 
     configuration_reader get_default_configuration_reader();
@@ -73,19 +72,19 @@ public:
     boost::program_options::options_description_easy_init add_options();
     void add_positional_options(std::initializer_list<positional_option> options);
     boost::program_options::variables_map& configuration();
-    int run_deprecated(int ac, char ** av, std::function<void ()>&& func);
+    int run_deprecated(int argc, const char * const * const argv, std::function<void ()>&& func);
 
     void set_configuration_reader(configuration_reader conf_reader);
 
     // Runs given function and terminates the application when the future it
     // returns resolves. The value with which the future resolves will be
     // returned by this function.
-    int run(int ac, char ** av, std::function<future<int> ()>&& func);
+    int run(int argc, const char * const * argv, std::function<future<int> ()>&& func);
 
     // Like run() which takes std::function<future<int>()>, but returns
     // with exit code 0 when the future returned by func resolves
     // successfully.
-    int run(int ac, char ** av, std::function<future<> ()>&& func);
+    int run(int argc, const char * const * argv, std::function<future<> ()>&& func);
 };
 
 }

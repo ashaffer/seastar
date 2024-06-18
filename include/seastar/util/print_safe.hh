@@ -75,7 +75,7 @@ void convert_zero_padded_hex_safe(char *buf, size_t bufsz, Integral n) noexcept 
 // Async-signal safe.
 template<typename Integral>
 void print_zero_padded_hex_safe(Integral n) noexcept {
-    static_assert(std::is_integral<Integral>::value && !std::is_signed<Integral>::value, "Requires unsigned integrals");
+    static_assert(::std::is_integral<Integral>::value && !::std::is_signed<Integral>::value, "Requires unsigned integrals");
 
     char buf[sizeof(n) * 2];
     convert_zero_padded_hex_safe(buf, sizeof(buf), n);
@@ -87,7 +87,7 @@ void print_zero_padded_hex_safe(Integral n) noexcept {
 // For example, print_decimal_safe(buf, 16, 12) prints "12".
 template<typename Integral>
 size_t convert_decimal_safe(char *buf, size_t bufsz, Integral n) noexcept {
-    static_assert(std::is_integral<Integral>::value && !std::is_signed<Integral>::value, "Requires unsigned integrals");
+    static_assert(::std::is_integral<Integral>::value && !::std::is_signed<Integral>::value, "Requires unsigned integrals");
 
     char tmp[sizeof(n) * 3];
     unsigned i = bufsz;

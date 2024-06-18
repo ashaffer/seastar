@@ -20,7 +20,8 @@
  */
 
 #pragma once
-
+#include <optional>
+#include <unordered_map>
 #include <seastar/core/reactor.hh>
 #include <seastar/core/deleter.hh>
 #include <seastar/core/queue.hh>
@@ -30,311 +31,305 @@
 #include <seastar/net/ethernet.hh>
 #include <seastar/net/packet.hh>
 #include <seastar/net/const.hh>
-#include <unordered_map>
 
 namespace seastar {
+    namespace net {
+        // class ::seastar::net::packet;
+        class interface;
+        class device;
+        class qp;
+        class l3_protocol;
 
-namespace net {
-
-class packet;
-class interface;
-class device;
-class qp;
-class l3_protocol;
-
-class forward_hash {
-    size_t end_idx = 0;
-public:
-    uint8_t data[64];
-    
-    size_t size() const {
-        return end_idx;
-    }
-    void push_back(uint8_t b) {
-        assert(end_idx < sizeof(data));
-        data[end_idx++] = b;
-    }
-    void push_back(uint16_t b) {
-        push_back(uint8_t(b));
-        push_back(uint8_t(b >> 8));
-    }
-    void push_back(uint32_t b) {
-        push_back(uint16_t(b));
-        push_back(uint16_t(b >> 16));
-    }
-    const uint8_t& operator[](size_t idx) const {
-        return data[idx];
-    }
-
-    void print () const {
-        printf("forward hash data (%u):", (uint)size());
-        for (uint i = 0; i < end_idx; i++) {
-            printf(" %02.2x", data[i]);
-        }
-        printf("\n");
-    }
-};
-
-struct hw_features {
-    // Enable tx ip header checksum offload
-    bool tx_csum_ip_offload = false;
-    // Enable tx l4 (TCP or UDP) checksum offload
-    bool tx_csum_l4_offload = false;
-    // Enable rx checksum offload
-    bool rx_csum_offload = false;
-    // LRO is enabled
-    bool rx_lro = false;
-    // Enable tx TCP segment offload
-    bool tx_tso = false;
-    // Enable tx UDP fragmentation offload
-    bool tx_ufo = false;
-    // Maximum Transmission Unit
-    uint16_t mtu = 1500;
-    // Maximun packet len when TCP/UDP offload is enabled
-    uint16_t max_packet_len = ip_packet_len_max - eth_hdr_len;
-};
-
-class l3_protocol {
-public:
-    struct l3packet {
-        eth_protocol_num proto_num;
-        ethernet_address to;
-        packet p;
-    };
-    using packet_provider_type = std::function<compat::optional<l3packet> ()>;
-private:
-    interface* _netif;
-    eth_protocol_num _proto_num;
-public:
-    explicit l3_protocol(interface* netif, eth_protocol_num proto_num, packet_provider_type func);
-    subscription<packet, ethernet_address> receive(
-            std::function<future<> (packet, ethernet_address)> rx_fn,
-            std::function<bool (forward_hash&, packet&, size_t)> forward);
-
-private:
-    friend class interface;
-};
-
-class interface {
-    struct l3_rx_stream {
-        stream<packet, ethernet_address> packet_stream;
-        future<> ready;
-        std::function<bool (forward_hash&, packet&, size_t)> forward;
-        l3_rx_stream(std::function<bool (forward_hash&, packet&, size_t)>&& fw) : ready(packet_stream.started()), forward(fw) {}
-    };
-    std::unordered_map<uint16_t, l3_rx_stream> _proto_map;
-    std::shared_ptr<device> _dev;
-    subscription<packet> _rx;
-    ethernet_address _hw_address;
-    net::hw_features _hw_features;
-    std::vector<l3_protocol::packet_provider_type> _pkt_providers;
-private:
-    future<> dispatch_packet(packet p);
-public:
-    explicit interface(std::shared_ptr<device> dev);
-    ~interface();
-    ethernet_address hw_address() { return _hw_address; }
-    const net::hw_features& hw_features() const { return _hw_features; }
-    subscription<packet, ethernet_address> register_l3(eth_protocol_num proto_num,
-            std::function<future<> (packet p, ethernet_address from)> next,
-            std::function<bool (forward_hash&, packet&, size_t)> forward);
-    void forward(unsigned cpuid, packet p);
-    unsigned hash2cpu(uint32_t hash);
-    void register_packet_provider(l3_protocol::packet_provider_type func) {
-        _pkt_providers.push_back(std::move(func));
-    }
-    uint16_t hw_queues_count();
-    uint16_t port_idx();
-
-    inline
-    void decorate(l3_protocol::l3packet& l3pv) {
-        auto eh = l3pv.p.prepend_header<eth_hdr>();
-        eh->dst_mac = l3pv.to;
-        eh->src_mac = _hw_address;
-        eh->eth_proto = uint16_t(l3pv.proto_num);
-        *eh = hton(*eh);
-    }
-
-    void send(l3_protocol::l3packet l3pv);
-    void flush();
-    
-    const rss_config& rss_conf() const;
-    bool uses_full_hash() const;
-    uint32_t initial_hash() const;
-    friend class l3_protocol;
-};
-
-struct qp_stats_good {
-    /**
-     * Update the packets bunch related statistics.
-     *
-     * Update the last packets bunch size and the total packets counter.
-     *
-     * @param count Number of packets in the last packets bunch.
-     */
-    void update_pkts_bunch(uint64_t count) {
-        last_bunch = count;
-        packets   += count;
-    }
-
-    /**
-     * Increment the appropriate counters when a few fragments have been
-     * processed in a copy-way.
-     *
-     * @param nr_frags Number of copied fragments
-     * @param bytes    Number of copied bytes
-     */
-    void update_copy_stats(uint64_t nr_frags, uint64_t bytes) {
-        copy_frags += nr_frags;
-        copy_bytes += bytes;
-    }
-
-    /**
-     * Increment total fragments and bytes statistics
-     *
-     * @param nfrags Number of processed fragments
-     * @param nbytes Number of bytes in the processed fragments
-     */
-    void update_frags_stats(uint64_t nfrags, uint64_t nbytes) {
-        nr_frags += nfrags;
-        bytes    += nbytes;
-    }
-
-    uint64_t bytes;      // total number of bytes
-    uint64_t nr_frags;   // total number of fragments
-    uint64_t copy_frags; // fragments that were copied on L2 level
-    uint64_t copy_bytes; // bytes that were copied on L2 level
-    uint64_t packets;    // total number of packets
-    uint64_t last_bunch; // number of packets in the last sent/received bunch
-};
-
-struct qp_stats {
-    qp_stats() : rx{}, tx{} {}
-
-    struct {
-        struct qp_stats_good good;
-
-        struct {
-            void inc_csum_err() {
-                ++csum;
-                ++total;
+        class forward_hash {
+            size_t end_idx = 0;
+        public:
+            uint8_t data[64];
+            
+            size_t size() const {
+                return end_idx;
+            }
+            void push_back(uint8_t b) {
+                assert(end_idx < sizeof(data));
+                data[end_idx++] = b;
+            }
+            void push_back(uint16_t b) {
+                push_back(uint8_t(b));
+                push_back(uint8_t(b >> 8));
+            }
+            void push_back(uint32_t b) {
+                push_back(uint16_t(b));
+                push_back(uint16_t(b >> 16));
+            }
+            const uint8_t& operator[](size_t idx) const {
+                return data[idx];
             }
 
-            void inc_no_mem() {
-                ++no_mem;
-                ++total;
+            void print () const {
+                printf("forward hash data (%u):", (uint)size());
+                for (uint i = 0; i < end_idx; i++) {
+                    printf(" %02.2x", data[i]);
+                }
+                printf("\n");
+            }
+        };
+
+        struct hw_features {
+            // Enable tx ip header checksum offload
+            bool tx_csum_ip_offload = false;
+            // Enable tx l4 (TCP or UDP) checksum offload
+            bool tx_csum_l4_offload = false;
+            // Enable rx checksum offload
+            bool rx_csum_offload = false;
+            // LRO is enabled
+            bool rx_lro = false;
+            // Enable tx TCP segment offload
+            bool tx_tso = false;
+            // Enable tx UDP fragmentation offload
+            bool tx_ufo = false;
+            // Maximum Transmission Unit
+            uint16_t mtu = 1500;
+            // Maximun packet len when TCP/UDP offload is enabled
+            uint16_t max_packet_len = ::seastar::net::ip_packet_len_max - ::seastar::net::eth_hdr_len;
+        };
+
+        class l3_protocol {
+        public:
+            struct l3packet {
+                ::seastar::net::eth_protocol_num proto_num;
+                ethernet_address to;
+                ::seastar::net::packet p;
+            };
+            using packet_provider_type = std::function<std::optional<l3packet> ()>;
+        private:
+            interface* _netif;
+            ::seastar::net::eth_protocol_num _proto_num;
+        public:
+            explicit l3_protocol(interface* netif, ::seastar::net::eth_protocol_num proto_num, packet_provider_type func);
+            subscription<::seastar::net::packet, ethernet_address> receive(
+                    std::function<future<> (::seastar::net::packet, ethernet_address)> rx_fn,
+                    std::function<bool (forward_hash&, ::seastar::net::packet&, size_t)> forward);
+
+        private:
+            friend class interface;
+        };
+
+        class interface {
+            struct l3_rx_stream {
+                stream<::seastar::net::packet, ethernet_address> packet_stream;
+                future<> ready;
+                std::function<bool (forward_hash&, ::seastar::net::packet&, size_t)> forward;
+                l3_rx_stream(std::function<bool (forward_hash&, ::seastar::net::packet&, size_t)>&& fw) : ready(packet_stream.started()), forward(fw) {}
+            };
+            std::unordered_map<uint16_t, l3_rx_stream> _proto_map;
+            std::shared_ptr<device> _dev;
+            subscription<::seastar::net::packet> _rx;
+            ethernet_address _hw_address;
+            net::hw_features _hw_features;
+            std::vector<l3_protocol::packet_provider_type> _pkt_providers;
+        private:
+            future<> dispatch_packet(::seastar::net::packet p);
+        public:
+            explicit interface(std::shared_ptr<device> dev);
+            ~interface();
+            ethernet_address hw_address() { return _hw_address; }
+            const net::hw_features& hw_features() const { return _hw_features; }
+            subscription<::seastar::net::packet, ethernet_address> register_l3(::seastar::net::eth_protocol_num proto_num,
+                    std::function<future<> (::seastar::net::packet p, ethernet_address from)> next,
+                    std::function<bool (forward_hash&, ::seastar::net::packet&, size_t)> forward);
+            void forward(unsigned cpuid, ::seastar::net::packet p);
+            unsigned hash2cpu(uint32_t hash);
+            void register_packet_provider(l3_protocol::packet_provider_type func) {
+                _pkt_providers.push_back(std::move(func));
+            }
+            uint16_t hw_queues_count();
+            uint16_t port_idx();
+
+            inline
+            void decorate(l3_protocol::l3packet& l3pv) {
+                auto eh = l3pv.p.prepend_header<eth_hdr>();
+                eh->dst_mac = l3pv.to;
+                eh->src_mac = _hw_address;
+                eh->eth_proto = uint16_t(l3pv.proto_num);
+                *eh = ::seastar::net::hton(*eh);
             }
 
-            uint64_t no_mem;       // Packets dropped due to allocation failure
-            uint64_t total;        // total number of erroneous packets
-            uint64_t csum;         // packets with bad checksum
-        } bad;
-    } rx;
+            void send(l3_protocol::l3packet l3pv);
+            void flush();
+            
+            const rss_config& rss_conf() const;
+            bool uses_full_hash() const;
+            uint32_t initial_hash() const;
+            friend class l3_protocol;
+        };
 
-    struct {
-        struct qp_stats_good good;
-        uint64_t linearized;       // number of packets that were linearized
-    } tx;
+        struct qp_stats_good {
+            /**
+             * Update the packets bunch related statistics.
+             *
+             * Update the last packets bunch size and the total packets counter.
+             *
+             * @param count Number of packets in the last packets bunch.
+             */
+            void update_pkts_bunch(uint64_t count) {
+                last_bunch = count;
+                packets   += count;
+            }
+
+            /**
+             * Increment the appropriate counters when a few fragments have been
+             * processed in a copy-way.
+             *
+             * @param nr_frags Number of copied fragments
+             * @param bytes    Number of copied bytes
+             */
+            void update_copy_stats(uint64_t nr_frags, uint64_t bytes) {
+                copy_frags += nr_frags;
+                copy_bytes += bytes;
+            }
+
+            /**
+             * Increment total fragments and bytes statistics
+             *
+             * @param nfrags Number of processed fragments
+             * @param nbytes Number of bytes in the processed fragments
+             */
+            void update_frags_stats(uint64_t nfrags, uint64_t nbytes) {
+                nr_frags += nfrags;
+                bytes    += nbytes;
+            }
+
+            uint64_t bytes;      // total number of bytes
+            uint64_t nr_frags;   // total number of fragments
+            uint64_t copy_frags; // fragments that were copied on L2 level
+            uint64_t copy_bytes; // bytes that were copied on L2 level
+            uint64_t packets;    // total number of packets
+            uint64_t last_bunch; // number of packets in the last sent/received bunch
+        };
+
+        struct qp_stats {
+            qp_stats() : rx{}, tx{} {}
+
+            struct {
+                struct qp_stats_good good;
+
+                struct {
+                    void inc_csum_err() {
+                        ++csum;
+                        ++total;
+                    }
+
+                    void inc_no_mem() {
+                        ++no_mem;
+                        ++total;
+                    }
+
+                    uint64_t no_mem;       // packets dropped due to allocation failure
+                    uint64_t total;        // total number of erroneous packets
+                    uint64_t csum;         // packets with bad checksum
+                } bad;
+            } rx;
+
+            struct {
+                struct qp_stats_good good;
+                uint64_t linearized;       // number of packets that were linearized
+            } tx;
+        };
+
+        class qp {
+            using packet_provider_type = std::function<std::optional<::seastar::net::packet> ()>;
+            std::vector<packet_provider_type> _pkt_providers;
+            std::optional<std::array<uint8_t, 128>> _sw_reta;
+            circular_buffer<::seastar::net::packet> _proxy_packetq;
+            stream<::seastar::net::packet> _rx_stream;
+            reactor::poller _tx_poller;
+            circular_buffer<::seastar::net::packet> _tx_packetq;
+
+        protected:
+            const std::string _stats_plugin_name;
+            const std::string _queue_name;
+            metrics::metric_groups _metrics;
+            qp_stats _stats;
+
+        public:
+            qp(bool register_copy_stats = false,
+               const std::string stats_plugin_name = std::string("network"),
+               uint8_t qid = 0, uint8_t port_idx = 0);
+            virtual ~qp();
+            virtual future<> send(::seastar::net::packet p) = 0;
+            virtual uint32_t send(circular_buffer<::seastar::net::packet>& p) {
+                uint32_t sent = 0;
+                while (!p.empty()) {
+                    // FIXME: future is discarded
+                    (void)send(std::move(p.front()));
+                    p.pop_front();
+                    sent++;
+                }
+                return sent;
+            }
+            virtual void rx_start() {};
+            void configure_proxies(const std::map<unsigned, float>& cpu_weights);
+            // build REdirection TAble for cpu_weights map: target cpu -> weight
+            void build_sw_reta(const std::map<unsigned, float>& cpu_weights);
+            void proxy_send(::seastar::net::packet&& p) {
+                _proxy_packetq.push_back(std::move(p));
+            }
+            void register_packet_provider(packet_provider_type func) {
+                _pkt_providers.push_back(std::move(func));
+            }
+            bool poll_tx();
+            void send_immediate(::seastar::net::packet p);
+            friend class device;
+        };
+
+        class device {
+        protected:
+            std::unique_ptr<qp*[]> _queues;
+            std::unordered_map<uint,uint> _qid2cpuid;
+            size_t _rss_table_bits = 0;
+            rss_config _rss_conf;
+        public:
+            device() {
+                _queues = std::make_unique<qp*[]>(smp::count);
+            }
+            virtual ~device() {};
+            inline qp& queue_for_cpu(unsigned cpu) { return *_queues[cpu]; }
+            inline qp& local_queue() { return queue_for_cpu(engine().cpu_id()); }
+
+            uint qid2cpuid(uint qid) { 
+                return qid;
+                // return _qid2cpuid[qid]; 
+            }
+            void l2receive(::seastar::net::packet p) { 
+                (void)_queues[engine().cpu_id()]->_rx_stream.produce(std::move(p)); 
+            }
+            subscription<::seastar::net::packet> receive(std::function<future<> (::seastar::net::packet)> next_packet);
+            virtual ethernet_address hw_address() = 0;
+            virtual net::hw_features hw_features() = 0;
+            virtual uint16_t port_idx() { return 0; }
+            virtual const rss_config& rss_conf() const { return _rss_conf; }
+
+            virtual uint16_t hw_queues_count() { return 1; }
+            virtual future<> link_ready() { return make_ready_future<>(); }
+            virtual std::unique_ptr<qp> init_local_queue(boost::program_options::variables_map opts, uint16_t qid) = 0;
+            virtual unsigned hash2qid(uint32_t hash) {
+                return hash % hw_queues_count();
+            }
+            void set_local_queue(std::unique_ptr<qp> dev, uint qid);
+            template <typename Func>
+            unsigned forward_dst(unsigned src_cpuid, Func&& hashfn) {
+                auto& qp = queue_for_cpu(src_cpuid);
+                if (!qp._sw_reta) {
+                    return src_cpuid;
+                }
+                auto hash = hashfn() >> _rss_table_bits;
+                auto& reta = *qp._sw_reta;
+                return reta[hash % reta.size()];
+            }
+            virtual unsigned hash2cpu(uint32_t hash) {
+                // there is an assumption here that qid == cpu_id which will
+                // not necessary be true in the future
+                return forward_dst(qid2cpuid(hash2qid(hash)), [hash] { return hash; });
+            }
+        };
+    };
 };
-
-class qp {
-    using packet_provider_type = std::function<compat::optional<packet> ()>;
-    std::vector<packet_provider_type> _pkt_providers;
-    compat::optional<std::array<uint8_t, 128>> _sw_reta;
-    circular_buffer<packet> _proxy_packetq;
-    stream<packet> _rx_stream;
-    reactor::poller _tx_poller;
-    circular_buffer<packet> _tx_packetq;
-
-protected:
-    const std::string _stats_plugin_name;
-    const std::string _queue_name;
-    metrics::metric_groups _metrics;
-    qp_stats _stats;
-
-public:
-    qp(bool register_copy_stats = false,
-       const std::string stats_plugin_name = std::string("network"),
-       uint8_t qid = 0, uint8_t port_idx = 0);
-    virtual ~qp();
-    virtual future<> send(packet p) = 0;
-    virtual uint32_t send(circular_buffer<packet>& p) {
-        printf("net virtual send called\n");
-        uint32_t sent = 0;
-        while (!p.empty()) {
-            // FIXME: future is discarded
-            (void)send(std::move(p.front()));
-            p.pop_front();
-            sent++;
-        }
-        return sent;
-    }
-    virtual void rx_start() {};
-    void configure_proxies(const std::map<unsigned, float>& cpu_weights);
-    // build REdirection TAble for cpu_weights map: target cpu -> weight
-    void build_sw_reta(const std::map<unsigned, float>& cpu_weights);
-    void proxy_send(packet p) {
-        _proxy_packetq.push_back(std::move(p));
-    }
-    void register_packet_provider(packet_provider_type func) {
-        _pkt_providers.push_back(std::move(func));
-    }
-    bool poll_tx();
-    void send_immediate(packet p);
-    friend class device;
-};
-
-class device {
-protected:
-    std::unique_ptr<qp*[]> _queues;
-    std::unordered_map<uint,uint> _qid2cpuid;
-    size_t _rss_table_bits = 0;
-    rss_config _rss_conf;
-public:
-    device() {
-        _queues = std::make_unique<qp*[]>(smp::count);
-    }
-    virtual ~device() {};
-    inline qp& queue_for_cpu(unsigned cpu) { return *_queues[cpu]; }
-    inline qp& local_queue() { return queue_for_cpu(engine().cpu_id()); }
-
-    uint qid2cpuid(uint qid) { 
-        return qid;
-        // return _qid2cpuid[qid]; 
-    }
-    void l2receive(packet p) { 
-        (void)_queues[engine().cpu_id()]->_rx_stream.produce(std::move(p)); 
-    }
-    subscription<packet> receive(std::function<future<> (packet)> next_packet);
-    virtual ethernet_address hw_address() = 0;
-    virtual net::hw_features hw_features() = 0;
-    virtual uint16_t port_idx() { return 0; }
-    virtual const rss_config& rss_conf() const { return _rss_conf; }
-
-    virtual uint16_t hw_queues_count() { return 1; }
-    virtual future<> link_ready() { return make_ready_future<>(); }
-    virtual std::unique_ptr<qp> init_local_queue(boost::program_options::variables_map opts, uint16_t qid) = 0;
-    virtual unsigned hash2qid(uint32_t hash) {
-        return hash % hw_queues_count();
-    }
-    void set_local_queue(std::unique_ptr<qp> dev, uint qid);
-    template <typename Func>
-    unsigned forward_dst(unsigned src_cpuid, Func&& hashfn) {
-        auto& qp = queue_for_cpu(src_cpuid);
-        if (!qp._sw_reta) {
-            return src_cpuid;
-        }
-        auto hash = hashfn() >> _rss_table_bits;
-        auto& reta = *qp._sw_reta;
-        return reta[hash % reta.size()];
-    }
-    virtual unsigned hash2cpu(uint32_t hash) {
-        // there is an assumption here that qid == cpu_id which will
-        // not necessary be true in the future
-        return forward_dst(qid2cpuid(hash2qid(hash)), [hash] { return hash; });
-    }
-};
-
-}
-
-}

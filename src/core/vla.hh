@@ -28,33 +28,31 @@
 #include <seastar/core/reactor.hh>
 
 namespace seastar {
-
-// Some C APIs have a structure with a variable length array at the end.
-// This is a helper function to help allocate it.
-//
-// for a structure
-//
-//   struct xx { int a; float b[0]; };
-//
-// use
-//
-//   make_struct_with_vla(&xx::b, number_of_bs);
-//
-// to allocate it.
-//
-template <class S, typename E>
-inline
-std::unique_ptr<S, free_deleter>
-make_struct_with_vla(E S::*last, size_t nr) {
-    auto fake = reinterpret_cast<S*>(0);
-    size_t offset = reinterpret_cast<uintptr_t>(&(fake->*last));
-    size_t element_size = sizeof((fake->*last)[0]);
-    assert(offset == sizeof(S));
-    auto p = std::unique_ptr<char, free_deleter>(
-            reinterpret_cast<char*>(::malloc(offset + element_size * nr)));
-    auto s = std::unique_ptr<S, free_deleter>(new (p.get()) S());
-    p.release();
-    return s;
-}
-
-}
+    // Some C APIs have a structure with a variable length array at the end.
+    // This is a helper function to help allocate it.
+    //
+    // for a structure
+    //
+    //   struct xx { int a; float b[0]; };
+    //
+    // use
+    //
+    //   make_struct_with_vla(&xx::b, number_of_bs);
+    //
+    // to allocate it.
+    //
+    template <class S, typename E>
+    inline
+    std::unique_ptr<S, free_deleter>
+    make_struct_with_vla(E S::*last, size_t nr) {
+        auto fake = reinterpret_cast<S*>(0);
+        size_t offset = reinterpret_cast<uintptr_t>(&(fake->*last));
+        size_t element_size = sizeof((fake->*last)[0]);
+        assert(offset == sizeof(S));
+        auto p = std::unique_ptr<char, free_deleter>(
+                reinterpret_cast<char*>(::malloc(offset + element_size * nr)));
+        auto s = std::unique_ptr<S, free_deleter>(new (p.get()) S());
+        p.release();
+        return s;
+    }
+};

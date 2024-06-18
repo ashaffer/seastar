@@ -20,21 +20,22 @@
  */
 
 #pragma once
-
+#include <optional>
 #include <seastar/core/internal/pollable_fd.hh>
 #include <seastar/core/future.hh>
 #include <seastar/core/semaphore.hh>
 #include <seastar/util/std-compat.hh>
 #include <seastar/util/noncopyable_function.hh>
-#include <boost/lockfree/spsc_queue.hpp>
+// #include <boost/lockfree/spsc_queue.hpp>
+#include <seastar/util/ring_buffer.hh>
 
 namespace seastar {
 
 class syscall_work_queue {
     static constexpr size_t queue_length = 128;
     struct work_item;
-    using lf_queue = boost::lockfree::spsc_queue<work_item*,
-                            boost::lockfree::capacity<queue_length>>;
+    using lf_queue = ring_buffer<seastar::syscall_work_queue::work_item *, queue_length>;//::boost::lockfree::spsc_queue<::seastar::syscall_work_queue::work_item*,
+                       //     ::boost::lockfree::capacity<queue_length>>;
     lf_queue _pending;
     lf_queue _completed;
     writeable_eventfd _start_eventfd;
@@ -48,7 +49,7 @@ class syscall_work_queue {
     struct work_item_returning :  work_item {
         noncopyable_function<T ()> _func;
         promise<T> _promise;
-        compat::optional<T> _result;
+        std::optional<T> _result;
         work_item_returning(noncopyable_function<T ()> func) : _func(std::move(func)) {}
         virtual void process() override { _result = this->_func(); }
         virtual void complete() override { _promise.set_value(std::move(*_result)); }
@@ -72,7 +73,7 @@ private:
     //
     // Returns the number of requests handled.
     unsigned complete();
-    void submit_item(std::unique_ptr<syscall_work_queue::work_item> wi);
+    void submit_item(std::unique_ptr<work_item> wi);
 
     friend class thread_pool;
 };

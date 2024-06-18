@@ -24,7 +24,8 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
-#include <seastar/util/std-compat.hh>
+#include <optional>
+// #include <seastar/util/std-compat.hh>
 
 #include <seastar/core/future.hh>
 #include <seastar/core/sstring.hh>
@@ -56,7 +57,7 @@ struct hostent {
     std::vector<inet_address> addr_list;
 };
 
-typedef compat::optional<inet_address::family> opt_family;
+typedef std::optional<inet_address::family> opt_family;
 
 struct srv_record {
     unsigned short priority;
@@ -76,15 +77,15 @@ struct srv_record {
 class dns_resolver {
 public:
     struct options {
-        compat::optional<bool>
+        std::optional<bool>
             use_tcp_query;
-        compat::optional<std::vector<inet_address>>
+        std::optional<std::vector<inet_address>>
             servers;
-        compat::optional<std::chrono::milliseconds>
+        std::optional<std::chrono::milliseconds>
             timeout;
-        compat::optional<uint16_t>
+        std::optional<uint16_t>
             tcp_port, udp_port;
-        compat::optional<std::vector<sstring>>
+        std::optional<std::vector<sstring>>
             domains;
     };
 

@@ -45,11 +45,12 @@ static void parse_map_associations(const std::string& v, string_map& ss) {
     std::sregex_token_iterator s(v.begin(), v.end(), colon, -1);
     const std::sregex_token_iterator e;
     while (s != e) {
-        const sstring p = std::string(*s++);
+        std::string str{*s++};
+        const sstring p = str;
 
         const auto i = p.find('=');
         if (i == sstring::npos) {
-            throw bpo::invalid_option_value(p);
+            throw bpo::validation_error(bpo::validation_error::invalid_option_value); //invalid_option_value(str.c_str());
         }
 
         auto k = p.substr(0, i);

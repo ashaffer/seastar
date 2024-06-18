@@ -19,6 +19,9 @@
  * Copyright (C) 2015 Cloudius Systems, Ltd.
  */
 #pragma once
+#include <optional>
+#include <variant>
+#include <memory_resource>
 
 #include <seastar/core/function_traits.hh>
 #include <seastar/core/apply.hh>
@@ -27,8 +30,7 @@
 #include <seastar/core/future-util.hh>
 #include <seastar/util/is_smart_ptr.hh>
 #include <seastar/core/simple-stream.hh>
-#include <boost/range/numeric.hpp>
-#include <boost/range/adaptor/transformed.hpp>
+#include <seastar/util/hash.hh>
 #include <seastar/net/packet-data-source.hh>
 #include <seastar/core/print.hh>
 
@@ -47,7 +49,7 @@ struct remove_optional {
 };
 
 template<typename T>
-struct remove_optional<optional<T>> {
+struct remove_optional<std::optional<T>> {
     using type = T;
 };
 
@@ -254,11 +256,11 @@ inline void do_marshall(Serializer& serializer, Output& out, const T&... args) {
 }
 
 static inline memory_output_stream<snd_buf::iterator> make_serializer_stream(snd_buf& output) {
-    auto* b = compat::get_if<temporary_buffer<char>>(&output.bufs);
+    auto* b = std::get_if<temporary_buffer<char>>(&output.bufs);
     if (b) {
         return memory_output_stream<snd_buf::iterator>(memory_output_stream<snd_buf::iterator>::simple(b->get_write(), b->size()));
     } else {
-        auto& ar = compat::get<std::vector<temporary_buffer<char>>>(output.bufs);
+        auto& ar = std::get<std::vector<temporary_buffer<char>>>(output.bufs);
         return memory_output_stream<snd_buf::iterator>(memory_output_stream<snd_buf::iterator>::fragmented(ar.begin(), output.size));
     }
 }
@@ -286,12 +288,12 @@ struct unmarshal_one {
             return read(c.serializer<Serializer>(), in, type<T>());
         }
     };
-    template<typename T> struct helper<optional<T>> {
-        static optional<T> doit(connection& c, Input& in) {
+    template<typename T> struct helper<std::optional<T>> {
+        static std::optional<T> doit(connection& c, Input& in) {
             if (in.size()) {
-                return optional<T>(read(c.serializer<Serializer>(), in, type<typename remove_optional<T>::type>()));
+                return std::optional<T>(read(c.serializer<Serializer>(), in, type<typename remove_optional<T>::type>()));
             } else {
-                return optional<T>();
+                return std::optional<T>();
             }
         }
     };
@@ -407,7 +409,7 @@ template<typename Serializer>
 struct rcv_reply<Serializer, future<>> : rcv_reply<Serializer, void> {};
 
 template <typename Serializer, typename Ret, typename... InArgs>
-inline auto wait_for_reply(wait_type, compat::optional<rpc_clock_type::time_point> timeout, cancellable* cancel, rpc::client& dst, id_type msg_id,
+inline auto wait_for_reply(wait_type, std::optional<rpc_clock_type::time_point> timeout, cancellable* cancel, rpc::client& dst, id_type msg_id,
         signature<Ret (InArgs...)> sig) {
     using reply_type = rcv_reply<Serializer, Ret>;
     auto lambda = [] (reply_type& r, rpc::client& dst, id_type msg_id, rcv_buf data) mutable {
@@ -428,13 +430,13 @@ inline auto wait_for_reply(wait_type, compat::optional<rpc_clock_type::time_poin
 }
 
 template<typename Serializer, typename... InArgs>
-inline auto wait_for_reply(no_wait_type, compat::optional<rpc_clock_type::time_point>, cancellable* cancel, rpc::client& dst, id_type msg_id,
+inline auto wait_for_reply(no_wait_type, std::optional<rpc_clock_type::time_point>, cancellable* cancel, rpc::client& dst, id_type msg_id,
         signature<no_wait_type (InArgs...)> sig) {  // no_wait overload
     return make_ready_future<>();
 }
 
 template<typename Serializer, typename... InArgs>
-inline auto wait_for_reply(no_wait_type, compat::optional<rpc_clock_type::time_point>, cancellable* cancel, rpc::client& dst, id_type msg_id,
+inline auto wait_for_reply(no_wait_type, std::optional<rpc_clock_type::time_point>, cancellable* cancel, rpc::client& dst, id_type msg_id,
         signature<future<no_wait_type> (InArgs...)> sig) {  // future<no_wait> overload
     return make_ready_future<>();
 }
@@ -457,7 +459,7 @@ auto send_helper(MsgType xt, signature<Ret (InArgs...)> xsig) {
     struct shelper {
         MsgType t;
         signature<Ret (InArgs...)> sig;
-        auto send(rpc::client& dst, compat::optional<rpc_clock_type::time_point> timeout, cancellable* cancel, const InArgs&... args) {
+        auto send(rpc::client& dst, std::optional<rpc_clock_type::time_point> timeout, cancellable* cancel, const InArgs&... args) {
             if (dst.error()) {
                 using cleaned_ret_type = typename wait_signature<Ret>::cleaned_type;
                 return futurize<cleaned_ret_type>::make_exception_future(closed_error());
@@ -497,7 +499,7 @@ auto send_helper(MsgType xt, signature<Ret (InArgs...)> xsig) {
 
 template<typename Serializer, typename... RetTypes>
 inline future<> reply(wait_type, future<RetTypes...>&& ret, int64_t msg_id, shared_ptr<server::connection> client,
-        compat::optional<rpc_clock_type::time_point> timeout) {
+        std::optional<rpc_clock_type::time_point> timeout) {
     if (!client->error()) {
         snd_buf data;
         try {
@@ -525,7 +527,7 @@ inline future<> reply(wait_type, future<RetTypes...>&& ret, int64_t msg_id, shar
 
 // specialization for no_wait_type which does not send a reply
 template<typename Serializer>
-inline future<> reply(no_wait_type, future<no_wait_type>&& r, int64_t msgid, shared_ptr<server::connection> client, compat::optional<rpc_clock_type::time_point> timeout) {
+inline future<> reply(no_wait_type, future<no_wait_type>&& r, int64_t msgid, shared_ptr<server::connection> client, std::optional<rpc_clock_type::time_point> timeout) {
     try {
         r.get();
     } catch (std::exception& ex) {
@@ -562,7 +564,7 @@ auto recv_helper(signature<Ret (InArgs...)> sig, Func&& func, WantClientInfo wci
     using signature = decltype(sig);
     using wait_style = wait_signature_t<Ret>;
     return [func = lref_to_cref(std::forward<Func>(func))](shared_ptr<server::connection> client,
-                                                           compat::optional<rpc_clock_type::time_point> timeout,
+                                                           std::optional<rpc_clock_type::time_point> timeout,
                                                            int64_t msg_id,
                                                            rcv_buf data) mutable {
         auto memory_consumed = client->estimate_request_size(data.size);
@@ -759,13 +761,13 @@ future<> sink_impl<Serializer, Out...>::close() {
 }
 
 template<typename Serializer, typename... In>
-future<compat::optional<std::tuple<In...>>> source_impl<Serializer, In...>::operator()() {
+future<std::optional<std::tuple<In...>>> source_impl<Serializer, In...>::operator()() {
     auto process_one_buffer = [this] {
         foreign_ptr<std::unique_ptr<rcv_buf>> buf = std::move(this->_bufs.front());
         this->_bufs.pop_front();
         return seastar::apply([] (In&&... args) {
-            auto ret = compat::make_optional(std::make_tuple(std::move(args)...));
-            return make_ready_future<compat::optional<std::tuple<In...>>>(std::move(ret));
+            auto ret = std::make_optional(std::make_tuple(std::move(args)...));
+            return make_ready_future<std::optional<std::tuple<In...>>>(std::move(ret));
         }, unmarshall<Serializer, In...>(*this->_con->get(), make_shard_local_buffer_copy(std::move(buf))));
     };
 
@@ -796,7 +798,7 @@ future<compat::optional<std::tuple<In...>>> source_impl<Serializer, In...>::oper
         });
     }).then([this, process_one_buffer] () {
         if (this->_bufs.empty()) {
-            return make_ready_future<compat::optional<std::tuple<In...>>>(compat::nullopt);
+            return make_ready_future<std::optional<std::tuple<In...>>>(std::nullopt);
         } else {
             return process_one_buffer();
         }
@@ -828,7 +830,7 @@ template<>
 struct hash<seastar::rpc::streaming_domain_type> {
     size_t operator()(const seastar::rpc::streaming_domain_type& domain) const {
         size_t h = 0;
-        boost::hash_combine(h, std::hash<uint64_t>{}(domain._id));
+        seastar::hash_combine(h, std::hash<uint64_t>{}(domain._id));
         return h;
     }
 };

@@ -23,7 +23,7 @@
 #pragma once
 
 #include <vector>
-#include <seastar/util/std-compat.hh>
+// #include <seastar/util/std-compat.hh>
 #include <boost/test/unit_test.hpp>
 
 #include <seastar/core/future.hh>

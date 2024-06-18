@@ -237,7 +237,7 @@ cooking_ingredient (yaml-cpp
 
 cooking_ingredient (c-ares
   EXTERNAL_PROJECT_ARGS
-    URL https://c-ares.haxx.se/download/c-ares-1.13.0.tar.gz
+    URL https://c-ares.haxx.se/download/c-ares-1.27.0.tar.gz
     URL_MD5 d2e010b43537794d8bedfb562ae6bba2
     CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
     BUILD_COMMAND <DISABLE>
@@ -254,10 +254,12 @@ cooking_ingredient (cryptopp
 
 # Use the "native" profile that DPDK defines in `dpdk/config`, but in `dpdk_configure.cmake` we override
 # CONFIG_RTE_MACHINE with `Seastar_DPDK_MACHINE`.P
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-  set (dpdk_quadruple arm64-armv8a-linuxapp-gcc)
+if (Seastar_DPDK_QUAD)
+  set (dpdk_quadruple ${Seastar_DPDK_QUAD})
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+  set (dpdk_quadruple arm64-armv8a-linuxapp-${CMAKE_C_COMPILER})
 else()
-  set (dpdk_quadruple ${CMAKE_SYSTEM_PROCESSOR}-native-linuxapp-gcc)
+  set (dpdk_quadruple ${CMAKE_SYSTEM_PROCESSOR}-native-linuxapp-${CMAKE_C_COMPILER})
 endif()
 
 set (dpdk_args

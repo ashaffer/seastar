@@ -109,27 +109,27 @@ namespace seastar {
         struct context {
             explicit context(size_t nr);
             ~context();
-            internal::linux_abi::aio_context_t io_context{};
-            std::unique_ptr<internal::linux_abi::iocb*[]> iocbs;
-            internal::linux_abi::iocb** last = iocbs.get();
-            void replenish(internal::linux_abi::iocb* iocb, bool& flag);
-            void queue(internal::linux_abi::iocb* iocb);
+            ::seastar::internal::linux_abi::aio_context_t io_context{};
+            std::unique_ptr<::seastar::internal::linux_abi::iocb*[]> iocbs;
+            ::seastar::internal::linux_abi::iocb** last = iocbs.get();
+            void replenish(::seastar::internal::linux_abi::iocb* iocb, bool& flag);
+            void queue(::seastar::internal::linux_abi::iocb* iocb);
             void flush();
         };
         context _preempting_io{2}; // Used for the timer tick and the high resolution timer
         context _polling_io{max_polls}; // FIXME: unify with disk aio_context
         file_desc _steady_clock_timer = make_timerfd();
-        internal::linux_abi::iocb _task_quota_timer_iocb;
-        internal::linux_abi::iocb _timerfd_iocb;
-        internal::linux_abi::iocb _smp_wakeup_iocb;
+        ::seastar::internal::linux_abi::iocb _task_quota_timer_iocb;
+        ::seastar::internal::linux_abi::iocb _timerfd_iocb;
+        ::seastar::internal::linux_abi::iocb _smp_wakeup_iocb;
         bool _task_quota_timer_in_preempting_io = false;
         bool _timerfd_in_preempting_io = false;
         bool _timerfd_in_polling_io = false;
         bool _smp_wakeup_in_polling_io = false;
-        std::stack<std::unique_ptr<internal::linux_abi::iocb>> _iocb_pool;
+        std::stack<std::unique_ptr<::seastar::internal::linux_abi::iocb>> _iocb_pool;
     private:
-        internal::linux_abi::iocb* new_iocb();
-        void free_iocb(internal::linux_abi::iocb* iocb);
+        ::seastar::internal::linux_abi::iocb* new_iocb();
+        void free_iocb(::seastar::internal::linux_abi::iocb* iocb);
         static file_desc make_timerfd();
         void process_task_quota_timer();
         void process_timerfd();
@@ -138,14 +138,14 @@ namespace seastar {
         bool await_events(int timeout, const sigset_t* active_sigmask);
         static void signal_received(int signo, siginfo_t* siginfo, void* ignore);
     private:
-        class io_poll_poller : public seastar::pollfn {
+        class io_poll_poller : public ::seastar::pollfn {
             reactor_backend_aio* _backend;
         public:
             explicit io_poll_poller(reactor_backend_aio* b);
-            virtual bool poll() override;
-            virtual bool pure_poll() override;
-            virtual bool try_enter_interrupt_mode() override;
-            virtual void exit_interrupt_mode() override;
+            virtual bool poll();
+            virtual bool pure_poll();
+            virtual bool try_enter_interrupt_mode();
+            virtual void exit_interrupt_mode();
         };
     public:
         explicit reactor_backend_aio(reactor* r);

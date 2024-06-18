@@ -29,7 +29,8 @@
 #include <seastar/core/sstring.hh>
 #include <seastar/core/shared_ptr.hh>
 #include <seastar/net/socket_defs.hh>
-#include <seastar/util/std-compat.hh>
+#include <string_view>
+// #include <seastar/util/std-compat.hh>
 #include <seastar/net/api.hh>
 #include "../core/internal/api-level.hh"
 
@@ -63,7 +64,7 @@ namespace tls {
         PEM,
     };
 
-    typedef compat::basic_string_view<char> blob;
+    typedef std::basic_string_view<char> blob;
 
     class session;
     class server_session;

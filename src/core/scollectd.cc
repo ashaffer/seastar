@@ -523,16 +523,16 @@ future<> send_metric(const type_instance_id & id,
 }
 
 void configure(const boost::program_options::variables_map & opts) {
-    bool enable = opts["collectd"].as<bool>();
+    bool enable = opts.find("collectd")->second.as<bool>();
     if (!enable) {
         return;
     }
-    auto addr = ipv4_addr(opts["collectd-address"].as<std::string>());
-    auto period = std::chrono::milliseconds(opts["collectd-poll-period"].as<unsigned>());
+    auto addr = ipv4_addr(opts.find("collectd-address")->second.as<std::string>());
+    auto period = std::chrono::milliseconds(opts.find("collectd-poll-period")->second.as<unsigned>());
 
-    auto host = (opts["collectd-hostname"].as<std::string>() == "")
+    auto host = (opts.find("collectd-hostname")->second.as<std::string>() == "")
             ? seastar::metrics::impl::get_local_impl()->get_config().hostname
-            : sstring(opts["collectd-hostname"].as<std::string>());
+            : sstring(opts.find("collectd-hostname")->second.as<std::string>());
 
     // Now create send loops on each cpu
     for (unsigned c = 0; c < smp::count; c++) {
@@ -545,7 +545,7 @@ void configure(const boost::program_options::variables_map & opts) {
 
 boost::program_options::options_description get_options_description() {
     namespace bpo = boost::program_options;
-    bpo::options_description opts("COLLECTD options");
+    bpo::options_description opts{};
     opts.add_options()("collectd", bpo::value<bool>()->default_value(false),
             "enable collectd daemon")("collectd-address",
             bpo::value<std::string>()->default_value("239.192.74.66:25826"),

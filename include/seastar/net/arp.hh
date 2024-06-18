@@ -44,14 +44,14 @@ protected:
 public:
     arp_for_protocol(arp& a, uint16_t proto_num);
     virtual ~arp_for_protocol();
-    virtual future<> received(packet p) = 0;
-    virtual bool forward(forward_hash& out_hash_data, packet& p, size_t off) { return false; }
+    virtual future<> received(::seastar::net::packet p) = 0;
+    virtual bool forward(forward_hash& out_hash_data, ::seastar::net::packet& p, size_t off) { return false; }
 };
 
 class arp {
     interface* _netif;
     l3_protocol _proto;
-    subscription<packet, ethernet_address> _rx_packets;
+    subscription<::seastar::net::packet, ethernet_address> _rx_packets;
     std::unordered_map<uint16_t, arp_for_protocol*> _arp_for_protocol;
     circular_buffer<l3_protocol::l3packet> _packetq;
 private:
@@ -73,9 +73,9 @@ public:
     void del(uint16_t proto_num);
 private:
     ethernet_address l2self() { return _netif->hw_address(); }
-    future<> process_packet(packet p, ethernet_address from);
-    bool forward(forward_hash& out_hash_data, packet& p, size_t off);
-    compat::optional<l3_protocol::l3packet> get_packet();
+    future<> process_packet(::seastar::net::packet p, ethernet_address from);
+    bool forward(forward_hash& out_hash_data, ::seastar::net::packet& p, size_t off);
+    std::optional<l3_protocol::l3packet> get_packet();
     template <class l3_proto>
     friend class arp_for;
 };
@@ -140,11 +140,11 @@ private:
     std::unordered_map<l3addr, l2addr> _table;
     std::unordered_map<l3addr, resolution> _in_progress;
 private:
-    packet make_query_packet(l3addr paddr);
-    virtual future<> received(packet p) override;
+    ::seastar::net::packet make_query_packet(l3addr paddr);
+    virtual future<> received(::seastar::net::packet p) override;
     future<> handle_request(arp_hdr* ah);
     l2addr l2self() { return _arp.l2self(); }
-    void send(l2addr to, packet p);
+    void send(l2addr to, ::seastar::net::packet p);
 public:
     future<> send_query(const l3addr& paddr);
     explicit arp_for(arp& a) : arp_for_protocol(a, L3::arp_protocol_type()) {
@@ -164,7 +164,7 @@ public:
 };
 
 template <typename L3>
-packet
+::seastar::net::packet
 arp_for<L3>::make_query_packet(l3addr paddr) {
     arp_hdr hdr;
     hdr.htype = ethernet::arp_hardware_type();
@@ -176,15 +176,15 @@ arp_for<L3>::make_query_packet(l3addr paddr) {
     hdr.sender_paddr = _selves.begin()->first;
     hdr.target_hwaddr = ethernet::broadcast_address();
     hdr.target_paddr = paddr;
-    auto p = packet();
+    auto p = ::seastar::net::packet();
     p.prepend_uninitialized_header(hdr.size());
     hdr.write(p.get_header(0, hdr.size()));
     return p;
 }
 
 template <typename L3>
-void arp_for<L3>::send(l2addr to, packet p) {
-    _arp._packetq.push_back(l3_protocol::l3packet{eth_protocol_num::arp, to, std::move(p)});
+void arp_for<L3>::send(l2addr to, ::seastar::net::packet p) {
+    _arp._packetq.push_back(l3_protocol::l3packet{::seastar::net::eth_protocol_num::arp, to, std::move(p)});
 }
 
 template <typename L3>
@@ -265,7 +265,7 @@ arp_for<L3>::is_self(l3addr paddr) {
 
 template <typename L3>
 future<>
-arp_for<L3>::received(packet p) {
+arp_for<L3>::received(::seastar::net::packet p) {
     auto ah = p.get_header(0, arp_hdr::size());
     if (!ah) {
         return make_ready_future<>();
@@ -295,7 +295,7 @@ arp_for<L3>::handle_request(arp_hdr* ah) {
         ah->target_paddr = ah->sender_paddr;
         ah->sender_hwaddr = l2self();
         ah->sender_paddr = _selves.begin()->first;
-        auto p = packet();
+        auto p = ::seastar::net::packet();
         ah->write(p.prepend_uninitialized_header(ah->size()));
         send(ah->target_hwaddr, std::move(p));
     }

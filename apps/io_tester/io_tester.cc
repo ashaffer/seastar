@@ -49,7 +49,7 @@
 
 using namespace seastar;
 using namespace std::chrono_literals;
-using namespace boost::accumulators;
+using namespace ::boost::accumulators;
 
 static auto random_seed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 static std::default_random_engine random_generator(random_seed);
@@ -83,7 +83,7 @@ class shard_config {
     std::unordered_set<unsigned> _shards;
 public:
     shard_config()
-        : _shards(boost::copy_range<std::unordered_set<unsigned>>(boost::irange(0u, smp::count))) {}
+        : _shards(::boost::copy_range<std::unordered_set<unsigned>>(::boost::irange(0u, smp::count))) {}
     shard_config(std::unordered_set<unsigned> s) : _shards(std::move(s)) {}
 
     bool is_set(unsigned cpu) const {
@@ -149,7 +149,7 @@ public:
     future<> issue_requests(std::chrono::steady_clock::time_point stop) {
         _start = std::chrono::steady_clock::now();
         return with_scheduling_group(_sg, [this, stop] {
-            return parallel_for_each(boost::irange(0u, parallelism()), [this, stop] (auto dummy) mutable {
+            return parallel_for_each(::boost::irange(0u, parallelism()), [this, stop] (auto dummy) mutable {
                 auto bufptr = allocate_aligned_buffer<char>(this->req_size(), _alignment);
                 auto buf = bufptr.get();
                 return do_until([stop] { return std::chrono::steady_clock::now() > stop; }, [this, buf, stop] () mutable {
@@ -291,7 +291,7 @@ public:
         }).then([this, fname] {
             return do_with(seastar::semaphore(64), [this] (auto& write_parallelism) mutable {
                 auto bufsize = 256ul << 10;
-                auto pos = boost::irange(0ul, (file_data_size / bufsize) + 1);
+                auto pos = ::boost::irange(0ul, (file_data_size / bufsize) + 1);
                 return parallel_for_each(pos.begin(), pos.end(), [this, bufsize, &write_parallelism] (auto pos) mutable {
                     return get_units(write_parallelism, 1).then([this, bufsize, pos] (auto perm) mutable {
                         auto bufptr = allocate_aligned_buffer<char>(bufsize, 4096);
@@ -402,7 +402,7 @@ struct convert<byte_size> {
             }[str.back()];
             str.pop_back();
         }
-        bs.size = (boost::lexical_cast<size_t>(str) << shift);
+        bs.size = (::boost::lexical_cast<size_t>(str) << shift);
         return bs.size >= 512;
     }
 };
@@ -428,9 +428,9 @@ struct convert<duration_time> {
         if (unit.count(str.back())) {
             auto u = str.back();
             str.pop_back();
-            dt.time = (boost::lexical_cast<size_t>(str) * unit[u]);
+            dt.time = (::boost::lexical_cast<size_t>(str) * unit[u]);
         } else {
-            dt.time = (boost::lexical_cast<size_t>(str) * 1s);
+            dt.time = (::boost::lexical_cast<size_t>(str) * 1s);
         }
         return true;
     }
@@ -443,7 +443,7 @@ struct convert<shard_config> {
             auto str = node.as<std::string>();
             return (str == "all");
         } catch (YAML::TypedBadConversion<std::string>& e) {
-            shards = shard_config(boost::copy_range<std::unordered_set<unsigned>>(node.as<std::vector<unsigned>>()));
+            shards = shard_config(::boost::copy_range<std::unordered_set<unsigned>>(node.as<std::vector<unsigned>>()));
             return true;
         }
         return false;
@@ -517,9 +517,9 @@ class context {
     semaphore _finished;
 public:
     context(sstring dir, std::vector<job_config> req_config, unsigned duration)
-            : _cl(boost::copy_range<std::vector<std::unique_ptr<class_data>>>(req_config
-                | boost::adaptors::filtered([] (auto& cfg) { return cfg.shard_placement.is_set(engine().cpu_id()); })
-                | boost::adaptors::transformed([] (auto& cfg) { return cfg.gen_class_data(); })
+            : _cl(::boost::copy_range<std::vector<std::unique_ptr<class_data>>>(req_config
+                | ::boost::adaptors::filtered([] (auto& cfg) { return cfg.shard_placement.is_set(engine().cpu_id()); })
+                | ::boost::adaptors::transformed([] (auto& cfg) { return cfg.gen_class_data(); })
             ))
             , _dir(dir)
             , _duration(duration)
@@ -561,7 +561,7 @@ int class_data::idgen() {
 }
 
 int main(int ac, char** av) {
-    namespace bpo = boost::program_options;
+    namespace bpo = ::boost::program_options;
 
     app_template app;
     auto opt_add = app.add_options();

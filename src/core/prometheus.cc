@@ -35,6 +35,7 @@
 #include <boost/range/algorithm.hpp>
 #include <boost/range/combine.hpp>
 #include <seastar/core/thread.hh>
+#include <seastar/util/counterator.hh>
 
 namespace seastar {
 
@@ -293,7 +294,7 @@ public:
 
 static future<> get_map_value(metrics_families_per_shard& vec) {
     vec.resize(smp::count);
-    return parallel_for_each(boost::irange(0u, smp::count), [&vec] (auto cpu) {
+    return parallel_for_each(counterator<unsigned>{smp::count}, [&vec] (auto cpu) {
         return smp::submit_to(cpu, [] {
             return mi::get_values();
         }).then([&vec, cpu] (auto res) {

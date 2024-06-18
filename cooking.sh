@@ -653,6 +653,7 @@ function (_cooking_define_ep)
     INSTALL_COMMAND ${pa_INSTALL_COMMAND}
     PREFIX ${pa_INGREDIENT_DIR}
     STAMP_DIR ${stamp_dir}
+    DOWNLOAD_EXTRACT_TIMESTAMP ON
     INSTALL_DIR ${pa_STOW_DIR}/${pa_NAME}
     CMAKE_ARGS ${pa_CMAKE_ARGS}
     LIST_SEPARATOR :::

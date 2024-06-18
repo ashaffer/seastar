@@ -36,7 +36,9 @@
 #include <cstdio>
 #include <type_traits>
 #include <format>
-#include <seastar/util/std-compat.hh>
+#include <exception>
+#include <string_view>
+// #include <seastar/util/std-compat.hh>
 #include <seastar/core/temporary_buffer.hh>
 
 namespace seastar {
@@ -255,7 +257,7 @@ public:
             : basic_sstring(initialized_later(), std::distance(first, last)) {
         std::copy(first, last, begin());
     }
-    explicit basic_sstring(compat::basic_string_view<char_type, traits_type> v)
+    explicit basic_sstring(std::basic_string_view<char_type, traits_type> v)
             : basic_sstring(v.data(), v.size()) {
     }
     ~basic_sstring() noexcept {
@@ -603,8 +605,8 @@ public:
         return str()[pos];
     }
 
-    operator compat::basic_string_view<char_type>() const {
-        return compat::basic_string_view<char_type>(str(), size());
+    operator std::basic_string_view<char_type>() const {
+        return std::basic_string_view<char_type>(str(), size());
     }
 
     template <typename string_type, typename T>
@@ -696,6 +698,7 @@ public:
       return os.write(s.begin(), s.size());
   }
 
+
   template <typename char_type, typename size_type, size_type max_size, bool NulTerminate, typename char_traits>
   inline
   std::basic_istream<char_type, char_traits>&
@@ -715,22 +718,24 @@ public:
 
   template<class...Args>
   struct osstringstream<seastar::basic_sstring<Args...>>;
-}
+};
 
 namespace std {
   template <typename char_type, typename size_type, size_type max_size, bool NulTerminate>
   struct hash<seastar::basic_sstring<char_type, size_type, max_size, NulTerminate>> {
       size_t operator()(const seastar::basic_sstring<char_type, size_type, max_size, NulTerminate>& s) const {
-          return std::hash<seastar::compat::basic_string_view<char_type>>()(s);
+          return std::hash<std::basic_string_view<char_type>>()(s);
       }
   };
-}
+};
 
 namespace seastar {
   static inline
   char* copy_str_to(char* dst) {
       return dst;
   }
+
+  const char *eptr_to_what (std::exception_ptr ep);
 
   template <typename Head, typename... Tail>
   static inline
@@ -774,12 +779,11 @@ namespace seastar {
   string_type to_sstring(T&& value) {
       return internal::to_sstring<string_type>(std::forward<decltype(value)>(value));
   }
-}
+};
 
 namespace std {
     template <typename T>
-    inline
-    ostream& operator<<(ostream& os, const vector<T>&& v) {
+    inline ostream& operator<<(ostream& os, const vector<T>&& v) {
       bool first = true;
       os << "{";
       for (auto&& elem : v) {
@@ -814,36 +818,43 @@ namespace std {
     inline basic_ostream<CharType>& operator<<(basic_ostream<CharType>& os, seastar::temporary_buffer<CharType>&& buf) {
         return os.write(buf.get(), buf.size());
     }
-}
+
+    template<>
+    struct formatter<seastar::temporary_buffer<char>> : formatter<string_view> {
+      template <typename FormatContext>
+      constexpr auto format(const seastar::temporary_buffer<char>&& buf, FormatContext& ctx) {
+        return format_to(ctx.out(), "{:.{}}", buf.get(), buf.size());
+      }
+
+      template <typename FormatContext>
+      constexpr auto format(const seastar::temporary_buffer<char>& buf, FormatContext& ctx) {
+        return format_to(ctx.out(), "{:.{}}", buf.get(), buf.size());
+      }
+    };
 
 
-template<>
-struct std::formatter<seastar::temporary_buffer<char>> : std::formatter<std::string_view> {
-  template <typename FormatContext>
-  constexpr auto format(const seastar::temporary_buffer<char>&& buf, FormatContext& ctx) {
-    return std::format_to(ctx.out(), "{:.{}}", buf.get(), buf.size());
-  }
+    template <typename char_type, typename Size, Size max_size, bool NulTerminate>
+    struct formatter<seastar::basic_sstring<char_type, Size, max_size, NulTerminate>> : std::formatter<basic_string_view<char_type>> {
+        using sstr = seastar::basic_sstring<char_type, Size, max_size, NulTerminate>;
 
-  template <typename FormatContext>
-  constexpr auto format(const seastar::temporary_buffer<char>& buf, FormatContext& ctx) {
-    return std::format_to(ctx.out(), "{:.{}}", buf.get(), buf.size());
-  }
-};
+        template <typename FormatContext>
+        decltype(auto) format(sstr&& s, FormatContext& ctx) const {
+            return formatter<basic_string_view<char_type>>::format(s.c_str(), ctx);
+        }
 
+        template <typename FormatContext>
+        decltype(auto) format(const sstr& s, FormatContext& ctx) const {
+            return formatter<basic_string_view<char_type>>::format(s.c_str(), ctx);
+        }
+    };
 
-template <typename char_type, typename Size, Size max_size, bool NulTerminate>
-struct std::formatter<seastar::basic_sstring<char_type, Size, max_size, NulTerminate>> : std::formatter<std::basic_string_view<char_type>> {
-    using sstr = seastar::basic_sstring<char_type, Size, max_size, NulTerminate>;
-
-    template <typename FormatContext>
-    decltype(auto) format(sstr&& s, FormatContext& ctx) const {
-        return formatter<std::basic_string_view<char_type>>::format(s.c_str(), ctx);
-    }
-
-    template <typename FormatContext>
-    decltype(auto) format(const sstr& s, FormatContext& ctx) const {
-        return formatter<std::basic_string_view<char_type>>::format(s.c_str(), ctx);
-    }
+    template<>
+    struct formatter<exception_ptr> : public formatter<string> {
+      template<class FormatContext>
+      auto format (exception_ptr eptr, FormatContext& fc) {
+        return format_to(fc.out(), "Exception: {}", seastar::eptr_to_what(eptr));
+      }
+    };
 };
 
 namespace seastar {
@@ -855,19 +866,6 @@ namespace seastar {
       return std::formatter<std::string>::format(os.str(), fc);
     }
   };
-}
-
-
-template<>
-struct std::formatter<std::exception_ptr> : public std::formatter<std::string> {
-  template<class FormatContext>
-  auto format (std::exception_ptr eptr, FormatContext& fc) {
-    try {
-      std::rethrow_exception(eptr);
-    } catch (std::exception err) {
-      return std::format_to(fc.out(), "Exception: {}", err.what());
-    }
-  }
 };
 
 template<class>

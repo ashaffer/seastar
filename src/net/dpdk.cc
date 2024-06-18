@@ -21,6 +21,17 @@
 #ifdef SEASTAR_HAVE_DPDK
 
 #include <cinttypes>
+#include <memory>
+#include <atomic>
+#include <vector>
+#include <queue>
+#include <type_traits>
+#include <locale>
+#include <iterator>
+#include <list>
+#include <unordered_map>
+#include <string>
+#include <string_view>
 #include <seastar/core/posix.hh>
 #include "core/vla.hh"
 #include <seastar/net/virtio-interface.hh>
@@ -33,12 +44,10 @@
 #include <seastar/core/metrics.hh>
 #include <seastar/util/function_input_iterator.hh>
 #include <seastar/util/transform_iterator.hh>
-#include <atomic>
-#include <vector>
-#include <queue>
-#include <seastar/util/std-compat.hh>
-#include <boost/preprocessor.hpp>
 #include <seastar/net/ip.hh>
+#include <optional>
+// #include <seastar/util/std-compat.hh>
+#include <boost/preprocessor.hpp>
 #include <seastar/net/const.hh>
 #include <seastar/core/dpdk_rte.hh>
 #include <seastar/net/dpdk.hh>
@@ -308,7 +317,7 @@ uint32_t qp_mempool_obj_size(bool hugetlbfs_membackend)
                                                memory::huge_page_size);
     }
     //Tx
-    std::memset(&mp_obj_sz, 0, sizeof(mp_obj_sz));
+    memset(&mp_obj_sz, 0, sizeof(mp_obj_sz));
     mp_size += align_up(rte_mempool_calc_obj_size(inline_mbuf_size, 0,
                                                   &mp_obj_sz)+
                                         sizeof(struct rte_pktmbuf_pool_private),
@@ -395,7 +404,7 @@ public:
     }
 
     void update_xstats() {
-        auto len = rte_eth_xstats_get(_port_id, _xstats, _len);
+        [[maybe_unused]] auto len = rte_eth_xstats_get(_port_id, _xstats, _len);
         assert(len == _len);
     }
 
@@ -432,7 +441,7 @@ private:
     }
 
     void update_xstat_names() {
-        auto len = rte_eth_xstats_get_names(_port_id, _xstat_names, _len);
+        [[maybe_unused]] auto len = rte_eth_xstats_get_names(_port_id, _xstat_names, _len);
         assert(len == _len);
     }
 
@@ -459,7 +468,7 @@ class dpdk_device : public device {
     timer<> _stats_collector;
     const std::string _stats_plugin_name;
     const std::string _stats_plugin_inst;
-    seastar::metrics::metric_groups _metrics;
+    metrics::metric_groups _metrics;
     bool _is_i40e_device = false;
     bool _is_vmxnet3_device = false;
     dpdk_xstats _xstats;
@@ -1141,11 +1150,11 @@ build_mbuf_cluster:
             //
             if (_p) {
                 //
-                // Reset the compat::optional. This in particular is going
+                // Reset the std::optional. This in particular is going
                 // to call the "packet"'s destructor and reset the
                 // "optional" state to "nonengaged".
                 //
-                _p = compat::nullopt;
+                _p = std::nullopt;
 
             } else if (!_is_zc) {
                 return;
@@ -1177,7 +1186,7 @@ build_mbuf_cluster:
     private:
         struct rte_mbuf _mbuf;
         MARKER private_start;
-        compat::optional<packet> _p;
+        std::optional<packet> _p;
         rte_iova_t _buf_iova;
         uint16_t _data_off;
         // TRUE if underlying mbuf has been used in the zero-copy flow
@@ -1517,7 +1526,7 @@ private:
      * @return a "optional" object representing the newly received data if in an
      *         "engaged" state or an error if in a "disengaged" state.
      */
-    compat::optional<packet> from_mbuf(rte_mbuf* m);
+    std::optional<packet> from_mbuf(rte_mbuf* m);
 
     /**
      * Transform an LRO rte_mbuf cluster into the "packet" object.
@@ -1526,7 +1535,7 @@ private:
      * @return a "optional" object representing the newly received LRO packet if
      *         in an "engaged" state or an error if in a "disengaged" state.
      */
-    compat::optional<packet> from_mbuf_lro(rte_mbuf* m);
+    std::optional<packet> from_mbuf_lro(rte_mbuf* m);
 
 private:
     dpdk_device* _dev;
@@ -1540,7 +1549,7 @@ private:
     reactor::poller _rx_gc_poller;
     std::unique_ptr<void, free_deleter> _rx_xmem;
     tx_buf_factory _tx_buf_factory;
-    compat::optional<reactor::poller> _rx_poller;
+    std::optional<reactor::poller> _rx_poller;
     reactor::poller _tx_gc_poller;
     std::vector<rte_mbuf*> _tx_burst;
     uint16_t _tx_burst_idx = 0;
@@ -2166,7 +2175,7 @@ void dpdk_qp<HugetlbfsMemBackend>::rx_start() {
 }
 
 template<bool HugetlbfsMemBackend>
-inline compat::optional<packet>
+inline std::optional<packet>
 dpdk_qp<HugetlbfsMemBackend>::from_mbuf_lro(rte_mbuf* m)
 {
     //
@@ -2196,11 +2205,11 @@ dpdk_qp<HugetlbfsMemBackend>::from_mbuf_lro(rte_mbuf* m)
     // Drop if allocation failed
     rte_pktmbuf_free(m);
 
-    return compat::nullopt;
+    return std::nullopt;
 }
 
 template<bool HugetlbfsMemBackend>
-inline compat::optional<packet>
+inline std::optional<packet>
 dpdk_qp<HugetlbfsMemBackend>::from_mbuf(rte_mbuf* m)
 {
     if (!_dev->hw_features_ref().rx_lro || rte_pktmbuf_is_contiguous(m)) {
@@ -2217,7 +2226,7 @@ dpdk_qp<HugetlbfsMemBackend>::from_mbuf(rte_mbuf* m)
             // Drop if allocation failed
             rte_pktmbuf_free(m);
 
-            return compat::nullopt;
+            return std::nullopt;
         } else {
             rte_memcpy(buf, rte_pktmbuf_mtod(m, char*), len);
             rte_pktmbuf_free(m);
@@ -2230,7 +2239,7 @@ dpdk_qp<HugetlbfsMemBackend>::from_mbuf(rte_mbuf* m)
 }
 
 // template<>
-// inline compat::optional<packet>
+// inline std::optional<packet>
 // dpdk_qp<true>::from_mbuf_lro(rte_mbuf* m)
 // {
 //     _frags.clear();
@@ -2253,7 +2262,7 @@ dpdk_qp<HugetlbfsMemBackend>::from_mbuf(rte_mbuf* m)
 // }
 
 // template<>
-// inline compat::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
+// inline std::optional<packet> dpdk_qp<true>::from_mbuf(rte_mbuf* m)
 // {
 //     _rx_free_pkts.push_back(m);
 //     _num_rx_free_segs += m->nb_segs;
@@ -2338,7 +2347,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
         offload_info oi;
 
 
-        compat::optional<packet> p = from_mbuf(m);
+        std::optional<packet> p = from_mbuf(m);
 
         p->setReceivedAt(receivedAt);
         p->setPollDelay(pollDelay);
@@ -2532,8 +2541,7 @@ std::unique_ptr<net::device> create_dpdk_net_device(
 boost::program_options::options_description
 get_dpdk_net_options_description()
 {
-    boost::program_options::options_description opts(
-            "DPDK net options");
+    boost::program_options::options_description opts{};
 
     opts.add_options()
         ("dpdk-port-index",

@@ -23,7 +23,7 @@
 #include <gnutls/x509.h>
 #include <system_error>
 #include <format>
-
+#include <boost/range/iterator_range.hpp>
 #include <seastar/core/reactor.hh>
 #include <seastar/core/thread.hh>
 #include <seastar/core/sstring.hh>
@@ -32,7 +32,9 @@
 #include <seastar/core/print.hh>
 #include <seastar/net/tls.hh>
 #include <seastar/net/stack.hh>
-#include <seastar/util/std-compat.hh>
+#include <string>
+#include <string_view>
+// #include <seastar/util/std-compat.hh>
 
 namespace seastar {
 
@@ -432,6 +434,10 @@ static const sstring x509_key_key = "x509_key";
 static const sstring pkcs12_key = "pkcs12";
 static const sstring system_trust = "system_trust";
 
+template <typename CharT, typename Traits = std::char_traits<CharT>>
+std::string string_view_to_string(const std::basic_string_view<CharT, Traits>& v) {
+    return std::string(v);
+}
 typedef std::basic_string<tls::blob::value_type, tls::blob::traits_type, std::allocator<tls::blob::value_type>> buffer_type;
 
 void tls::credentials_builder::set_dh_level(dh_params::level level) {
@@ -439,19 +445,19 @@ void tls::credentials_builder::set_dh_level(dh_params::level level) {
 }
 
 void tls::credentials_builder::set_x509_trust(const blob& b, x509_crt_format fmt) {
-    _blobs.emplace(x509_trust_key, std::make_pair(compat::string_view_to_string(b), fmt));
+    _blobs.emplace(x509_trust_key, std::make_pair(string_view_to_string(b), fmt));
 }
 
 void tls::credentials_builder::set_x509_crl(const blob& b, x509_crt_format fmt) {
-    _blobs.emplace(x509_crl_key, std::make_pair(compat::string_view_to_string(b), fmt));
+    _blobs.emplace(x509_crl_key, std::make_pair(string_view_to_string(b), fmt));
 }
 
 void tls::credentials_builder::set_x509_key(const blob& cert, const blob& key, x509_crt_format fmt) {
-    _blobs.emplace(x509_key_key, std::make_tuple(compat::string_view_to_string(cert), compat::string_view_to_string(key), fmt));
+    _blobs.emplace(x509_key_key, std::make_tuple(string_view_to_string(cert), string_view_to_string(key), fmt));
 }
 
 void tls::credentials_builder::set_simple_pkcs12(const blob& b, x509_crt_format fmt, const sstring& password) {
-    _blobs.emplace(pkcs12_key, std::make_tuple(compat::string_view_to_string(b), fmt, password));
+    _blobs.emplace(pkcs12_key, std::make_tuple(string_view_to_string(b), fmt, password));
 }
 
 future<> tls::credentials_builder::set_system_trust() {
@@ -481,13 +487,15 @@ void tls::credentials_builder::apply_to(certificate_credentials& creds) const {
     {
         auto tr = _blobs.equal_range(x509_trust_key);
         for (auto& p : boost::make_iterator_range(tr.first, tr.second)) {
+        // for (auto&& p : tr) {
             auto v = boost::any_cast<std::pair<buffer_type, x509_crt_format>>(p.second);
             creds.set_x509_trust(v.first, v.second);
         }
     }
     {
-        auto tr = _blobs.equal_range(x509_crl_key);
+        auto tr = _blobs.equal_range(x509_crl_key);        
         for (auto& p : boost::make_iterator_range(tr.first, tr.second)) {
+        // for (auto&& p : tr) {
             auto v = boost::any_cast<std::pair<buffer_type, x509_crt_format>>(p.second);
             creds.set_x509_crl(v.first, v.second);
         }
@@ -495,6 +503,7 @@ void tls::credentials_builder::apply_to(certificate_credentials& creds) const {
     {
         auto tr = _blobs.equal_range(x509_key_key);
         for (auto& p : boost::make_iterator_range(tr.first, tr.second)) {
+        // for (auto&& p : tr) {
             auto v = boost::any_cast<std::tuple<buffer_type, buffer_type, x509_crt_format>>(p.second);
             creds.set_x509_key(std::get<0>(v), std::get<1>(v), std::get<2>(v));
         }

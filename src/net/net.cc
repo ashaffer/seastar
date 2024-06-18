@@ -19,10 +19,8 @@
  * Copyright (C) 2014 Cloudius Systems, Ltd.
  *
  */
-
-#include <seastar/util/std-compat.hh>
-#include <boost/asio/ip/address_v4.hpp>
-#include <boost/algorithm/string.hpp>
+#include <optional>
+// #include <seastar/util/std-compat.hh>
 #include <seastar/net/net.hh>
 #include <utility>
 #include <seastar/net/toeplitz.hh>
@@ -53,20 +51,17 @@ inline int ticks_to_ns (uint64_t delta) {
 using std::move;
 
 ipv4_addr::ipv4_addr(const std::string &addr) {
-    std::vector<std::string> items;
-    boost::split(items, addr, boost::is_any_of(":"));
-    if (items.size() == 1) {
-        ip = boost::asio::ip::address_v4::from_string(addr).to_ulong();
+    std::size_t pos = addr.find(':');
+    if (pos == std::string::npos) {
+        ip = ipv4_addr::from_string(addr.c_str()).ip;
         port = 0;
-    } else if (items.size() == 2) {
-        ip = boost::asio::ip::address_v4::from_string(items[0]).to_ulong();
-        port = std::stoul(items[1]);
     } else {
-        throw std::invalid_argument("invalid format: " + addr);
+        ip = ipv4_addr::from_string(addr.substr(0, pos)).ip;
+        port = atoi((const char *)(addr.c_str() + pos + 1));
     }
 }
 
-ipv4_addr::ipv4_addr(const std::string &addr, uint16_t port_) : ip(boost::asio::ip::address_v4::from_string(addr).to_ulong()), port(port_) {
+ipv4_addr::ipv4_addr(const std::string &addr, uint16_t port_) : ip(ipv4_addr::from_string(addr).ip), port(port_) {
 }
 
 ipv4_addr::ipv4_addr(const net::inet_address& a, uint16_t port)
@@ -212,7 +207,7 @@ void qp::configure_proxies(const std::map<unsigned, float>& cpu_weights) {
     //     return;
     // }
     register_packet_provider([this] {
-        compat::optional<packet> p;
+        std::optional<packet> p;
         if (!_proxy_packetq.empty()) {
             p = std::move(_proxy_packetq.front());
             _proxy_packetq.pop_front();
@@ -275,7 +270,7 @@ interface::interface(std::shared_ptr<device> dev)
     , _hw_address(_dev->hw_address())
     , _hw_features(_dev->hw_features()) {
     dev->local_queue().register_packet_provider([this, idx = 0u] () mutable {
-            compat::optional<packet> p;
+            std::optional<packet> p;
             for (size_t i = 0; i < _pkt_providers.size(); i++) {
                 auto l3p = _pkt_providers[idx++]();
                 if (idx == _pkt_providers.size())

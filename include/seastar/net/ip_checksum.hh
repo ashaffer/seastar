@@ -36,7 +36,7 @@ struct checksummer {
     __int128 csum = 0;
     bool odd = false;
     void sum(const char* data, size_t len);
-    void sum(const packet& p);
+    void sum(const ::seastar::net::packet& p);
     void sum(uint8_t data) {
         if (!odd) {
             csum += data << 8;

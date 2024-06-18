@@ -25,7 +25,7 @@
 #include <chrono>
 #include <functional>
 
-#include <seastar/core/abort_source.hh>
+// #include <seastar/core/abort_source.hh>
 #include <seastar/core/future.hh>
 #include <seastar/core/lowres_clock.hh>
 #include <seastar/core/timer.hh>
@@ -84,10 +84,10 @@ extern template future<> sleep_abortable<lowres_clock>(typename lowres_clock::du
 /// \param as the \ref abort_source that eventually notifies that the sleep
 ///            should be aborted.
 /// \return A \ref future which becomes ready when the sleep duration elapses.
-template <typename Clock = steady_clock_type>
-future<> sleep_abortable(typename Clock::duration dur, abort_source& as);
+// template <typename Clock = steady_clock_type>
+// future<> sleep_abortable(typename Clock::duration dur, abort_source& as);
 
-extern template future<> sleep_abortable<steady_clock_type>(typename steady_clock_type::duration, abort_source&);
-extern template future<> sleep_abortable<lowres_clock>(typename lowres_clock::duration, abort_source&);
+// extern template future<> sleep_abortable<steady_clock_type>(typename steady_clock_type::duration, abort_source&);
+// extern template future<> sleep_abortable<lowres_clock>(typename lowres_clock::duration, abort_source&);
 
 }

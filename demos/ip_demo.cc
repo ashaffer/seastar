@@ -19,21 +19,48 @@
  * Copyright (C) 2014 Cloudius Systems, Ltd.
  */
 
+#include <string>
 #include <seastar/net/arp.hh>
 #include <seastar/net/ip.hh>
 #include <seastar/net/net.hh>
 #include <seastar/core/reactor.hh>
-#include <seastar/net/virtio.hh>
+
+// #include <seastar/net/virtio.hh>
 
 using namespace seastar;
 using namespace net;
 
+
+void usage() {
+    // std::cout<<"Usage: echotest [-virtio|-dpdk]"<<std::endl;
+    // std::cout<<"   -virtio - use virtio backend (default)"<<std::endl;
+    std::cout<<"   -dpdk   - use dpdk-pmd backend"<<std::endl;
+}
+
 int main(int ac, char** av) {
+    std::unique_ptr<net::device> dnet;
+    net::qp* vnet;
+
     boost::program_options::variables_map opts;
     opts.insert(std::make_pair("tap-device", boost::program_options::variable_value(std::string("tap0"), false)));
 
-    auto vnet = create_virtio_net_device(opts);
-    vnet->set_local_queue(vnet->init_local_queue(opts, 0));
+    if (ac > 2) {
+        usage();
+        return -1;
+    }
+
+    // if ((ac == 1) || !std::strcmp(av[1], "-virtio")) {
+    //     dnet = create_virtio_net_device(opts);
+    if (!std::strcmp(av[1], "-dpdk")) {
+        dnet = create_dpdk_net_device();
+    } else {
+        usage();
+        return -1;
+    }
+
+    auto qp = dnet->init_local_queue(opts, 0);
+    vnet = qp.get();
+    dnet->set_local_queue(std::move(qp));
 
     interface netif(std::move(vnet));
     ipv4 inet(&netif);

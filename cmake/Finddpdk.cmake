@@ -97,43 +97,73 @@ find_package_handle_standard_args (dpdk
     ${dpdk_REQUIRED}
 )
 
+
+find_library (dpdk_PMD_VMXNET3_UIO_LIBRARY rte_pmd_vmxnet3_uio)
+find_library (dpdk_PMD_I40E_LIBRARY rte_pmd_i40e)
+find_library (dpdk_PMD_IXGBE_LIBRARY rte_pmd_ixgbe)
+find_library (dpdk_PMD_E1000_LIBRARY rte_pmd_e1000)
+find_library (dpdk_PMD_BNXT_LIBRARY rte_pmd_bnxt)
+find_library (dpdk_PMD_RING_LIBRARY rte_pmd_ring)
+find_library (dpdk_PMD_CXGBE_LIBRARY rte_pmd_cxgbe)
+find_library (dpdk_PMD_ENA_LIBRARY rte_pmd_ena)
+find_library (dpdk_PMD_ENIC_LIBRARY rte_pmd_enic)
+find_library (dpdk_PMD_FM10K_LIBRARY rte_pmd_fm10k)
+find_library (dpdk_PMD_NFP_LIBRARY rte_pmd_nfp)
+find_library (dpdk_PMD_QEDE_LIBRARY rte_pmd_qede)
+find_library (dpdk_RING_LIBRARY rte_ring)
+find_library (dpdk_KVARGS_LIBRARY rte_kvargs)
+find_library (dpdk_MEMPOOL_LIBRARY rte_mempool)
+find_library (dpdk_MEMPOOL_RING_LIBRARY rte_mempool_ring)
+find_library (dpdk_PMD_SFC_EFX_LIBRARY rte_pmd_sfc_efx)
+find_library (dpdk_HASH_LIBRARY rte_hash)
+find_library (dpdk_CMDLINE_LIBRARY rte_cmdline)
+find_library (dpdk_MBUF_LIBRARY rte_mbuf)
+find_library (dpdk_CFGFILE_LIBRARY rte_cfgfile)
+find_library (dpdk_EAL_LIBRARY rte_eal)
+find_library (dpdk_ETHDEV_LIBRARY rte_ethdev)
+find_library (dpdk_NET_LIBRARY rte_net)
+find_library (dpdk_TIMER_LIBRARY rte_timer)
+find_library (dpdk_PCI_LIBRARY rte_pci)
+find_library (dpdk_BUS_PCI_LIBRARY rte_bus_pci)
+find_library (dpdk_BUS_VDEV_LIBRARY rte_bus_vdev)
+
 if (dpdk_FOUND AND NOT (TARGET dpdk::dpdk))
   set (dpdk_LIBRARIES
-    ${dpdk_CFGFILE_LIBRARY}
-    ${dpdk_CMDLINE_LIBRARY}
-    ${dpdk_ETHDEV_LIBRARY}
-    ${dpdk_HASH_LIBRARY}
-    ${dpdk_MBUF_LIBRARY}
-    ${dpdk_EAL_LIBRARY}
-    ${dpdk_KVARGS_LIBRARY}
-    ${dpdk_MEMPOOL_LIBRARY}
-    ${dpdk_MEMPOOL_RING_LIBRARY}
-    ${dpdk_PMD_BNXT_LIBRARY}
-    ${dpdk_PMD_E1000_LIBRARY}
-    ${dpdk_PMD_ENA_LIBRARY}
-    ${dpdk_PMD_ENIC_LIBRARY}
-    ${dpdk_PMD_QEDE_LIBRARY}
-    ${dpdk_PMD_I40E_LIBRARY}
-    ${dpdk_PMD_IXGBE_LIBRARY}
-    ${dpdk_PMD_NFP_LIBRARY}
-    ${dpdk_PMD_RING_LIBRARY}
-    ${dpdk_PMD_VMXNET3_UIO_LIBRARY})
+    -lrte_cfgfile
+    -lrte_cmdline
+    -lrte_ethdev
+    -lrte_hash
+    -lrte_mbuf
+    -lrte_eal
+    -lrte_kvargs
+    -lrte_mempool
+    -lrte_mempool_ring
+    -lrte_pmd_bnxt
+    -lrte_pmd_e1000
+    -lrte_pmd_ena
+    -lrte_pmd_enic
+    -lrte_pmd_qede
+    -lrte_pmd_i40e
+    -lrte_pmd_ixgbe
+    -lrte_pmd_nfp
+    -lrte_pmd_ring
+    -lrte_pmd_vmxnet3_uio)
 
   if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
     set (dpdk_LIBRARIES
       ${dpdk_LIBRARIES}
-      ${dpdk_PMD_FM10K_LIBRARY}
-      ${dpdk_PMD_SFC_EFX_LIBRARY})
+      -lrte_pmd_fm10k
+      -lrte_pmd_sfc_efx)
   endif()
 
   set (dpdk_LIBRARIES
     ${dpdk_LIBRARIES}
-    ${dpdk_RING_LIBRARY}
-    ${dpdk_NET_LIBRARY}
-    ${dpdk_TIMER_LIBRARY}
-    ${dpdk_PCI_LIBRARY}
-    ${dpdk_BUS_PCI_LIBRARY}
-    ${dpdk_BUS_VDEV_LIBRARY})
+    -lrte_ring
+    -lrte_net
+    -lrte_timer
+    -lrte_pci
+    -lrte_bus_pci
+    -lrte_bus_vdev)
 
   #
   # pmd_vmxnet3_uio

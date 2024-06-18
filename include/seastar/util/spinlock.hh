@@ -80,18 +80,18 @@ namespace util {
 // Async-signal safe.
 // unlock() "synchronizes with" lock().
 class spinlock {
-    std::atomic<bool> _busy = { false };
+    ::std::atomic<bool> _busy = { false };
 public:
     spinlock() = default;
     spinlock(const spinlock&) = delete;
-    ~spinlock() { assert(!_busy.load(std::memory_order_relaxed)); }
+    ~spinlock() { assert(!_busy.load(::std::memory_order_relaxed)); }
     void lock() noexcept {
-        while (_busy.exchange(true, std::memory_order_acquire)) {
+        while (_busy.exchange(true, ::std::memory_order_acquire)) {
             internal::cpu_relax();
         }
     }
     void unlock() noexcept {
-        _busy.store(false, std::memory_order_release);
+        _busy.store(false, ::std::memory_order_release);
     }
 };
 

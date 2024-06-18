@@ -21,11 +21,12 @@
 
 #pragma once
 
-#include <seastar/util/std-compat.hh>
+// #include <seastar/util/std-compat.hh>
+#include <string_view>
 
 namespace seastar {
 
-void report_exception(compat::string_view message, std::exception_ptr) noexcept;
+void report_exception(std::string_view message, std::exception_ptr) noexcept;
 
 }
 

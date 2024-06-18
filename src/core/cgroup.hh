@@ -22,21 +22,20 @@
 #pragma once
 
 #include <string>
-#include <seastar/util/std-compat.hh>
+#include <optional>
 #include <set>
 
 namespace seastar {
 
 namespace cgroup {
 
-using compat::optional;
 using cpuset = std::set<unsigned>;
 
-optional<cpuset> cpu_set();
-size_t memory_limit();
+std::optional<cpuset> cpu_set();
+std::size_t memory_limit();
 
 template <typename T>
-optional<T> read_setting_as(std::string path);
+std::optional<T> read_setting_as(std::string path);
 
 }
 

@@ -1,0 +1,43 @@
+prefix=/home/andrew/seastar
+exec_prefix=${prefix}
+seastar_include_flags=-I/home/andrew/seastar/include -I/home/andrew/seastar/gen/include
+libdir=/home/andrew/seastar
+
+Name: Seastar
+Url: http://seastar-project.org
+Description: Advanced C++ framework for high-performance server applications on modern hardware.
+Version: 1.0
+
+# Platform dependencies.
+stdatomic_libs=
+stdfilesystem_libs=
+dl_libs=-ldl
+rt_libs=
+
+# Dependencies of dependencies.
+boost_system_libs=
+
+# Dependencies.
+boost_cflags=-I/usr/include
+boost_filesystem_libs=
+boost_program_options_libs=
+boost_thread_libs=${boost_system_libs} 
+c_ares_cflags=-I/usr/include
+c_ares_libs=/usr/lib/x86_64-linux-gnu/libcares.a
+cryptopp_cflags=-I/usr/include
+cryptopp_libs=/usr/lib/x86_64-linux-gnu/libcryptopp.a
+lksctp_tools_cflags=-I/usr/include
+lksctp_tools_libs=/usr/lib/x86_64-linux-gnu/libsctp.a
+numactl_cflags=-I/usr/include
+numactl_libs=/usr/lib/x86_64-linux-gnu/libnuma.a
+
+# Us.
+seastar_cflags=${seastar_include_flags} -std=c++23 -U_FORTIFY_SOURCE -DSEASTAR_API_LEVEL=2
+seastar_libs=${libdir}/libseastar.a  
+
+Requires: liblz4 >= 1.7.3
+Requires.private: gnutls >= 3.2.26, protobuf >= 2.5.0, 2 > hwloc >= 1.11.2, yaml-cpp >= 0.5.1
+Conflicts:
+Cflags: ${boost_cflags} ${c_ares_cflags} ${cryptopp_cflags} ${lksctp_tools_cflags} ${numactl_cflags} ${seastar_cflags}
+Libs: ${seastar_libs} ${boost_program_options_libs} ${boost_thread_libs} ${c_ares_libs} ${cryptopp_libs}
+Libs.private: ${dl_libs} ${rt_libs} ${boost_filesystem_libs} ${boost_thread_libs} ${lksctp_tools_libs} ${numactl_libs} ${stdatomic_libs} ${stdfilesystem_libs}

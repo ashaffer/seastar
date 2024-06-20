@@ -1,0 +1,21 @@
+prefix=/home/andrew/seastar
+exec_prefix=${prefix}
+libdir=/home/andrew/seastar
+
+Name: Seastar testing
+Url: http://seastar-project.org
+Description: Testing tools for libraries and applications built with Seastar
+Version: 1.0
+
+# Dependencies.
+boost_cflags=-I$<JOIN:/usr/include, -I>
+boost_unit_test_libs=
+
+# Us.
+seastar_testing_cflags=-DBoost_TEST_DYN_LINK
+seastar_testing_libs=${libdir}/$<TARGET_FILE_NAME:seastar_testing>
+
+Requires: seastar >= 1.0
+Conflicts:
+Cflags: ${boost_cflags} ${seastar_testing_cflags}
+Libs: ${boost_unit_test_libs} ${seastar_testing_libs}

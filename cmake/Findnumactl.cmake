@@ -35,6 +35,7 @@ mark_as_advanced (
 include (FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args (numactl
+  HINTS ${LIBRARY_PATH}
   REQUIRED_VARS
     numactl_LIBRARY
     numactl_INCLUDE_DIR)

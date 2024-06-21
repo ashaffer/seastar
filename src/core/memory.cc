@@ -1387,6 +1387,7 @@ void disable_large_allocation_warning() {
 
 void configure(std::vector<resource::memory> m, bool has_mbind,
         optional<std::string> hugetlbfs_path) {
+    printf("memory configure\n");
     size_t total = 0;
 
     for (auto&& x : m) {
@@ -1395,6 +1396,7 @@ void configure(std::vector<resource::memory> m, bool has_mbind,
     allocate_system_memory_fn sys_alloc = allocate_anonymous_memory;
 
     if (hugetlbfs_path) {
+        printf("hugetlbfs_path\n");
         // First resize the memory to be at least as big as 1 page
         // worth of the huge page size
         uint tmp_total = std::min(huge_page_size, total);
@@ -1406,7 +1408,9 @@ void configure(std::vector<resource::memory> m, bool has_mbind,
         sys_alloc = [fdp] (optional<void*> where, size_t how_much) {
             return allocate_hugetlbfs_memory(*fdp, where, how_much);
         };
+        printf("replace backing\n");
         cpu_mem.replace_memory_backing(sys_alloc);
+        printf("replaced\n");
     }
 
     cpu_mem.resize(total, sys_alloc);
@@ -1414,6 +1418,7 @@ void configure(std::vector<resource::memory> m, bool has_mbind,
     for (auto&& x : m) {
 #ifdef SEASTAR_HAVE_NUMA
         unsigned long nodemask{1UL << x.nodeid};
+        printf("node\n");
         if (has_mbind) {
             char *p{&cpu_mem.mem()[pos]};
 

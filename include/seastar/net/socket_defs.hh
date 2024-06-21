@@ -42,11 +42,11 @@ namespace seastar {
     public:
         socklen_t addr_length; ///!< actual size of the relevant 'u' member
         union {
-            ::sockaddr_storage sas;
-            ::sockaddr sa;
-            ::sockaddr_in in;
-            ::sockaddr_in6 in6;
-            ::sockaddr_un un;
+            sockaddr_storage sas;
+            sockaddr sa;
+            sockaddr_in in;
+            sockaddr_in6 in6;
+            sockaddr_un un;
         } u;
         socket_address(const sockaddr_in& sa) : addr_length{sizeof(::sockaddr_in)} {
             u.in = sa;
@@ -60,12 +60,12 @@ namespace seastar {
         socket_address(const net::inet_address&, uint16_t p = 0);
         explicit socket_address(const unix_domain_addr&);
         socket_address();
-        ::sockaddr& as_posix_sockaddr() { return u.sa; }
-        ::sockaddr_in& as_posix_sockaddr_in() { return u.in; }
-        ::sockaddr_in6& as_posix_sockaddr_in6() { return u.in6; }
-        const ::sockaddr& as_posix_sockaddr() const { return u.sa; }
-        const ::sockaddr_in& as_posix_sockaddr_in() const { return u.in; }
-        const ::sockaddr_in6& as_posix_sockaddr_in6() const { return u.in6; }
+        sockaddr& as_posix_sockaddr() { return u.sa; }
+        sockaddr_in& as_posix_sockaddr_in() { return u.in; }
+        sockaddr_in6& as_posix_sockaddr_in6() { return u.in6; }
+        const sockaddr& as_posix_sockaddr() const { return u.sa; }
+        const sockaddr_in& as_posix_sockaddr_in() const { return u.in; }
+        const sockaddr_in6& as_posix_sockaddr_in6() const { return u.in6; }
 
         socket_address(uint32_t, uint16_t p = 0);
 
@@ -80,7 +80,7 @@ namespace seastar {
         }
 
         net::inet_address addr() const;
-        ::in_port_t port() const;
+        in_port_t port() const;
         bool is_wildcard() const;
 
         bool operator==(const socket_address&) const;
@@ -107,7 +107,7 @@ namespace seastar {
         ipv4_addr(const std::string &addr, uint16_t port);
         ipv4_addr(const net::inet_address&, uint16_t);
         ipv4_addr(const socket_address &);
-        ipv4_addr(const ::in_addr&, uint16_t = 0);
+        ipv4_addr(const in_addr&, uint16_t = 0);
 
         bool is_ip_unspecified() const {
             return ip == 0;
@@ -129,7 +129,7 @@ namespace seastar {
         static inline ipv4_addr from_string (const char *str, std::error_code& ec) noexcept {
             ipv4_addr ip;
             int res = inet_pton(AF_INET, str, &ip.ip);
-            if (res != -1) {
+            if (res != 1) {
                 printf("ipv4_addr from_string error: %s\n", ec.message().c_str());
                 ec = std::make_error_code(std::errc::invalid_argument);
                 return ipv4_addr{};

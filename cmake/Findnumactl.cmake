@@ -28,6 +28,7 @@ find_library (numactl_LIBRARY
   HINTS ${LIBRARY_PATH}
   NAMES numa)
 
+mesage("here ${numactl_INCLUDE_DIR}, ${numactl_LIBRARY}")
 mark_as_advanced (
   numactl_INCLUDE_DIR
   numactl_LIBRARY)
@@ -35,7 +36,6 @@ mark_as_advanced (
 include (FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args (numactl
-  HINTS ${LIBRARY_PATH}
   REQUIRED_VARS
     numactl_LIBRARY
     numactl_INCLUDE_DIR)

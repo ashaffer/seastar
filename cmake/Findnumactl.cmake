@@ -28,7 +28,6 @@ find_library (numactl_LIBRARY
   HINTS ${LIBRARY_PATH}
   NAMES numa)
 
-message("here ${numactl_INCLUDE_DIR}, ${numactl_LIBRARY}")
 mark_as_advanced (
   numactl_INCLUDE_DIR
   numactl_LIBRARY)

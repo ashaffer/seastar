@@ -3724,6 +3724,7 @@ namespace seastar {
 
     void smp::configure(boost::program_options::variables_map configuration, reactor_config reactor_cfg)
     {
+        printf("smp configure\n");
     #ifndef SEASTAR_NO_EXCEPTION_HACK
         if (configuration.find("enable-glibc-exception-scaling-workaround")->second.as<bool>()) {
             init_phdr_cache();
@@ -3749,7 +3750,7 @@ namespace seastar {
 
         install_oneshot_signal_handler<SIGSEGV, sigsegv_action>();
         install_oneshot_signal_handler<SIGABRT, sigabrt_action>();
-
+        printf("post signals\n");
     #ifdef SEASTAR_HAVE_DPDK
         _using_dpdk = configuration.count("dpdk-pmd");
     #endif
@@ -3761,10 +3762,14 @@ namespace seastar {
         if (!thread_affinity && _using_dpdk) {
             std::cout << "warning: --thread-affinity 0 ignored in dpdk mode\n";
         }
+
+        printf("pre mbind\n");
         auto mbind = configuration.find("mbind")->second.as<bool>();
         if (!thread_affinity) {
             mbind = false;
         }
+
+        printf("post config mbind: %u\n", mbind);
 
         smp::count = 1;
         smp::_tmain = std::this_thread::get_id();
@@ -3816,7 +3821,7 @@ namespace seastar {
                 !configuration.find("network-stack")->second.as<std::string>().compare("native") &&
                 _using_dpdk) {
                 size_t dpdk_memory = dpdk::eal::mem_size(smp::count);
-
+                printf("dpdk_memory: %lu\n", dpdk_memory);
                 if (dpdk_memory >= rc.total_memory) {
                     std::cerr<<"Can't run with the given amount of memory: ";
                     std::cerr<<configuration.find("memory")->second.as<std::string>();
@@ -3839,7 +3844,7 @@ namespace seastar {
         std::optional<std::string> hugepages_path;
         if (configuration.count("hugepages")) {
             hugepages_path = configuration.find("hugepages")->second.as<std::string>();
-            printf("hugepages_path: %s\n", hugepages_path.c_str());
+            printf("hugepages_path: %s\n", (*hugepages_path).c_str());
         }
         auto mlock = false;
         if (configuration.count("lock-memory")) {

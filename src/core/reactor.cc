@@ -3808,6 +3808,7 @@ namespace seastar {
         smp::count = nr_cpus;
         _reactors.resize(nr_cpus);
         resource::configuration rc;
+        printf("parsing memory\n");
         if (configuration.count("memory")) {
             rc.total_memory = parse_memory_size(configuration.find("memory")->second.as<std::string>());
     #ifdef SEASTAR_HAVE_DPDK
@@ -3834,9 +3835,11 @@ namespace seastar {
         if (configuration.count("reserve-memory")) {
             rc.reserve_memory = parse_memory_size(configuration.find("reserve-memory")->second.as<std::string>());
         }
+        printf("post reserve\n");
         std::optional<std::string> hugepages_path;
         if (configuration.count("hugepages")) {
             hugepages_path = configuration.find("hugepages")->second.as<std::string>();
+            printf("hugepages_path: %s\n", hugepages_path.c_str());
         }
         auto mlock = false;
         if (configuration.count("lock-memory")) {
@@ -3849,6 +3852,7 @@ namespace seastar {
                 std::cout << std::format("warning: failed to mlockall: {}\n", strerror(errno));
             }
         }
+        printf("post lock\n");
 
         rc.cpus = smp::count;
         rc.cpu_set = std::move(cpu_set);
@@ -3858,12 +3862,14 @@ namespace seastar {
         for (auto& id : disk_config.device_ids()) {
             rc.num_io_queues.emplace(id, disk_config.num_io_queues(id));
         }
-
+        printf("post disk config\n");
         auto resources = resource::allocate(rc);
         std::vector<resource::cpu> allocations = std::move(resources.cpus);
+        printf("post resource allocate\n");
         if (thread_affinity) {
             smp::pin(allocations[0].cpu_id);
         }
+        printf("post pin\n");
 
         memory::configure(allocations[0].mem, mbind, hugepages_path);
 

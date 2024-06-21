@@ -1418,7 +1418,7 @@ void configure(std::vector<resource::memory> m, bool mbind,
             char *p{&cpu_mem.mem()[pos]};
 
             // cpu_mem.mem() + pos, x.bytes
-            long r{mbind(p, x.bytes, (int)MPOL_PREFERRED, &nodemask, std::numeric_limits<unsigned long>::digits, (unsigned int)MPOL_MF_MOVE)};
+            auto r{mbind((void *)p, x.bytes, (int)MPOL_PREFERRED, &nodemask, std::numeric_limits<unsigned long>::digits, (unsigned int)MPOL_MF_MOVE)};
 
             if (r == -1) {
                 char err[1000] = {};

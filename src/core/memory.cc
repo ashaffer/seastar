@@ -1413,7 +1413,7 @@ void configure(std::vector<resource::memory> m, bool mbind,
     size_t pos = 0;
     for (auto&& x : m) {
 #ifdef SEASTAR_HAVE_NUMA
-        unsigned long nodemask = 1UL << x.nodeid;
+        unsigned long nodemask{1UL << x.nodeid};
         if (mbind) {
             char *p{&cpu_mem.mem()[pos]};
 

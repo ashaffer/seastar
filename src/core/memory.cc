@@ -1435,6 +1435,8 @@ void configure(std::vector<resource::memory> m, bool has_mbind,
 #endif
         pos += x.bytes;
     }
+
+    printf("memory configure end\n");
 }
 
 statistics stats() {

@@ -3877,14 +3877,14 @@ namespace seastar {
         printf("post pin\n");
 
         memory::configure(allocations[0].mem, mbind, hugepages_path);
-
+        printf("post mem config\n");
         if (configuration.count("abort-on-seastar-bad-alloc")) {
             memory::enable_abort_on_allocation_failure();
         }
 
         bool heapprof_enabled = configuration.count("heapprof");
         memory::set_heap_profiling_enabled(heapprof_enabled);
-
+        printf("post heapprof\n");
     #ifdef SEASTAR_HAVE_DPDK
         if (smp::_using_dpdk) {
             dpdk::eal::cpuset cpus;
@@ -3892,7 +3892,9 @@ namespace seastar {
                 cpus[a.cpu_id] = true;
             }
 
+            printf("dpdk eal init\n");
             dpdk::eal::init(cpus, configuration);
+            printf("post dpdk eal init\n");
         }
     #endif
         // Better to put it into the smp class, but at smp construction time
@@ -3900,11 +3902,11 @@ namespace seastar {
         static std::latch reactors_registered(smp::count);
         static std::latch smp_queues_constructed(smp::count);
         static std::latch inited(smp::count);
-
+        printf("post latches\n");
         auto ioq_topology = std::move(resources.ioq_topology);
 
         std::unordered_map<dev_t, std::vector<io_queue*>> all_io_queues;
-
+        printf("all_io_queues\n");
         for (auto& id : disk_config.device_ids()) {
             auto io_info = ioq_topology.at(id);
             all_io_queues.emplace(id, io_info.coordinators.size());

@@ -3937,12 +3937,13 @@ namespace seastar {
             engine()._io_queues.emplace(dev_id, all_io_queues[dev_id][queue_idx]);
         };
 
+        printf("waiting event loops done\n");
         _all_event_loops_done.emplace(smp::count);
-
+        printf("event loops done\n");
         auto backend_selector = configuration.find("reactor-backend")->second.as<reactor_backend_selector>();
 
         unsigned i;
-
+        printf("creating backends\n");
         for (i = 1; i < smp::count; i++) {
             auto allocation = allocations[i];
             create_thread([configuration, &disk_config, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
@@ -3982,15 +3983,16 @@ namespace seastar {
               }
             });
         }
-
+        printf("backends created\n");
         init_default_smp_service_group();
+        printf("allocating reactors\n");
         try {
             allocate_reactor(0, backend_selector, reactor_cfg);
         } catch (const std::exception& e) {
             seastar_logger.error(e.what());
             _exit(1);
         }
-
+        printf("reactors allocated\n");
         _reactors[0] = &engine();
         for (auto& dev_id : disk_config.device_ids()) {
             alloc_io_queue(0, dev_id);
@@ -3998,12 +4000,14 @@ namespace seastar {
 
     #ifdef SEASTAR_HAVE_DPDK
         if (_using_dpdk) {
+            printf("launching dpdks\n");
             auto it = _thread_loops.begin();
             uint ll = 0;
             RTE_LCORE_FOREACH_SLAVE(i) {
                 rte_eal_remote_launch(dpdk_thread_adaptor, static_cast<void*>(&*(it++)), i);
                 ++ll;
             }
+            printf("dpdks launched\n");
         }
     #endif
 
@@ -4017,15 +4021,21 @@ namespace seastar {
         }
         alien::smp::_qs = alien::smp::create_qs(_reactors);
         smp_queues_constructed.wait();
+        printf("starting queues\n");
         start_all_queues();
+        printf("queues started\n");
         for (auto& dev_id : disk_config.device_ids()) {
             assign_io_queue(0, dev_id);
         }
+        printf("queues assigned\n");
         inited.wait();
+        printf("inited done\n");
 
         engine().configure(configuration);
+        printf("engine configured\n");
         // The raw `new` is necessary because of the private constructor of `lowres_clock_impl`.
         engine()._lowres_clock_impl = std::unique_ptr<lowres_clock_impl>(new lowres_clock_impl);
+        printf("lowres clock impl\n");
     }
 
     bool smp::poll_queues() {

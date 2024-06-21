@@ -1385,7 +1385,7 @@ void disable_large_allocation_warning() {
     cpu_mem.large_allocation_warning_threshold = std::numeric_limits<size_t>::max();
 }
 
-void configure(std::vector<resource::memory> m, bool mbind,
+void configure(std::vector<resource::memory> m, bool has_mbind,
         optional<std::string> hugetlbfs_path) {
     size_t total = 0;
 
@@ -1414,11 +1414,11 @@ void configure(std::vector<resource::memory> m, bool mbind,
     for (auto&& x : m) {
 #ifdef SEASTAR_HAVE_NUMA
         unsigned long nodemask{1UL << x.nodeid};
-        if (mbind) {
+        if (has_mbind) {
             char *p{&cpu_mem.mem()[pos]};
 
             // cpu_mem.mem() + pos, x.bytes
-            auto r{mbind((void *)p, x.bytes, (int)MPOL_PREFERRED, &nodemask, std::numeric_limits<unsigned long>::digits, (unsigned int)MPOL_MF_MOVE)};
+            auto r = mbind((void *)p, x.bytes, (int)MPOL_PREFERRED, &nodemask, std::numeric_limits<unsigned long>::digits, (unsigned int)MPOL_MF_MOVE);
 
             if (r == -1) {
                 char err[1000] = {};
@@ -1930,7 +1930,7 @@ reclaimer::~reclaimer() {
 void set_reclaim_hook(std::function<void (std::function<void ()>)> hook) {
 }
 
-void configure(std::vector<resource::memory> m, bool mbind, std::optional<std::string> hugepages_path) {
+void configure(std::vector<resource::memory> m, bool has_mbind, std::optional<std::string> hugepages_path) {
 }
 
 statistics stats() {

@@ -136,6 +136,7 @@ namespace resource {
 std::size_t calculate_memory(configuration c, std::size_t available_memory, float panic_factor = 1) {
     std::size_t default_reserve_memory = std::max<std::size_t>(1536 * 1024 * 1024, 0.07 * available_memory) * panic_factor;
     auto reserve = c.reserve_memory.value_or(default_reserve_memory);
+    printf("calculate_memory (reserve): %lu\n", reserve);
     std::size_t min_memory = 500'000'000;
     if (available_memory >= reserve + min_memory) {
         available_memory -= reserve;
@@ -143,7 +144,9 @@ std::size_t calculate_memory(configuration c, std::size_t available_memory, floa
         // Allow starting up even in low memory configurations (e.g. 2GB boot2docker VM)
         available_memory = min_memory;
     }
+    printf("calculate_memory (available): %lu\n", available_memory);    
     std::size_t mem = c.total_memory.value_or(available_memory);
+    printf("calculate_memory: %lu\n", mem);
     if (mem > available_memory) {
         throw std::runtime_error(std::format("insufficient physical memory: needed {} available {}", mem, available_memory));
     }

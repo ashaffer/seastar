@@ -1415,7 +1415,9 @@ void configure(std::vector<resource::memory> m, bool mbind,
 #ifdef SEASTAR_HAVE_NUMA
         unsigned long nodemask = 1UL << x.nodeid;
         if (mbind) {
-            auto r = mbind(cpu_mem.mem() + pos, x.bytes,
+            char *p{&cpu_mem.mem()[pos]};
+
+            auto r = mbind(p, //cpu_mem.mem() + pos, x.bytes,
                             MPOL_PREFERRED,
                             &nodemask, std::numeric_limits<unsigned long>::digits,
                             MPOL_MF_MOVE);

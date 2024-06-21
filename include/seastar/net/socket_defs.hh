@@ -128,8 +128,9 @@ namespace seastar {
 
         static inline ipv4_addr from_string (const char *str, std::error_code& ec) noexcept {
             ipv4_addr ip;
-            int res = ::inet_pton(AF_INET, str, &ip.ip);
+            int res = inet_pton(AF_INET, str, &ip.ip);
             if (res != -1) {
+                printf("ipv4_addr from_string error: %s\n", ec.message().c_str());
                 ec = std::make_error_code(std::errc::invalid_argument);
                 return ipv4_addr{};
             } 
@@ -167,8 +168,8 @@ namespace seastar {
         ipv6_addr(const std::string&);
         ipv6_addr(const std::string&, uint16_t port);
         ipv6_addr(const net::inet_address&, uint16_t = 0);
-        ipv6_addr(const ::in6_addr&, uint16_t = 0);
-        ipv6_addr(const ::sockaddr_in6&);
+        ipv6_addr(const in6_addr&, uint16_t = 0);
+        ipv6_addr(const sockaddr_in6&);
         ipv6_addr(const socket_address&);
 
         bool is_ip_unspecified() const;

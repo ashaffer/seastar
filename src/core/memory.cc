@@ -203,18 +203,18 @@ static char* mem_base() {
     static std::once_flag flag;
     std::call_once(flag, [] {
         size_t alloc = size_t(1) << 44;
-        auto r = ::mmap(NULL, 2 * alloc,
+        auto r = mmap(NULL, 2 * alloc,
                     PROT_NONE,
                     MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE,
                     -1, 0);
         if (r == MAP_FAILED) {
             abort();
         }
-        ::madvise(r, 2 * alloc, MADV_DONTDUMP);
+        madvise(r, 2 * alloc, MADV_DONTDUMP);
         auto cr = reinterpret_cast<char*>(r);
         known = align_up(cr, alloc);
-        ::munmap(cr, known - cr);
-        ::munmap(known + alloc, cr + 2 * alloc - (known + alloc));
+        munmap(cr, known - cr);
+        munmap(known + alloc, cr + 2 * alloc - (known + alloc));
     });
     return known;
 }
@@ -1415,7 +1415,7 @@ void configure(std::vector<resource::memory> m, bool mbind,
 #ifdef SEASTAR_HAVE_NUMA
         unsigned long nodemask = 1UL << x.nodeid;
         if (mbind) {
-            auto r = ::mbind(cpu_mem.mem() + pos, x.bytes,
+            auto r = mbind(cpu_mem.mem() + pos, x.bytes,
                             MPOL_PREFERRED,
                             &nodemask, std::numeric_limits<unsigned long>::digits,
                             MPOL_MF_MOVE);

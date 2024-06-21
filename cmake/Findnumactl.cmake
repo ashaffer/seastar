@@ -21,9 +21,11 @@
 #
 
 find_path (numactl_INCLUDE_DIR
+  HINTS ${CPLUS_INCLUDE_PATH}
   NAMES numaif.h)
 
 find_library (numactl_LIBRARY
+  HINTS ${LIBRARY_PATH}
   NAMES numa)
 
 mark_as_advanced (

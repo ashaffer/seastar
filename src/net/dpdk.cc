@@ -2155,14 +2155,18 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
     static_assert((inline_mbuf_data_size & (inline_mbuf_data_size - 1)) == 0,
                   "inline_mbuf_data_size has to be a power of two!");
 
+    printf("Setting up rx queues...\n");
     if (rte_eth_rx_queue_setup(_dev->port_idx(), _qid, default_ring_size,
             rte_eth_dev_socket_id(_dev->port_idx()),
             _dev->def_rx_conf(), _pktmbuf_pool_rx) < 0) {
+        printf("Failed to setup rx queues\n");
         rte_exit(EXIT_FAILURE, "Cannot initialize rx queue\n");
     }
 
+    printf("Setting up tx queues...\n");
     if (rte_eth_tx_queue_setup(_dev->port_idx(), _qid, default_ring_size,
             rte_eth_dev_socket_id(_dev->port_idx()), _dev->def_tx_conf()) < 0) {
+        printf("Failed to setup tx queues\n");
         rte_exit(EXIT_FAILURE, "Cannot initialize tx queue\n");
     }
 
@@ -2180,6 +2184,8 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
                         sm::description("Counts a number of ingress packets received by this HW queue but dropped by the SW due to low memory. "
                                         "A non-zero value indicates that seastar doesn't have enough memory to handle the packet reception or the memory is too fragmented.")),
     });
+
+    printf("Dpdk qp finalized\n");
 }
 
 #pragma GCC diagnostic pop

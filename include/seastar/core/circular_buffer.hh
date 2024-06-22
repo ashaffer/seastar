@@ -339,7 +339,9 @@ namespace seastar {
     inline
     void
     circular_buffer<T, Alloc>::maybe_expand(size_t nr) {
+        printf("maybe_expand\n");
         if (_impl.end - _impl.begin + nr > _impl.capacity) {
+            printf("calling expand\n");
             expand();
         }
     }
@@ -379,6 +381,7 @@ namespace seastar {
     inline
     void
     circular_buffer<T, Alloc>::push_back(const T& data) {
+        printf("circular_buffer const push_back\n");
         maybe_expand();
         printf("circular_buffer copy maybe expanded\n");
         auto p = &_impl.storage[mask(_impl.end)];
@@ -392,6 +395,7 @@ namespace seastar {
     inline
     void
     circular_buffer<T, Alloc>::push_back(T&& data) {
+        printf("circular_buffer move push_back\n");
         maybe_expand();
         printf("circular_buffer move maybe expanded\n");
         auto p = &_impl.storage[mask(_impl.end)];

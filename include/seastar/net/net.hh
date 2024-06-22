@@ -266,6 +266,9 @@ namespace seastar {
                 }
                 return sent;
             }
+            virtual size_t num_packets () const {
+                return 0;
+            }
             virtual void rx_start() {};
             void configure_proxies(const std::map<unsigned, float>& cpu_weights);
             // build REdirection TAble for cpu_weights map: target cpu -> weight

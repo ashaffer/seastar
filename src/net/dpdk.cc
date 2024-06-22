@@ -640,10 +640,16 @@ public:
 
 template <bool HugetlbfsMemBackend>
 class dpdk_qp : public net::qp {
-    uint num_packets = 0;
+    size_t _num_packets = 0;
     static std::unordered_map<uint64_t, bool> dma_mapped;
     class tx_buf_factory;
 
+public:
+    virtual size_t num_packets () const override {
+        return _num_packets;
+    }
+
+private:
     class tx_buf {
     friend class dpdk_qp;
     public:
@@ -2358,7 +2364,7 @@ void dpdk_qp<HugetlbfsMemBackend>::process_packets(
     struct rte_mbuf **bufs, uint16_t count, uint64_t receivedAt, uint64_t lastPoll)
 {
     uint64_t nr_frags = 0, bytes = 0;
-    num_packets += count;
+    _num_packets += count;
     uint64_t pollDelay = receivedAt > lastPoll
         ? ticks_to_us(receivedAt - lastPoll)
         : 0;

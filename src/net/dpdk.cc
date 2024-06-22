@@ -1946,6 +1946,8 @@ void* dpdk_qp<HugetlbfsMemBackend>::alloc_mempool_xmem(
         printf("Can't allocate %ld bytes aligned to %ld\n",
                xmem_size, page_size);
         return nullptr;
+    } else {
+        printf("Successfully alllocated mempool, xmem_size: %u, 0x%lx\n", num_bufs, xmem_size);
     }
 
     return xmem;

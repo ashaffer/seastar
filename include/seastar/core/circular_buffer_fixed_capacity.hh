@@ -275,7 +275,9 @@ template <typename T, size_t Capacity>
 inline
 void
 circular_buffer_fixed_capacity<T, Capacity>::push_back(const T& data) {
+    printf("fixed capacity push_back copy\n");
     new (obj(_end)) T(data);
+    printf("pushed back copy\n");
     ++_end;
 }
 
@@ -283,9 +285,9 @@ template <typename T, size_t Capacity>
 inline
 void
 circular_buffer_fixed_capacity<T, Capacity>::push_back(T&& data) {
-    printf("fixed capacity push_back\n");
+    printf("fixed capacity push_back move\n");
     new (obj(_end)) T(std::move(data));
-    printf("pushed back\n");
+    printf("pushed back move\n");
     ++_end;
 }
 

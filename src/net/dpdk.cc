@@ -1938,13 +1938,13 @@ void* dpdk_qp<HugetlbfsMemBackend>::alloc_mempool_xmem(
         get_mempool_xmem_size(num_bufs,
                               mp_obj_sz.elt_size + mp_obj_sz.header_size +
                                                    mp_obj_sz.trailer_size,
-                              page_bits);
+                              huge_page_bits);
 
     // Aligning to 2M causes the further failure in small allocations.
     // TODO: Check why - and fix.
     if (posix_memalign((void**)&xmem, huge_page_size, xmem_size)) {
         printf("Can't allocate %ld bytes aligned to %ld\n",
-               xmem_size, page_size);
+               xmem_size, huge_page_size);
         return nullptr;
     } else {
         printf("Successfully alllocated mempool, xmem_size: %u, 0x%lx\n", num_bufs, xmem_size);

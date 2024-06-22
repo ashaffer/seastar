@@ -1243,7 +1243,7 @@ build_mbuf_cluster:
 
                     int res = rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
                                                   xmem_size, page_size,
-                                                  nullptr, nullptr)
+                                                  nullptr, nullptr);
                     if (res <= 0) {
                         printf("Failed to populate mempool for Tx: %d (%lu, %lu)\n", res, xmem_size, page_size);
                         exit(1);

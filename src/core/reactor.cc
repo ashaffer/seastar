@@ -3899,9 +3899,9 @@ namespace seastar {
     #endif
         // Better to put it into the smp class, but at smp construction time
         // correct smp::count is not known.
-        static std::latch reactors_registered(smp::count);
-        static std::latch smp_queues_constructed(smp::count);
-        static std::latch inited(smp::count);
+        std::latch reactors_registered{smp::count};
+        std::latch smp_queues_constructed{smp::count};
+        std::latch inited{smp::count};
         printf("post latches\n");
         auto ioq_topology = std::move(resources.ioq_topology);
 
@@ -3943,10 +3943,11 @@ namespace seastar {
         auto backend_selector = configuration.find("reactor-backend")->second.as<reactor_backend_selector>();
 
         unsigned i;
+        unsigned rereg{0};
         printf("creating backends\n");
         for (i = 1; i < smp::count; i++) {
             auto allocation = allocations[i];
-            create_thread([configuration, &disk_config, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
+            create_thread([configuration, &disk_config, &rereg, &reactors_registered, &smp_queues_constructed, &inited, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
               try {
                 auto thread_name = std::format("reactor-{}", i);
                 pthread_setname_np(pthread_self(), thread_name.c_str());
@@ -3973,7 +3974,8 @@ namespace seastar {
                 for (auto& dev_id : disk_config.device_ids()) {
                     alloc_io_queue(i, dev_id);
                 }
-                printf("io queues allocated: %u\n", i);
+                ++rereg;
+                printf("io queues allocated: %u, %u\n", i, rereg);
                 reactors_registered.wait();
                 printf("reactors registered: %u\n", i);
                 smp_queues_constructed.wait();
@@ -4022,7 +4024,8 @@ namespace seastar {
             printf("dpdks launched\n");
         }
     #endif
-        printf("awaiting reactor registration\n");
+        ++rereg;
+        printf("reactors registered: 0, %u\n", rereg);
         reactors_registered.wait();
         printf("reactors registered\n");
         smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};

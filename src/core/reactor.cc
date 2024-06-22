@@ -3976,7 +3976,7 @@ namespace seastar {
                 }
                 printf("io queues allocated: %u\n", i);
                 ++rereg;                
-                printf("reactors registered: %u\n", i, rereg);
+                printf("reactors registered: %u, %u\n", i, rereg);
                 reactors_registered.wait();
                 ++ioqueues;
                 printf("waiting for smp queues: %u, %u\n", i, ioqueues);

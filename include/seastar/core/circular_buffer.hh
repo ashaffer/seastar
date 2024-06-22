@@ -276,7 +276,7 @@ namespace seastar {
     template <typename Func>
     inline
     void
-    circular_buffer<T, Alloc>::for_each(Func func) {
+    circular_buffer<T, Alloc>::for_each(Func&& func) {
         auto s = _impl.storage;
         auto m = _impl.capacity - 1;
         for (auto i = _impl.begin; i != _impl.end; ++i) {
@@ -302,14 +302,18 @@ namespace seastar {
     template <typename T, typename Alloc>
     void
     circular_buffer<T, Alloc>::expand(size_t new_cap) {
+        printf("expand: %lu\n", new_cap);
         auto new_storage = _impl.allocate(new_cap);
         auto p = new_storage;
         try {
+            printf("for_each transfer_pass1\n");
             for_each([this, &p] (T& obj) {
                 transfer_pass1(_impl, &obj, p);
                 p++;
             });
+            printf("first transfer\n");
         } catch (...) {
+            printf("exceptions encountered\n");
             while (p != new_storage) {
                 std::allocator_traits<Alloc>::destroy(_impl, --p);
             }
@@ -317,14 +321,18 @@ namespace seastar {
             throw;
         }
         p = new_storage;
+        printf("start transfer_pass2\n");
         for_each([this, &p] (T& obj) {
             transfer_pass2(_impl, &obj, p++);
         });
+        printf("finish transfer_pass2\n");
         std::swap(_impl.storage, new_storage);
         std::swap(_impl.capacity, new_cap);
         _impl.begin = 0;
         _impl.end = p - _impl.storage;
+        printf("deallocating\n");
         _impl.deallocate(new_storage, new_cap);
+        printf("expanded\n");
     }
 
     template <typename T, typename Alloc>
@@ -372,8 +380,11 @@ namespace seastar {
     void
     circular_buffer<T, Alloc>::push_back(const T& data) {
         maybe_expand();
+        printf("circular_buffer copy maybe expanded\n");
         auto p = &_impl.storage[mask(_impl.end)];
+        printf("circular_buffer copy constructing...\n");        
         std::allocator_traits<Alloc>::construct(_impl, p, data);
+        printf("circular_buffer copy constructed\n");        
         ++_impl.end;
     }
 
@@ -382,8 +393,11 @@ namespace seastar {
     void
     circular_buffer<T, Alloc>::push_back(T&& data) {
         maybe_expand();
+        printf("circular_buffer move maybe expanded\n");
         auto p = &_impl.storage[mask(_impl.end)];
+        printf("circular_buffer move constructing...\n");        
         std::allocator_traits<Alloc>::construct(_impl, p, std::move(data));
+        printf("circular_buffer move constructed\n");
         ++_impl.end;
     }
 

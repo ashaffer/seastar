@@ -198,6 +198,7 @@ qp::qp(bool register_copy_stats,
 }
 
 qp::~qp() {
+    printf("regular qp destroyed\n");
 }
 
 void qp::configure_proxies(const std::map<unsigned, float>& cpu_weights) {

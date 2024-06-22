@@ -1271,6 +1271,8 @@ build_mbuf_cluster:
             if (!_pool) {
                 printf("Failed to create mempool for Tx\n");
                 exit(1);
+            } else {
+                printf("Successfully created mempool for Tx\n");
             }
 
             //
@@ -1278,6 +1280,7 @@ build_mbuf_cluster:
             // above.
             //
             init_factory();
+            printf("Tx mbuf init factory complete\n");
         }
 
         /**

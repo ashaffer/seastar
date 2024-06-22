@@ -349,10 +349,10 @@ resources allocate(configuration c) {
             abort();
         }
     }
-    auto machine_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_MACHINE);
-    assert(hwloc_get_nbobjs_by_depth(topology, machine_depth) == 1);
-    auto machine = hwloc_get_obj_by_depth(topology, machine_depth, 0);
-    auto available_memory = machine->total_memory;
+    auto node_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_NUMANODE);
+    assert(hwloc_get_nbobjs_by_depth(topology, node_depth) == 1);
+    auto node = hwloc_get_obj_by_depth(topology, node_depth, 0);
+    auto available_memory = node->total_memory;
     std::size_t mem = calculate_memory(c, std::min(available_memory,
                                               cgroup::memory_limit()));
     unsigned available_procs = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);

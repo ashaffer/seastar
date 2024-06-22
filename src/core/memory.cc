@@ -1406,6 +1406,7 @@ void configure(std::vector<resource::memory> m, bool has_mbind,
         // a shared_ptr to allow sys_alloc to be copied around
         auto fdp = make_lw_shared<file_desc>(file_desc::temporary(*hugetlbfs_path));
         sys_alloc = [fdp] (optional<void*> where, size_t how_much) {
+            printf("allocate_hugetlbfs_memory: %lu\n", how_much);
             return allocate_hugetlbfs_memory(*fdp, where, how_much);
         };
         printf("replace backing\n");
@@ -1421,7 +1422,7 @@ void configure(std::vector<resource::memory> m, bool has_mbind,
         printf("node\n");
         if (has_mbind) {
             char *p{&cpu_mem.mem()[pos]};
-
+            printf("mbind: %lu\n", x.bytes);
             // cpu_mem.mem() + pos, x.bytes
             auto r = mbind((void *)p, x.bytes, (int)MPOL_PREFERRED, &nodemask, std::numeric_limits<unsigned long>::digits, (unsigned int)MPOL_MF_MOVE);
 

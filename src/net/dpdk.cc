@@ -1215,8 +1215,8 @@ build_mbuf_cluster:
             using namespace memory;
 
             sstring name = sstring(pktmbuf_pool_name) + to_sstring(port_idx) + sstring("_") + to_sstring(qid) + "_tx";
-            printf("Creating Tx mbuf pool '%s' [%u mbufs] ...\n",
-                   name.c_str(), mbufs_per_queue_tx);
+            printf("Creating Tx mbuf pool '%s' [%u mbufs]  [%hu inline_mbuf_size] [%hu mbuf_cache_size]...\n",
+                   name.c_str(), mbufs_per_queue_tx, inline_mbuf_size, mbuf_cache_size);
 
             if (HugetlbfsMemBackend) {
                 size_t xmem_size;
@@ -1248,10 +1248,10 @@ build_mbuf_cluster:
                                                   xmem_size, page_size,
                                                   nullptr, nullptr);
                     if (res <= 0) {
-                        printf("Failed to populate mempool for Tx: %d (%lx, %lx, %d)\n", res, xmem_size, page_size, EINVAL);
+                        printf("Failed to populate mempool for Tx: %d (0x%lx, 0x%lx, %d, 0x%lx)\n", res, xmem_size, page_size, EINVAL, (uint64_t)_xmem.get());
                         exit(1);
                     } else {
-                        printf("Successfully populated Tx mempool: %lx, %lx\n", xmem_size, page_size);
+                        printf("Successfully populated Tx mempool: 0x%lx, 0x%lx\n", xmem_size, page_size);
                     }
 
                     rte_mempool_obj_iter(_pool, rte_pktmbuf_init, nullptr);

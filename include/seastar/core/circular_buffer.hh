@@ -277,10 +277,12 @@ namespace seastar {
     inline
     void
     circular_buffer<T, Alloc>::for_each(Func&& func) {
-        auto s = _impl.storage;
-        auto m = _impl.capacity - 1;
-        for (auto i = _impl.begin; i != _impl.end; ++i) {
-            func(s[i & m]);
+        if (__impl.capacity > 0) {
+            auto s = _impl.storage;
+            auto m = _impl.capacity - 1;
+            for (auto i = _impl.begin; i != _impl.end; ++i) {
+                func(s[i & m]);
+            }
         }
     }
 
@@ -340,6 +342,7 @@ namespace seastar {
     void
     circular_buffer<T, Alloc>::maybe_expand(size_t nr) {
         printf("maybe_expand: %lu\n", nr);
+        printf("test: %lu, %lu, %lu\n", _impl.end, _impl.begin, _impl.capacity);
         if ((_impl.end - _impl.begin) + nr > _impl.capacity) {
             printf("calling expand\n");
             expand();

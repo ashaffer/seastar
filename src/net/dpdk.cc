@@ -306,17 +306,20 @@ uint32_t qp_mempool_obj_size(bool hugetlbfs_membackend)
 
     // Rx
     if (hugetlbfs_membackend) {
+        printf("Rx hugetlbfs memory backend, page size: 0x%lx\n", memory::huge_page_size);
         mp_size +=
             align_up(rte_mempool_calc_obj_size(mbuf_overhead, 0, &mp_obj_sz)+
                                         sizeof(struct rte_pktmbuf_pool_private),
                                                memory::huge_page_size);
     } else {
+        printf("Rx regular memory backend, page size: 0x%lx\n", memory::huge_page_size);
         mp_size +=
             align_up(rte_mempool_calc_obj_size(inline_mbuf_size, 0, &mp_obj_sz)+
                                         sizeof(struct rte_pktmbuf_pool_private),
                                                memory::huge_page_size);
     }
     //Tx
+    printf("Tx memory backend, page size: 0x%lx\n", memory::huge_page_size);
     memset(&mp_obj_sz, 0, sizeof(mp_obj_sz));
     mp_size += align_up(rte_mempool_calc_obj_size(inline_mbuf_size, 0,
                                                   &mp_obj_sz)+
@@ -1242,10 +1245,10 @@ build_mbuf_cluster:
                     rte_pktmbuf_pool_init(_pool, nullptr);
 
                     int res = rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
-                                                  xmem_size, page_size,
+                                                  xmem_size, huge_page_size,
                                                   nullptr, nullptr);
                     if (res <= 0) {
-                        printf("Failed to populate mempool for Tx: %d (%lu, %lu)\n", res, xmem_size, page_size);
+                        printf("Failed to populate mempool for Tx: %d (%lu, %lu)\n", res, xmem_size, huge_page_size);
                         exit(1);
                     }
 

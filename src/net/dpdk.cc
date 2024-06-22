@@ -1248,7 +1248,7 @@ build_mbuf_cluster:
                                                   xmem_size, page_size,
                                                   nullptr, nullptr);
                     if (res <= 0) {
-                        printf("Failed to populate mempool for Tx: %d (%lx, %lx)\n", res, xmem_size, page_size);
+                        printf("Failed to populate mempool for Tx: %d (%lx, %lx, %d)\n", res, xmem_size, page_size, EINVAL);
                         exit(1);
                     } else {
                         printf("Successfully populated Tx mempool: %lx, %lx\n", xmem_size, page_size);

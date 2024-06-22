@@ -62,7 +62,7 @@ namespace seastar {
             size_t end = 0;
             size_t capacity = 0;
         };
-        impl _impl;
+        impl _impl{};
     public:
         using value_type = T;
         using size_type = size_t;
@@ -342,7 +342,7 @@ namespace seastar {
     void
     circular_buffer<T, Alloc>::maybe_expand(size_t nr) {
         printf("maybe_expand: %lu\n", nr);
-        printf("test: %lu, %lu, %lu\n", _impl.end, _impl.begin, _impl.capacity);
+        printf("test: %lu\n", _impl.capacity);
         if ((_impl.end - _impl.begin) + nr > _impl.capacity) {
             printf("calling expand\n");
             expand();

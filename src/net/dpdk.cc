@@ -1962,8 +1962,8 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
     using namespace memory;
     sstring name = sstring(pktmbuf_pool_name) + to_sstring(_dev->port_idx()) + sstring("_") + to_sstring(_qid) + "_rx";
 
-    printf("Creating Rx mbuf pool '%s' [%u mbufs] ...\n",
-           name.c_str(), mbufs_per_queue_rx);
+    printf("Creating Rx mbuf pool '%s' [%u mbufs] [%hu inline_mbuf_size] [%hu mbuf_cache_size]...\n",
+           name.c_str(), mbufs_per_queue_rx, inline_mbuf_size, mbuf_cache_size);
 
     //
     // If we have a hugetlbfs memory backend we may perform a virt2phys
@@ -2134,8 +2134,12 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
         rte_exit(EXIT_FAILURE, "Cannot initialize mbuf pools\n");
     }
 
+    printf("Rx mbuf pool initialized\n");
+
     if (HugetlbfsMemBackend) {
+        printf("Initializing virt2iova table\n");
         build_virt2iova_table();
+        printf("Virt2iova table initialized\n");
     }
     // if (HugetlbfsMemBackend && !map_dma()) {
     //     rte_exit(EXIT_FAILURE, "Cannot map DMA\n");

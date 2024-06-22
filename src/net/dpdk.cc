@@ -1218,46 +1218,46 @@ build_mbuf_cluster:
             printf("Creating Tx mbuf pool '%s' [%u mbufs]  [%hu inline_mbuf_size] [%hu mbuf_cache_size]...\n",
                    name.c_str(), mbufs_per_queue_tx, inline_mbuf_size, mbuf_cache_size);
 
-            if (HugetlbfsMemBackend) {
-                size_t xmem_size;
+            // if (HugetlbfsMemBackend) {
+            //     size_t xmem_size;
 
-                _xmem.reset(dpdk_qp::alloc_mempool_xmem(mbufs_per_queue_tx,
-                                                        inline_mbuf_size,
-                                                        xmem_size));
-                if (!_xmem.get()) {
-                    printf("Can't allocate a memory for Tx buffers\n");
-                    exit(1);
-                }
+            //     _xmem.reset(dpdk_qp::alloc_mempool_xmem(mbufs_per_queue_tx,
+            //                                             inline_mbuf_size,
+            //                                             xmem_size));
+            //     if (!_xmem.get()) {
+            //         printf("Can't allocate a memory for Tx buffers\n");
+            //         exit(1);
+            //     }
 
-                //
-                // We are going to push the buffers from the mempool into
-                // the circular_buffer and then poll them from there anyway, so
-                // we prefer to make a mempool non-atomic in this case.
-                //
-                _pool =
-                    rte_mempool_create_empty(name.c_str(),
-                                             mbufs_per_queue_tx,
-                                             inline_mbuf_size,
-                                             mbuf_cache_size,
-                                             sizeof(struct rte_pktmbuf_pool_private),
-                                             rte_socket_id(), 0);
-                if (_pool) {
-                    rte_pktmbuf_pool_init(_pool, nullptr);
+            //     //
+            //     // We are going to push the buffers from the mempool into
+            //     // the circular_buffer and then poll them from there anyway, so
+            //     // we prefer to make a mempool non-atomic in this case.
+            //     //
+            //     _pool =
+            //         rte_mempool_create_empty(name.c_str(),
+            //                                  mbufs_per_queue_tx,
+            //                                  inline_mbuf_size,
+            //                                  mbuf_cache_size,
+            //                                  sizeof(struct rte_pktmbuf_pool_private),
+            //                                  rte_socket_id(), 0);
+            //     if (_pool) {
+            //         rte_pktmbuf_pool_init(_pool, nullptr);
 
-                    int res = rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
-                                                  xmem_size, page_size,
-                                                  nullptr, nullptr);
-                    if (res <= 0) {
-                        printf("Failed to populate mempool for Tx: %d (0x%lx, 0x%lx, %d, 0x%lx)\n", res, xmem_size, page_size, EINVAL, (uint64_t)_xmem.get());
-                        exit(1);
-                    } else {
-                        printf("Successfully populated Tx mempool: 0x%lx, 0x%lx\n", xmem_size, page_size);
-                    }
+            //         int res = rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
+            //                                       xmem_size, page_size,
+            //                                       nullptr, nullptr);
+            //         if (res <= 0) {
+            //             printf("Failed to populate mempool for Tx: %d (0x%lx, 0x%lx, %d, 0x%lx)\n", res, xmem_size, page_size, EINVAL, (uint64_t)_xmem.get());
+            //             exit(1);
+            //         } else {
+            //             printf("Successfully populated Tx mempool: 0x%lx, 0x%lx\n", xmem_size, page_size);
+            //         }
 
-                    rte_mempool_obj_iter(_pool, rte_pktmbuf_init, nullptr);
-                }
+            //         rte_mempool_obj_iter(_pool, rte_pktmbuf_init, nullptr);
+            //     }
 
-            } else {
+            // } else {
                 _pool =
                     rte_mempool_create(name.c_str(),
                                        mbufs_per_queue_tx, inline_mbuf_size,
@@ -1266,7 +1266,7 @@ build_mbuf_cluster:
                                        rte_pktmbuf_pool_init, nullptr,
                                        rte_pktmbuf_init, nullptr,
                                        rte_socket_id(), 0);
-            }
+            // }
 
             if (!_pool) {
                 printf("Failed to create mempool for Tx\n");

@@ -3953,30 +3953,42 @@ namespace seastar {
                 if (thread_affinity) {
                     smp::pin(allocation.cpu_id);
                 }
+                printf("calling memory configure on cpu: %u\n", i);
                 memory::configure(allocation.mem, mbind, hugepages_path);
+                printf("finished memory configure: %u\n", i);
                 memory::set_heap_profiling_enabled(heapprof_enabled);
                 sigset_t mask;
                 sigfillset(&mask);
                 for (auto sig : { SIGSEGV }) {
                     sigdelset(&mask, sig);
                 }
+                printf("heapprof enabled\n");
                 auto r = ::pthread_sigmask(SIG_BLOCK, &mask, NULL);
                 throw_pthread_error(r);
                 init_default_smp_service_group();
+                printf("allocating reactor %u\n", i);
                 allocate_reactor(i, backend_selector, reactor_cfg);
+                printf("reactor allocated: %u\n", i);
                 _reactors[i] = &engine();
                 for (auto& dev_id : disk_config.device_ids()) {
                     alloc_io_queue(i, dev_id);
                 }
+                printf("io queues allocated: %u\n", i);
                 reactors_registered.wait();
+                printf("reactors registered: %u\n", i);
                 smp_queues_constructed.wait();
+                printf("smp queues constructed: %u\n", i);
                 start_all_queues();
                 for (auto& dev_id : disk_config.device_ids()) {
                     assign_io_queue(i, dev_id);
                 }
+                printf("assigned io queues: %u\n", i);
                 inited.wait();
+                printf("initialized: %u\n", i);
                 engine().configure(configuration);
+                printf("configured: %u\n", i);
                 engine().run();
+                printf("engine run: %u\n", i);
               } catch (const std::exception& e) {
                   seastar_logger.error(e.what());
                   _exit(1);

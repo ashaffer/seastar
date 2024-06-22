@@ -1241,10 +1241,11 @@ build_mbuf_cluster:
                 if (_pool) {
                     rte_pktmbuf_pool_init(_pool, nullptr);
 
-                    if (rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
+                    int res = rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
                                                   xmem_size, page_size,
-                                                  nullptr, nullptr) <= 0) {
-                        printf("Failed to populate mempool for Tx\n");
+                                                  nullptr, nullptr)
+                    if (res <= 0) {
+                        printf("Failed to populate mempool for Tx: %d (%lu, %lu)\n", res, xmem_size, page_size);
                         exit(1);
                     }
 

@@ -252,7 +252,7 @@ void device::set_local_queue(std::unique_ptr<qp> dev, uint qid) {
     printf("queue set, setting destructor...\n");
     // _qid2cpuid[qid] = engine().cpu_id();
     engine().at_destroy([dev = std::move(dev)] {
-        printf("destroying dev", dev->num_packets());
+        printf("destroying dev: %lu packets\n", dev->num_packets());
     });
     printf("destructor set\n");
 }

@@ -339,8 +339,8 @@ namespace seastar {
     inline
     void
     circular_buffer<T, Alloc>::maybe_expand(size_t nr) {
-        printf("maybe_expand\n");
-        if (_impl.end - _impl.begin + nr > _impl.capacity) {
+        printf("maybe_expand: %lu\n", nr);
+        if ((_impl.end - _impl.begin) + nr > _impl.capacity) {
             printf("calling expand\n");
             expand();
         }

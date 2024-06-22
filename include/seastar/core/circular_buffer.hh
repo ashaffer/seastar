@@ -277,7 +277,7 @@ namespace seastar {
     inline
     void
     circular_buffer<T, Alloc>::for_each(Func&& func) {
-        if (__impl.capacity > 0) {
+        if (_impl.capacity > 0) {
             auto s = _impl.storage;
             auto m = _impl.capacity - 1;
             for (auto i = _impl.begin; i != _impl.end; ++i) {

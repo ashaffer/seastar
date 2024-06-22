@@ -257,9 +257,9 @@ cooking_ingredient (cryptopp
 if (Seastar_DPDK_QUAD)
   set (dpdk_quadruple ${Seastar_DPDK_QUAD})
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-  set (dpdk_quadruple arm64-armv8a-linuxapp-${CMAKE_C_COMPILER})
+  set (dpdk_quadruple arm64-armv8a-linux-${CMAKE_C_COMPILER})
 else()
-  set (dpdk_quadruple ${CMAKE_SYSTEM_PROCESSOR}-native-linuxapp-${CMAKE_C_COMPILER})
+  set (dpdk_quadruple ${CMAKE_SYSTEM_PROCESSOR}-native-linux-${CMAKE_C_COMPILER})
 endif()
 
 set (dpdk_args

@@ -594,6 +594,7 @@ public:
     }
 
     ~dpdk_device() {
+        printf("dpdk_device destructor called\n");
         _stats_collector.cancel();
     }
 

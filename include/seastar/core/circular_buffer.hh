@@ -99,7 +99,7 @@ namespace seastar {
         T& operator[](size_t idx);
         const T& operator[](size_t idx) const;
         template <typename Func>
-        void for_each(Func func);
+        void for_each(Func&& func);
         // access an element, may return wrong or destroyed element
         // only useful if you do not rely on data accuracy (e.g. prefetch)
         T& access_element_unsafe(size_t idx);

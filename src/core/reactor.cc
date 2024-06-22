@@ -3976,7 +3976,7 @@ namespace seastar {
                 }
                 printf("io queues allocated: %u\n", i);
                 ++rereg;                
-                printf("reactors registered: %u, %u\n", i, rereg);
+                printf("awaiting reactors registered: %u, %u\n", i, rereg);
                 reactors_registered.wait();
                 ++ioqueues;
                 printf("waiting for smp queues: %u, %u\n", i, ioqueues);
@@ -4027,7 +4027,7 @@ namespace seastar {
         }
     #endif
         ++rereg;
-        printf("reactors registered: 0, %u\n", rereg);
+        printf("awaiting reactors registered: 0, %u\n", rereg);
         reactors_registered.wait();
         printf("reactors registered\n");
         smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};

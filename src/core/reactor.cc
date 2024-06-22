@@ -3483,7 +3483,7 @@ namespace seastar {
 
     void smp::arrive_at_event_loop_end() {
         if (_all_event_loops_done) {
-            _all_event_loops_done->wait();
+            _all_event_loops_done->arrive_and_wait();
         }
     }
 
@@ -3977,17 +3977,17 @@ namespace seastar {
                 printf("io queues allocated: %u\n", i);
                 ++rereg;                
                 printf("awaiting reactors registered: %u, %u\n", i, rereg);
-                reactors_registered.wait();
+                reactors_registered.arrive_and_wait();
                 ++ioqueues;
                 printf("waiting for smp queues: %u, %u\n", i, ioqueues);
-                smp_queues_constructed.wait();
+                smp_queues_constructed.arrive_and_wait();
                 printf("smp queues constructed: %u\n", i);
                 start_all_queues();
                 for (auto& dev_id : disk_config.device_ids()) {
                     assign_io_queue(i, dev_id);
                 }
                 printf("assigned io queues: %u\n", i);
-                inited.wait();
+                inited.arrive_and_wait();
                 printf("initialized: %u\n", i);
                 engine().configure(configuration);
                 printf("configured: %u\n", i);
@@ -4028,7 +4028,7 @@ namespace seastar {
     #endif
         ++rereg;
         printf("awaiting reactors registered: 0, %u\n", rereg);
-        reactors_registered.wait();
+        reactors_registered.arrive_and_wait();
         printf("reactors registered\n");
         smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};
         for(unsigned i = 0; i < smp::count; i++) {
@@ -4040,7 +4040,7 @@ namespace seastar {
         alien::smp::_qs = alien::smp::create_qs(_reactors);
         ++ioqueues;
         printf("waiting for io queues: 0, %u\n", ioqueues);
-        smp_queues_constructed.wait();
+        smp_queues_constructed.arrive_and_wait();
         printf("starting queues\n");
         start_all_queues();
         printf("queues started\n");
@@ -4048,7 +4048,7 @@ namespace seastar {
             assign_io_queue(0, dev_id);
         }
         printf("queues assigned\n");
-        inited.wait();
+        inited.arrive_and_wait();
         printf("inited done\n");
 
         engine().configure(configuration);

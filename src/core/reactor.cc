@@ -4010,8 +4010,9 @@ namespace seastar {
             printf("dpdks launched\n");
         }
     #endif
-
+        printf("awaiting reactor registration\n");
         reactors_registered.wait();
+        printf("reactors registered\n");
         smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};
         for(unsigned i = 0; i < smp::count; i++) {
             smp::_qs[i] = reinterpret_cast<smp_message_queue*>(operator new[] (sizeof(smp_message_queue) * smp::count));

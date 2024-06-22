@@ -1242,13 +1242,15 @@ build_mbuf_cluster:
                                              sizeof(struct rte_pktmbuf_pool_private),
                                              rte_socket_id(), 0);
                 if (_pool) {
+                    size_t pgsz{1 << 21};
+
                     rte_pktmbuf_pool_init(_pool, nullptr);
 
                     int res = rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
-                                                  xmem_size, huge_page_size,
+                                                  xmem_size, pgsz,
                                                   nullptr, nullptr);
                     if (res <= 0) {
-                        printf("Failed to populate mempool for Tx: %d (%lu, %lu)\n", res, xmem_size, huge_page_size);
+                        printf("Failed to populate mempool for Tx: %d (%lx, %lx)\n", res, xmem_size, pgsz);
                         exit(1);
                     }
 

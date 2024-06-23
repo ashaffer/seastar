@@ -986,6 +986,8 @@ namespace seastar {
                 }
             }
         }
+        printf("task queue 2: 0x%lx\n", (uint64_t)std::addressof(_at_destroy_tasks->_q));
+
     }
 
     bool reactor::wait_and_process(int timeout, const sigset_t* active_sigmask) {
@@ -1339,6 +1341,9 @@ namespace seastar {
             _network_stack_ready_promise.set_value(std::move(stack));
         });
 
+        printf("task queue configure 1: 0x%lx\n", (uint64_t)std::addressof(_at_destroy_tasks->_q));
+
+
         _handle_sigint = !vm.count("no-handle-interrupt");
         auto task_quota = vm.find("task-quota-ms")->second.as<double>() * 1ms;
         _task_quota = std::chrono::duration_cast<sched_clock::duration>(task_quota);
@@ -1348,6 +1353,7 @@ namespace seastar {
         csdc.threshold = blocked_time;
         csdc.stall_detector_reports_per_minute = vm.find("blocked-reactor-reports-per-minute")->second.as<unsigned>();
         _cpu_stall_detector->update_config(csdc);
+        printf("task queue configure 2: 0x%lx\n", (uint64_t)std::addressof(_at_destroy_tasks->_q));
 
         _max_task_backlog = vm.find("max-task-backlog")->second.as<unsigned>();
         _max_poll_time = vm.find("idle-poll-time-us")->second.as<unsigned>() * 1us;
@@ -1368,6 +1374,7 @@ namespace seastar {
         _force_io_getevents_syscall = vm.find("force-aio-syscalls")->second.as<bool>();
         aio_nowait_supported = vm.find("linux-aio-nowait")->second.as<bool>();
         _have_aio_fsync = vm.find("aio-fsync")->second.as<bool>();
+        printf("task queue configure 3: 0x%lx\n", (uint64_t)std::addressof(_at_destroy_tasks->_q));
     }
 
     pollable_fd
@@ -3732,6 +3739,7 @@ namespace seastar {
             init_phdr_cache();
         }
     #endif
+        printf("smp::configure configure 1: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks->_q));
 
         // Mask most, to prevent threads (esp. dpdk helper threads)
         // from servicing a signal.  Individual reactors will unmask signals
@@ -3768,6 +3776,7 @@ namespace seastar {
         if (!thread_affinity) {
             mbind = false;
         }
+        printf("smp::configure configure 2: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks->_q));
 
         smp::count = 1;
         smp::_tmain = std::this_thread::get_id();
@@ -3802,6 +3811,7 @@ namespace seastar {
         } else if (cgroup_cpu_set) {
             cpu_set = *cgroup_cpu_set;
         }
+        printf("smp::configure configure 3: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks->_q));
 
         if (configuration.count("smp")) {
             nr_cpus = configuration.find("smp")->second.as<unsigned>();

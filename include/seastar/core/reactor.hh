@@ -776,6 +776,7 @@ namespace seastar {
         void at_destroy(Func&& func) {
             auto&& t{make_task(default_scheduling_group(), std::forward<Func>(func))};
             printf("made task, pushing...\n");
+            printf("_task_queues front: 0x%lx\n", std:addressof(_task_queues.front().get()->_q));
             auto *p{std::addressof(_at_destroy_tasks->_q)};
             auto *p2{std::addressof(_at_destroy_tasks->_tasks_processed)};
             auto *p3{std::addressof(_at_destroy_tasks->_vruntime)};

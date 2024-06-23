@@ -365,7 +365,7 @@ namespace seastar {
                 _begin = new_start.idx;
                 return last;
             } else {
-                auto new_end = std::move(last, end(), first);
+                auto new_end = std::move(last);
                 for (auto i = new_end, e = end(); i < e; ++i) {
                     traits::destroy(_impl, this[i]);
                 }

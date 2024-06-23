@@ -94,21 +94,8 @@ namespace seastar {
                 traits::deallocate(_alloc, _impl, _capacity);
             }
         }
-    private:
-        inline std::size_t mask (std::size_t idx) const noexcept {
-            return idx % _capacity;
-        }
 
-        inline void maybe_expand (std::size_t nr = 1) {
-            printf("maybe_expand: %lu, %lu\n", nr, _capacity);
-            if ((_end - _begin) + nr > _capacity) {
-                printf("calling expand\n");
-                expand();
-            }
-        }
-
-        void expand () {
-            std::size_t new_cap{_capacity * 2};
+        inline void reserve (std::size_t new_cap) noexcept {
             T *new_storage{traits::allocate(_alloc, new_cap)};
             T *p{new_storage};
 
@@ -138,6 +125,19 @@ namespace seastar {
             printf("deallocating\n");
             traits::deallocate(_alloc, new_storage, new_cap);
             printf("expanded\n");
+
+        }
+    private:
+        inline std::size_t mask (std::size_t idx) const noexcept {
+            return idx % _capacity;
+        }
+
+        inline void maybe_expand (std::size_t nr = 1) noexcept {
+            printf("maybe_expand: %lu, %lu\n", nr, _capacity);
+            if ((_end - _begin) + nr > _capacity) {
+                printf("calling expand\n");
+                reserve(_capacity * 2);
+            }
         }
 
         struct Iterator {

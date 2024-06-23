@@ -749,7 +749,7 @@ namespace seastar {
             , _reciprocal_shares_times_2_power_32((uint64_t(1) << 32) / _shares)
             , _id(id)
             , _name(name) {
-        printf("task_queue: 0x%lx, 0x%lx\n", (uint64_t)this, (uint64_t)&_q);
+        printf("task_queue: 0x%lx, 0x%lx, 0x%lx, 0x%lx\n", (uint64_t)this, (uint64_t)&_tasks_processed, (uint64_t)&_q, (uint64_t)&_name);
         register_stats();
     }
 

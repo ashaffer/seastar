@@ -329,7 +329,7 @@ namespace seastar {
         }
 
         inline void push_back(T&& data) {
-            printf("circular_buffer move push_back\n");
+            printf("circular_buffer move push_back: 0x%lx\n", (uint64_t)this);
             maybe_expand();
             printf("circular_buffer move maybe expanded\n");
             printf("circular_buffer move constructing...\n");        

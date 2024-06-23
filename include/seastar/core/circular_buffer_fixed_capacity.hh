@@ -69,7 +69,7 @@ namespace seastar {
         using pointer = T*;
         using const_reference = const T&;
         using const_pointer = const T*;
-        using difference_type = std::ssize_t;
+        using difference_type = ssize_t;
     public:
         struct Iterator {
             T *operator->() const noexcept { 

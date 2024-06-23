@@ -103,7 +103,10 @@ namespace seastar {
             }
         }
 
-        inline void reserve (std::size_t new_cap) noexcept {
+        inline void reserve (std::size_t new_cap) {
+            if (new_cap > 1024) {
+                throw std::runtime_error("test");
+            }
             ++stats.reserves;
             printf("reserve called: %lu new capacity, %lu begin, %lu end, %lu size, %lu old capacity\n", new_cap, _begin, _end, size(), _capacity);
             stats.print();

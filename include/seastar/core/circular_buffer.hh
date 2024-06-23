@@ -76,44 +76,40 @@ namespace seastar {
         using pointer = T*;
         using const_reference = const T&;
         using const_pointer = const T*;
-    public:
+
         circular_buffer() = default;
-        circular_buffer(circular_buffer&& X) noexcept;
-        circular_buffer(const circular_buffer& X) = delete;
-        ~circular_buffer();
-        circular_buffer& operator=(const circular_buffer&) = delete;
-        circular_buffer& operator=(circular_buffer&& b) noexcept;
-        void push_front(const T& data);
-        void push_front(T&& data);
-        template <typename... A>
-        void emplace_front(A&&... args);
-        void push_back(const T& data);
-        void push_back(T&& data);
-        template <typename... A>
-        void emplace_back(A&&... args);
-        T& front();
-        const T& front() const;
-        T& back();
-        const T& back() const;
-        void pop_front();
-        void pop_back();
-        bool empty() const;
-        size_t size() const;
-        size_t capacity() const;
-        void reserve(size_t);
-        void clear();
-        T& operator[](size_t idx);
-        // const T& operator[](size_t idx) const;
-        template <typename Func>
-        void for_each(Func&& func);
-        // access an element, may return wrong or destroyed element
-        // only useful if you do not rely on data accuracy (e.g. prefetch)
-        T& access_element_unsafe(size_t idx);
+        
+        inline circular_buffer(circular_buffer&& x) noexcept : _impl(std::move(x._impl)), _begin{x._begin}, _end{x._end}, _capacity{x._capacity} {
+            x._impl = nullptr;
+            x._begin = 0;
+            x._end = 0;
+            x._capacity = 0;
+        }
+
+        inline ~circular_buffer() {
+            if (_impl != nullptr) {
+                for_each([] (T& obj) {
+                    std::destroy_at(std::addressof(obj));
+                });
+                traits::deallocate(_alloc, _impl, _capacity);
+            }
+        }
     private:
+        inline size_t mask(size_t idx) const {
+            return idx & (_capacity - 1);
+        }
+
+        inline void maybe_expand(size_t nr = 1) {
+            printf("test: %lu\n", _capacity);
+            printf("maybe_expand: %lu\n", nr);
+            if ((_end - _begin) + nr > _capacity) {
+                printf("calling expand\n");
+                expand();
+            }
+        }
+
         void expand();
         void realloc(size_t);
-        void maybe_expand(size_t nr = 1);
-        size_t mask(size_t idx) const;
 
         struct Iterator {
             T *operator->() const noexcept { 
@@ -231,10 +227,6 @@ namespace seastar {
             return _impl[mask(_begin + idx)];
         }
 
-        inline size_t mask(size_t idx) const {
-            return idx & (_capacity - 1);
-        }
-
         inline bool empty() const {
             return _begin == _end;
         }
@@ -256,13 +248,6 @@ namespace seastar {
 
         inline void clear() {
             erase(begin(), end());
-        }
-
-        inline circular_buffer(circular_buffer&& x) noexcept : _impl(std::move(x._impl)), _begin{x._begin}, _end{x._end}, _capacity{x._capacity} {
-            x._impl = nullptr;
-            x._begin = 0;
-            x._end = 0;
-            x._capacity = 0;
         }
 
         inline T& front() {
@@ -295,7 +280,7 @@ namespace seastar {
             return _impl[mask(_begin + idx)];
         }
 
-        inline circular_buffer<T>&  operator=(circular_buffer&& x) noexcept {
+        inline circular_buffer<T>& operator=(circular_buffer&& x) noexcept {
             if (this != &x) {
                 this->~circular_buffer();
                 new (this) circular_buffer(std::move(x));
@@ -310,7 +295,80 @@ namespace seastar {
             }
         }
 
-        iterator erase (iterator first, iterator last);
+        inline void push_front(const T& data) {
+            maybe_expand();
+            --_begin;
+            std::construct_at(std::addressof(_impl[_begin]), data);
+        }
+
+        inline void push_front(T&& data) {
+            maybe_expand();
+            --_begin;
+            std::construct_at(std::addressof(_impl[mask(_begin)]), std::move(data));
+        }
+
+        template <typename... Args>
+        inline void emplace_front(Args&&... args) {
+            maybe_expand();
+            --_begin;
+            std::construct_at(std::addressof(_impl[mask(_begin )]), std::forward<Args>(args)...);
+        }
+
+        inline void push_back(const T& data) {
+            printf("circular_buffer const push_back\n");
+            maybe_expand();
+            printf("circular_buffer copy maybe expanded\n");
+            std::construct_at(std::addressof(_impl[_end]), data);
+            printf("circular_buffer copy constructed\n");        
+            ++_end;
+        }
+
+        inline void push_back(T&& data) {
+            printf("circular_buffer move push_back\n");
+            maybe_expand();
+            printf("circular_buffer move maybe expanded\n");
+            printf("circular_buffer move constructing...\n");        
+            std::construct_at(std::addressof(_impl[_end]), std::move(data));
+            printf("circular_buffer move constructed\n");
+            ++_end;
+        }
+
+        template <typename... Args>
+        inline void emplace_back(Args&&... args) {
+            maybe_expand();
+            std::construct_at(std::addressof(_impl[_end]), std::forward<Args>(args)...);
+            ++_end;
+        }
+
+        inline T& access_element_unsafe(size_t idx) {
+            return _impl[mask(_begin + idx)];
+        }
+
+        inline iterator erase(iterator first, iterator last) {
+            static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
+            if (first == last) {
+                return last;
+            }
+            // Move to the left or right depending on which would result in least amount of moves.
+            // This also guarantees that iterators will be stable when removing from either front or back.
+            if (std::distance(begin(), first) < std::distance(last, end())) {
+                auto new_start = std::move_backward(begin(), first, last);
+                for (auto i = begin(); i < new_start; ++i) {
+                    traits::destroy(_impl, &*i);
+                }
+
+                _begin = new_start.idx;
+                return last;
+            } else {
+                auto new_end = std::move(last, end(), first);
+                for (auto i = new_end, e = end(); i < e; ++i) {
+                    traits::destroy(_impl, this[i]);
+                }
+
+                _end = new_end.idx;
+                return first;
+            }
+        }
     };
 
     // template <typename T>
@@ -319,107 +377,4 @@ namespace seastar {
     // circular_buffer<T>::operator[](size_t idx) const {
     //     return _impl[mask(_begin + idx)];
     // }
-
-    template <typename T>
-    inline circular_buffer<T>::~circular_buffer() {
-        if (_impl != nullptr) {
-            for_each([] (T& obj) {
-                std::destroy_at(std::addressof(obj));
-            });
-            traits::deallocate(_alloc, _impl, _capacity);
-        }
-    }
-
-    template <typename T>
-    inline void circular_buffer<T>::maybe_expand(size_t nr) {
-        printf("test: %lu\n", _capacity);
-        printf("maybe_expand: %lu\n", nr);
-        if ((_end - _begin) + nr > _capacity) {
-            printf("calling expand\n");
-            expand();
-        }
-    }
-
-    template <typename T>
-    inline void circular_buffer<T>::push_front(const T& data) {
-        maybe_expand();
-        --_begin;
-        std::construct_at(std::addressof(_impl[_begin]), data);
-    }
-
-    template <typename T>
-    inline void circular_buffer<T>::push_front(T&& data) {
-        maybe_expand();
-        --_begin;
-        std::construct_at(std::addressof(_impl[mask(_begin)]), std::move(data));
-    }
-
-    template <typename T>
-    template <typename... Args>
-    inline void circular_buffer<T>::emplace_front(Args&&... args) {
-        maybe_expand();
-        --_begin;
-        std::construct_at(std::addressof(_impl[mask(_begin )]), std::forward<Args>(args)...);
-    }
-
-    template <typename T>
-    inline void circular_buffer<T>::push_back(const T& data) {
-        printf("circular_buffer const push_back\n");
-        maybe_expand();
-        printf("circular_buffer copy maybe expanded\n");
-        std::construct_at(std::addressof(_impl[_end]), data);
-        printf("circular_buffer copy constructed\n");        
-        ++_end;
-    }
-
-    template <typename T>
-    inline void circular_buffer<T>::push_back(T&& data) {
-        printf("circular_buffer move push_back\n");
-        maybe_expand();
-        printf("circular_buffer move maybe expanded\n");
-        printf("circular_buffer move constructing...\n");        
-        std::construct_at(std::addressof(_impl[_end]), std::move(data));
-        printf("circular_buffer move constructed\n");
-        ++_end;
-    }
-
-    template <typename T>
-    template <typename... Args>
-    inline void circular_buffer<T>::emplace_back(Args&&... args) {
-        maybe_expand();
-        std::construct_at(std::addressof(_impl[_end]), std::forward<Args>(args)...);
-        ++_end;
-    }
-
-    template <typename T>
-    inline T& circular_buffer<T>::access_element_unsafe(size_t idx) {
-        return _impl[mask(_begin + idx)];
-    }
-
-    template <typename T>
-    inline typename circular_buffer<T>::iterator circular_buffer<T>::erase(typename circular_buffer<T>::iterator first, typename circular_buffer<T>::iterator last) {
-        static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
-        if (first == last) {
-            return last;
-        }
-        // Move to the left or right depending on which would result in least amount of moves.
-        // This also guarantees that iterators will be stable when removing from either front or back.
-        if (std::distance(begin(), first) < std::distance(last, end())) {
-            auto new_start = std::move_backward(begin(), first, last);
-            for (auto i = begin(); i < new_start; ++i) {
-                traits::destroy(_impl, &*i);
-            }
-
-            _begin = new_start.idx;
-            return last;
-        } else {
-            auto new_end = std::move(last, end(), first);
-            for (auto i = new_end, e = end(); i < e; ++i) {
-                traits::destroy(_impl, this[i]);
-            }
-
-            _end = new_end.idx;
-            return first;
-        }
-    }
 };

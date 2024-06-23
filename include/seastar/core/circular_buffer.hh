@@ -57,7 +57,7 @@ namespace seastar {
     class circular_buffer {
         std::size_t _begin{0};
         std::size_t _end{0};
-        std::size_t _capacity{0};
+        std::size_t _capacity{1};
 
         // struct impl : Alloc {
         //     T* storage = nullptr;
@@ -67,7 +67,7 @@ namespace seastar {
         //     std::size_t capacity = 0;
         // };
         std::allocator<T> _alloc{};
-        T *_impl{nullptr};
+        T *_impl{_alloc.allocate(_capacity)};
         using traits = std::allocator_traits<decltype(_alloc)>;
     public:
         using value_type = T;
@@ -99,21 +99,45 @@ namespace seastar {
             return idx % _capacity;
         }
 
-        inline void maybe_expand(std::size_t nr = 1) {
-            printf("maybe_expand: %lu\n", nr);
-            printf("testing\n");
-            if (_capacity == 0) {
-                printf("asdf\n");
-            }
-            if (_begin == 0) {
-                printf("fdsa\n");
-            }
-            printf("test: %lu\n", _capacity);
-
+        inline void maybe_expand (std::size_t nr = 1) {
+            printf("maybe_expand: %lu, %lu\n", nr, _capacity);
             if ((_end - _begin) + nr > _capacity) {
                 printf("calling expand\n");
                 expand();
             }
+        }
+
+        void expand () {
+            std::size_t new_cap{_capacity * 2};
+            T *new_storage{traits::allocate(_alloc, new_cap)};
+            T *p{new_storage};
+
+            try {
+                printf("for_each transfer_pass1\n");
+                for_each([this, &p] (T& obj) {
+                    transfer_pass1(_alloc, std::addressof(obj), p);
+                    p++;
+                });
+                printf("first transfer\n");
+            } catch (...) {
+                printf("exceptions encountered\n");
+                while (p != new_storage) {
+                    std::destroy_at(--p);
+                }
+                traits::deallocate(_alloc, new_storage, new_cap);
+                throw;
+            }
+            p = new_storage;
+            printf("start transfer_pass2\n");
+            for_each([this, &p] (T& obj) {
+                transfer_pass2(_alloc, std::addressof(obj), p++);
+            });
+            printf("finish transfer_pass2\n");
+            std::swap(_impl, new_storage);
+            std::swap(_capacity, new_cap);
+            printf("deallocating\n");
+            traits::deallocate(_alloc, new_storage, new_cap);
+            printf("expanded\n");
         }
 
         struct Iterator {
@@ -235,18 +259,11 @@ namespace seastar {
         }
 
         inline std::size_t size () const noexcept {
-            return _end - _begin;
+            return (_end - _begin) % _capacity;
         }
 
         inline std::size_t capacity () const noexcept {
             return _capacity;
-        }
-
-        inline void reserve (std::size_t size) {
-            if (capacity() < size) {
-                // Make sure that the new capacity is a power of two.
-                realloc(size_t(1) << log2ceil(size));
-            }
         }
 
         inline void clear () {
@@ -301,7 +318,7 @@ namespace seastar {
         inline void push_front (const T& data) {
             maybe_expand();
             --_begin;
-            std::construct_at(std::addressof(_impl[_begin]), data);
+            std::construct_at(std::addressof(_impl[mask(_begin)]), data);
         }
 
         inline void push_front (T&& data) {
@@ -371,43 +388,6 @@ namespace seastar {
                 _end = new_end.idx;
                 return first;
             }
-        }
-
-        void expand() {
-            reserve(std::max<std::size_t>(_capacity * 2, 1));
-        }
-
-        void realloc(std::size_t new_cap) {
-            printf("expand: %lu\n", new_cap);
-            T *new_storage{traits::allocate(_alloc, new_cap)};
-            T *p{new_storage};
-
-            try {
-                printf("for_each transfer_pass1\n");
-                for_each([this, &p] (T& obj) {
-                    transfer_pass1(_alloc, std::addressof(obj), p);
-                    p++;
-                });
-                printf("first transfer\n");
-            } catch (...) {
-                printf("exceptions encountered\n");
-                while (p != new_storage) {
-                    std::destroy_at(--p);
-                }
-                traits::deallocate(_alloc, new_storage, new_cap);
-                throw;
-            }
-            p = new_storage;
-            printf("start transfer_pass2\n");
-            for_each([this, &p] (T& obj) {
-                transfer_pass2(_alloc, std::addressof(obj), p++);
-            });
-            printf("finish transfer_pass2\n");
-            std::swap(_impl, new_storage);
-            std::swap(_capacity, new_cap);
-            printf("deallocating\n");
-            traits::deallocate(_alloc, new_storage, new_cap);
-            printf("expanded\n");
         }
     };
 

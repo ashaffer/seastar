@@ -3739,7 +3739,6 @@ namespace seastar {
             init_phdr_cache();
         }
     #endif
-        printf("smp::configure configure 1: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks));
 
         // Mask most, to prevent threads (esp. dpdk helper threads)
         // from servicing a signal.  Individual reactors will unmask signals
@@ -3776,7 +3775,6 @@ namespace seastar {
         if (!thread_affinity) {
             mbind = false;
         }
-        printf("smp::configure configure 2: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks->_q));
 
         smp::count = 1;
         smp::_tmain = std::this_thread::get_id();
@@ -3811,7 +3809,6 @@ namespace seastar {
         } else if (cgroup_cpu_set) {
             cpu_set = *cgroup_cpu_set;
         }
-        printf("smp::configure configure 3: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks->_q));
 
         if (configuration.count("smp")) {
             nr_cpus = configuration.find("smp")->second.as<unsigned>();
@@ -3991,9 +3988,13 @@ namespace seastar {
         }
 
         _reactors[0] = &engine();
+
+        printf("smp::configure configure 1: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks->_q));
+
         for (auto& dev_id : disk_config.device_ids()) {
             alloc_io_queue(0, dev_id);
         }
+        printf("smp::configure configure 2: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks->_q));
 
     #ifdef SEASTAR_HAVE_DPDK
         if (_using_dpdk) {

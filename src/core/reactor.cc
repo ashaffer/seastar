@@ -921,6 +921,7 @@ namespace seastar {
         _task_queues.push_back(std::make_unique<task_queue>(1, "atexit", 1000));
         printf("task queue front: 0x%lx\n", (uint64_t)std::addressof(_task_queues.front().get()->_q));
         _at_destroy_tasks = _task_queues.back().get();
+        printf("task queue back: 0x%lx, 0x%lx\n", (uint64_t)std::addressof(_task_queues.back().get()->_q), (uint64_t)std::addressof(_at_destroy_tasks->_q));
 
         g_need_preempt = &(this->_preemption_monitor);
         seastar::thread_impl::init();

@@ -56,9 +56,17 @@ namespace seastar {
         };
         maybe_storage _storage[Capacity];
     private:
-        static std::size_t mask (std::size_t idx) { return idx % Capacity; }
-        T* obj (std::size_t idx) { return &_storage[mask(idx)].data; }
-        const T* obj (std::size_t idx) const { return &_storage[mask(idx)].data; }
+        static std::size_t mask (std::size_t idx) const noexcept { 
+            return idx % Capacity; 
+        }
+        
+        T* obj (std::size_t idx) noexcept { 
+            return &_storage[mask(idx)].data; 
+        }
+        
+        const T* obj (std::size_t idx) const noexcept { 
+            return &_storage[mask(idx)].data; 
+        }
     public:
         static_assert((Capacity & (Capacity - 1)) == 0, "capacity must be a power of two");
         static_assert(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value,

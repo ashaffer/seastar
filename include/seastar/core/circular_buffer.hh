@@ -95,8 +95,8 @@ namespace seastar {
             }
         }
     private:
-        inline std::size_t mask(std::size_t idx) const {
-            return idx & (_capacity - 1);
+        inline std::size_t mask (std::size_t idx) const noexcept {
+            return idx % _capacity;
         }
 
         inline void maybe_expand(std::size_t nr = 1) {
@@ -226,64 +226,64 @@ namespace seastar {
             return const_iterator{this, _end};
         }
 
-        inline T& at (std::size_t idx) {
+        inline T& at (std::size_t idx) noexcept {
             return _impl[mask(_begin + idx)];
         }
 
-        inline bool empty() const {
+        inline bool empty () const noexcept {
             return _begin == _end;
         }
 
-        inline std::size_t size() const {
+        inline std::size_t size () const noexcept {
             return _end - _begin;
         }
 
-        inline std::size_t capacity() const {
+        inline std::size_t capacity () const noexcept {
             return _capacity;
         }
 
-        inline void reserve(std::size_t size) {
+        inline void reserve (std::size_t size) {
             if (capacity() < size) {
                 // Make sure that the new capacity is a power of two.
                 realloc(size_t(1) << log2ceil(size));
             }
         }
 
-        inline void clear() {
+        inline void clear () {
             erase(begin(), end());
         }
 
-        inline T& front() {
+        inline T& front () {
             return _impl[mask(_begin)];
         }
 
-        inline const T& front() const {
+        inline const T& front () const {
             return _impl[mask(_begin)];
         }
 
-        inline T& back() {
+        inline T& back () {
             return _impl[mask(_end - 1)];
         }
 
-        inline const T& back() const {
+        inline const T& back () const {
             return _impl[mask(_end - 1)];
         }
 
-        inline void pop_front() {
+        inline void pop_front () {
             std::destroy_at(std::addressof(front()));
             ++_begin;
         }
 
-        inline void pop_back() {
+        inline void pop_back () {
             std::destroy_at(std::addressof(back()));
             --_end;
         }
 
-        inline T& operator[](std::size_t idx) {
+        inline T& operator[] (std::size_t idx) {
             return _impl[mask(_begin + idx)];
         }
 
-        inline circular_buffer<T>& operator=(circular_buffer&& x) noexcept {
+        inline circular_buffer& operator= (circular_buffer&& x) noexcept {
             if (this != &x) {
                 this->~circular_buffer();
                 new (this) circular_buffer(std::move(x));
@@ -292,32 +292,32 @@ namespace seastar {
         }
 
         template <typename Func>
-        inline void for_each(Func&& func) {
+        inline void for_each (Func&& func) {
             for (auto&& p{begin()}, e{end()}; p != e; ++p) {
                 func(*p);
             }
         }
 
-        inline void push_front(const T& data) {
+        inline void push_front (const T& data) {
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[_begin]), data);
         }
 
-        inline void push_front(T&& data) {
+        inline void push_front (T&& data) {
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), std::move(data));
         }
 
         template <typename... Args>
-        inline void emplace_front(Args&&... args) {
+        inline void emplace_front (Args&&... args) {
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), std::forward<Args>(args)...);
         }
 
-        inline void push_back(const T& data) {
+        inline void push_back (const T& data) {
             printf("circular_buffer const push_back\n");
             maybe_expand();
             printf("circular_buffer copy maybe expanded\n");
@@ -326,7 +326,7 @@ namespace seastar {
             ++_end;
         }
 
-        inline void push_back(T&& data) {
+        inline void push_back (T&& data) {
             printf("circular_buffer move push_back: 0x%lx\n", (uint64_t)this);
             maybe_expand();
             printf("circular_buffer move maybe expanded\n");

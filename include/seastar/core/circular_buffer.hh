@@ -58,6 +58,7 @@ namespace seastar {
         std::size_t _begin{0};
         std::size_t _end{0};
         std::size_t _capacity{1};
+        std::size_t _nth{0};
 
         // struct impl : Alloc {
         //     T* storage = nullptr;
@@ -266,7 +267,7 @@ namespace seastar {
             return _capacity;
         }
 
-        inline void clear () {
+        inline void clear () noexcept {
             erase(begin(), end());
         }
 
@@ -286,18 +287,14 @@ namespace seastar {
             return _impl[mask(_end - 1)];
         }
 
-        inline void pop_front () noexcept {
-            printf("pop_front: %lu, %lu, %lu, %lu\n", _begin, _end, size(), _capacity);
-            std::destroy_at(std::addressof(front()));
-            ++_begin;
+        template <typename Func>
+        inline void for_each (Func&& func) noexcept {
+            for (auto&& p{begin()}, e{end()}; p != e; ++p) {
+                func(*p);
+            }
         }
 
-        inline void pop_back () {
-            std::destroy_at(std::addressof(back()));
-            --_end;
-        }
-
-        inline T& operator[] (std::size_t idx) {
+        inline T& operator[] (std::size_t idx) noexcept {
             return _impl[mask(_begin + idx)];
         }
 
@@ -309,63 +306,71 @@ namespace seastar {
             return *this;
         }
 
-        template <typename Func>
-        inline void for_each (Func&& func) {
-            for (auto&& p{begin()}, e{end()}; p != e; ++p) {
-                func(*p);
-            }
+        inline void pop_front () noexcept {
+            printf("pop_front: %lu, %lu, %lu, %lu\n", _begin, _end, size(), _capacity);
+            std::destroy_at(std::addressof(front()));
+            ++_begin;
+            --_nth;
         }
 
-        inline void push_front (const T& data) {
+        inline void pop_back () noexcept {
+            std::destroy_at(std::addressof(back()));
+            --_end;
+            --_nth;
+        }
+
+        inline void push_front (const T& data) noexcept {
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), data);
+            ++_nth;
         }
 
-        inline void push_front (T&& data) {
+        inline void push_front (T&& data) noexcept {
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), std::move(data));
+            ++_nth;
         }
 
         template <typename... Args>
-        inline void emplace_front (Args&&... args) {
+        inline void emplace_front (Args&&... args) noexcept {
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), std::forward<Args>(args)...);
+            ++_nth;
         }
 
-        inline void push_back (const T& data) {
+        inline void push_back (const T& data) noexcept {
             printf("circular_buffer const push_back\n");
             maybe_expand();
             printf("circular_buffer copy maybe expanded\n");
-            std::construct_at(std::addressof(_impl[_end]), data);
+            std::construct_at(std::addressof(_impl[mask(_end)]), data);
             printf("circular_buffer copy constructed\n");        
             ++_end;
+            ++_nth;
         }
 
-        inline void push_back (T&& data) {
+        inline void push_back (T&& data) noexcept {
             printf("circular_buffer move push_back: 0x%lx\n", (uint64_t)this);
             maybe_expand();
             printf("circular_buffer move maybe expanded\n");
             printf("circular_buffer move constructing...\n");        
-            std::construct_at(std::addressof(_impl[_end]), std::move(data));
+            std::construct_at(std::addressof(_impl[mask(_end)]), std::move(data));
             printf("circular_buffer move constructed\n");
             ++_end;
+            ++_nth;
         }
 
         template <typename... Args>
-        inline void emplace_back(Args&&... args) {
+        inline void emplace_back(Args&&... args) noexcept {
             maybe_expand();
-            std::construct_at(std::addressof(_impl[_end]), std::forward<Args>(args)...);
+            std::construct_at(std::addressof(_impl[mask(_end)]), std::forward<Args>(args)...);
             ++_end;
+            ++_nth;
         }
 
-        inline T& access_element_unsafe(std::size_t idx) {
-            return _impl[mask(_begin + idx)];
-        }
-
-        inline iterator erase(iterator first, iterator last) {
+        inline iterator erase(iterator first, iterator last) noexcept {
             static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
             if (first == last) {
                 return last;
@@ -391,11 +396,4 @@ namespace seastar {
             }
         }
     };
-
-    // template <typename T>
-    // inline
-    // const T&
-    // circular_buffer<T>::operator[](std::size_t idx) const {
-    //     return _impl[mask(_begin + idx)];
-    // }
 };

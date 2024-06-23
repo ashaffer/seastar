@@ -78,7 +78,7 @@ namespace seastar {
         using const_pointer = const T*;
 
         circular_buffer() = default;
-        
+
         inline circular_buffer(circular_buffer&& x) noexcept : _impl(std::move(x._impl)), _begin{x._begin}, _end{x._end}, _capacity{x._capacity} {
             x._impl = nullptr;
             x._begin = 0;
@@ -107,9 +107,6 @@ namespace seastar {
                 expand();
             }
         }
-
-        void expand();
-        void realloc(size_t);
 
         struct Iterator {
             T *operator->() const noexcept { 
@@ -368,6 +365,43 @@ namespace seastar {
                 _end = new_end.idx;
                 return first;
             }
+        }
+
+        void expand() {
+            reserve(std::max<size_t>(_capacity * 2, 1));
+        }
+
+        void realloc(size_t new_cap) {
+            printf("expand: %lu\n", new_cap);
+            T *new_storage{traits::allocate(_alloc, new_cap)};
+            T *p{new_storage};
+
+            try {
+                printf("for_each transfer_pass1\n");
+                for_each([this, &p] (T& obj) {
+                    transfer_pass1(_alloc, std::addressof(obj), p);
+                    p++;
+                });
+                printf("first transfer\n");
+            } catch (...) {
+                printf("exceptions encountered\n");
+                while (p != new_storage) {
+                    std::destroy_at(--p);
+                }
+                traits::deallocate(_alloc, new_storage, new_cap);
+                throw;
+            }
+            p = new_storage;
+            printf("start transfer_pass2\n");
+            for_each([this, &p] (T& obj) {
+                transfer_pass2(_alloc, std::addressof(obj), p++);
+            });
+            printf("finish transfer_pass2\n");
+            std::swap(_impl, new_storage);
+            std::swap(_capacity, new_cap);
+            printf("deallocating\n");
+            traits::deallocate(_alloc, new_storage, new_cap);
+            printf("expanded\n");
         }
     };
 

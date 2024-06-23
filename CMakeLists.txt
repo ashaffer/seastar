@@ -536,6 +536,7 @@ add_library (seastar STATIC
   include/seastar/util/transform_iterator.hh
   include/seastar/util/tuple_utils.hh
   include/seastar/util/variant_utils.hh
+  src/core/circular_buffer.cc
   src/core/alien.cc
   src/core/file.cc
   src/core/fair_queue.cc
@@ -565,7 +566,6 @@ add_library (seastar STATIC
   src/core/uname.cc
   src/core/vla.hh
   src/core/io_queue.cc
-  src/core/circular_buffer.cc  
   src/http/api_docs.cc
   src/http/common.cc
   src/http/file_handler.cc

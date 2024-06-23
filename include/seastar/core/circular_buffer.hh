@@ -101,8 +101,12 @@ namespace seastar {
 
         inline void maybe_expand(size_t nr = 1) {
             printf("maybe_expand: %lu\n", nr);
+            printf("testing\n");
             if (_capacity == 0) {
                 printf("asdf\n");
+            }
+            if (_begin == 0) {
+                printf("fdsa\n");
             }
             printf("test: %lu\n", _capacity);
 

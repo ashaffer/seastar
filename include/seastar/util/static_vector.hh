@@ -2,6 +2,7 @@
 #include <type_traits>
 #include <memory>
 #include <utility>
+#include <algorithm>
 #include "concepts.hh"
 
 /*

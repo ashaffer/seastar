@@ -919,9 +919,9 @@ namespace seastar {
         , _thread_pool(std::make_unique<thread_pool>(this, std::format("syscall-{}", id))) {
         _task_queues.push_back(std::make_unique<task_queue>(0, "main", 1000));
         _task_queues.push_back(std::make_unique<task_queue>(1, "atexit", 1000));
-        printf("task queue front: 0x%lx, 0x%lx\n", (uint64_t)_task_queues.front().get(), (uint64_t)std::addressof(_task_queues.front().get()->_q));
+        printf("task queue front: %u, 0x%lx, 0x%lx\n", engine().cpu_id(), (uint64_t)_task_queues.front().get(), (uint64_t)std::addressof(_task_queues.front().get()->_q));
         _at_destroy_tasks = _task_queues.back().get();
-        printf("task queue back: 0x%lx, 0x%lx, 0x%lx\n", (uint64_t)std::addressof(_at_destroy_tasks), (uint64_t)std::addressof(_task_queues.back().get()->_q), (uint64_t)std::addressof(_at_destroy_tasks->_q));
+        printf("task queue back: %u, 0x%lx, 0x%lx, 0x%lx\n", engine().cpu_id(), (uint64_t)std::addressof(_at_destroy_tasks), (uint64_t)std::addressof(_task_queues.back().get()->_q), (uint64_t)std::addressof(_at_destroy_tasks->_q));
 
         g_need_preempt = &(this->_preemption_monitor);
         seastar::thread_impl::init();

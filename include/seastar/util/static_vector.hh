@@ -80,23 +80,15 @@ namespace seastar {
         }
 
         inline constexpr reference back () noexcept {
-            return const_cast<reference>(cback());
-        }
-
-        inline constexpr reference back () const noexcept {
-            return const_cast<reference>(cback());
+            return _data[std::max<size_t>(nth, 1) - 1];
         }
 
         inline constexpr const_reference cback () const noexcept {
-            return *cend();
+            return _data[std::max<size_t>(nth, 1) - 1];
         }
 
         inline constexpr iterator begin () noexcept {
             return const_cast<iterator>(cbegin());
-        }
-
-        inline constexpr const_iterator begin () const noexcept {
-            return cbegin();
         }
 
         inline constexpr const_iterator cbegin () const noexcept {
@@ -107,7 +99,11 @@ namespace seastar {
             return const_cast<iterator>(cend());
         }
 
-        inline constexpr const_iterator end () const noexcept {
+        inline constexpr const_iterator begin () const noexcept {
+            return cbegin();
+        }
+
+        inline constexpr const_iterator end() const noexcept {
             return cend();
         }
 

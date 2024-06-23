@@ -270,23 +270,24 @@ namespace seastar {
             erase(begin(), end());
         }
 
-        inline T& front () {
+        inline T& front () noexcept {
             return _impl[mask(_begin)];
         }
 
-        inline const T& front () const {
+        inline const T& front () const noexcept {
             return _impl[mask(_begin)];
         }
 
-        inline T& back () {
+        inline T& back () noexcept {
             return _impl[mask(_end - 1)];
         }
 
-        inline const T& back () const {
+        inline const T& back () const noexcept {
             return _impl[mask(_end - 1)];
         }
 
-        inline void pop_front () {
+        inline void pop_front () noexcept {
+            printf("pop_front: %lu, %lu, %lu, %lu\n", _begin, _end, size(), _capacity);
             std::destroy_at(std::addressof(front()));
             ++_begin;
         }

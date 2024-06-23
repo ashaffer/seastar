@@ -919,6 +919,7 @@ namespace seastar {
         , _thread_pool(std::make_unique<thread_pool>(this, std::format("syscall-{}", id))) {
         _task_queues.push_back(std::make_unique<task_queue>(0, "main", 1000));
         _task_queues.push_back(std::make_unique<task_queue>(1, "atexit", 1000));
+        printf("task queue front: 0x%lx\n", std::addressof(_task_queues.front().get()->_q));
         _at_destroy_tasks = _task_queues.back().get();
 
         g_need_preempt = &(this->_preemption_monitor);

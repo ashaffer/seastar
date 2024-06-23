@@ -165,194 +165,159 @@ namespace seastar {
         using const_iterator = const Iterator;
     public:
         circular_buffer_fixed_capacity() = default;
-        circular_buffer_fixed_capacity(circular_buffer_fixed_capacity&& x) noexcept;
-        ~circular_buffer_fixed_capacity();
-        circular_buffer_fixed_capacity& operator=(circular_buffer_fixed_capacity&& x) noexcept;
-        void push_front(const T& data);
-        void push_front(T&& data);
-        template <typename... A>
-        T& emplace_front(A&&... args);
-        void push_back(const T& data);
-        void push_back(T&& data);
-        template <typename... A>
-        T& emplace_back(A&&... args);
-        T& front();
-        T& back();
-        void pop_front();
-        void pop_back();
-        bool empty() const;
-        size_t size() const;
-        size_t capacity() const;
-        T& operator[](size_t idx);
-        void clear();
-        iterator begin() {
-            return iterator(_storage, _begin);
+        inline circular_buffer_fixed_capacity(circular_buffer_fixed_capacity&& x) noexcept : _begin(std::exchange(x._begin, 0)), _end(std::exchange(x._end, 0)) {
+            for (auto i = _begin; i != _end; ++i) {
+                new (&_storage[i].data) T(std::move(x._storage[i].data));
+            }
         }
-        const_iterator begin() const {
-            return const_iterator(_storage, _begin);
+
+        inline ~circular_buffer_fixed_capacity() noexcept {
+            for (auto i = _begin; i != _end; ++i) {
+                _storage[i].data.~T();
+            }
         }
-        iterator end() {
-            return iterator(_storage, _end);
+
+        template <typename... Args>
+        inline T& emplace_back(Args&&... args) {
+            auto p = new (obj(_end)) T(std::forward<Args>(args)...);
+            ++_end;
+            return *p;
         }
-        const_iterator end() const {
-            return const_iterator(_storage, _end);
+
+        template <typename... Args>
+        inline T& emplace_front(Args&&... args) {
+            auto p = new (obj(_begin - 1)) T(std::forward<Args>(args)...);
+            --_begin;
+            return *p;
         }
-        const_iterator cbegin() const {
-            return const_iterator(_storage, _begin);
+
+        inline T& front() {
+            return *obj(_begin);
         }
-        const_iterator cend() const {
-            return const_iterator(_storage, _end);
+
+        inline T& back() {
+            return *obj(_end - 1);
         }
-        iterator erase(iterator first, iterator last);
+
+        inline void pop_front() {
+            obj(_begin)->~T();
+            ++_begin;
+        }
+
+        inline void pop_back() {
+            obj(_end - 1)->~T();
+            --_end;
+        }
+
+        inline circular_buffer_fixed_capacity<T, Capacity>& operator=(circular_buffer_fixed_capacity&& x) noexcept {
+            if (this != &x) {
+                this->~circular_buffer_fixed_capacity();
+                new (this) circular_buffer_fixed_capacity(std::move(x));
+            }
+            return *this;
+        }
+
+        inline void push_front(const T& data) {
+            new (obj(_begin - 1)) T(data);
+            --_begin;
+        }
+
+        inline void push_front(T&& data) {
+            new (obj(_begin - 1)) T(std::move(data));
+            --_begin;
+        }
+
+        inline void push_back(const T& data) {
+            printf("fixed capacity push_back copy\n");
+            new (obj(_end)) T(data);
+            printf("pushed back copy\n");
+            ++_end;
+        }
+
+        inline void push_back(T&& data) {
+            printf("fixed capacity push_back move\n");
+            new (obj(_end)) T(std::move(data));
+            printf("pushed back move\n");
+            ++_end;
+        }
+
+        inline bool empty() const noexcept {
+            return _begin == _end;
+        }
+
+        inline std::size_t size() const noexcept {
+            return (_end - _begin) % Capacity;
+        }
+
+        inline std::size_t constexpr capacity () const noexcept {
+            return Capacity;
+        }
+
+        inline T& operator[](std::size_t idx) noexcept {
+            return *obj(_begin + idx);
+        }
+
+        inline T& at (std::size_t idx) noexcept {
+            return *obj(_begin + idx);
+        }
+
+        inline iterator begin() {
+            return {this, _begin};
+        }
+        
+        inline const_iterator begin() const {
+            return {this, _begin};
+        }
+        
+        inline iterator end() {
+            return {this, _end};
+        }
+        
+        inline const_iterator end() const {
+            return {this, _end};
+        }
+        
+        inline const_iterator cbegin() const {
+            return {this, _begin};
+        }
+        
+        inline const_iterator cend() const {
+            return {this, _end};
+        }
+
+        inline iterator erase (iterator first, iterator last) {
+            static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
+            if (first == last) {
+                return last;
+            }
+            // Move to the left or right depending on which would result in least amount of moves.
+            // This also guarantees that iterators will be stable when removing from either front or back.
+            if (std::distance(begin(), first) < std::distance(last, end())) {
+                auto new_start = std::move_backward(begin(), first, last);
+                auto i = begin();
+                while (i < new_start) {
+                    *i++.~T();
+                }
+                _begin = new_start.idx;
+                return last;
+            } else {
+                auto new_end = std::move(last, end(), first);
+                auto i = new_end;
+                auto e = end();
+                while (i < e) {
+                    *i++.~T();
+                }
+                _end = new_end.idx;
+                return first;
+            }
+        }
+
+        inline void clear () {
+            for (auto i = _begin; i != _end; ++i) {
+                obj(i)->~T();
+            }
+            _begin = _end = 0;
+        }
     };
-
-    template <typename T, size_t Capacity>
-    inline bool circular_buffer_fixed_capacity<T, Capacity>::empty() const {
-        return _begin == _end;
-    }
-
-    template <typename T, size_t Capacity>
-    inline size_t circular_buffer_fixed_capacity<T, Capacity>::size() const {
-        return (_end - _begin) % Capacity;
-    }
-
-    template <typename T, size_t Capacity>
-    inline size_t circular_buffer_fixed_capacity<T, Capacity>::capacity() const {
-        return Capacity;
-    }
-
-    template <typename T, size_t Capacity>
-    inline circular_buffer_fixed_capacity<T, Capacity>::circular_buffer_fixed_capacity(circular_buffer_fixed_capacity&& x) noexcept
-            : _begin(std::exchange(x._begin, 0)), _end(std::exchange(x._end, 0)) {
-        for (auto i = _begin; i != _end; ++i) {
-            new (&_storage[i].data) T(std::move(x._storage[i].data));
-        }
-    }
-
-    template <typename T, size_t Capacity>
-    inline circular_buffer_fixed_capacity<T, Capacity>& circular_buffer_fixed_capacity<T, Capacity>::operator=(circular_buffer_fixed_capacity&& x) noexcept {
-        if (this != &x) {
-            this->~circular_buffer_fixed_capacity();
-            new (this) circular_buffer_fixed_capacity(std::move(x));
-        }
-        return *this;
-    }
-
-    template <typename T, size_t Capacity>
-    inline circular_buffer_fixed_capacity<T, Capacity>::~circular_buffer_fixed_capacity() {
-        for (auto i = _begin; i != _end; ++i) {
-            _storage[i].data.~T();
-        }
-    }
-
-    template <typename T, size_t Capacity>
-    inline void circular_buffer_fixed_capacity<T, Capacity>::push_front(const T& data) {
-        new (obj(_begin - 1)) T(data);
-        --_begin;
-    }
-
-    template <typename T, size_t Capacity>
-    inline void circular_buffer_fixed_capacity<T, Capacity>::push_front(T&& data) {
-        new (obj(_begin - 1)) T(std::move(data));
-        --_begin;
-    }
-
-    template <typename T, size_t Capacity>
-    template <typename... Args>
-    inline T& circular_buffer_fixed_capacity<T, Capacity>::emplace_front(Args&&... args) {
-        auto p = new (obj(_begin - 1)) T(std::forward<Args>(args)...);
-        --_begin;
-        return *p;
-    }
-
-    template <typename T, size_t Capacity>
-    inline void circular_buffer_fixed_capacity<T, Capacity>::push_back(const T& data) {
-        printf("fixed capacity push_back copy\n");
-        new (obj(_end)) T(data);
-        printf("pushed back copy\n");
-        ++_end;
-    }
-
-    template <typename T, size_t Capacity>
-    inline void circular_buffer_fixed_capacity<T, Capacity>::push_back(T&& data) {
-        printf("fixed capacity push_back move\n");
-        new (obj(_end)) T(std::move(data));
-        printf("pushed back move\n");
-        ++_end;
-    }
-
-    template <typename T, size_t Capacity>
-    template <typename... Args>
-    inline T& circular_buffer_fixed_capacity<T, Capacity>::emplace_back(Args&&... args) {
-        auto p = new (obj(_end)) T(std::forward<Args>(args)...);
-        ++_end;
-        return *p;
-    }
-
-    template <typename T, size_t Capacity>
-    inline T& circular_buffer_fixed_capacity<T, Capacity>::front() {
-        return *obj(_begin);
-    }
-
-    template <typename T, size_t Capacity>
-    inline T& circular_buffer_fixed_capacity<T, Capacity>::back() {
-        return *obj(_end - 1);
-    }
-
-    template <typename T, size_t Capacity>
-    inline
-    void
-    circular_buffer_fixed_capacity<T, Capacity>::pop_front() {
-        obj(_begin)->~T();
-        ++_begin;
-    }
-
-    template <typename T, size_t Capacity>
-    inline void circular_buffer_fixed_capacity<T, Capacity>::pop_back() {
-        obj(_end - 1)->~T();
-        --_end;
-    }
-
-    template <typename T, size_t Capacity>
-    inline T& circular_buffer_fixed_capacity<T, Capacity>::operator[](size_t idx) {
-        return *obj(_begin + idx);
-    }
-
-    template <typename T, size_t Capacity>
-    inline typename circular_buffer_fixed_capacity<T, Capacity>::iterator
-    circular_buffer_fixed_capacity<T, Capacity>::erase(iterator first, iterator last) {
-        static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
-        if (first == last) {
-            return last;
-        }
-        // Move to the left or right depending on which would result in least amount of moves.
-        // This also guarantees that iterators will be stable when removing from either front or back.
-        if (std::distance(begin(), first) < std::distance(last, end())) {
-            auto new_start = std::move_backward(begin(), first, last);
-            auto i = begin();
-            while (i < new_start) {
-                *i++.~T();
-            }
-            _begin = new_start.idx;
-            return last;
-        } else {
-            auto new_end = std::move(last, end(), first);
-            auto i = new_end;
-            auto e = end();
-            while (i < e) {
-                *i++.~T();
-            }
-            _end = new_end.idx;
-            return first;
-        }
-    }
-
-    template <typename T, size_t Capacity>
-    inline void circular_buffer_fixed_capacity<T, Capacity>::clear() {
-        for (auto i = _begin; i != _end; ++i) {
-            obj(i)->~T();
-        }
-        _begin = _end = 0;
-    }
 };
 

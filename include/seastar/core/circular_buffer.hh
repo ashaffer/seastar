@@ -67,9 +67,10 @@ namespace seastar {
             std::size_t emplace_fronts{0};
             std::size_t clears{0};
             std::size_t reserves{0};
+            std::size_t erases{0};
             void print () const noexcept {
-                printf("circular_buffer stats: %lu pop_backs, %lu pop_fronts, %lu push_backs, %lu push_fronts, %lu emplace_backs, %lu emplace_fronts, %lu clears, %lu reserves\n", 
-                    pop_backs, pop_fronts, push_backs, push_fronts, emplace_backs, emplace_fronts, clears, reserves);
+                printf("circular_buffer stats: %lu pop_backs, %lu pop_fronts, %lu push_backs, %lu push_fronts, %lu emplace_backs, %lu emplace_fronts, %lu clears, %lu reserves %lu erases\n", 
+                    pop_backs, pop_fronts, push_backs, push_fronts, emplace_backs, emplace_fronts, clears, reserves, erases);
             }
         };
         Stats stats;
@@ -104,7 +105,7 @@ namespace seastar {
 
         inline void reserve (std::size_t new_cap) noexcept {
             ++stats.reserves;
-            printf("reserve called: %lu\n", new_cap);
+            printf("reserve called: %lu new capacity, %lu begin, %lu end, %lu size, %lu old capacity\n", new_cap, _begin, _end, size(), _capacity);
             stats.print();
             std::size_t sz{size()};
             T *new_storage{traits::allocate(_alloc, new_cap)};

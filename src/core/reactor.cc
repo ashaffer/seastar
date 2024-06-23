@@ -2162,6 +2162,7 @@ namespace seastar {
         while (!tasks.empty()) {
             auto tsk = std::move(tasks.front());
             tasks.pop_front();
+            printf("popped task: %u, %lu\n", engine().cpu_id(), tasks.size());
             STAP_PROBE(seastar, reactor_run_tasks_single_start);
             task_histogram_add_task(*tsk);
             tsk->run_and_dispose();
@@ -2185,6 +2186,7 @@ namespace seastar {
 
     #ifdef SEASTAR_SHUFFLE_TASK_QUEUE
     void reactor::shuffle(std::unique_ptr<task>& t, task_queue& q) {
+        printf("shuffling task queue\n");
         static thread_local std::mt19937 gen = std::mt19937(std::default_random_engine()());
         std::uniform_int_distribution<size_t> tasks_dist{0, q._q.size() - 1};
         auto& to_swap = q._q[tasks_dist(gen)];

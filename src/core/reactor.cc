@@ -3183,6 +3183,9 @@ namespace seastar {
             wi->complete();
             auto ssg_id = smp_service_group_id(wi->ssg);
             if (!wi->ignoreLimits) {
+                if (smp_service_groups[ssg_id].clients.size() <= t) {
+                    printf("not enough clients: %u, %lu\n", t, smp_service_groups[ssg_id].clients.size());
+                }
                 smp_service_groups[ssg_id].clients[t].signal();
             }
             delete wi;

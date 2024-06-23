@@ -79,11 +79,11 @@ namespace seastar {
         using difference_type = ssize_t;
     public:
         struct Iterator {
-            T *operator->() const noexcept { 
+            T *operator-> () const noexcept { 
                 return std::addressof(cb->at(idx)); 
             }
             
-            T& operator*() const noexcept { 
+            T& operator* () const noexcept { 
                 return cb->at(idx); 
             }
 
@@ -91,66 +91,66 @@ namespace seastar {
             // ValueType* operator->() const { return &cb[idx]; }
 
             // prefix
-            Iterator& operator++() noexcept {
+            Iterator& operator++ () noexcept {
                 ++idx;
                 return *this;
             }
             
             // postfix
-            Iterator operator++(int unused) noexcept {
+            Iterator operator++ (int unused) noexcept {
                 auto v = *this;
                 ++idx;
                 return v;
             }
             
             // prefix
-            Iterator& operator--() noexcept {
+            Iterator& operator-- () noexcept {
                 --idx;
                 return *this;
             }
             
             // postfix
-            Iterator operator--(int unused) noexcept {
+            Iterator operator-- (int unused) noexcept {
                 auto v = *this;
                 --idx;
                 return v;
             }
             
-            Iterator operator+(std::size_t n) noexcept {
+            Iterator operator+ (std::size_t n) noexcept {
                 return {cb, idx + n};
             }
             
-            Iterator operator-(std::size_t n) noexcept {
+            Iterator operator- (std::size_t n) noexcept {
                 return {cb, idx - n};
             }
             
-            Iterator& operator+=(std::size_t n) noexcept {
+            Iterator& operator+= (std::size_t n) noexcept {
                 idx += n;
                 return *this;
             }
             
-            Iterator& operator-=(std::size_t n) noexcept {
+            Iterator& operator-= (std::size_t n) noexcept {
                 idx -= n;
                 return *this;
             }
             
-            bool operator==(Iterator rhs) const noexcept {
+            bool operator== (Iterator rhs) const noexcept {
                 return idx == rhs.idx;
             }
             
-            bool operator!=(Iterator rhs) const noexcept {
+            bool operator!= (Iterator rhs) const noexcept {
                 return idx != rhs.idx;
             }
             
-            bool operator<(Iterator rhs) const noexcept {
+            bool operator< (Iterator rhs) const noexcept {
                 return idx < rhs.idx;
             }
             
-            bool operator>(Iterator rhs) const noexcept {
+            bool operator> (Iterator rhs) const noexcept {
                 return idx > rhs.idx;
             }
             
-            bool operator>=(Iterator rhs) const noexcept {
+            bool operator>= (Iterator rhs) const noexcept {
                 return idx >= rhs.idx;
             }
             
@@ -158,11 +158,11 @@ namespace seastar {
                 return idx <= rhs.idx;
             }
 
-            std::size_t operator-(Iterator rhs) const noexcept {
+            std::size_t operator- (Iterator rhs) const noexcept {
                 return idx - rhs.idx;
             }
 
-            Iterator(circular_buffer_fixed_capacity<T, Capacity> *cb, std::size_t idx) noexcept : cb{cb}, idx{idx} {}
+            Iterator (circular_buffer_fixed_capacity<T, Capacity> *cb, std::size_t idx) noexcept : cb{cb}, idx{idx} {}
 
         private:
             circular_buffer_fixed_capacity<T, Capacity>* cb;

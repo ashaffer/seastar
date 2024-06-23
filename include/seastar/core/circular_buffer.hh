@@ -134,7 +134,7 @@ namespace seastar {
 
         inline void maybe_expand (std::size_t nr = 1) noexcept {
             printf("maybe_expand: %lu, %lu\n", nr, _capacity);
-            if ((_end - _begin) + nr > _capacity) {
+            if (size() + nr > _capacity) {
                 printf("calling expand\n");
                 reserve(_capacity * 2);
             }

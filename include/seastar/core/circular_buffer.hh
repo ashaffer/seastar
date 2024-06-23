@@ -58,15 +58,6 @@ namespace seastar {
         std::size_t _begin{0};
         std::size_t _end{0};
         std::size_t _capacity{1};
-        std::size_t _nth{0};
-
-        // struct impl : Alloc {
-        //     T* storage = nullptr;
-        //     // begin, end interpreted (mod capacity)
-        //     std::size_t begin = 0;
-        //     std::size_t end = 0;
-        //     std::size_t capacity = 0;
-        // };
         std::allocator<T> _alloc{};
         T *_impl{_alloc.allocate(_capacity)};
         using traits = std::allocator_traits<decltype(_alloc)>;
@@ -78,16 +69,16 @@ namespace seastar {
         using const_reference = const T&;
         using const_pointer = const T*;
 
-        circular_buffer() = default;
+        inline circular_buffer () noexcept = default;
 
-        inline circular_buffer(circular_buffer&& x) noexcept : _impl(std::move(x._impl)), _begin{x._begin}, _end{x._end}, _capacity{x._capacity} {
+        inline circular_buffer (circular_buffer&& x) noexcept : _impl(std::move(x._impl)), _begin{x._begin}, _end{x._end}, _capacity{x._capacity} {
             x._impl = nullptr;
             x._begin = 0;
             x._end = 0;
             x._capacity = 0;
         }
 
-        inline ~circular_buffer() {
+        inline ~circular_buffer () noexcept {
             if (_impl != nullptr) {
                 for_each([] (T& obj) {
                     std::destroy_at(std::addressof(obj));
@@ -102,14 +93,11 @@ namespace seastar {
             T *p{new_storage};
 
             try {
-                printf("for_each transfer_pass1\n");
                 for_each([this, &p] (T& obj) {
                     transfer_pass1(_alloc, std::addressof(obj), p);
                     p++;
                 });
-                printf("first transfer\n");
             } catch (...) {
-                printf("exceptions encountered\n");
                 while (p != new_storage) {
                     std::destroy_at(--p);
                 }
@@ -117,19 +105,14 @@ namespace seastar {
                 throw;
             }
             p = new_storage;
-            printf("start transfer_pass2\n");
             for_each([this, &p] (T& obj) {
                 transfer_pass2(_alloc, std::addressof(obj), p++);
             });
-            printf("finish transfer_pass2\n");
             std::swap(_impl, new_storage);
             std::swap(_capacity, new_cap);
             _begin = 0;
             _end = sz;
-            printf("deallocating\n");
             traits::deallocate(_alloc, new_storage, new_cap);
-            printf("expanded\n");
-
         }
     private:
         inline std::size_t mask (std::size_t idx) const noexcept {
@@ -313,27 +296,23 @@ namespace seastar {
             printf("pop_front: %lu, %lu, %lu, %lu\n", _begin, _end, size(), _capacity);
             std::destroy_at(std::addressof(front()));
             ++_begin;
-            --_nth;
         }
 
         inline void pop_back () noexcept {
             std::destroy_at(std::addressof(back()));
             --_end;
-            --_nth;
         }
 
         inline void push_front (const T& data) noexcept {
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), data);
-            ++_nth;
         }
 
         inline void push_front (T&& data) noexcept {
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), std::move(data));
-            ++_nth;
         }
 
         template <typename... Args>
@@ -341,39 +320,28 @@ namespace seastar {
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), std::forward<Args>(args)...);
-            ++_nth;
         }
 
         inline void push_back (const T& data) noexcept {
-            printf("circular_buffer const push_back\n");
             maybe_expand();
-            printf("circular_buffer copy maybe expanded\n");
             std::construct_at(std::addressof(_impl[mask(_end)]), data);
-            printf("circular_buffer copy constructed\n");        
             ++_end;
-            ++_nth;
         }
 
         inline void push_back (T&& data) noexcept {
-            printf("circular_buffer move push_back: 0x%lx\n", (uint64_t)this);
             maybe_expand();
-            printf("circular_buffer move maybe expanded\n");
-            printf("circular_buffer move constructing...\n");        
             std::construct_at(std::addressof(_impl[mask(_end)]), std::move(data));
-            printf("circular_buffer move constructed\n");
             ++_end;
-            ++_nth;
         }
 
         template <typename... Args>
-        inline void emplace_back(Args&&... args) noexcept {
+        inline void emplace_back (Args&&... args) noexcept {
             maybe_expand();
             std::construct_at(std::addressof(_impl[mask(_end)]), std::forward<Args>(args)...);
             ++_end;
-            ++_nth;
         }
 
-        inline iterator erase(iterator first, iterator last) noexcept {
+        inline iterator erase (iterator first, iterator last) noexcept {
             static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
             if (first == last) {
                 return last;

@@ -749,7 +749,6 @@ namespace seastar {
             , _reciprocal_shares_times_2_power_32((uint64_t(1) << 32) / _shares)
             , _id(id)
             , _name(name) {
-        printf("task_queue: 0x%lx, 0x%lx, 0x%lx, 0x%lx\n", (uint64_t)this, (uint64_t)&_tasks_processed, (uint64_t)&_q, (uint64_t)&_name);
         register_stats();
     }
 
@@ -919,9 +918,7 @@ namespace seastar {
         , _thread_pool(std::make_unique<thread_pool>(this, std::format("syscall-{}", id))) {
         _task_queues.push_back(std::make_unique<task_queue>(0, "main", 1000));
         _task_queues.push_back(std::make_unique<task_queue>(1, "atexit", 1000));
-        printf("task queue front: %u, 0x%lx, 0x%lx\n", engine().cpu_id(), (uint64_t)_task_queues.front().get(), (uint64_t)std::addressof(_task_queues.front().get()->_q));
         _at_destroy_tasks = _task_queues.back().get();
-        printf("task queue back: %u, 0x%lx, 0x%lx, 0x%lx\n", engine().cpu_id(), (uint64_t)std::addressof(_at_destroy_tasks), (uint64_t)std::addressof(_task_queues.back().get()->_q), (uint64_t)std::addressof(_at_destroy_tasks->_q));
 
         g_need_preempt = &(this->_preemption_monitor);
         seastar::thread_impl::init();
@@ -986,8 +983,6 @@ namespace seastar {
                 }
             }
         }
-        printf("task queue 2: 0x%lx\n", (uint64_t)std::addressof(_at_destroy_tasks->_q));
-
     }
 
     bool reactor::wait_and_process(int timeout, const sigset_t* active_sigmask) {
@@ -1341,9 +1336,6 @@ namespace seastar {
             _network_stack_ready_promise.set_value(std::move(stack));
         });
 
-        printf("task queue configure 1: 0x%lx\n", (uint64_t)std::addressof(_at_destroy_tasks->_q));
-
-
         _handle_sigint = !vm.count("no-handle-interrupt");
         auto task_quota = vm.find("task-quota-ms")->second.as<double>() * 1ms;
         _task_quota = std::chrono::duration_cast<sched_clock::duration>(task_quota);
@@ -1353,7 +1345,6 @@ namespace seastar {
         csdc.threshold = blocked_time;
         csdc.stall_detector_reports_per_minute = vm.find("blocked-reactor-reports-per-minute")->second.as<unsigned>();
         _cpu_stall_detector->update_config(csdc);
-        printf("task queue configure 2: 0x%lx\n", (uint64_t)std::addressof(_at_destroy_tasks->_q));
 
         _max_task_backlog = vm.find("max-task-backlog")->second.as<unsigned>();
         _max_poll_time = vm.find("idle-poll-time-us")->second.as<unsigned>() * 1us;
@@ -1374,7 +1365,6 @@ namespace seastar {
         _force_io_getevents_syscall = vm.find("force-aio-syscalls")->second.as<bool>();
         aio_nowait_supported = vm.find("linux-aio-nowait")->second.as<bool>();
         _have_aio_fsync = vm.find("aio-fsync")->second.as<bool>();
-        printf("task queue configure 3: 0x%lx\n", (uint64_t)std::addressof(_at_destroy_tasks->_q));
     }
 
     pollable_fd
@@ -2171,13 +2161,9 @@ namespace seastar {
         auto& tasks = tq._q;
         while (!tasks.empty()) {
             auto tsk = std::move(tasks.front());
-            printf("pre-pop: %u, %lu, %lu\n", engine().cpu_id(), tasks.size(), tasks.capacity());
             tasks.pop_front();
-            printf("post-pop: %u, %lu, %lu\n", engine().cpu_id(), tasks.size(), tasks.capacity());  
             STAP_PROBE(seastar, reactor_run_tasks_single_start);
-            printf("next: %u, %lu\n", engine().cpu_id(), tasks.capacity());
             task_histogram_add_task(*tsk);
-            printf("pre-run_and_dispose: %u, %lu\n", engine().cpu_id(), tasks.capacity());
             tsk->run_and_dispose();
             tsk.release();
             STAP_PROBE(seastar, reactor_run_tasks_single_end);
@@ -3993,12 +3979,9 @@ namespace seastar {
 
         _reactors[0] = &engine();
 
-        printf("smp::configure configure 1: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks->_q));
-
         for (auto& dev_id : disk_config.device_ids()) {
             alloc_io_queue(0, dev_id);
         }
-        printf("smp::configure configure 2: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks->_q));
 
     #ifdef SEASTAR_HAVE_DPDK
         if (_using_dpdk) {
@@ -4010,6 +3993,7 @@ namespace seastar {
             }
         }
     #endif
+
         reactors_registered.arrive_and_wait();
         smp::_qs = decltype(smp::_qs){new smp_message_queue* [smp::count], qs_deleter{}};
         for(unsigned i = 0; i < smp::count; i++) {

@@ -239,14 +239,14 @@ namespace seastar {
         inline void push_back(const T& data) {
             printf("fixed capacity push_back copy\n");
             new (obj(_end)) T(data);
-            printf("pushed back copy\n");
+            printf("fixed capacity pushed back copy\n");
             ++_end;
         }
 
         inline void push_back(T&& data) {
             printf("fixed capacity push_back move\n");
             new (obj(_end)) T(std::move(data));
-            printf("pushed back move\n");
+            printf("fixed capacity pushed back move\n");
             ++_end;
         }
 

@@ -3739,7 +3739,7 @@ namespace seastar {
             init_phdr_cache();
         }
     #endif
-        printf("smp::configure configure 1: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks->_q));
+        printf("smp::configure configure 1: 0x%lx\n", (uint64_t)std::addressof(engine()._at_destroy_tasks));
 
         // Mask most, to prevent threads (esp. dpdk helper threads)
         // from servicing a signal.  Individual reactors will unmask signals

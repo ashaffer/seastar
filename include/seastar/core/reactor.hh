@@ -776,11 +776,7 @@ namespace seastar {
 
         template <typename Func>
         void at_destroy(Func&& func) {
-            auto&& t{make_task(default_scheduling_group(), std::forward<Func>(func))};
-            auto *p{std::addressof(_at_destroy_tasks->_q)};
-            auto *p2{std::addressof(_at_destroy_tasks->_tasks_processed)};
-            auto *p3{std::addressof(_at_destroy_tasks->_vruntime)};
-            _at_destroy_tasks->_q.push_back(std::forward<decltype(t)>(t));
+            _at_destroy_tasks->_q.push_back(make_task(default_scheduling_group(), std::forward<Func>(func)));
         }
 
     #ifdef SEASTAR_SHUFFLE_TASK_QUEUE

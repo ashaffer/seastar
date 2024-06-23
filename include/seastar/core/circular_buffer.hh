@@ -53,16 +53,22 @@ namespace seastar {
     ///     * pop_back() will invalidate end().
     ///
     /// reserve() may also invalidate all iterators and references.
-    template <typename T, typename Alloc = std::allocator<T>>
+    template <typename T>
     class circular_buffer {
-        struct impl : Alloc {
-            T* storage = nullptr;
-            // begin, end interpreted (mod capacity)
-            size_t begin = 0;
-            size_t end = 0;
-            size_t capacity = 0;
-        };
-        impl _impl{};
+        size_t _begin{0};
+        size_t _end{0};
+        size_t _capacity{0};
+
+        // struct impl : Alloc {
+        //     T* storage = nullptr;
+        //     // begin, end interpreted (mod capacity)
+        //     size_t begin = 0;
+        //     size_t end = 0;
+        //     size_t capacity = 0;
+        // };
+        std::allocator<T> _alloc{};
+        T *_impl{nullptr};
+        using traits = std::allocator_traits<decltype(_alloc)>;
     public:
         using value_type = T;
         using size_type = size_t;
@@ -97,7 +103,7 @@ namespace seastar {
         void reserve(size_t);
         void clear();
         T& operator[](size_t idx);
-        const T& operator[](size_t idx) const;
+        // const T& operator[](size_t idx) const;
         template <typename Func>
         void for_each(Func&& func);
         // access an element, may return wrong or destroyed element
@@ -105,166 +111,186 @@ namespace seastar {
         T& access_element_unsafe(size_t idx);
     private:
         void expand();
-        void expand(size_t);
+        void realloc(size_t);
         void maybe_expand(size_t nr = 1);
         size_t mask(size_t idx) const;
 
-        template<typename CB, typename ValueType>
-        struct cbiterator : std::iterator<std::random_access_iterator_tag, ValueType> {
-            typedef std::iterator<std::random_access_iterator_tag, ValueType> super_t;
+        struct Iterator {
+            T *operator->() const noexcept { 
+                return std::addressof(cb->at(idx)); 
+            }
+            
+            T& operator*() const noexcept { 
+                return cb->at(idx); 
+            }
 
-            ValueType& operator*() const { return cb->_impl.storage[cb->mask(idx)]; }
-            ValueType* operator->() const { return &cb->_impl.storage[cb->mask(idx)]; }
+            // ValueType& operator*() const { return cb[idx]; }
+            // ValueType* operator->() const { return &cb[idx]; }
+
             // prefix
-            cbiterator<CB, ValueType>& operator++() {
-                idx++;
+            Iterator& operator++() noexcept {
+                ++idx;
                 return *this;
             }
+            
             // postfix
-            cbiterator<CB, ValueType> operator++(int unused) {
+            Iterator operator++(int unused) noexcept {
                 auto v = *this;
-                idx++;
+                ++idx;
                 return v;
             }
+            
             // prefix
-            cbiterator<CB, ValueType>& operator--() {
-                idx--;
+            Iterator& operator--() noexcept {
+                --idx;
                 return *this;
             }
+            
             // postfix
-            cbiterator<CB, ValueType> operator--(int unused) {
+            Iterator operator--(int unused) noexcept {
                 auto v = *this;
-                idx--;
+                --idx;
                 return v;
             }
-            cbiterator<CB, ValueType> operator+(typename super_t::difference_type n) const {
-                return cbiterator<CB, ValueType>(cb, idx + n);
+            
+            Iterator operator+(size_t n) noexcept {
+                return {cb, idx + n};
             }
-            cbiterator<CB, ValueType> operator-(typename super_t::difference_type n) const {
-                return cbiterator<CB, ValueType>(cb, idx - n);
+            
+            Iterator operator-(size_t n) noexcept {
+                return {cb, idx - n};
             }
-            cbiterator<CB, ValueType>& operator+=(typename super_t::difference_type n) {
+            
+            Iterator& operator+=(size_t n) noexcept {
                 idx += n;
                 return *this;
             }
-            cbiterator<CB, ValueType>& operator-=(typename super_t::difference_type n) {
+            
+            Iterator& operator-=(size_t n) noexcept {
                 idx -= n;
                 return *this;
             }
-            bool operator==(const cbiterator<CB, ValueType>& rhs) const {
+            
+            bool operator==(Iterator rhs) const noexcept {
                 return idx == rhs.idx;
             }
-            bool operator!=(const cbiterator<CB, ValueType>& rhs) const {
+            
+            bool operator!=(Iterator rhs) const noexcept {
                 return idx != rhs.idx;
             }
-            bool operator<(const cbiterator<CB, ValueType>& rhs) const {
+            
+            bool operator<(Iterator rhs) const noexcept {
                 return idx < rhs.idx;
             }
-            bool operator>(const cbiterator<CB, ValueType>& rhs) const {
+            
+            bool operator>(Iterator rhs) const noexcept {
                 return idx > rhs.idx;
             }
-            bool operator>=(const cbiterator<CB, ValueType>& rhs) const {
+            
+            bool operator>=(Iterator rhs) const noexcept {
                 return idx >= rhs.idx;
             }
-            bool operator<=(const cbiterator<CB, ValueType>& rhs) const {
+            
+            bool operator<=(Iterator rhs) const noexcept {
                 return idx <= rhs.idx;
             }
-           typename super_t::difference_type operator-(const cbiterator<CB, ValueType>& rhs) const {
+
+            size_t operator-(Iterator rhs) const noexcept {
                 return idx - rhs.idx;
             }
+
+            Iterator(circular_buffer<T> *cb, size_t idx) noexcept : cb{cb}, idx{idx} {}
+
         private:
-            CB* cb;
+            circular_buffer<T>* cb;
             size_t idx;
-            cbiterator<CB, ValueType>(CB* b, size_t i) : cb(b), idx(i) {}
-            friend class circular_buffer;
+            // friend class circular_buffer;
         };
-        friend class iterator;
+        // friend class iterator;
 
     public:
-        using iterator = cbiterator<circular_buffer, T>;
-        using const_iterator = cbiterator<const circular_buffer, const iterator>;
-
-        const_iterator begin () const noexcept {
-            return const_iterator(this, _impl.begin);
-        }
-
-        const_iterator end () const noexcept {
-            return const_iterator(this, _impl.end);
-        }
+        using iterator = Iterator;
+        using const_iterator = const iterator;
 
         iterator begin () noexcept {
-            return iterator(this, _impl.begin);
+            return {this, _begin};
         }
 
-        iterator end () {
-            return iterator(this, _impl.end);
+        iterator end () noexcept {
+            return {this, _end};
         }
 
         const_iterator cbegin () const noexcept {
-            return const_iterator(this, _impl.begin);
+            return const_iterator{this, _begin};
         }
         const_iterator cend () const noexcept {
-            return const_iterator(this, _impl.end);
+            return const_iterator{this, _end};
         }
 
+        inline T& at (size_t idx) {
+            return _impl[mask(_begin + idx)];
+        }
         iterator erase (iterator first, iterator last);
     };
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     size_t
-    circular_buffer<T, Alloc>::mask(size_t idx) const {
-        return idx & (_impl.capacity - 1);
+    circular_buffer<T>::mask(size_t idx) const {
+        return idx & (_capacity - 1);
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     bool
-    circular_buffer<T, Alloc>::empty() const {
-        return _impl.begin == _impl.end;
+    circular_buffer<T>::empty() const {
+        return _begin == _end;
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     size_t
-    circular_buffer<T, Alloc>::size() const {
-        return _impl.end - _impl.begin;
+    circular_buffer<T>::size() const {
+        return _end - _begin;
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     size_t
-    circular_buffer<T, Alloc>::capacity() const {
-        return _impl.capacity;
+    circular_buffer<T>::capacity() const {
+        return _capacity;
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     void
-    circular_buffer<T, Alloc>::reserve(size_t size) {
+    circular_buffer<T>::reserve(size_t size) {
         if (capacity() < size) {
             // Make sure that the new capacity is a power of two.
-            expand(size_t(1) << log2ceil(size));
+            realloc(size_t(1) << log2ceil(size));
         }
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     void
-    circular_buffer<T, Alloc>::clear() {
+    circular_buffer<T>::clear() {
         erase(begin(), end());
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
-    circular_buffer<T, Alloc>::circular_buffer(circular_buffer&& x) noexcept
-        : _impl(std::move(x._impl)) {
-        x._impl = {};
+    circular_buffer<T>::circular_buffer(circular_buffer&& x) noexcept
+        : _impl(std::move(x._impl)), _begin{x._begin}, _end{x._end}, _capacity{x._capacity} {
+        x._impl = nullptr;
+        x._begin = 0;
+        x._end = 0;
+        x._capacity = 0;
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
-    circular_buffer<T, Alloc>& circular_buffer<T, Alloc>::operator=(circular_buffer&& x) noexcept {
+    circular_buffer<T>& circular_buffer<T>::operator=(circular_buffer&& x) noexcept {
         if (this != &x) {
             this->~circular_buffer();
             new (this) circular_buffer(std::move(x));
@@ -272,222 +298,212 @@ namespace seastar {
         return *this;
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     template <typename Func>
     inline
     void
-    circular_buffer<T, Alloc>::for_each(Func&& func) {
-        if (_impl.capacity > 0) {
-            auto s = _impl.storage;
-            auto m = _impl.capacity - 1;
-            for (auto i = _impl.begin; i != _impl.end; ++i) {
-                func(s[i & m]);
-            }
+    circular_buffer<T>::for_each(Func&& func) {
+        for (auto&& p{begin()}, e{end()}; p != e; ++p) {
+            func(*p);
         }
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
-    circular_buffer<T, Alloc>::~circular_buffer() {
-        for_each([this] (T& obj) {
-            std::allocator_traits<Alloc>::destroy(_impl, &obj);
-        });
-        _impl.deallocate(_impl.storage, _impl.capacity);
+    circular_buffer<T>::~circular_buffer() {
+        if (_impl != nullptr) {
+            for_each([] (T& obj) {
+                std::destroy_at(std::addressof(obj));
+            });
+            traits::deallocate(_alloc, _impl, _capacity);
+        }
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     void
-    circular_buffer<T, Alloc>::expand() {
-        expand(std::max<size_t>(_impl.capacity * 2, 1));
+    circular_buffer<T>::expand() {
+        reserve(std::max<size_t>(_capacity * 2, 1));
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     void
-    circular_buffer<T, Alloc>::expand(size_t new_cap) {
+    circular_buffer<T>::realloc(size_t new_cap) {
         printf("expand: %lu\n", new_cap);
-        auto new_storage = _impl.allocate(new_cap);
-        auto p = new_storage;
+        T *new_storage{traits::allocate(_alloc, new_cap)};
+        T *p{new_storage};
+
         try {
             printf("for_each transfer_pass1\n");
             for_each([this, &p] (T& obj) {
-                transfer_pass1(_impl, &obj, p);
+                transfer_pass1(_alloc, std::addressof(obj), p);
                 p++;
             });
             printf("first transfer\n");
         } catch (...) {
             printf("exceptions encountered\n");
             while (p != new_storage) {
-                std::allocator_traits<Alloc>::destroy(_impl, --p);
+                std::destroy_at(--p);
             }
-            _impl.deallocate(new_storage, new_cap);
+            traits::deallocate(_alloc, new_storage, new_cap);
             throw;
         }
         p = new_storage;
         printf("start transfer_pass2\n");
         for_each([this, &p] (T& obj) {
-            transfer_pass2(_impl, &obj, p++);
+            transfer_pass2(_alloc, std::addressof(obj), p++);
         });
         printf("finish transfer_pass2\n");
-        std::swap(_impl.storage, new_storage);
-        std::swap(_impl.capacity, new_cap);
-        _impl.begin = 0;
-        _impl.end = p - _impl.storage;
+        std::swap(_impl, new_storage);
+        std::swap(_capacity, new_cap);
         printf("deallocating\n");
-        _impl.deallocate(new_storage, new_cap);
+        traits::deallocate(_alloc, new_storage, new_cap);
         printf("expanded\n");
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     void
-    circular_buffer<T, Alloc>::maybe_expand(size_t nr) {
+    circular_buffer<T>::maybe_expand(size_t nr) {
         printf("maybe_expand: %lu\n", nr);
-        printf("test: %lu\n", _impl.capacity);
-        if ((_impl.end - _impl.begin) + nr > _impl.capacity) {
+        printf("test: %lu\n", _capacity);
+        if ((_end - _begin) + nr > _capacity) {
             printf("calling expand\n");
             expand();
         }
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     void
-    circular_buffer<T, Alloc>::push_front(const T& data) {
+    circular_buffer<T>::push_front(const T& data) {
         maybe_expand();
-        auto p = &_impl.storage[mask(_impl.begin - 1)];
-        std::allocator_traits<Alloc>::construct(_impl, p, data);
-        --_impl.begin;
+        --_begin;
+        std::construct_at(std::addressof(_impl[_begin]), data);
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     void
-    circular_buffer<T, Alloc>::push_front(T&& data) {
+    circular_buffer<T>::push_front(T&& data) {
         maybe_expand();
-        auto p = &_impl.storage[mask(_impl.begin - 1)];
-        std::allocator_traits<Alloc>::construct(_impl, p, std::move(data));
-        --_impl.begin;
+        --_begin;
+        std::construct_at(std::addressof(_impl[mask(_begin)]), std::move(data));
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     template <typename... Args>
     inline
     void
-    circular_buffer<T, Alloc>::emplace_front(Args&&... args) {
+    circular_buffer<T>::emplace_front(Args&&... args) {
         maybe_expand();
-        auto p = &_impl.storage[mask(_impl.begin - 1)];
-        std::allocator_traits<Alloc>::construct(_impl, p, std::forward<Args>(args)...);
-        --_impl.begin;
+        --_begin;
+        std::construct_at(std::addressof(_impl[mask(_begin )]), std::forward<Args>(args)...);
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     void
-    circular_buffer<T, Alloc>::push_back(const T& data) {
+    circular_buffer<T>::push_back(const T& data) {
         printf("circular_buffer const push_back\n");
         maybe_expand();
         printf("circular_buffer copy maybe expanded\n");
-        auto p = &_impl.storage[mask(_impl.end)];
-        printf("circular_buffer copy constructing...\n");        
-        std::allocator_traits<Alloc>::construct(_impl, p, data);
+        std::construct_at(std::addressof(_impl[_end]), data);
         printf("circular_buffer copy constructed\n");        
-        ++_impl.end;
+        ++_end;
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     void
-    circular_buffer<T, Alloc>::push_back(T&& data) {
+    circular_buffer<T>::push_back(T&& data) {
         printf("circular_buffer move push_back\n");
         maybe_expand();
         printf("circular_buffer move maybe expanded\n");
-        auto p = &_impl.storage[mask(_impl.end)];
         printf("circular_buffer move constructing...\n");        
-        std::allocator_traits<Alloc>::construct(_impl, p, std::move(data));
+        std::construct_at(std::addressof(_impl[_end]), std::move(data));
         printf("circular_buffer move constructed\n");
-        ++_impl.end;
+        ++_end;
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     template <typename... Args>
     inline
     void
-    circular_buffer<T, Alloc>::emplace_back(Args&&... args) {
+    circular_buffer<T>::emplace_back(Args&&... args) {
         maybe_expand();
-        auto p = &_impl.storage[mask(_impl.end)];
-        std::allocator_traits<Alloc>::construct(_impl, p, std::forward<Args>(args)...);
-        ++_impl.end;
+        std::construct_at(std::addressof(_impl[_end]), std::forward<Args>(args)...);
+        ++_end;
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     T&
-    circular_buffer<T, Alloc>::front() {
-        return _impl.storage[mask(_impl.begin)];
+    circular_buffer<T>::front() {
+        return _impl[mask(_begin)];
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     const T&
-    circular_buffer<T, Alloc>::front() const {
-        return _impl.storage[mask(_impl.begin)];
+    circular_buffer<T>::front() const {
+        return _impl[mask(_begin)];
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     T&
-    circular_buffer<T, Alloc>::back() {
-        return _impl.storage[mask(_impl.end - 1)];
+    circular_buffer<T>::back() {
+        return _impl[mask(_end - 1)];
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     const T&
-    circular_buffer<T, Alloc>::back() const {
-        return _impl.storage[mask(_impl.end - 1)];
+    circular_buffer<T>::back() const {
+        return _impl[mask(_end - 1)];
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     void
-    circular_buffer<T, Alloc>::pop_front() {
-        std::allocator_traits<Alloc>::destroy(_impl, &front());
-        ++_impl.begin;
+    circular_buffer<T>::pop_front() {
+        std::destroy_at(std::addressof(front()));
+        ++_begin;
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     void
-    circular_buffer<T, Alloc>::pop_back() {
-        std::allocator_traits<Alloc>::destroy(_impl, &back());
-        --_impl.end;
+    circular_buffer<T>::pop_back() {
+        std::destroy_at(std::addressof(back()));
+        --_end;
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     T&
-    circular_buffer<T, Alloc>::operator[](size_t idx) {
-        return _impl.storage[mask(_impl.begin + idx)];
+    circular_buffer<T>::operator[](size_t idx) {
+        return _impl[mask(_begin + idx)];
     }
 
-    template <typename T, typename Alloc>
-    inline
-    const T&
-    circular_buffer<T, Alloc>::operator[](size_t idx) const {
-        return _impl.storage[mask(_impl.begin + idx)];
-    }
+    // template <typename T>
+    // inline
+    // const T&
+    // circular_buffer<T>::operator[](size_t idx) const {
+    //     return _impl[mask(_begin + idx)];
+    // }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
     T&
-    circular_buffer<T, Alloc>::access_element_unsafe(size_t idx) {
-        return _impl.storage[mask(_impl.begin + idx)];
+    circular_buffer<T>::access_element_unsafe(size_t idx) {
+        return _impl[mask(_begin + idx)];
     }
 
-    template <typename T, typename Alloc>
+    template <typename T>
     inline
-    typename circular_buffer<T, Alloc>::iterator
-    circular_buffer<T, Alloc>::erase(iterator first, iterator last) {
+    typename circular_buffer<T>::iterator
+    circular_buffer<T>::erase(typename circular_buffer<T>::iterator first, typename circular_buffer<T>::iterator last) {
         static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
         if (first == last) {
             return last;
@@ -497,18 +513,18 @@ namespace seastar {
         if (std::distance(begin(), first) < std::distance(last, end())) {
             auto new_start = std::move_backward(begin(), first, last);
             for (auto i = begin(); i < new_start; ++i) {
-                std::allocator_traits<Alloc>::destroy(_impl, &*i);
+                traits::destroy(_impl, &*i);
             }
 
-            _impl.begin = new_start.idx;
+            _begin = new_start.idx;
             return last;
         } else {
             auto new_end = std::move(last, end(), first);
             for (auto i = new_end, e = end(); i < e; ++i) {
-                std::allocator_traits<Alloc>::destroy(_impl, &*i);
+                traits::destroy(_impl, this[i]);
             }
 
-            _impl.end = new_end.idx;
+            _end = new_end.idx;
             return first;
         }
     }

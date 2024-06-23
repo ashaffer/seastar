@@ -55,23 +55,23 @@ namespace seastar {
     /// reserve() may also invalidate all iterators and references.
     template <typename T>
     class circular_buffer {
-        size_t _begin{0};
-        size_t _end{0};
-        size_t _capacity{0};
+        std::size_t _begin{0};
+        std::size_t _end{0};
+        std::size_t _capacity{0};
 
         // struct impl : Alloc {
         //     T* storage = nullptr;
         //     // begin, end interpreted (mod capacity)
-        //     size_t begin = 0;
-        //     size_t end = 0;
-        //     size_t capacity = 0;
+        //     std::size_t begin = 0;
+        //     std::size_t end = 0;
+        //     std::size_t capacity = 0;
         // };
         std::allocator<T> _alloc{};
         T *_impl{nullptr};
         using traits = std::allocator_traits<decltype(_alloc)>;
     public:
         using value_type = T;
-        using size_type = size_t;
+        using size_type = std::size_t;
         using reference = T&;
         using pointer = T*;
         using const_reference = const T&;
@@ -95,11 +95,11 @@ namespace seastar {
             }
         }
     private:
-        inline size_t mask(size_t idx) const {
+        inline std::size_t mask(std::size_t idx) const {
             return idx & (_capacity - 1);
         }
 
-        inline void maybe_expand(size_t nr = 1) {
+        inline void maybe_expand(std::size_t nr = 1) {
             printf("maybe_expand: %lu\n", nr);
             printf("testing\n");
             if (_capacity == 0) {
@@ -154,20 +154,20 @@ namespace seastar {
                 return v;
             }
             
-            Iterator operator+(size_t n) noexcept {
+            Iterator operator+(std::size_t n) noexcept {
                 return {cb, idx + n};
             }
             
-            Iterator operator-(size_t n) noexcept {
+            Iterator operator-(std::size_t n) noexcept {
                 return {cb, idx - n};
             }
             
-            Iterator& operator+=(size_t n) noexcept {
+            Iterator& operator+=(std::size_t n) noexcept {
                 idx += n;
                 return *this;
             }
             
-            Iterator& operator-=(size_t n) noexcept {
+            Iterator& operator-=(std::size_t n) noexcept {
                 idx -= n;
                 return *this;
             }
@@ -196,15 +196,15 @@ namespace seastar {
                 return idx <= rhs.idx;
             }
 
-            size_t operator-(Iterator rhs) const noexcept {
+            std::size_t operator-(Iterator rhs) const noexcept {
                 return idx - rhs.idx;
             }
 
-            Iterator(circular_buffer<T> *cb, size_t idx) noexcept : cb{cb}, idx{idx} {}
+            Iterator(circular_buffer<T> *cb, std::size_t idx) noexcept : cb{cb}, idx{idx} {}
 
         private:
             circular_buffer<T>* cb;
-            size_t idx;
+            std::size_t idx;
             // friend class circular_buffer;
         };
         // friend class iterator;
@@ -228,7 +228,7 @@ namespace seastar {
             return const_iterator{this, _end};
         }
 
-        inline T& at (size_t idx) {
+        inline T& at (std::size_t idx) {
             return _impl[mask(_begin + idx)];
         }
 
@@ -236,15 +236,15 @@ namespace seastar {
             return _begin == _end;
         }
 
-        inline size_t size() const {
+        inline std::size_t size() const {
             return _end - _begin;
         }
 
-        inline size_t capacity() const {
+        inline std::size_t capacity() const {
             return _capacity;
         }
 
-        inline void reserve(size_t size) {
+        inline void reserve(std::size_t size) {
             if (capacity() < size) {
                 // Make sure that the new capacity is a power of two.
                 realloc(size_t(1) << log2ceil(size));
@@ -281,7 +281,7 @@ namespace seastar {
             --_end;
         }
 
-        inline T& operator[](size_t idx) {
+        inline T& operator[](std::size_t idx) {
             return _impl[mask(_begin + idx)];
         }
 
@@ -316,7 +316,7 @@ namespace seastar {
         inline void emplace_front(Args&&... args) {
             maybe_expand();
             --_begin;
-            std::construct_at(std::addressof(_impl[mask(_begin )]), std::forward<Args>(args)...);
+            std::construct_at(std::addressof(_impl[mask(_begin)]), std::forward<Args>(args)...);
         }
 
         inline void push_back(const T& data) {
@@ -345,7 +345,7 @@ namespace seastar {
             ++_end;
         }
 
-        inline T& access_element_unsafe(size_t idx) {
+        inline T& access_element_unsafe(std::size_t idx) {
             return _impl[mask(_begin + idx)];
         }
 
@@ -376,10 +376,10 @@ namespace seastar {
         }
 
         void expand() {
-            reserve(std::max<size_t>(_capacity * 2, 1));
+            reserve(std::max<std::size_t>(_capacity * 2, 1));
         }
 
-        void realloc(size_t new_cap) {
+        void realloc(std::size_t new_cap) {
             printf("expand: %lu\n", new_cap);
             T *new_storage{traits::allocate(_alloc, new_cap)};
             T *p{new_storage};
@@ -416,7 +416,7 @@ namespace seastar {
     // template <typename T>
     // inline
     // const T&
-    // circular_buffer<T>::operator[](size_t idx) const {
+    // circular_buffer<T>::operator[](std::size_t idx) const {
     //     return _impl[mask(_begin + idx)];
     // }
 };

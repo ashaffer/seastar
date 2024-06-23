@@ -778,7 +778,8 @@ namespace seastar {
             printf("made task, pushing...\n");
             auto *p{std::addressof(_at_destroy_tasks->_q)};
             auto *p2{std::addressof(_at_destroy_tasks->_tasks_processed)};
-            printf("_q addr: 0x%lx, 0x%lx, 0x%lx\n", (uint64_t)&_at_destroy_tasks, (uint64_t)p, (uint64_t)p2);
+            auto *p3{std::addressof(_at_destroy_tasks->_vruntime)};
+            printf("_q addr: 0x%lx, 0x%lx, 0x%lx, 0x%lx\n", (uint64_t)&_at_destroy_tasks, (uint64_t)p, (uint64_t)p2, (uint64_t)p3);
             _at_destroy_tasks->_q.push_back(std::forward<decltype(t)>(t));
             printf("pushed task to queue\n");
         }

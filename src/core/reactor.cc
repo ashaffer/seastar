@@ -2171,13 +2171,13 @@ namespace seastar {
         auto& tasks = tq._q;
         while (!tasks.empty()) {
             auto tsk = std::move(tasks.front());
-            printf("pre-pop: %lu, %lu\n", tasks.size(), tasks.capacity());
+            printf("pre-pop: %u %lu, %lu\n", engine().cpu_id(), tasks.size(), tasks.capacity());
             tasks.pop_front();
-            printf("post-pop: %lu, %lu\n", tasks.size(), tasks.capacity());  
+            printf("post-pop: %u %lu, %lu\n", engine().cpu_id(), tasks.size(), tasks.capacity());  
             STAP_PROBE(seastar, reactor_run_tasks_single_start);
-            printf("next: %lu\n", tasks.capacity());
+            printf("next: %u, %lu\n", engine().cpu_id(), tasks.capacity());
             task_histogram_add_task(*tsk);
-            printf("next2: %lu\n", tasks.capacity());
+            printf("pre-run_and_dispose: %u, %lu\n", engine().cpu_id(), tasks.capacity());
             tsk->run_and_dispose();
             tsk.release();
             STAP_PROBE(seastar, reactor_run_tasks_single_end);

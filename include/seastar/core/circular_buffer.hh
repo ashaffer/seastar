@@ -97,6 +97,7 @@ namespace seastar {
         }
 
         inline void reserve (std::size_t new_cap) noexcept {
+            std::size_t sz{size()};
             T *new_storage{traits::allocate(_alloc, new_cap)};
             T *p{new_storage};
 
@@ -123,6 +124,8 @@ namespace seastar {
             printf("finish transfer_pass2\n");
             std::swap(_impl, new_storage);
             std::swap(_capacity, new_cap);
+            _begin = 0;
+            _end = sz;
             printf("deallocating\n");
             traits::deallocate(_alloc, new_storage, new_cap);
             printf("expanded\n");

@@ -21,7 +21,7 @@ import distutils.dir_util
 import os
 import seastar_cmake
 import subprocess
-import sys
+import sysPb
 import tempfile
 
 tempfile.tempdir = "./build/tmp"

@@ -58,6 +58,21 @@ namespace seastar {
         std::size_t _begin{0};
         std::size_t _end{0};
         std::size_t _capacity{1};
+        struct Stats {
+            std::size_t pop_backs{0};
+            std::size_t pop_fronts{0};
+            std::size_t push_backs{0};
+            std::size_t push_fronts{0};
+            std::size_t emplace_backs{0};
+            std::size_t emplace_fronts{0};
+            std::size_t clears{0};
+            std::size_t reserves{0};
+            void print () const noexcept {
+                printf("circular_buffer stats: %lu pop_backs, %lu pop_fronts, %lu push_backs, %lu push_fronts, %lu emplace_backs, %lu emplace_fronts, %lu clears, %lu reserves\n", 
+                    pop_backs, pop_fronts, push_backs, push_fronts, emplace_backs, emplace_fronts, clears, reserves);
+            }
+        };
+        Stats stats;
         std::allocator<T> _alloc{};
         T *_impl{_alloc.allocate(_capacity)};
         using traits = std::allocator_traits<decltype(_alloc)>;
@@ -88,7 +103,9 @@ namespace seastar {
         }
 
         inline void reserve (std::size_t new_cap) noexcept {
+            ++stats.reserves;
             printf("reserve called: %lu\n", new_cap);
+            stats.print();
             std::size_t sz{size()};
             T *new_storage{traits::allocate(_alloc, new_cap)};
             T *p{new_storage};
@@ -253,10 +270,6 @@ namespace seastar {
             return _capacity;
         }
 
-        inline void clear () noexcept {
-            erase(begin(), end());
-        }
-
         inline T& front () noexcept {
             return _impl[mask(_begin)];
         }
@@ -292,23 +305,32 @@ namespace seastar {
             return *this;
         }
 
+        inline void clear () noexcept {
+            ++stats.clears;
+            erase(begin(), end());
+        }
+
         inline void pop_front () noexcept {
+            ++stats.pop_fronts;
             std::destroy_at(std::addressof(front()));
             ++_begin;
         }
 
         inline void pop_back () noexcept {
+            ++stats.pop_backs;
             std::destroy_at(std::addressof(back()));
             --_end;
         }
 
         inline void push_front (const T& data) noexcept {
+            ++stats.push_fronts;
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), data);
         }
 
         inline void push_front (T&& data) noexcept {
+            ++stats.push_fronts;
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), std::move(data));
@@ -316,18 +338,21 @@ namespace seastar {
 
         template <typename... Args>
         inline void emplace_front (Args&&... args) noexcept {
+            ++stats.emplace_fronts;
             maybe_expand();
             --_begin;
             std::construct_at(std::addressof(_impl[mask(_begin)]), std::forward<Args>(args)...);
         }
 
         inline void push_back (const T& data) noexcept {
+            ++stats.push_backs;
             maybe_expand();
             std::construct_at(std::addressof(_impl[mask(_end)]), data);
             ++_end;
         }
 
         inline void push_back (T&& data) noexcept {
+            ++stats.push_backs;
             maybe_expand();
             std::construct_at(std::addressof(_impl[mask(_end)]), std::move(data));
             ++_end;
@@ -335,6 +360,7 @@ namespace seastar {
 
         template <typename... Args>
         inline void emplace_back (Args&&... args) noexcept {
+            ++stats.emplace_backs;
             maybe_expand();
             std::construct_at(std::addressof(_impl[mask(_end)]), std::forward<Args>(args)...);
             ++_end;

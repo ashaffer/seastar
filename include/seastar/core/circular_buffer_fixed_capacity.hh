@@ -56,7 +56,7 @@ namespace seastar {
         };
         maybe_storage _storage[Capacity];
     private:
-        static std::size_t mask (std::size_t idx) const noexcept { 
+        static std::size_t mask (std::size_t idx) noexcept { 
             return idx % Capacity; 
         }
         

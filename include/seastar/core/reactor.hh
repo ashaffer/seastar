@@ -541,7 +541,9 @@ namespace seastar {
         int64_t _last_vruntime = 0;
         task_queue_list _active_task_queues;
         task_queue_list _activating_task_queues;
+    public:
         task_queue* _at_destroy_tasks;
+    private:
         sched_clock::duration _task_quota;
         /// Handler that will be called when there is no task to execute on cpu.
         /// It represents a low priority work.
@@ -776,7 +778,7 @@ namespace seastar {
         void at_destroy(Func&& func) {
             auto&& t{make_task(default_scheduling_group(), std::forward<Func>(func))};
             printf("made task, pushing...\n");
-            printf("_task_queues front: 0x%lx\n", std:addressof(_task_queues.front().get()->_q));
+            printf("_task_queues front: 0x%lx\n", (uint64_t)std::addressof(_task_queues.front().get()->_q));
             auto *p{std::addressof(_at_destroy_tasks->_q)};
             auto *p2{std::addressof(_at_destroy_tasks->_tasks_processed)};
             auto *p3{std::addressof(_at_destroy_tasks->_vruntime)};

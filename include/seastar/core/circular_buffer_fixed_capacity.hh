@@ -44,10 +44,11 @@ namespace seastar {
     ///
     /// \tparam T type of objects stored in the container; must be noexcept move enabled
     /// \tparam Capacity maximum number of objects that can be stored in the container; must be a power of 2
-    template <typename T, size_t Capacity>
+    template <typename T, std::size_t Capacity>
     class circular_buffer_fixed_capacity {
-        size_t _begin = 0;
-        size_t _end = 0;
+        std::size_t _begin{0};
+        std::size_t _end{0};
+        std::size_t _num{0};
         union maybe_storage {
             T data;
             maybe_storage() noexcept {}
@@ -55,20 +56,20 @@ namespace seastar {
         };
         maybe_storage _storage[Capacity];
     private:
-        static size_t mask(size_t idx) { return idx % Capacity; }
-        T* obj(size_t idx) { return &_storage[mask(idx)].data; }
-        const T* obj(size_t idx) const { return &_storage[mask(idx)].data; }
+        static std::size_t mask (std::size_t idx) { return idx % Capacity; }
+        T* obj (std::size_t idx) { return &_storage[mask(idx)].data; }
+        const T* obj (std::size_t idx) const { return &_storage[mask(idx)].data; }
     public:
         static_assert((Capacity & (Capacity - 1)) == 0, "capacity must be a power of two");
         static_assert(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value,
                 "circular_buffer_fixed_capacity only supports nothrow-move value types");
         using value_type = T;
-        using size_type = size_t;
+        using size_type = std::size_t;
         using reference = T&;
         using pointer = T*;
         using const_reference = const T&;
         using const_pointer = const T*;
-        using difference_type = ssize_t;
+        using difference_type = std::ssize_t;
     public:
         struct Iterator {
             T *operator->() const noexcept { 
@@ -209,7 +210,7 @@ namespace seastar {
             --_end;
         }
 
-        inline circular_buffer_fixed_capacity<T, Capacity>& operator=(circular_buffer_fixed_capacity&& x) noexcept {
+        inline circular_buffer_fixed_capacity& operator=(circular_buffer_fixed_capacity&& x) noexcept {
             if (this != &x) {
                 this->~circular_buffer_fixed_capacity();
                 new (this) circular_buffer_fixed_capacity(std::move(x));
@@ -245,7 +246,7 @@ namespace seastar {
             return _begin == _end;
         }
 
-        inline std::size_t size() const noexcept {
+        inline std::size_t size () const noexcept {
             return (_end - _begin) % Capacity;
         }
 

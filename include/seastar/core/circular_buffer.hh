@@ -205,9 +205,7 @@ namespace seastar {
         private:
             circular_buffer<T>* cb;
             std::size_t idx;
-            // friend class circular_buffer;
         };
-        // friend class iterator;
 
     public:
         using iterator = Iterator;

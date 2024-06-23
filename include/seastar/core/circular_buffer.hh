@@ -120,9 +120,8 @@ namespace seastar {
         }
 
         inline void maybe_expand (std::size_t nr = 1) noexcept {
-            printf("maybe_expand: %lu, %lu, %lu, %lu, %lu\n", _begin, _end, size(), nr, _capacity);
             if (size() + nr > _capacity) {
-                printf("calling expand\n");
+                printf("calling reserve: %lu, %lu, %lu, %lu, %lu\n", _begin, _end, size(), nr, _capacity);
                 reserve(_capacity * 2);
             }
         }
@@ -293,7 +292,6 @@ namespace seastar {
         }
 
         inline void pop_front () noexcept {
-            printf("pop_front: %lu, %lu, %lu, %lu\n", _begin, _end, size(), _capacity);
             std::destroy_at(std::addressof(front()));
             ++_begin;
         }

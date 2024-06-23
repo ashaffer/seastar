@@ -51,8 +51,8 @@ namespace seastar {
         std::size_t _num{0};
         union maybe_storage {
             T data;
-            maybe_storage() noexcept {}
-            ~maybe_storage() {}
+            maybe_storage () noexcept {}
+            ~maybe_storage () noexcept {}
         };
         maybe_storage _storage[Capacity];
     private:
@@ -69,8 +69,7 @@ namespace seastar {
         }
     public:
         static_assert((Capacity & (Capacity - 1)) == 0, "capacity must be a power of two");
-        static_assert(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value,
-                "circular_buffer_fixed_capacity only supports nothrow-move value types");
+        static_assert(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value, "circular_buffer_fixed_capacity only supports nothrow-move value types");
         using value_type = T;
         using size_type = std::size_t;
         using reference = T&;
@@ -173,52 +172,52 @@ namespace seastar {
         using iterator = Iterator;
         using const_iterator = const Iterator;
     public:
-        circular_buffer_fixed_capacity() = default;
-        inline circular_buffer_fixed_capacity(circular_buffer_fixed_capacity&& x) noexcept : _begin(std::exchange(x._begin, 0)), _end(std::exchange(x._end, 0)) {
+        circular_buffer_fixed_capacity () noexcept = default;
+        inline circular_buffer_fixed_capacity (circular_buffer_fixed_capacity&& x) noexcept : _begin(std::exchange(x._begin, 0)), _end(std::exchange(x._end, 0)) {
             for (auto i = _begin; i != _end; ++i) {
                 new (&_storage[i].data) T(std::move(x._storage[i].data));
             }
         }
 
-        inline ~circular_buffer_fixed_capacity() noexcept {
+        inline ~circular_buffer_fixed_capacity () noexcept {
             for (auto i = _begin; i != _end; ++i) {
                 _storage[i].data.~T();
             }
         }
 
         template <typename... Args>
-        inline T& emplace_back(Args&&... args) {
+        inline T& emplace_back (Args&&... args) noexcept {
             auto p = new (obj(_end)) T(std::forward<Args>(args)...);
             ++_end;
             return *p;
         }
 
         template <typename... Args>
-        inline T& emplace_front(Args&&... args) {
+        inline T& emplace_front (Args&&... args) noexcept {
             auto p = new (obj(_begin - 1)) T(std::forward<Args>(args)...);
             --_begin;
             return *p;
         }
 
-        inline T& front() {
+        inline T& front () noexcept {
             return *obj(_begin);
         }
 
-        inline T& back() {
+        inline T& back () noexcept {
             return *obj(_end - 1);
         }
 
-        inline void pop_front() {
+        inline void pop_front () noexcept {
             obj(_begin)->~T();
             ++_begin;
         }
 
-        inline void pop_back() {
+        inline void pop_back () noexcept {
             obj(_end - 1)->~T();
             --_end;
         }
 
-        inline circular_buffer_fixed_capacity& operator=(circular_buffer_fixed_capacity&& x) noexcept {
+        inline circular_buffer_fixed_capacity& operator= (circular_buffer_fixed_capacity&& x) noexcept {
             if (this != &x) {
                 this->~circular_buffer_fixed_capacity();
                 new (this) circular_buffer_fixed_capacity(std::move(x));
@@ -226,31 +225,31 @@ namespace seastar {
             return *this;
         }
 
-        inline void push_front(const T& data) {
+        inline void push_front (const T& data) noexcept {
             new (obj(_begin - 1)) T(data);
             --_begin;
         }
 
-        inline void push_front(T&& data) {
+        inline void push_front (T&& data) noexcept {
             new (obj(_begin - 1)) T(std::move(data));
             --_begin;
         }
 
-        inline void push_back(const T& data) {
+        inline void push_back (const T& data) noexcept {
             printf("fixed capacity push_back copy\n");
             new (obj(_end)) T(data);
             printf("fixed capacity pushed back copy\n");
             ++_end;
         }
 
-        inline void push_back(T&& data) {
+        inline void push_back (T&& data) noexcept {
             printf("fixed capacity push_back move\n");
             new (obj(_end)) T(std::move(data));
             printf("fixed capacity pushed back move\n");
             ++_end;
         }
 
-        inline bool empty() const noexcept {
+        inline bool empty () const noexcept {
             return _begin == _end;
         }
 
@@ -270,31 +269,31 @@ namespace seastar {
             return *obj(_begin + idx);
         }
 
-        inline iterator begin() {
+        inline iterator begin () {
             return {this, _begin};
         }
         
-        inline const_iterator begin() const {
+        inline const_iterator begin () const noexcept {
             return {this, _begin};
         }
         
-        inline iterator end() {
+        inline iterator end () noexcept {
             return {this, _end};
         }
         
-        inline const_iterator end() const {
+        inline const_iterator end () const noexcept {
             return {this, _end};
         }
         
-        inline const_iterator cbegin() const {
+        inline const_iterator cbegin () const noexcept {
             return {this, _begin};
         }
         
-        inline const_iterator cend() const {
+        inline const_iterator cend () const noexcept {
             return {this, _end};
         }
 
-        inline iterator erase (iterator first, iterator last) {
+        inline iterator erase (iterator first, iterator last) noexcept {
             static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
             if (first == last) {
                 return last;

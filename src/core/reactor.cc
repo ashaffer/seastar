@@ -3365,7 +3365,7 @@ namespace seastar {
 
         opts.add_options()
             ("network-stack", bpo::value<std::string>(), net_stacks.c_str())
-            ("poll-mode", bpo::value<bool>->default_value(false), "poll continuously (100% cpu use)")
+            ("poll-mode", bpo::value<bool>()->default_value(false), "poll continuously (100% cpu use)")
             ("idle-poll-time-us", bpo::value<unsigned>()->default_value(calculate_poll_time() / 1us),
                     "idle polling time in microseconds (reduce for overprovisioned environments or laptops)")
             ("poll-aio", bpo::value<bool>()->default_value(true),

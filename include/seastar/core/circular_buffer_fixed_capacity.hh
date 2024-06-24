@@ -46,9 +46,10 @@ namespace seastar {
     /// \tparam Capacity maximum number of objects that can be stored in the container; must be a power of 2
     template <typename T, std::size_t Capacity>
     class circular_buffer_fixed_capacity {
-        std::size_t _begin{0};
-        std::size_t _end{0};
-        std::size_t _num{0};
+        std::size_t head{0};
+        std::size_t tail{0};
+        bool full{false};
+
         union maybe_storage {
             T data;
             maybe_storage () noexcept {}
@@ -168,53 +169,121 @@ namespace seastar {
             circular_buffer_fixed_capacity<T, Capacity>* cb;
             std::size_t idx;
         };
+
+        T *advance_tail () noexcept {
+            T *t{std::addressof(_storage[tail].data)};
+
+            if (++tail == Capacity) {
+                tail = 0;
+            }
+
+            if (tail == head) {
+                t->~T();
+                if (++head == Capacity) {
+                    head = 0;
+                }
+            }
+
+            return t;
+        }
+
+        T *advance_head () noexcept {
+            T *t{std::addressof(_storage[head].data)};
+
+            if (++head == Capacity) {
+                head = 0;
+            }
+
+            if (head == tail) {
+                if (++tail == Capacity) {
+                    tail = 0;
+                }
+                t->~T();
+            }
+
+            return t;
+        }
+
+        T *dec_tail () noexcept {
+            if (tail-- == 0) {
+                tail = Capacity - 1;
+            }
+
+            T *t{std::addressof(_storage[tail].data)};
+            if (tail == head) {
+                if (head-- == 0) {
+                    head = Capacity - 1;
+                }
+                t->~T();
+            }
+
+            return t;
+        }
+
+        T *dec_head () noexcept {
+            T *t{std::addressof(_storage[head].data)};
+
+            if (head-- == 0) {
+                head = Capacity - 1;
+            }
+
+            if (head == tail) {
+                if (tail-- == 0) {
+                    tail = Capacity - 1;
+                }
+                t->~T();
+            }
+
+            return t;
+        }
     public:
         using iterator = Iterator;
         using const_iterator = const Iterator;
-    public:
+
         circular_buffer_fixed_capacity () noexcept = default;
-        inline circular_buffer_fixed_capacity (circular_buffer_fixed_capacity&& x) noexcept : _begin(std::exchange(x._begin, 0)), _end(std::exchange(x._end, 0)) {
-            for (auto i = _begin; i != _end; ++i) {
-                new (&_storage[i].data) T(std::move(x._storage[i].data));
+        inline circular_buffer_fixed_capacity (circular_buffer_fixed_capacity&& x) noexcept : head(std::exchange(x.head, 0)), tail(std::exchange(x.tail, 0)) {
+            std::size_t i{head};
+
+            for (auto&& it : *this) {
+                new (std::addressof(it)) T(std::move(x._storage[i].data));
+                ++i;
             }
         }
 
         inline ~circular_buffer_fixed_capacity () noexcept {
-            for (auto i = _begin; i != _end; ++i) {
-                _storage[i].data.~T();
+            for (auto&& it : *this) {
+                it.~T();
             }
         }
 
         template <typename... Args>
         inline T& emplace_back (Args&&... args) noexcept {
-            auto p = new (obj(_end)) T(std::forward<Args>(args)...);
-            ++_end;
-            return *p;
+            T *t{advance_tail()};
+            new (t)T{std::forward<Args>(args)...};
+            return *t;
         }
 
         template <typename... Args>
         inline T& emplace_front (Args&&... args) noexcept {
-            auto p = new (obj(_begin - 1)) T(std::forward<Args>(args)...);
-            --_begin;
-            return *p;
+            T *t{advance_head()};
+            new (t) T(std::forward<Args>(args)...);
+            return *t;
         }
 
         inline T& front () noexcept {
-            return *obj(_begin);
+            return _storage[head].data;
         }
 
         inline T& back () noexcept {
-            return *obj(_end - 1);
+            return _storage[tail].data;
         }
 
         inline void pop_front () noexcept {
-            obj(_begin)->~T();
-            ++_begin;
+            advance_head();
         }
 
         inline void pop_back () noexcept {
-            obj(_end - 1)->~T();
-            --_end;
+            dec_tail();
         }
 
         inline circular_buffer_fixed_capacity& operator= (circular_buffer_fixed_capacity&& x) noexcept {
@@ -226,35 +295,33 @@ namespace seastar {
         }
 
         inline void push_front (const T& data) noexcept {
-            new (obj(_begin - 1)) T(data);
-            --_begin;
+            T *t{advance_head()};
+            new (t) T(data);
         }
 
         inline void push_front (T&& data) noexcept {
-            new (obj(_begin - 1)) T(std::move(data));
-            --_begin;
+            T *t{advance_head()};
+            new (t) T(std::move(data));
         }
 
         inline void push_back (const T& data) noexcept {
-            printf("fixed capacity push_back copy\n");
-            new (obj(_end)) T(data);
-            printf("fixed capacity pushed back copy\n");
-            ++_end;
+            T *t{advance_tail()};
+            new (t) T(data);
         }
 
         inline void push_back (T&& data) noexcept {
-            printf("fixed capacity push_back move\n");
-            new (obj(_end)) T(std::move(data));
-            printf("fixed capacity pushed back move\n");
-            ++_end;
+            T *t{advance_tail()};
+            new (t) T(std::move(data));
         }
 
         inline bool empty () const noexcept {
-            return _begin == _end;
+            return head == tail;
         }
 
         inline std::size_t size () const noexcept {
-            return (_end - _begin) % Capacity;
+            return head < tail
+                ? tail - head
+                : (Capacity - head) + tail;
         }
 
         inline std::size_t constexpr capacity () const noexcept {
@@ -262,39 +329,44 @@ namespace seastar {
         }
 
         inline T& operator[](std::size_t idx) noexcept {
-            return *obj(_begin + idx);
+            return _storage[idx].data;
         }
 
         inline T& at (std::size_t idx) noexcept {
-            return *obj(_begin + idx);
+            return _storage[idx].data;
         }
 
         inline iterator begin () {
-            return {this, _begin};
+            return {this, head};
         }
         
         inline const_iterator begin () const noexcept {
-            return {this, _begin};
+            return {this, head};
         }
         
         inline iterator end () noexcept {
-            return {this, _end};
+            return {this, tail + 1};
         }
         
         inline const_iterator end () const noexcept {
-            return {this, _end};
+            return {this, tail + 1};
         }
         
         inline const_iterator cbegin () const noexcept {
-            return {this, _begin};
+            return {this, head};
         }
         
         inline const_iterator cend () const noexcept {
-            return {this, _end};
+            return {this, tail + 1};
         }
 
         inline iterator erase (iterator first, iterator last) noexcept {
             static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
+
+            while (first != last) {
+
+                ++first;
+            }
             if (first == last) {
                 return last;
             }
@@ -306,7 +378,7 @@ namespace seastar {
                 while (i < new_start) {
                     *i++.~T();
                 }
-                _begin = new_start.idx;
+                head = new_start.idx;
                 return last;
             } else {
                 auto new_end = std::move(last, end(), first);
@@ -315,16 +387,15 @@ namespace seastar {
                 while (i < e) {
                     *i++.~T();
                 }
-                _end = new_end.idx;
+                head = new_end.idx;
                 return first;
             }
         }
 
         inline void clear () {
-            for (auto i = _begin; i != _end; ++i) {
-                obj(i)->~T();
+            while (!empty()) {
+                pop_front();
             }
-            _begin = _end = 0;
         }
     };
 };

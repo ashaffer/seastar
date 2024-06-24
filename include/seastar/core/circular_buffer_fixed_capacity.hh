@@ -192,7 +192,6 @@ namespace seastar {
             friend class circular_buffer_fixed_capacity;
         };
 
-        template<bool bump_head>
         T *advance_tail () noexcept {
             T *t{std::addressof(_storage[tail].data)};
 
@@ -200,19 +199,33 @@ namespace seastar {
                 tail = 0;
             }
 
-            if constexpr (bump_head) {
-                if (tail == head) {
-                    t->~T();
-                    if (++head == Capacity) {
-                        head = 0;
-                    }
+            if (tail == head) {
+                t->~T();
+                if (++head == Capacity) {
+                    head = 0;
                 }
             }
 
             return t;
         }
 
-        template<bool bump_tail>
+        T *dec_head () noexcept {
+            if (head-- == 0) {
+                head = Capacity - 1;
+            }
+
+            T *t{_storage[head].data]};
+
+             if (tail == head) {
+                if (tail-- == 0) {
+                    tail = Capacity - 1;
+                }
+                t->~T();
+            }
+
+            return t;
+        }
+
         T *advance_head () noexcept {
             T *t{std::addressof(_storage[head].data)};
 
@@ -220,33 +233,15 @@ namespace seastar {
                 head = 0;
             }
 
-            if constexpr (bump_tail) {
-                if (++tail == Capacity) {
-                    tail = 0;
-                }
-                t->~T();
-            }
-
             return t;
         }
 
-        template<bool bump_head>
         T *dec_tail () noexcept {
             if (tail-- == 0) {
                 tail = Capacity - 1;
             }
 
-            T *t{std::addressof(_storage[tail].data)};
-            if (tail == head) {
-                if constexpr (bump_head) {
-                    if (head-- == 0) {
-                        head = Capacity - 1;
-                    }                    
-                }
-                t->~T();
-            }
-
-            return t;
+            return std::addressof(_storage[tail].data)};
         }
     public:
         using iterator = Iterator;
@@ -270,54 +265,54 @@ namespace seastar {
 
         template <typename... Args>
         inline T& emplace_back (Args&&... args) noexcept {
-            T *t{advance_tail<true>()};
             ++stats.emplace_backs;
+            T *t{advance_tail<true>()};
             new (t)T{std::forward<Args>(args)...};
             return *t;
         }
 
         template <typename... Args>
         inline T& emplace_front (Args&&... args) noexcept {
-            T *t{advance_head<true>()};
             ++stats.emplace_fronts;
+            T *t{dec_head()};
             new (t) T(std::forward<Args>(args)...);
             return *t;
         }
 
         inline void push_front (const T& data) noexcept {
-            T *t{advance_head<true>()};
             ++stats.push_fronts;
+            T *t{dec_head()};
             new (t) T(data);
         }
 
         inline void push_front (T&& data) noexcept {
-            T *t{advance_head<true>()};
             ++stats.push_fronts;
+            T *t{dec_head()};
             new (t) T(std::move(data));
         }
 
         inline void push_back (const T& data) noexcept {
-            T *t{advance_tail<true>()};
             ++stats.push_backs;
+            T *t{advance_tail()};
             new (t) T(data);
         }
 
         inline void push_back (T&& data) noexcept {
-            T *t{advance_tail<true>()};
             ++stats.push_backs;
+            T *t{advance_tail()};
             new (t) T(std::move(data));
         }
 
         inline void pop_front () noexcept {
             ++stats.pop_fronts;
-            _storage[head].data.~T();
-            advance_head<false>();
+            T *t{advance_head()};
+            t.~T();
         }
 
         inline void pop_back () noexcept {
             ++stats.pop_backs;
-            back().~T();
-            dec_tail<false>();
+            T *t{dec_tail()};
+            t.~T();
         }
 
         inline T& front () noexcept {

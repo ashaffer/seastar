@@ -55,8 +55,8 @@ namespace seastar {
     /// reserve() may also invalidate all iterators and references.
     template <typename T>
     class circular_buffer {
-        std::size_t _begin{0};
-        std::size_t _end{0};
+        std::size_t head{0};
+        std::size_t tail{0};
         std::size_t _capacity{1};
         struct Stats {
             std::size_t pop_backs{0};
@@ -87,10 +87,10 @@ namespace seastar {
 
         inline circular_buffer () noexcept = default;
 
-        inline circular_buffer (circular_buffer&& x) noexcept : _impl(std::move(x._impl)), _begin{x._begin}, _end{x._end}, _capacity{x._capacity} {
+        inline circular_buffer (circular_buffer&& x) noexcept : _impl(std::move(x._impl)), head{x.head}, tail{x.tail}, _capacity{x._capacity} {
             x._impl = nullptr;
-            x._begin = 0;
-            x._end = 0;
+            x.head = 0;
+            x.tail = 0;
             x._capacity = 0;
         }
 
@@ -108,7 +108,7 @@ namespace seastar {
                 throw std::runtime_error("test");
             }
             ++stats.reserves;
-            printf("reserve called: %lu new capacity, %lu begin, %lu end, %lu size, %lu old capacity\n", new_cap, _begin, _end, size(), _capacity);
+            printf("reserve called: %lu new capacity, %lu begin, %lu end, %lu size, %lu old capacity\n", new_cap, head, tail, size(), _capacity);
             stats.print();
             std::size_t sz{size()};
             T *new_storage{traits::allocate(_alloc, new_cap)};
@@ -132,20 +132,61 @@ namespace seastar {
             });
             std::swap(_impl, new_storage);
             std::swap(_capacity, new_cap);
-            _begin = 0;
-            _end = sz;
+            head = 0;
+            tail = sz;
             traits::deallocate(_alloc, new_storage, new_cap);
         }
     private:
-        inline std::size_t mask (std::size_t idx) const noexcept {
-            return idx % _capacity;
+        T *advance_tail () noexcept {
+            std::size_t old_tail{tail};
+            T *t{std::addressof(_impl[tail])};
+
+            if (++tail == _capacity) {
+                tail = 0;
+            }
+
+            if (tail == head) {
+                tail = old_tail;
+                reserve(_capacity * 2);
+                return advance_tail<true>();
+            }
+
+            return t;
         }
 
-        inline void maybe_expand (std::size_t nr = 1) noexcept {
-            if (size() + nr > _capacity) {
-                printf("calling reserve: %lu, %lu, %lu, %lu, %lu\n", _begin, _end, size(), nr, _capacity);
-                reserve(_capacity * 2);
+        T *dec_head () noexcept {
+            if (head-- == 0) {
+                head = _capacity - 1;
             }
+
+            T *t{_impl[head]]};
+
+            if (tail == head) {
+                if (tail-- == 0) {
+                    tail = _capacity - 1;
+                }
+                t->~T();
+            }
+
+            return t;
+        }
+
+        T *advance_head () noexcept {
+            T *t{std::addressof(_impl[head])};
+
+            if (++head == _capacity) {
+                head = 0;
+            }
+
+            return t;
+        }
+
+        T *dec_tail () noexcept {
+            if (tail-- == 0) {
+                tail = _capacity - 1;
+            }
+
+            return t;
         }
 
         struct Iterator {
@@ -244,30 +285,28 @@ namespace seastar {
         using const_iterator = const iterator;
 
         iterator begin () noexcept {
-            return {this, _begin};
+            return {this, head};
         }
 
         iterator end () noexcept {
-            return {this, _end};
+            return {this, tail};
         }
 
         const_iterator cbegin () const noexcept {
-            return const_iterator{this, _begin};
+            return const_iterator{this, head};
         }
         const_iterator cend () const noexcept {
-            return const_iterator{this, _end};
-        }
-
-        inline T& at (std::size_t idx) noexcept {
-            return _impl[mask(_begin + idx)];
+            return const_iterator{this, tail};
         }
 
         inline bool empty () const noexcept {
-            return _begin == _end;
+            return head == tail;
         }
 
         inline std::size_t size () const noexcept {
-            return _end - _begin;
+            return head <= tail
+                ? tail - head
+                : (Capacity - head) + tail;
         }
 
         inline std::size_t capacity () const noexcept {
@@ -275,19 +314,21 @@ namespace seastar {
         }
 
         inline T& front () noexcept {
-            return _impl[mask(_begin)];
+            return _impl[head];
         }
 
         inline const T& front () const noexcept {
-            return _impl[mask(_begin)];
+            return _impl[head];
         }
 
         inline T& back () noexcept {
-            return _impl[mask(_end - 1)];
+            std::size_t idx = tail == 0 ? _capacity - 1 : tail - 1;
+            return _impl[idx];
         }
 
         inline const T& back () const noexcept {
-            return _impl[mask(_end - 1)];
+            std::size_t idx = tail == 0 ? _capacity - 1 : tail - 1;
+            return _impl[idx];
         }
 
         template <typename Func>
@@ -297,8 +338,18 @@ namespace seastar {
             }
         }
 
+        inline T& at (std::size_t idx) noexcept {
+            idx += head;
+            
+            if (idx > _capacity) {
+                idx -= _capacity;
+            }
+
+            return _impl[idx];
+        }
+
         inline T& operator[] (std::size_t idx) noexcept {
-            return _impl[mask(_begin + idx)];
+            return at(idx);
         }
 
         inline circular_buffer& operator= (circular_buffer&& x) noexcept {
@@ -316,58 +367,52 @@ namespace seastar {
 
         inline void pop_front () noexcept {
             ++stats.pop_fronts;
-            std::destroy_at(std::addressof(front()));
-            ++_begin;
+            T *t{advance_head()};
+            std::destroy_at(t);
         }
 
         inline void pop_back () noexcept {
             ++stats.pop_backs;
-            std::destroy_at(std::addressof(back()));
-            --_end;
+            T *t{dec_tail()};
+            std::destroy_at(t);
         }
 
         inline void push_front (const T& data) noexcept {
             ++stats.push_fronts;
-            maybe_expand();
-            --_begin;
-            std::construct_at(std::addressof(_impl[mask(_begin)]), data);
+            T *t{dec_head()};
+            std::construct_at(t, data);
         }
 
         inline void push_front (T&& data) noexcept {
             ++stats.push_fronts;
-            maybe_expand();
-            --_begin;
-            std::construct_at(std::addressof(_impl[mask(_begin)]), std::move(data));
+            T *t{dec_head()};
+            std::construct_at(t, std::move(data));
         }
 
         template <typename... Args>
         inline void emplace_front (Args&&... args) noexcept {
             ++stats.emplace_fronts;
-            maybe_expand();
-            --_begin;
-            std::construct_at(std::addressof(_impl[mask(_begin)]), std::forward<Args>(args)...);
+            T *t{dec_head()};
+            std::construct_at(t, std::forward<Args>(args)...);
         }
 
         inline void push_back (const T& data) noexcept {
             ++stats.push_backs;
-            maybe_expand();
-            std::construct_at(std::addressof(_impl[mask(_end)]), data);
-            ++_end;
+            T *t{advance_tail()};
+            std::construct_at(t, data);
         }
 
         inline void push_back (T&& data) noexcept {
             ++stats.push_backs;
-            maybe_expand();
-            std::construct_at(std::addressof(_impl[mask(_end)]), std::move(data));
-            ++_end;
+            T *t{advance_tail()};
+            std::construct_at(t, std::move(data));
         }
 
         template <typename... Args>
         inline void emplace_back (Args&&... args) noexcept {
             ++stats.emplace_backs;
-            maybe_expand();
-            std::construct_at(std::addressof(_impl[mask(_end)]), std::forward<Args>(args)...);
-            ++_end;
+            T *t{advance_tail()};
+            std::construct_at(t, std::forward<Args>(args)...);
         }
 
         inline iterator erase (iterator first, iterator last) noexcept {
@@ -383,7 +428,7 @@ namespace seastar {
                     traits::destroy(_impl, &*i);
                 }
 
-                _begin = new_start.idx;
+                head = new_start.idx;
                 return last;
             } else {
                 auto new_end = std::move(last);
@@ -391,7 +436,7 @@ namespace seastar {
                     traits::destroy(_impl, this[i]);
                 }
 
-                _end = new_end.idx;
+                tail = new_end.idx;
                 return first;
             }
         }

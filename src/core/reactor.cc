@@ -2565,7 +2565,9 @@ namespace seastar {
     void
     reactor::insert_activating_task_queues() {
         // Quadratic, but since we expect the common cases in insert_active_task_queue() to dominate, faster
+        printf("activating_task_queues: %u, %lu\n", engine().cpu_id(), _activating_task_queues.size());
         for (auto&& tq : _activating_task_queues) {
+            printf("\t%u\n", engine().cpu_id());
             insert_active_task_queue(tq);
         }
         _activating_task_queues.clear();

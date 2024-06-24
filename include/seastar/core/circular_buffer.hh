@@ -155,6 +155,8 @@ namespace seastar {
         }
 
         T *dec_head () noexcept {
+            std::size_t old_head{head};
+
             if (head-- == 0) {
                 head = _capacity - 1;
             }
@@ -162,10 +164,10 @@ namespace seastar {
             T *t{std::addressof(_impl[head])};
 
             if (tail == head) {
-                if (tail-- == 0) {
-                    tail = _capacity - 1;
-                }
-                t->~T();
+                head = old_head;
+                reserve(_capacity * 2);
+                head = _capacity - 1;
+                return std::addressof(_impl[head]);
             }
 
             return t;

@@ -148,7 +148,7 @@ namespace seastar {
             if (tail == head) {
                 tail = old_tail;
                 reserve(_capacity * 2);
-                return std::addessof(_impl[tail]);
+                return std::addressof(_impl[tail]);
             }
 
             return t;

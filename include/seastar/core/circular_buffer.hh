@@ -105,6 +105,7 @@ namespace seastar {
 
         inline void reserve (std::size_t new_cap) {
             if (new_cap > 1024) {
+                printf("capacity too large: %lu\n", new_cap);
                 throw std::runtime_error("test");
             }
             ++stats.reserves;
@@ -147,7 +148,7 @@ namespace seastar {
             if (tail == head) {
                 tail = old_tail;
                 reserve(_capacity * 2);
-                return advance_tail();
+                return std::addessof(_impl[tail]);
             }
 
             return t;

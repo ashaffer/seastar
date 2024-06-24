@@ -320,7 +320,7 @@ namespace seastar {
         }
 
         inline bool empty () const noexcept {
-            return head == tail;
+            return head + 1 == tail || head == Capacity - 1 == tail;
         }
 
         inline std::size_t size () const noexcept {

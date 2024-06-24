@@ -3379,7 +3379,7 @@ namespace seastar {
                     bpo::value<bool>()->default_value(aio_nowait_supported),
                     "use the Linux NOWAIT AIO feature, which reduces reactor stalls due to aio (autodetected)")
             ("unsafe-bypass-fsync", bpo::value<bool>()->default_value(false), "Bypass fsync(), may result in data loss. Use for testing on consumer drives")
-            ("overprovisioned", bpo::value<bool>->default_value(false), "run in an overprovisioned environment (such as docker or a laptop); equivalent to --idle-poll-time-us 0 --thread-affinity 0 --poll-aio 0")
+            ("overprovisioned", bpo::value<bool>()->default_value(false), "run in an overprovisioned environment (such as docker or a laptop); equivalent to --idle-poll-time-us 0 --thread-affinity 0 --poll-aio 0")
             ("abort-on-seastar-bad-alloc", "abort when seastar allocator cannot allocate memory")
             ("force-aio-syscalls", bpo::value<bool>()->default_value(false),
                     "Force io_getevents(2) to issue a system call, instead of bypassing the kernel when possible."

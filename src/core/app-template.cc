@@ -18,6 +18,7 @@
 /*
  * Copyright (C) 2014 Cloudius Systems, Ltd.
  */
+#include <map>
 #include <seastar/core/app-template.hh>
 #include <seastar/core/reactor.hh>
 #include <seastar/core/scollectd.hh>
@@ -27,7 +28,8 @@
 #include <seastar/util/log.hh>
 #include <seastar/util/log-cli.hh>
 #include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/errors.hpp>
 #include <boost/make_shared.hpp>
 #include <exception>
 #include <fstream>
@@ -162,7 +164,7 @@ app_template::run_deprecated(int argc, const char * const * const argv, std::fun
         // std::cout << _opts << "\n";
         return 1;
     }
-    if (configuration.find("help-loggers")->second.as<bool>()) {
+    if (configuration["help-loggers"].as<bool>()) {
         log_cli::print_available_loggers(std::cout);
         return 1;
     }

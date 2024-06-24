@@ -47,6 +47,7 @@
 #include <format>
 #include <filesystem>
 #include <any>
+#include <map>
 #include <seastar/core/task.hh>
 #include <seastar/core/reactor.hh>
 #include <seastar/core/memory.hh>
@@ -120,6 +121,9 @@
 #include <seastar/core/metrics.hh>
 #include <seastar/core/execution_stage.hh>
 #include <seastar/core/exception_hacks.hh>
+#include <boost/program_options.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/errors.hpp>
 #include <boost/program_options/errors.hpp>
 #include "stall_detector.hh"
 #include <exception>
@@ -1333,7 +1337,7 @@ namespace seastar {
 
     void reactor::configure(boost::program_options::variables_map vm) {
         auto network_stack_ready = vm.count("network-stack")
-            ? network_stack_registry::create(sstring(vm.find("network-stack")->second.as<std::string>()), vm)
+            ? network_stack_registry::create(sstring(vm["network-stack"].as<std::string>()), vm)
             : network_stack_registry::create(vm);
         // FIXME: future is discarded
         (void)network_stack_ready.then([this] (std::unique_ptr<network_stack> stack) {
@@ -1341,34 +1345,34 @@ namespace seastar {
         });
 
         _handle_sigint = !vm.count("no-handle-interrupt");
-        auto task_quota = vm.find("task-quota-ms")->second.as<double>() * 1ms;
+        auto task_quota = vm["task-quota-ms"].as<double>() * 1ms;
         _task_quota = std::chrono::duration_cast<sched_clock::duration>(task_quota);
 
-        auto blocked_time = vm.find("blocked-reactor-notify-ms")->second.as<unsigned>() * 1ms;
+        auto blocked_time = vm["blocked-reactor-notify-ms"].as<unsigned>() * 1ms;
         cpu_stall_detector_config csdc;
         csdc.threshold = blocked_time;
-        csdc.stall_detector_reports_per_minute = vm.find("blocked-reactor-reports-per-minute")->second.as<unsigned>();
+        csdc.stall_detector_reports_per_minute = vm["blocked-reactor-reports-per-minute"].as<unsigned>();
         _cpu_stall_detector->update_config(csdc);
 
-        _max_task_backlog = vm.find("max-task-backlog")->second.as<unsigned>();
-        _max_poll_time = vm.find("idle-poll-time-us")->second.as<unsigned>() * 1us;
+        _max_task_backlog = vm["max-task-backlog"].as<unsigned>();
+        _max_poll_time = vm["idle-poll-time-us"].as<unsigned>() * 1us;
         if (vm.count("poll-mode")) {
             _max_poll_time = std::chrono::nanoseconds::max();
         }
         if (vm.count("overprovisioned")
-               && vm.find("idle-poll-time-us")->second.defaulted()
+               && vm["idle-poll-time-us"].defaulted()
                && !vm.count("poll-mode")) {
             _max_poll_time = 0us;
         }
         set_strict_dma(!vm.count("relaxed-dma"));
-        if (!vm.find("poll-aio")->second.as<bool>()
-                || (vm.find("poll-aio")->second.defaulted() && vm.count("overprovisioned"))) {
+        if (!vm["poll-aio"].as<bool>()
+                || (vm["poll-aio"].defaulted() && vm.count("overprovisioned"))) {
             _aio_eventfd = pollable_fd(file_desc::eventfd(0, 0));
         }
-        set_bypass_fsync(vm.find("unsafe-bypass-fsync")->second.as<bool>());
-        _force_io_getevents_syscall = vm.find("force-aio-syscalls")->second.as<bool>();
-        aio_nowait_supported = vm.find("linux-aio-nowait")->second.as<bool>();
-        _have_aio_fsync = vm.find("aio-fsync")->second.as<bool>();
+        set_bypass_fsync(vm["unsafe-bypass-fsync"].as<bool>());
+        _force_io_getevents_syscall = vm["force-aio-syscalls"].as<bool>();
+        aio_nowait_supported = vm["linux-aio-nowait"].as<bool>();
+        _have_aio_fsync = vm["aio-fsync"].as<bool>();
     }
 
     pollable_fd
@@ -3606,15 +3610,15 @@ namespace seastar {
 
         void parse_config(boost::program_options::variables_map& configuration) {
             seastar_logger.debug("smp::count: {}", smp::count);
-            _latency_goal = std::chrono::duration_cast<std::chrono::duration<double>>(configuration.find("task-quota-ms")->second.as<double>() * 1.5 * 1ms);
+            _latency_goal = std::chrono::duration_cast<std::chrono::duration<double>>(configuration["task-quota-ms"].as<double>() * 1.5 * 1ms);
             seastar_logger.debug("latency_goal: {}", latency_goal().count());
 
             if (configuration.count("max-io-requests")) {
-                _capacity = configuration.find("max-io-requests")->second.as<unsigned>();
+                _capacity = configuration["max-io-requests"].as<unsigned>();
             }
 
             if (configuration.count("num-io-queues")) {
-                _num_io_queues = configuration.find("num-io-queues")->second.as<unsigned>();
+                _num_io_queues = configuration["num-io-queues"].as<unsigned>();
                 if (!_num_io_queues) {
                     throw std::runtime_error("num-io-queues must be greater than zero");
                 }
@@ -3625,10 +3629,10 @@ namespace seastar {
 
             std::optional<YAML::Node> doc;
             if (configuration.count("io-properties-file")) {
-                std::string iop_file{configuration.find("io-properties-file")->second.as<std::string>()};
+                std::string iop_file{configuration["io-properties-file"].as<std::string>()};
                 doc = YAML::LoadFile(iop_file.c_str());
             } else if (configuration.count("io-properties")) {
-                std::string iop_yaml{configuration.find("io-properties")->second.as<std::string>()};
+                std::string iop_yaml{configuration["io-properties"].as<std::string>()};
                 doc = YAML::Load(iop_yaml.c_str());
             }
 
@@ -3738,7 +3742,7 @@ namespace seastar {
     void smp::configure(boost::program_options::variables_map configuration, reactor_config reactor_cfg)
     {
     #ifndef SEASTAR_NO_EXCEPTION_HACK
-        if (configuration.find("enable-glibc-exception-scaling-workaround")->second.as<bool>()) {
+        if (configuration["enable-glibc-exception-scaling-workaround"].as<bool>()) {
             init_phdr_cache();
         }
     #endif
@@ -3765,16 +3769,16 @@ namespace seastar {
     #ifdef SEASTAR_HAVE_DPDK
         _using_dpdk = configuration.count("dpdk-pmd");
     #endif
-        auto thread_affinity = configuration.find("thread-affinity")->second.as<bool>();
+        auto thread_affinity = configuration["thread-affinity"].as<bool>();
         if (configuration.count("overprovisioned")
-               && configuration.find("thread-affinity")->second.defaulted()) {
+               && configuration["thread-affinity"].defaulted()) {
             thread_affinity = false;
         }
         if (!thread_affinity && _using_dpdk) {
             std::cout << "warning: --thread-affinity 0 ignored in dpdk mode\n";
         }
 
-        auto mbind = configuration.find("mbind")->second.as<bool>();
+        auto mbind = configuration["mbind"].as<bool>();
         if (!thread_affinity) {
             mbind = false;
         }
@@ -3791,7 +3795,7 @@ namespace seastar {
         } 
 
         if (configuration.count("cpuset")) {
-            cpu_set = configuration.find("cpuset")->second.as<cpuset_bpo_wrapper>().value;
+            cpu_set = configuration["cpuset"].as<cpuset_bpo_wrapper>().value;
             if (cgroup_cpu_set && *cgroup_cpu_set != cpu_set) {
                 // CPUs that are not available are those pinned by
                 // --cpuset but not by cgroups, if mounted.
@@ -3814,7 +3818,7 @@ namespace seastar {
         }
 
         if (configuration.count("smp")) {
-            nr_cpus = configuration.find("smp")->second.as<unsigned>();
+            nr_cpus = configuration["smp"].as<unsigned>();
         } else {
             nr_cpus = cpu_set.size();
         }
@@ -3822,15 +3826,15 @@ namespace seastar {
         _reactors.resize(nr_cpus);
         resource::configuration rc;
         if (configuration.count("memory")) {
-            rc.total_memory = parse_memory_size(configuration.find("memory")->second.as<std::string>());
+            rc.total_memory = parse_memory_size(configuration["memory"].as<std::string>());
     #ifdef SEASTAR_HAVE_DPDK
             if (configuration.count("hugepages") &&
-                !configuration.find("network-stack")->second.as<std::string>().compare("native") &&
+                !configuration["network-stack"].as<std::string>().compare("native") &&
                 _using_dpdk) {
                 size_t dpdk_memory = dpdk::eal::mem_size(smp::count);
                 if (dpdk_memory >= rc.total_memory) {
                     std::cerr<<"Can't run with the given amount of memory: ";
-                    std::cerr<<configuration.find("memory")->second.as<std::string>();
+                    std::cerr<<configuration["memory"].as<std::string>();
                     std::cerr<<". Consider giving more."<<std::endl;
                     exit(1);
                 }
@@ -3844,16 +3848,16 @@ namespace seastar {
     #endif
         }
         if (configuration.count("reserve-memory")) {
-            rc.reserve_memory = parse_memory_size(configuration.find("reserve-memory")->second.as<std::string>());
+            rc.reserve_memory = parse_memory_size(configuration["reserve-memory"].as<std::string>());
         }
 
         std::optional<std::string> hugepages_path;
         if (configuration.count("hugepages")) {
-            hugepages_path = configuration.find("hugepages")->second.as<std::string>();
+            hugepages_path = configuration["hugepages"].as<std::string>();
         }
         auto mlock = false;
         if (configuration.count("lock-memory")) {
-            mlock = configuration.find("lock-memory")->second.as<bool>();
+            mlock = configuration["lock-memory"].as<bool>();
         }
         if (mlock) {
             auto r = mlockall(MCL_CURRENT | MCL_FUTURE);
@@ -3936,7 +3940,7 @@ namespace seastar {
         };
 
         _all_event_loops_done.emplace(smp::count);
-        auto backend_selector = configuration.find("reactor-backend")->second.as<reactor_backend_selector>();
+        auto backend_selector = configuration["reactor-backend"].as<reactor_backend_selector>();
 
         unsigned i;
 

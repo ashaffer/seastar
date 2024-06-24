@@ -28,6 +28,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <format>
+#include <boost/program_options.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/errors.hpp>
 #include <seastar/core/future-util.hh>
 #include <seastar/core/scollectd_api.hh>
 #include <seastar/core/metrics_api.hh>
@@ -523,16 +526,16 @@ future<> send_metric(const type_instance_id & id,
 }
 
 void configure(const boost::program_options::variables_map & opts) {
-    bool enable = opts.find("collectd")->second.as<bool>();
+    bool enable = opts["collectd"].as<bool>();
     if (!enable) {
         return;
     }
-    auto addr = ipv4_addr(opts.find("collectd-address")->second.as<std::string>());
-    auto period = std::chrono::milliseconds(opts.find("collectd-poll-period")->second.as<unsigned>());
+    auto addr = ipv4_addr(opts["collectd-address"].as<std::string>());
+    auto period = std::chrono::milliseconds(opts["collectd-poll-period"].as<unsigned>());
 
-    auto host = (opts.find("collectd-hostname")->second.as<std::string>() == "")
+    auto host = (opts["collectd-hostname"].as<std::string>() == "")
             ? seastar::metrics::impl::get_local_impl()->get_config().hostname
-            : sstring(opts.find("collectd-hostname")->second.as<std::string>());
+            : sstring(opts["collectd-hostname"].as<std::string>());
 
     // Now create send loops on each cpu
     for (unsigned c = 0; c < smp::count; c++) {

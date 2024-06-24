@@ -62,28 +62,28 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     if ( opts.count("net-config")) {
         deprecated_config_used = false;
         printf("Using net-config\n");
-        net_config << opts.find("net-config")->second.as<std::string>();
+        net_config << opts["net-config"].as<std::string>();
     }
     if ( opts.count("net-config-file")) {
         deprecated_config_used = false;
-        printf("Using net-config file: %s\n", opts.find("net-config-file")->second.as<std::string>().c_str());
-        std::fstream fs(opts.find("net-config-file")->second.as<std::string>());
+        printf("Using net-config file: %s\n", opts["net-config-file"].as<std::string>().c_str());
+        std::fstream fs(opts["net-config-file"].as<std::string>());
         net_config << fs.rdbuf();
     }
 
     std::vector<std::shared_ptr<device>> devices;
     device_configs dev_cfgs;
 
-    bool fullHash = opts.find("full-rss-hash")->second.as<bool>();
-    bool rssSort = opts.find("rss-sort")->second.as<bool>();
-    uint32_t initialHash = opts.find("rss-seed")->second.as<uint32_t>();
+    bool fullHash = opts["full-rss-hash"].as<bool>();
+    bool rssSort = opts["rss-sort"].as<bool>();
+    uint32_t initialHash = opts["rss-seed"].as<uint32_t>();
 
     if ( deprecated_config_used) {
 // #ifdef SEASTAR_HAVE_DPDK
         if ( opts.count("dpdk-pmd")) {
-             devices.push_back(create_dpdk_net_device(opts.find("dpdk-port-index")->second.as<unsigned>(), smp::count,
-                !(opts.count("lro") && opts.find("lro")->second.as<std::string>() == "off"),
-                !(opts.count("hw-fc") && opts.find("hw-fc")->second.as<std::string>() == "off"), fullHash, initialHash, rssSort));
+             devices.push_back(create_dpdk_net_device(opts["dpdk-port-index"].as<unsigned>(), smp::count,
+                !(opts["lro"].as<std::string>() == "off"),
+                !(opts["hw-fc"].as<std::string>() == "off"), fullHash, initialHash, rssSort));
         } else {
 // #endif
             throw std::runtime_error("[create_native_net_device] invalid config");
@@ -118,7 +118,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     }
 
     if (opts.count("hugepages")) {
-        printf("Using hugepages: %s\n", opts.find("hugepages")->second.as<std::string>().c_str());
+        printf("Using hugepages: %s\n", opts["hugepages"].as<std::string>().c_str());
     } else {
         printf("*NOT* using huge pages, cannot use zerocopy processing in the dpdk driver\n");
     }
@@ -132,12 +132,10 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
                 if (qid < sdev->hw_queues_count()) {
                     auto qp = sdev->init_local_queue(opts, qid);
-                    printf("Local queues initialized\n");
                     std::map<unsigned, float> cpu_weights;
                     for (unsigned i = sdev->hw_queues_count() + qid % sdev->hw_queues_count(); i < smp::count; i+= sdev->hw_queues_count()) {
                         cpu_weights[i] = 1;
                     }
-                    printf("opts count: %lu\n", opts.count("hw-queue-weight"));
                     cpu_weights[qid] = opts["hw-queue-weight"].as<float>();
                     printf("Configutring proxies...\n");
                     qp->configure_proxies(cpu_weights);
@@ -249,7 +247,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
         _devname_map[inet] = device_config.first;
         _dhcp = ip_config.dhcp;
 
-        inet->get_udp().set_queue_size(opts.find("udpv4-queue-size")->second.as<int>());
+        inet->get_udp().set_queue_size(opts["udpv4-queue-size"].as<int>());
 
         if (!_dhcp) {
             for (auto ip : ip_config.ip) {
@@ -257,7 +255,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
                 inet->set_host_address(sa);
                 _inet_map[(inet_address)sa] = inet;
             }
-            // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts.find("host-ipv4-addr")->second.as<std::string>()));
+            // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
             inet->set_gw_address(ipv4_address(ip_config.gateway));
             inet->set_netmask_address(ipv4_address(ip_config.netmask));
         }

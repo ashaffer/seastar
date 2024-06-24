@@ -19,12 +19,16 @@
  * Copyright (C) 2016 ScyllaDB.
  */
 #include <optional>
+#include <map>
 #include <seastar/core/metrics.hh>
 #include <seastar/core/metrics_api.hh>
 #include <boost/range/algorithm.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/range/algorithm_ext/erase.hpp>
+#include <boost/program_options.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/errors.hpp>
 
 namespace seastar {
     namespace metrics {
@@ -104,7 +108,7 @@ namespace seastar {
 
         future<> configure(const boost::program_options::variables_map & opts) {
             impl::config c;
-            c.hostname = opts.find("metrics-hostname")->second.as<std::string>();
+            c.hostname = opts["metrics-hostname"].as<std::string>();
             return smp::invoke_on_all([c] {
                 impl::get_local_impl()->set_config(c);
             });

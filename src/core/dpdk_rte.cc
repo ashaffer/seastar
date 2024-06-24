@@ -50,14 +50,14 @@ void eal::init(cpuset cpus, boost::program_options::variables_map opts)
 
     // TODO: Inherit these from the app parameters - "opts"
     std::vector<std::vector<char>> args {
-        string2vector(opts.find("argv0")->second.as<std::string>()),
+        string2vector(opts["argv0"].as<std::string>()),
         string2vector("-c"), string2vector(mask_str),
         string2vector("-n"), string2vector("1")
     };
 
     std::optional<std::string> hugepages_path;
     if (opts.count("hugepages")) {
-        hugepages_path = opts.find("hugepages")->second.as<std::string>();
+        hugepages_path = opts["hugepages"].as<std::string>();
     }
 
     // If "hugepages" is not provided and DPDK PMD drivers mode is requested -

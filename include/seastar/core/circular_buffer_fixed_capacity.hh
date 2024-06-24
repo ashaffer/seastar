@@ -200,9 +200,9 @@ namespace seastar {
                 tail = 0;
             }
 
-            if (tail == head) {
-                t->~T();
-                if constexpr (bump_head) {
+            if constexpr (bump_head) {
+                if (tail == head) {
+                    t->~T();
                     if (++head == Capacity) {
                         head = 0;
                     }
@@ -220,11 +220,9 @@ namespace seastar {
                 head = 0;
             }
 
-            if (head == tail) {
-                if constexpr (bump_tail) {
-                    if (++tail == Capacity) {
-                        tail = 0;
-                    }
+            if constexpr (bump_tail) {
+                if (++tail == Capacity) {
+                    tail = 0;
                 }
                 t->~T();
             }
@@ -312,11 +310,13 @@ namespace seastar {
 
         inline void pop_front () noexcept {
             ++stats.pop_fronts;
+            _storage[head].data.~T();
             advance_head<false>();
         }
 
         inline void pop_back () noexcept {
             ++stats.pop_backs;
+            back().~T();
             dec_tail<false>();
         }
 

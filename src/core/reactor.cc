@@ -3946,7 +3946,7 @@ namespace seastar {
 
         for (i = 1; i < smp::count; i++) {
             auto allocation = allocations[i];
-            create_thread([&configuration, &disk_config, &reactors_registered, &smp_queues_constructed, &inited, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
+            create_thread([&configuration, &disk_config, &reactors_registered, &smp_queues_constructed, &inited, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] mutable {
               try {
                 auto thread_name = std::format("reactor-{}", i);
                 pthread_setname_np(pthread_self(), thread_name.c_str());

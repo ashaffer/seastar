@@ -27,420 +27,486 @@
 #include <algorithm>
 
 namespace seastar {
-    /// A growable double-ended queue container that can be efficiently
-    /// extended (and shrunk) from both ends. Implementation is a single
-    /// storage vector.
-    ///
-    /// Similar to libstdc++'s std::deque, except that it uses a single
-    /// level store, and so is more efficient for simple stored items.
-    /// Similar to boost::circular_buffer_space_optimized, except it uses
-    /// uninitialized storage for unoccupied elements (and thus move/copy
-    /// constructors instead of move/copy assignments, which are less
-    /// efficient).
-    ///
-    /// The storage of the circular_buffer is expanded automatically in
-    /// exponential increments.
-    /// When adding new elements:
-    /// * if size + 1 > capacity: all iterators and references are
-    ///     invalidated,
-    /// * otherwise only the begin() or end() iterator is invalidated:
-    ///     * push_front() and emplace_front() will invalidate begin() and
-    ///     * push_back() and emplace_back() will invalidate end().
-    ///
-    /// Removing elements never invalidates any references and only
-    /// invalidates begin() or end() iterators:
-    ///     * pop_front() will invalidate begin() and
-    ///     * pop_back() will invalidate end().
-    ///
-    /// reserve() may also invalidate all iterators and references.
-    template <typename T>
-    class circular_buffer {
-        std::size_t head{0};
-        std::size_t tail{0};
-        std::size_t _capacity{1};
-        struct Stats {
-            std::size_t pop_backs{0};
-            std::size_t pop_fronts{0};
-            std::size_t push_backs{0};
-            std::size_t push_fronts{0};
-            std::size_t emplace_backs{0};
-            std::size_t emplace_fronts{0};
-            std::size_t clears{0};
-            std::size_t reserves{0};
-            std::size_t erases{0};
-            void print () const noexcept {
-                printf("circular_buffer stats: %lu pop_backs, %lu pop_fronts, %lu push_backs, %lu push_fronts, %lu emplace_backs, %lu emplace_fronts, %lu clears, %lu reserves %lu erases\n", 
-                    pop_backs, pop_fronts, push_backs, push_fronts, emplace_backs, emplace_fronts, clears, reserves, erases);
-            }
-        };
-        Stats stats;
-        std::allocator<T> _alloc{};
-        T *_impl{_alloc.allocate(_capacity)};
-        using traits = std::allocator_traits<decltype(_alloc)>;
-    public:
-        using value_type = T;
-        using size_type = std::size_t;
-        using reference = T&;
-        using pointer = T*;
-        using const_reference = const T&;
-        using const_pointer = const T*;
 
-        inline circular_buffer () noexcept = default;
+/// A growable double-ended queue container that can be efficiently
+/// extended (and shrunk) from both ends. Implementation is a single
+/// storage vector.
+///
+/// Similar to libstdc++'s std::deque, except that it uses a single
+/// level store, and so is more efficient for simple stored items.
+/// Similar to boost::circular_buffer_space_optimized, except it uses
+/// uninitialized storage for unoccupied elements (and thus move/copy
+/// constructors instead of move/copy assignments, which are less
+/// efficient).
+///
+/// The storage of the circular_buffer is expanded automatically in
+/// exponential increments.
+/// When adding new elements:
+/// * if size + 1 > capacity: all iterators and references are
+///     invalidated,
+/// * otherwise only the begin() or end() iterator is invalidated:
+///     * push_front() and emplace_front() will invalidate begin() and
+///     * push_back() and emplace_back() will invalidate end().
+///
+/// Removing elements never invalidates any references and only
+/// invalidates begin() or end() iterators:
+///     * pop_front() will invalidate begin() and
+///     * pop_back() will invalidate end().
+///
+/// reserve() may also invalidate all iterators and references.
+template <typename T, typename Alloc = std::allocator<T>>
+class circular_buffer {
+    struct impl : Alloc {
+        T* storage = nullptr;
+        // begin, end interpreted (mod capacity)
+        size_t begin = 0;
+        size_t end = 0;
+        size_t capacity = 0;
 
-        inline circular_buffer (circular_buffer&& x) noexcept : _impl(std::move(x._impl)), head{x.head}, tail{x.tail}, _capacity{x._capacity} {
-            x._impl = nullptr;
-            x.head = 0;
-            x.tail = 0;
-            x._capacity = 0;
-        }
-
-        inline ~circular_buffer () noexcept {
-            if (_impl != nullptr) {
-                for_each([] (T& obj) {
-                    std::destroy_at(std::addressof(obj));
-                });
-                traits::deallocate(_alloc, _impl, _capacity);
-            }
-        }
-
-        inline void reserve (std::size_t new_cap) {
-            if (new_cap > 1024) {
-                printf("capacity too large: %lu\n", new_cap);
-                throw std::runtime_error("test");
-            }
-            ++stats.reserves;
-            stats.print();
-            std::size_t sz{size()};
-            T *new_storage{traits::allocate(_alloc, new_cap)};
-            T *p{new_storage};
-
-            try {
-                for_each([this, &p] (T& obj) {
-                    transfer_pass1(_alloc, std::addressof(obj), p);
-                    p++;
-                });
-            } catch (...) {
-                while (p != new_storage) {
-                    std::destroy_at(--p);
-                }
-                traits::deallocate(_alloc, new_storage, new_cap);
-                throw;
-            }
-            p = new_storage;
-            for_each([this, &p] (T& obj) {
-                transfer_pass2(_alloc, std::addressof(obj), p++);
-            });
-            std::swap(_impl, new_storage);
-            std::swap(_capacity, new_cap);
-            head = 0;
-            tail = sz;
-            traits::deallocate(_alloc, new_storage, new_cap);
-        }
-    private:
-        T *advance_tail () noexcept {
-            std::size_t old_tail{tail};
-            T *t{std::addressof(_impl[tail])};
-
-            if (++tail == _capacity) {
-                tail = 0;
-            }
-
-            if (tail == head) {
-                tail = old_tail;
-                reserve(_capacity * 2);
-                return std::addressof(_impl[tail]);
-            }
-
-            return t;
-        }
-
-        T *dec_head () noexcept {
-            std::size_t old_head{head};
-
-            if (head-- == 0) {
-                head = _capacity - 1;
-            }
-
-            T *t{std::addressof(_impl[head])};
-
-            if (tail == head) {
-                head = old_head;
-                reserve(_capacity * 2);
-                head = _capacity - 1;
-                return std::addressof(_impl[head]);
-            }
-
-            return t;
-        }
-
-        T *advance_head () noexcept {
-            T *t{std::addressof(_impl[head])};
-
-            if (++head == _capacity) {
-                head = 0;
-            }
-
-            return t;
-        }
-
-        T *dec_tail () noexcept {
-            if (tail-- == 0) {
-                tail = _capacity - 1;
-            }
-
-            return std::addressof(_impl[tail]);
-        }
-
-        struct Iterator {
-            T *operator-> () const noexcept { 
-                return std::addressof(cb->at(idx)); 
-            }
-            
-            T& operator* () const noexcept { 
-                return cb->at(idx); 
-            }
-
-            // ValueType& operator*() const { return cb[idx]; }
-            // ValueType* operator->() const { return &cb[idx]; }
-
-            // prefix
-            Iterator& operator++ () noexcept {
-                ++idx;
-                return *this;
-            }
-            
-            // postfix
-            Iterator operator++ (int unused) noexcept {
-                auto v = *this;
-                ++idx;
-                return v;
-            }
-            
-            // prefix
-            Iterator& operator-- () noexcept {
-                --idx;
-                return *this;
-            }
-            
-            // postfix
-            Iterator operator-- (int unused) noexcept {
-                auto v = *this;
-                --idx;
-                return v;
-            }
-            
-            Iterator operator+ (std::size_t n) noexcept {
-                return {cb, idx + n};
-            }
-            
-            Iterator operator- (std::size_t n) noexcept {
-                return {cb, idx - n};
-            }
-            
-            Iterator& operator+= (std::size_t n) noexcept {
-                idx += n;
-                return *this;
-            }
-            
-            Iterator& operator-= (std::size_t n) noexcept {
-                idx -= n;
-                return *this;
-            }
-            
-            bool operator== (Iterator rhs) const noexcept {
-                return idx == rhs.idx;
-            }
-            
-            bool operator!= (Iterator rhs) const noexcept {
-                return idx != rhs.idx;
-            }
-            
-            bool operator< (Iterator rhs) const noexcept {
-                return idx < rhs.idx;
-            }
-            
-            bool operator> (Iterator rhs) const noexcept {
-                return idx > rhs.idx;
-            }
-            
-            bool operator>= (Iterator rhs) const noexcept {
-                return idx >= rhs.idx;
-            }
-            
-            bool operator<= (Iterator rhs) const noexcept {
-                return idx <= rhs.idx;
-            }
-
-            std::size_t operator- (Iterator rhs) const noexcept {
-                return idx - rhs.idx;
-            }
-
-            Iterator (circular_buffer<T> *cb, std::size_t idx) noexcept : cb{cb}, idx{idx} {}
-
-        private:
-            circular_buffer<T>* cb;
-            std::size_t idx;
-        };
-
-    public:
-        using iterator = Iterator;
-        using const_iterator = const iterator;
-
-        iterator begin () noexcept {
-            return {this, head};
-        }
-
-        iterator end () noexcept {
-            return {this, tail};
-        }
-
-        const_iterator cbegin () const noexcept {
-            return const_iterator{this, head};
-        }
-        const_iterator cend () const noexcept {
-            return const_iterator{this, tail};
-        }
-
-        inline bool empty () const noexcept {
-            return head == tail;
-        }
-
-        inline std::size_t size () const noexcept {
-            return head <= tail
-                ? tail - head
-                : (_capacity - head) + tail;
-        }
-
-        inline std::size_t capacity () const noexcept {
-            return _capacity;
-        }
-
-        inline T& front () noexcept {
-            return _impl[head];
-        }
-
-        inline const T& front () const noexcept {
-            return _impl[head];
-        }
-
-        inline T& back () noexcept {
-            std::size_t idx = tail == 0 ? _capacity - 1 : tail - 1;
-            return _impl[idx];
-        }
-
-        inline const T& back () const noexcept {
-            std::size_t idx = tail == 0 ? _capacity - 1 : tail - 1;
-            return _impl[idx];
-        }
-
-        template <typename Func>
-        inline void for_each (Func&& func) noexcept {
-            for (auto&& p{begin()}, e{end()}; p != e; ++p) {
-                func(*p);
-            }
-        }
-
-        inline T& at (std::size_t idx) noexcept {
-            idx += head;
-            
-            if (idx > _capacity) {
-                idx -= _capacity;
-            }
-
-            return _impl[idx];
-        }
-
-        inline T& operator[] (std::size_t idx) noexcept {
-            return at(idx);
-        }
-
-        inline circular_buffer& operator= (circular_buffer&& x) noexcept {
-            if (this != &x) {
-                this->~circular_buffer();
-                new (this) circular_buffer(std::move(x));
-            }
-            return *this;
-        }
-
-        inline void clear () noexcept {
-            ++stats.clears;
-            erase(begin(), end());
-        }
-
-        inline void pop_front () noexcept {
-            ++stats.pop_fronts;
-            T *t{advance_head()};
-            std::destroy_at(t);
-        }
-
-        inline void pop_back () noexcept {
-            ++stats.pop_backs;
-            T *t{dec_tail()};
-            std::destroy_at(t);
-        }
-
-        inline void push_front (const T& data) noexcept {
-            ++stats.push_fronts;
-            T *t{dec_head()};
-            std::construct_at(t, data);
-        }
-
-        inline void push_front (T&& data) noexcept {
-            ++stats.push_fronts;
-            T *t{dec_head()};
-            std::construct_at(t, std::move(data));
-        }
-
-        template <typename... Args>
-        inline void emplace_front (Args&&... args) noexcept {
-            ++stats.emplace_fronts;
-            T *t{dec_head()};
-            std::construct_at(t, std::forward<Args>(args)...);
-        }
-
-        inline void push_back (const T& data) noexcept {
-            ++stats.push_backs;
-            T *t{advance_tail()};
-            std::construct_at(t, data);
-        }
-
-        inline void push_back (T&& data) noexcept {
-            ++stats.push_backs;
-            T *t{advance_tail()};
-            std::construct_at(t, std::move(data));
-        }
-
-        template <typename... Args>
-        inline void emplace_back (Args&&... args) noexcept {
-            ++stats.emplace_backs;
-            T *t{advance_tail()};
-            std::construct_at(t, std::forward<Args>(args)...);
-        }
-
-        inline iterator erase (iterator first, iterator last) noexcept {
-            static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
-            if (first == last) {
-                return last;
-            }
-            // Move to the left or right depending on which would result in least amount of moves.
-            // This also guarantees that iterators will be stable when removing from either front or back.
-            if (std::distance(begin(), first) < std::distance(last, end())) {
-                auto new_start = std::move_backward(begin(), first, last);
-                for (auto i = begin(); i < new_start; ++i) {
-                    traits::destroy(_impl, &*i);
-                }
-
-                head = new_start.idx;
-                return last;
-            } else {
-                auto new_end = std::move(last);
-                for (auto i = new_end, e = end(); i < e; ++i) {
-                    traits::destroy(_impl, this[i]);
-                }
-
-                tail = new_end.idx;
-                return first;
-            }
+        impl(Alloc a) noexcept : Alloc(std::move(a)) { }
+        void reset() {
+            storage = {};
+            begin = 0;
+            end = 0;
+            capacity = 0;
         }
     };
+    static_assert(!std::is_default_constructible_v<Alloc>
+                  || std::is_nothrow_default_constructible_v<Alloc>);
+    static_assert(std::is_nothrow_move_constructible_v<Alloc>);
+    impl _impl;
+public:
+    using value_type = T;
+    using size_type = size_t;
+    using reference = T&;
+    using pointer = T*;
+    using const_reference = const T&;
+    using const_pointer = const T*;
+public:
+    circular_buffer() noexcept requires std::default_initializable<Alloc> : circular_buffer(Alloc()) {}
+    circular_buffer(Alloc alloc) noexcept;
+    circular_buffer(circular_buffer&& X) noexcept;
+    circular_buffer(const circular_buffer& X) = delete;
+    ~circular_buffer();
+    circular_buffer& operator=(const circular_buffer&) = delete;
+    circular_buffer& operator=(circular_buffer&& b) noexcept;
+    void push_front(const T& data);
+    void push_front(T&& data);
+    template <typename... A>
+    void emplace_front(A&&... args);
+    void push_back(const T& data);
+    void push_back(T&& data);
+    template <typename... A>
+    void emplace_back(A&&... args);
+    T& front() noexcept;
+    const T& front() const noexcept;
+    T& back() noexcept;
+    const T& back() const noexcept;
+    void pop_front() noexcept;
+    void pop_back() noexcept;
+    bool empty() const noexcept;
+    size_t size() const noexcept;
+    size_t capacity() const noexcept;
+    void reserve(size_t);
+    void clear() noexcept;
+    T& operator[](size_t idx) noexcept;
+    const T& operator[](size_t idx) const noexcept;
+    template <typename Func>
+    void for_each(Func func);
+    // access an element, may return wrong or destroyed element
+    // only useful if you do not rely on data accuracy (e.g. prefetch)
+    T& access_element_unsafe(size_t idx) noexcept;
+private:
+    void expand();
+    void expand(size_t);
+    void maybe_expand(size_t nr = 1);
+    size_t mask(size_t idx) const;
+
+    template<typename CB, typename ValueType>
+    struct cbiterator {
+        using iterator_category = std::random_access_iterator_tag;
+        using value_type = ValueType;
+        using difference_type = std::ptrdiff_t;
+        using pointer = ValueType*;
+        using reference = ValueType&;
+
+        ValueType& operator*() const noexcept { return cb->_impl.storage[cb->mask(idx)]; }
+        ValueType* operator->() const noexcept { return &cb->_impl.storage[cb->mask(idx)]; }
+        // prefix
+        cbiterator<CB, ValueType>& operator++() noexcept {
+            idx++;
+            return *this;
+        }
+        // postfix
+        cbiterator<CB, ValueType> operator++(int) noexcept {
+            auto v = *this;
+            idx++;
+            return v;
+        }
+        // prefix
+        cbiterator<CB, ValueType>& operator--() noexcept {
+            idx--;
+            return *this;
+        }
+        // postfix
+        cbiterator<CB, ValueType> operator--(int) noexcept {
+            auto v = *this;
+            idx--;
+            return v;
+        }
+        cbiterator<CB, ValueType> operator+(difference_type n) const noexcept {
+            return cbiterator<CB, ValueType>(cb, idx + n);
+        }
+        cbiterator<CB, ValueType> operator-(difference_type n) const noexcept {
+            return cbiterator<CB, ValueType>(cb, idx - n);
+        }
+        cbiterator<CB, ValueType>& operator+=(difference_type n) noexcept {
+            idx += n;
+            return *this;
+        }
+        cbiterator<CB, ValueType>& operator-=(difference_type n) noexcept {
+            idx -= n;
+            return *this;
+        }
+        bool operator==(const cbiterator<CB, ValueType>& rhs) const noexcept {
+            return idx == rhs.idx;
+        }
+        bool operator!=(const cbiterator<CB, ValueType>& rhs) const noexcept {
+            return idx != rhs.idx;
+        }
+        bool operator<(const cbiterator<CB, ValueType>& rhs) const noexcept {
+            return *this - rhs < 0;
+        }
+        bool operator>(const cbiterator<CB, ValueType>& rhs) const noexcept {
+            return *this - rhs > 0;
+        }
+        bool operator>=(const cbiterator<CB, ValueType>& rhs) const noexcept {
+            return *this - rhs >= 0;
+        }
+        bool operator<=(const cbiterator<CB, ValueType>& rhs) const noexcept {
+            return *this - rhs <= 0;
+        }
+       difference_type operator-(const cbiterator<CB, ValueType>& rhs) const noexcept {
+            return idx - rhs.idx;
+        }
+        cbiterator() = default;
+    private:
+        CB* cb{nullptr};
+        size_t idx{0};
+        cbiterator(CB* b, size_t i) noexcept : cb(b), idx(i) {}
+        friend class circular_buffer;
+    };
+    friend class iterator;
+
+public:
+    typedef cbiterator<circular_buffer, T> iterator;
+    typedef cbiterator<const circular_buffer, const T> const_iterator;
+
+    iterator begin() noexcept {
+        return iterator(this, _impl.begin);
+    }
+    const_iterator begin() const noexcept {
+        return const_iterator(this, _impl.begin);
+    }
+    iterator end() noexcept {
+        return iterator(this, _impl.end);
+    }
+    const_iterator end() const noexcept {
+        return const_iterator(this, _impl.end);
+    }
+    const_iterator cbegin() const noexcept {
+        return const_iterator(this, _impl.begin);
+    }
+    const_iterator cend() const noexcept {
+        return const_iterator(this, _impl.end);
+    }
+    iterator erase(iterator first, iterator last) noexcept;
 };
+
+template <typename T, typename Alloc>
+inline
+size_t
+circular_buffer<T, Alloc>::mask(size_t idx) const {
+    return idx & (_impl.capacity - 1);
+}
+
+template <typename T, typename Alloc>
+inline
+bool
+circular_buffer<T, Alloc>::empty() const noexcept {
+    return _impl.begin == _impl.end;
+}
+
+template <typename T, typename Alloc>
+inline
+size_t
+circular_buffer<T, Alloc>::size() const noexcept {
+    return _impl.end - _impl.begin;
+}
+
+template <typename T, typename Alloc>
+inline
+size_t
+circular_buffer<T, Alloc>::capacity() const noexcept {
+    return _impl.capacity;
+}
+
+template <typename T, typename Alloc>
+inline
+void
+circular_buffer<T, Alloc>::reserve(size_t size) {
+    if (capacity() < size) {
+        // Make sure that the new capacity is a power of two.
+        expand(size_t(1) << log2ceil(size));
+    }
+}
+
+template <typename T, typename Alloc>
+inline
+void
+circular_buffer<T, Alloc>::clear() noexcept {
+    erase(begin(), end());
+}
+
+template <typename T, typename Alloc>
+inline
+circular_buffer<T, Alloc>::circular_buffer(Alloc alloc) noexcept
+    : _impl(std::move(alloc)) {
+}
+
+template <typename T, typename Alloc>
+inline
+circular_buffer<T, Alloc>::circular_buffer(circular_buffer&& x) noexcept
+    : _impl(std::move(x._impl)) {
+    x._impl.reset();
+}
+
+template <typename T, typename Alloc>
+inline
+circular_buffer<T, Alloc>& circular_buffer<T, Alloc>::operator=(circular_buffer&& x) noexcept {
+    if (this != &x) {
+        this->~circular_buffer();
+        new (this) circular_buffer(std::move(x));
+    }
+    return *this;
+}
+
+template <typename T, typename Alloc>
+template <typename Func>
+inline
+void
+circular_buffer<T, Alloc>::for_each(Func func) {
+    auto s = _impl.storage;
+    auto m = _impl.capacity - 1;
+    for (auto i = _impl.begin; i != _impl.end; ++i) {
+        func(s[i & m]);
+    }
+}
+
+template <typename T, typename Alloc>
+inline
+circular_buffer<T, Alloc>::~circular_buffer() {
+    for_each([this] (T& obj) {
+        std::allocator_traits<Alloc>::destroy(_impl, &obj);
+    });
+    _impl.deallocate(_impl.storage, _impl.capacity);
+}
+
+template <typename T, typename Alloc>
+void
+circular_buffer<T, Alloc>::expand() {
+    expand(std::max<size_t>(_impl.capacity * 2, 1));
+}
+
+template <typename T, typename Alloc>
+void
+circular_buffer<T, Alloc>::expand(size_t new_cap) {
+    auto new_storage = _impl.allocate(new_cap);
+    auto p = new_storage;
+    try {
+        for_each([this, &p] (T& obj) {
+            transfer_pass1(_impl, &obj, p);
+            p++;
+        });
+    } catch (...) {
+        while (p != new_storage) {
+            std::allocator_traits<Alloc>::destroy(_impl, --p);
+        }
+        _impl.deallocate(new_storage, new_cap);
+        throw;
+    }
+    p = new_storage;
+    for_each([this, &p] (T& obj) {
+        transfer_pass2(_impl, &obj, p++);
+    });
+    std::swap(_impl.storage, new_storage);
+    std::swap(_impl.capacity, new_cap);
+    _impl.begin = 0;
+    _impl.end = p - _impl.storage;
+    _impl.deallocate(new_storage, new_cap);
+}
+
+template <typename T, typename Alloc>
+inline
+void
+circular_buffer<T, Alloc>::maybe_expand(size_t nr) {
+    if (_impl.end - _impl.begin + nr > _impl.capacity) {
+        expand();
+    }
+}
+
+template <typename T, typename Alloc>
+inline
+void
+circular_buffer<T, Alloc>::push_front(const T& data) {
+    maybe_expand();
+    auto p = &_impl.storage[mask(_impl.begin - 1)];
+    std::allocator_traits<Alloc>::construct(_impl, p, data);
+    --_impl.begin;
+}
+
+template <typename T, typename Alloc>
+inline
+void
+circular_buffer<T, Alloc>::push_front(T&& data) {
+    maybe_expand();
+    auto p = &_impl.storage[mask(_impl.begin - 1)];
+    std::allocator_traits<Alloc>::construct(_impl, p, std::move(data));
+    --_impl.begin;
+}
+
+template <typename T, typename Alloc>
+template <typename... Args>
+inline
+void
+circular_buffer<T, Alloc>::emplace_front(Args&&... args) {
+    maybe_expand();
+    auto p = &_impl.storage[mask(_impl.begin - 1)];
+    std::allocator_traits<Alloc>::construct(_impl, p, std::forward<Args>(args)...);
+    --_impl.begin;
+}
+
+template <typename T, typename Alloc>
+inline
+void
+circular_buffer<T, Alloc>::push_back(const T& data) {
+    maybe_expand();
+    auto p = &_impl.storage[mask(_impl.end)];
+    std::allocator_traits<Alloc>::construct(_impl, p, data);
+    ++_impl.end;
+}
+
+template <typename T, typename Alloc>
+inline
+void
+circular_buffer<T, Alloc>::push_back(T&& data) {
+    maybe_expand();
+    auto p = &_impl.storage[mask(_impl.end)];
+    std::allocator_traits<Alloc>::construct(_impl, p, std::move(data));
+    ++_impl.end;
+}
+
+template <typename T, typename Alloc>
+template <typename... Args>
+inline
+void
+circular_buffer<T, Alloc>::emplace_back(Args&&... args) {
+    maybe_expand();
+    auto p = &_impl.storage[mask(_impl.end)];
+    std::allocator_traits<Alloc>::construct(_impl, p, std::forward<Args>(args)...);
+    ++_impl.end;
+}
+
+template <typename T, typename Alloc>
+inline
+T&
+circular_buffer<T, Alloc>::front() noexcept {
+    return _impl.storage[mask(_impl.begin)];
+}
+
+template <typename T, typename Alloc>
+inline
+const T&
+circular_buffer<T, Alloc>::front() const noexcept {
+    return _impl.storage[mask(_impl.begin)];
+}
+
+template <typename T, typename Alloc>
+inline
+T&
+circular_buffer<T, Alloc>::back() noexcept {
+    return _impl.storage[mask(_impl.end - 1)];
+}
+
+template <typename T, typename Alloc>
+inline
+const T&
+circular_buffer<T, Alloc>::back() const noexcept {
+    return _impl.storage[mask(_impl.end - 1)];
+}
+
+template <typename T, typename Alloc>
+inline
+void
+circular_buffer<T, Alloc>::pop_front() noexcept {
+    std::allocator_traits<Alloc>::destroy(_impl, &front());
+    ++_impl.begin;
+}
+
+template <typename T, typename Alloc>
+inline
+void
+circular_buffer<T, Alloc>::pop_back() noexcept {
+    std::allocator_traits<Alloc>::destroy(_impl, &back());
+    --_impl.end;
+}
+
+template <typename T, typename Alloc>
+inline
+T&
+circular_buffer<T, Alloc>::operator[](size_t idx) noexcept {
+    return _impl.storage[mask(_impl.begin + idx)];
+}
+
+template <typename T, typename Alloc>
+inline
+const T&
+circular_buffer<T, Alloc>::operator[](size_t idx) const noexcept {
+    return _impl.storage[mask(_impl.begin + idx)];
+}
+
+template <typename T, typename Alloc>
+inline
+T&
+circular_buffer<T, Alloc>::access_element_unsafe(size_t idx) noexcept {
+    return _impl.storage[mask(_impl.begin + idx)];
+}
+
+template <typename T, typename Alloc>
+inline
+typename circular_buffer<T, Alloc>::iterator
+circular_buffer<T, Alloc>::erase(iterator first, iterator last) noexcept {
+    static_assert(std::is_nothrow_move_assignable_v<T>, "erase() assumes move assignment does not throw");
+    if (first == last) {
+        return last;
+    }
+    // Move to the left or right depending on which would result in least amount of moves.
+    // This also guarantees that iterators will be stable when removing from either front or back.
+    if (std::distance(begin(), first) < std::distance(last, end())) {
+        auto new_start = std::move_backward(begin(), first, last);
+        for (auto i = begin(); i < new_start; ++i) {
+            std::allocator_traits<Alloc>::destroy(_impl, &*i);
+        }
+        _impl.begin = new_start.idx;
+        return last;
+    } else {
+        auto new_end = std::move(last, end(), first);
+        for (auto i = new_end, e = end(); i < e; ++i) {
+            std::allocator_traits<Alloc>::destroy(_impl, &*i);
+        }
+        _impl.end = new_end.idx;
+        return first;
+    }
+}
+
+}

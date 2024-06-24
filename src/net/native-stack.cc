@@ -41,6 +41,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <map>
+#include <boost/program_options.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/errors.hpp>
 #include <exception>
 
 namespace seastar {
@@ -133,7 +137,8 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     for (unsigned i = sdev->hw_queues_count() + qid % sdev->hw_queues_count(); i < smp::count; i+= sdev->hw_queues_count()) {
                         cpu_weights[i] = 1;
                     }
-                    cpu_weights[qid] = opts.find("hw-queue-weight")->second.as<float>();
+                    printf("opts count: %lu\n", opts.count("hw-queue-weight"));
+                    cpu_weights[qid] = opts["hw-queue-weight"].as<float>();
                     printf("Configutring proxies...\n");
                     qp->configure_proxies(cpu_weights);
                     printf("Proxies configured, setting local queue...\n");

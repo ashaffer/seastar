@@ -2585,7 +2585,7 @@ namespace seastar {
         STAP_PROBE(seastar, reactor_run_tasks_start);
         _cpu_stall_detector->start_task_run(t_run_completed);
         do {
-            printf("run started: %lu active, %lu activating, %u needs_prompt\n", _active_task_queues.size(), _activating_task_queues.size(), needs_preempt());
+            printf("run started: %lu active, %lu activating, %u needs_prompt\n", _active_task_queues.size(), _activating_task_queues.size(), need_preempt());
             auto t_run_started = t_run_completed;
             insert_activating_task_queues();
             auto tq = _active_task_queues.front();

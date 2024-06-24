@@ -2146,9 +2146,7 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
     printf("Rx mbuf pool initialized\n");
 
     if (HugetlbfsMemBackend) {
-        printf("Initializing virt2iova table\n");
         build_virt2iova_table();
-        printf("Virt2iova table initialized\n");
     }
     // if (HugetlbfsMemBackend && !map_dma()) {
     //     rte_exit(EXIT_FAILURE, "Cannot map DMA\n");

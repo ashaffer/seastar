@@ -49,6 +49,23 @@ namespace seastar {
         std::size_t head{0};
         std::size_t tail{0};
 
+        struct Stats {
+            std::size_t pop_backs{0};
+            std::size_t pop_fronts{0};
+            std::size_t push_backs{0};
+            std::size_t push_fronts{0};
+            std::size_t emplace_backs{0};
+            std::size_t emplace_fronts{0};
+            std::size_t clears{0};
+            std::size_t reserves{0};
+            std::size_t erases{0};
+            void print () const noexcept {
+                printf("circular_buffer stats: %lu pop_backs, %lu pop_fronts, %lu push_backs, %lu push_fronts, %lu emplace_backs, %lu emplace_fronts, %lu clears, %lu reserves %lu erases\n", 
+                    pop_backs, pop_fronts, push_backs, push_fronts, emplace_backs, emplace_fronts, clears, reserves, erases);
+            }
+        };
+
+        Stats stats;
         union maybe_storage {
             T data;
             maybe_storage () noexcept {}
@@ -233,23 +250,6 @@ namespace seastar {
 
             return t;
         }
-
-        T *dec_head () noexcept {
-            T *t{std::addressof(_storage[head].data)};
-
-            if (head-- == 0) {
-                head = Capacity - 1;
-            }
-
-            if (head == tail) {
-                if (tail-- == 0) {
-                    tail = Capacity - 1;
-                }
-                t->~T();
-            }
-
-            return t;
-        }
     public:
         using iterator = Iterator;
         using const_iterator = const Iterator;
@@ -273,6 +273,7 @@ namespace seastar {
         template <typename... Args>
         inline T& emplace_back (Args&&... args) noexcept {
             T *t{advance_tail<true>()};
+            ++stats.emplace_backs;
             new (t)T{std::forward<Args>(args)...};
             return *t;
         }
@@ -280,35 +281,42 @@ namespace seastar {
         template <typename... Args>
         inline T& emplace_front (Args&&... args) noexcept {
             T *t{advance_head<true>()};
+            ++stats.emplace_fronts;
             new (t) T(std::forward<Args>(args)...);
             return *t;
         }
 
         inline void push_front (const T& data) noexcept {
             T *t{advance_head<true>()};
+            ++stats.push_fronts;
             new (t) T(data);
         }
 
         inline void push_front (T&& data) noexcept {
             T *t{advance_head<true>()};
+            ++stats.push_fronts;
             new (t) T(std::move(data));
         }
 
         inline void push_back (const T& data) noexcept {
             T *t{advance_tail<true>()};
+            ++stats.push_backs;
             new (t) T(data);
         }
 
         inline void push_back (T&& data) noexcept {
             T *t{advance_tail<true>()};
+            ++stats.push_backs;
             new (t) T(std::move(data));
         }
 
         inline void pop_front () noexcept {
+            ++stats.pop_fronts;
             advance_head<false>();
         }
 
         inline void pop_back () noexcept {
+            ++stats.pop_backs;
             dec_tail<false>();
         }
 
@@ -317,7 +325,8 @@ namespace seastar {
         }
 
         inline T& back () noexcept {
-            return _storage[tail].data;
+            std::size_t idx = tail == 0 ? Capacity - 1 : tail - 1;
+            return _storage[idx].data;
         }
 
         inline circular_buffer_fixed_capacity& operator= (circular_buffer_fixed_capacity&& x) noexcept {
@@ -326,6 +335,10 @@ namespace seastar {
                 new (this) circular_buffer_fixed_capacity(std::move(x));
             }
             return *this;
+        }
+
+        inline void show_stats () const noexcept {
+            stats.print();
         }
 
         inline bool empty () const noexcept {

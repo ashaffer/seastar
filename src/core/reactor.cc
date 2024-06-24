@@ -2589,6 +2589,7 @@ namespace seastar {
             insert_activating_task_queues();
             auto tq = _active_task_queues.front();
             _active_task_queues.pop_front();
+            _active_task_queues.show_stats();
             sched_print("running tq {} {}", (void*)tq, tq->_name);
             tq->_current = true;
             _last_vruntime = std::max(tq->_vruntime, _last_vruntime);

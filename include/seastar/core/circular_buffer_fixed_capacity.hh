@@ -48,7 +48,6 @@ namespace seastar {
     class circular_buffer_fixed_capacity {
         std::size_t head{0};
         std::size_t tail{0};
-        bool full{false};
 
         union maybe_storage {
             T data;
@@ -56,18 +55,6 @@ namespace seastar {
             ~maybe_storage () noexcept {}
         };
         maybe_storage _storage[Capacity];
-    private:
-        static std::size_t mask (std::size_t idx) noexcept { 
-            return idx % Capacity; 
-        }
-        
-        T* obj (std::size_t idx) noexcept { 
-            return &_storage[mask(idx)].data; 
-        }
-        
-        const T* obj (std::size_t idx) const noexcept { 
-            return &_storage[mask(idx)].data; 
-        }
     public:
         static_assert((Capacity & (Capacity - 1)) == 0, "capacity must be a power of two");
         static_assert(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value, "circular_buffer_fixed_capacity only supports nothrow-move value types");
@@ -78,7 +65,8 @@ namespace seastar {
         using const_reference = const T&;
         using const_pointer = const T*;
         using difference_type = ssize_t;
-    public:
+
+    private:
         struct Iterator {
             T *operator-> () const noexcept { 
                 return std::addressof(cb->at(idx)); 
@@ -94,6 +82,9 @@ namespace seastar {
             // prefix
             Iterator& operator++ () noexcept {
                 ++idx;
+                if (idx == Capacity) {
+                    idx = 0;
+                }
                 return *this;
             }
             
@@ -101,19 +92,30 @@ namespace seastar {
             Iterator operator++ (int unused) noexcept {
                 auto v = *this;
                 ++idx;
+                if (idx == Capacity) {
+                    idx = 0;
+                }
                 return v;
             }
             
             // prefix
             Iterator& operator-- () noexcept {
-                --idx;
+                if (idx == 0) {
+                    idx = Capacity - 1;
+                } else {
+                    --idx;
+                }
                 return *this;
             }
             
             // postfix
             Iterator operator-- (int unused) noexcept {
                 auto v = *this;
-                --idx;
+                if (idx == 0) {
+                    idx = Capacity - 1;
+                } else {
+                    --idx;
+                }
                 return v;
             }
             
@@ -127,11 +129,14 @@ namespace seastar {
             
             Iterator& operator+= (std::size_t n) noexcept {
                 idx += n;
+                if (idx > Capacity) {
+                    idx %= Capacity;
+                }
                 return *this;
             }
             
             Iterator& operator-= (std::size_t n) noexcept {
-                idx -= n;
+                idx = idx > n ? idx - n : (Capacity - (idx - n));
                 return *this;
             }
             
@@ -165,9 +170,9 @@ namespace seastar {
 
             Iterator (circular_buffer_fixed_capacity<T, Capacity> *cb, std::size_t idx) noexcept : cb{cb}, idx{idx} {}
 
-        private:
             circular_buffer_fixed_capacity<T, Capacity>* cb;
             std::size_t idx;
+            friend class circular_buffer_fixed_capacity;
         };
 
         T *advance_tail () noexcept {

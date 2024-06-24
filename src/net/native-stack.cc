@@ -53,7 +53,7 @@ namespace net {
 
 using namespace seastar;
 
-void create_native_net_device(boost::program_options::variables_map& opts) {
+void create_native_net_device(boost::program_options::variables_map opts) {
 
     bool deprecated_config_used = true;
 
@@ -127,7 +127,7 @@ void create_native_net_device(boost::program_options::variables_map& opts) {
     uint jj = 0;
     for (auto sdev : devices) {
         for (unsigned i = 0; i < smp::count; i++) {
-            (void)smp::submit_to(i, [&opts, sdev] {
+            (void)smp::submit_to(i, [opts, sdev] {
                 auto qid = engine().cpu_id();
 
                 if (qid < sdev->hw_queues_count()) {
@@ -157,7 +157,7 @@ void create_native_net_device(boost::program_options::variables_map& opts) {
         jj++;
     }
 
-    (void)sem->wait(smp::count * devices.size()).then([&opts, devices, dev_cfgs] {
+    (void)sem->wait(smp::count * devices.size()).then([opts, devices, dev_cfgs] {
         printf("Completed device init: awaiting %u devices to signal\n", (uint)devices.size());
         auto sem = std::make_shared<semaphore>(0);
         uint i = 0;
@@ -168,11 +168,11 @@ void create_native_net_device(boost::program_options::variables_map& opts) {
             ++i;
         }
 
-        (void)sem->wait(devices.size()).then([&opts, devices, dev_cfgs] {
+        (void)sem->wait(devices.size()).then([opts, devices, dev_cfgs] {
             printf("All devices signaled\n");
             printf("Needs preempt: %u\n", need_preempt());
             for (unsigned i = 0; i < smp::count; i++) {
-                (void)smp::submit_to(i, [&opts, devices, dev_cfgs] {
+                (void)smp::submit_to(i, [opts, devices, dev_cfgs] {
                     create_native_stack(opts, devices, dev_cfgs);
                 });
             }
@@ -201,12 +201,12 @@ private:
     }
     using tcp4 = tcp<ipv4_traits>;
 public:
-    explicit native_network_stack(boost::program_options::variables_map& opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs);
+    explicit native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs);
     virtual server_socket listen(socket_address sa, listen_options opt) override;
     virtual ::seastar::socket socket(socket_address local = {}) override;
     virtual udp_channel make_udp_channel(const socket_address& addr) override;
     virtual future<> initialize() override;
-    static future<std::unique_ptr<network_stack>> create(boost::program_options::variables_map& opts) {
+    static future<std::unique_ptr<network_stack>> create(boost::program_options::variables_map opts) {
         if (engine().cpu_id() == 0) {
             create_native_net_device(opts);
         }
@@ -238,7 +238,7 @@ add_native_net_options_description(boost::program_options::options_description &
 #endif
 }
 
-native_network_stack::native_network_stack(boost::program_options::variables_map& opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) {
+native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) {
     uint i = 0; 
 
     for (auto&& device_config : dev_cfgs) {
@@ -403,7 +403,7 @@ void arp_learn(ethernet_address l2, ipv4_address l3)
     });
 }
 
-void create_native_stack(boost::program_options::variables_map& opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) { 
+void create_native_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) { 
    native_network_stack::ready_promise.set_value(std::unique_ptr<network_stack>(std::make_unique<native_network_stack>(opts, devices, dev_cfgs)));
 }
 

@@ -129,18 +129,18 @@ namespace seastar {
 
 namespace std {
     template <>
-    struct hash<::sockaddr_in> {
-        size_t operator()(::sockaddr_in a) const {
+    struct hash<sockaddr_in> {
+        size_t operator()(sockaddr_in a) const {
             return a.sin_port ^ a.sin_addr.s_addr;
         }
     };
 };
 
-bool operator==(const ::sockaddr_in a, const ::sockaddr_in b);
+bool operator==(const sockaddr_in a, const sockaddr_in b);
 
 namespace seastar {
-    void register_network_stack(sstring name, ::boost::program_options::options_description opts,
-        std::function<future<std::unique_ptr<network_stack>>(::boost::program_options::variables_map opts)> create,
+    void register_network_stack(sstring name, boost::program_options::options_description opts,
+        std::function<future<std::unique_ptr<network_stack>>(boost::program_options::variables_map& opts)> create,
         bool make_default = false);
 
     class thread_pool;
@@ -698,7 +698,7 @@ namespace seastar {
         future<> update_shares_for_class(io_priority_class pc, uint32_t shares);
         static future<> rename_priority_class(io_priority_class pc, sstring new_name);
 
-        void configure(boost::program_options::variables_map config);
+        void configure(boost::program_options::variables_map& config);
 
         server_socket listen(socket_address sa, listen_options opts = {});
 
@@ -980,7 +980,7 @@ namespace seastar {
         using returns_void = std::is_same<std::invoke_result_t<Func>, void>;
         static ::boost::program_options::options_description get_options_description();
         static void register_network_stacks();
-        static void configure(::boost::program_options::variables_map vm, reactor_config cfg = {});
+        static void configure(::boost::program_options::variables_map& vm, reactor_config cfg = {});
         static void cleanup();
         static void cleanup_cpu();
         static void arrive_at_event_loop_end();

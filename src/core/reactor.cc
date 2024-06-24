@@ -1312,9 +1312,9 @@ namespace seastar {
         using options = boost::program_options::variables_map;
     private:
         static std::unordered_map<sstring,
-                std::function<future<std::unique_ptr<network_stack>> (options opts)>>& _map() {
+                std::function<future<std::unique_ptr<network_stack>> (options& opts)>>& _map() {
             static std::unordered_map<sstring,
-                    std::function<future<std::unique_ptr<network_stack>> (options opts)>> map;
+                    std::function<future<std::unique_ptr<network_stack>> (options& opts)>> map;
             return map;
         }
         static sstring& _default() {
@@ -1327,15 +1327,15 @@ namespace seastar {
             return opts;
         }
         static void register_stack(sstring name, boost::program_options::options_description opts,
-            std::function<future<std::unique_ptr<network_stack>>(options opts)> create,
+            std::function<future<std::unique_ptr<network_stack>>(options& opts)> create,
             bool make_default);
         static sstring default_stack();
         static std::vector<sstring> list();
-        static future<std::unique_ptr<network_stack>> create(options opts);
-        static future<std::unique_ptr<network_stack>> create(sstring name, options opts);
+        static future<std::unique_ptr<network_stack>> create(options& opts);
+        static future<std::unique_ptr<network_stack>> create(sstring name, options& opts);
     };
 
-    void reactor::configure(boost::program_options::variables_map vm) {
+    void reactor::configure(boost::program_options::variables_map& vm) {
         auto network_stack_ready = vm.count("network-stack")
             ? network_stack_registry::create(sstring(vm["network-stack"].as<std::string>()), vm)
             : network_stack_registry::create(vm);
@@ -3296,7 +3296,7 @@ bool operator==(const ::sockaddr_in a, const ::sockaddr_in b) {
 namespace seastar {
     void network_stack_registry::register_stack(sstring name,
             boost::program_options::options_description opts,
-            std::function<future<std::unique_ptr<network_stack>> (options opts)> create, bool make_default) {
+            std::function<future<std::unique_ptr<network_stack>> (options& opts)> create, bool make_default) {
         if (_map().count(name)) {
             return;
         }
@@ -3308,7 +3308,7 @@ namespace seastar {
     }
 
     void register_network_stack(sstring name, boost::program_options::options_description opts,
-        std::function<future<std::unique_ptr<network_stack>>(boost::program_options::variables_map)>
+        std::function<future<std::unique_ptr<network_stack>>(boost::program_options::variables_map&)>
             create,
         bool make_default) {
         return network_stack_registry::register_stack(
@@ -3328,12 +3328,12 @@ namespace seastar {
     }
 
     future<std::unique_ptr<network_stack>>
-    network_stack_registry::create(options opts) {
+    network_stack_registry::create(options& opts) {
         return create(_default(), opts);
     }
 
     future<std::unique_ptr<network_stack>>
-    network_stack_registry::create(sstring name, options opts) {
+    network_stack_registry::create(sstring name, options& opts) {
         if (!_map().count(name)) {
             throw std::runtime_error(std::format("network stack {} not registered", name));
         }
@@ -3739,7 +3739,7 @@ namespace seastar {
         register_native_stack();
     }
 
-    void smp::configure(boost::program_options::variables_map configuration, reactor_config reactor_cfg)
+    void smp::configure(boost::program_options::variables_map& configuration, reactor_config reactor_cfg)
     {
     #ifndef SEASTAR_NO_EXCEPTION_HACK
         if (configuration["enable-glibc-exception-scaling-workaround"].as<bool>()) {
@@ -3946,7 +3946,7 @@ namespace seastar {
 
         for (i = 1; i < smp::count; i++) {
             auto allocation = allocations[i];
-            create_thread([configuration, &disk_config, &reactors_registered, &smp_queues_constructed, &inited, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
+            create_thread([&configuration, &disk_config, &reactors_registered, &smp_queues_constructed, &inited, hugepages_path, i, allocation, assign_io_queue, alloc_io_queue, thread_affinity, heapprof_enabled, mbind, backend_selector, reactor_cfg] {
               try {
                 auto thread_name = std::format("reactor-{}", i);
                 pthread_setname_np(pthread_self(), thread_name.c_str());

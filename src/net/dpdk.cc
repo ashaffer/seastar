@@ -625,7 +625,7 @@ public:
 
     virtual uint16_t hw_queues_count() override { return _num_queues; }
     virtual future<> link_ready() override { return _link_ready_promise.get_future(); }
-    virtual std::unique_ptr<qp> init_local_queue(const boost::program_options::variables_map& opts, uint16_t qid) override;
+    virtual std::unique_ptr<qp> init_local_queue(boost::program_options::variables_map& opts, uint16_t qid) override;
     virtual unsigned hash2qid(uint32_t hash) override {
         assert(_redir_table.size());
         return _redir_table[hash & (_redir_table.size() - 1)];
@@ -2477,7 +2477,7 @@ void dpdk_device::set_rss_table()
     }
 }
 
-std::unique_ptr<qp> dpdk_device::init_local_queue(const boost::program_options::variables_map& opts, uint16_t qid) {
+std::unique_ptr<qp> dpdk_device::init_local_queue(boost::program_options::variables_map& opts, uint16_t qid) {
 
     std::unique_ptr<qp> qp;
     if (opts.count("hugepages")) {

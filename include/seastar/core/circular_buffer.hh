@@ -148,7 +148,7 @@ namespace seastar {
             if (tail == head) {
                 tail = old_tail;
                 reserve(_capacity * 2);
-                return advance_tail<true>();
+                return advance_tail();
             }
 
             return t;
@@ -159,7 +159,7 @@ namespace seastar {
                 head = _capacity - 1;
             }
 
-            T *t{_impl[head]]};
+            T *t{std::addressof(_impl[head])};
 
             if (tail == head) {
                 if (tail-- == 0) {
@@ -186,7 +186,7 @@ namespace seastar {
                 tail = _capacity - 1;
             }
 
-            return t;
+            return std::addressof(_impl[tail]);
         }
 
         struct Iterator {
@@ -306,7 +306,7 @@ namespace seastar {
         inline std::size_t size () const noexcept {
             return head <= tail
                 ? tail - head
-                : (Capacity - head) + tail;
+                : (_capacity - head) + tail;
         }
 
         inline std::size_t capacity () const noexcept {

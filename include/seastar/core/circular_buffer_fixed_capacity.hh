@@ -214,7 +214,7 @@ namespace seastar {
                 head = Capacity - 1;
             }
 
-            T *t{_storage[head].data]};
+            T *t{std::addressof(_storage[head].data)};
 
              if (tail == head) {
                 if (tail-- == 0) {
@@ -241,14 +241,14 @@ namespace seastar {
                 tail = Capacity - 1;
             }
 
-            return std::addressof(_storage[tail].data)};
+            return std::addressof(_storage[tail].data);
         }
     public:
         using iterator = Iterator;
         using const_iterator = const Iterator;
 
         circular_buffer_fixed_capacity () noexcept = default;
-        inline circular_buffer_fixed_capacity (circular_buffer_fixed_capacity&& x) noexcept : head(std::exchange(x.head, 0)), tail(std::exchange(x.tail, 0)) {
+        inline circular_buffer_fixed_capacity (circular_buffer_fixed_capacity&& x) noexcept : head{std::exchange(x.head, 0)}, tail{std::exchange(x.tail, 0)} {
             std::size_t i{head};
 
             for (auto&& it : *this) {
@@ -266,7 +266,7 @@ namespace seastar {
         template <typename... Args>
         inline T& emplace_back (Args&&... args) noexcept {
             ++stats.emplace_backs;
-            T *t{advance_tail<true>()};
+            T *t{advance_tail()};
             new (t)T{std::forward<Args>(args)...};
             return *t;
         }
@@ -306,13 +306,13 @@ namespace seastar {
         inline void pop_front () noexcept {
             ++stats.pop_fronts;
             T *t{advance_head()};
-            t.~T();
+            t->~T();
         }
 
         inline void pop_back () noexcept {
             ++stats.pop_backs;
             T *t{dec_tail()};
-            t.~T();
+            t->~T();
         }
 
         inline T& front () noexcept {

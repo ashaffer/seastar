@@ -919,7 +919,7 @@ namespace seastar {
         _task_queues.push_back(std::make_unique<task_queue>(0, "main", 1000));
         _task_queues.push_back(std::make_unique<task_queue>(1, "atexit", 1000));
         _at_destroy_tasks = _task_queues.back().get();
-        printf("Backend created: 0x%lx\n", (uint64_t)_backend.get());
+        printf("Backend created: %u 0x%lx\n", engine().cpu_id(), (uint64_t)_backend.get());
 
         g_need_preempt = &(this->_preemption_monitor);
         seastar::thread_impl::init();
@@ -1037,6 +1037,7 @@ namespace seastar {
 
     void
     reactor::request_preemption() {
+        printf("preemption requested: %u, 0x%lx\n", engine().cpu_id(), (uint64_t)_backend.get());
         return _backend->request_preemption();
     }
 

@@ -1344,7 +1344,7 @@ namespace seastar {
             _network_stack_ready_promise.set_value(std::move(stack));
         });
 
-        _handle_sigint = !vm.count("no-handle-interrupt");
+        _handle_sigint = !vm["no-handle-interrupt"].as<bool>();
         auto task_quota = vm["task-quota-ms"].as<double>() * 1ms;
         _task_quota = std::chrono::duration_cast<sched_clock::duration>(task_quota);
 
@@ -1356,17 +1356,17 @@ namespace seastar {
 
         _max_task_backlog = vm["max-task-backlog"].as<unsigned>();
         _max_poll_time = vm["idle-poll-time-us"].as<unsigned>() * 1us;
-        if (vm.count("poll-mode")) {
+        if (vm["poll-mode"].as<bool>()) {
             _max_poll_time = std::chrono::nanoseconds::max();
         }
-        if (vm.count("overprovisioned")
+        if (vm["overprovisioned"].as<bool>()
                && vm["idle-poll-time-us"].defaulted()
-               && !vm.count("poll-mode")) {
+               && !vm["poll-mode"].as<bool>()) {
             _max_poll_time = 0us;
         }
-        set_strict_dma(!vm.count("relaxed-dma"));
+        set_strict_dma(!vm["relaxed-dma"].as<bool>());
         if (!vm["poll-aio"].as<bool>()
-                || (vm["poll-aio"].defaulted() && vm.count("overprovisioned"))) {
+                || (vm["poll-aio"].defaulted() && vm["overprovisioned"].as<bool>())) {
             _aio_eventfd = pollable_fd(file_desc::eventfd(0, 0));
         }
         set_bypass_fsync(vm["unsafe-bypass-fsync"].as<bool>());
@@ -3365,7 +3365,7 @@ namespace seastar {
 
         opts.add_options()
             ("network-stack", bpo::value<std::string>(), net_stacks.c_str())
-            ("poll-mode", "poll continuously (100% cpu use)")
+            ("poll-mode", bpo::value<bool>->default_value(false), "poll continuously (100% cpu use)")
             ("idle-poll-time-us", bpo::value<unsigned>()->default_value(calculate_poll_time() / 1us),
                     "idle polling time in microseconds (reduce for overprovisioned environments or laptops)")
             ("poll-aio", bpo::value<bool>()->default_value(true),
@@ -3374,12 +3374,12 @@ namespace seastar {
             ("max-task-backlog", bpo::value<unsigned>()->default_value(1000), "Maximum number of task backlog to allow; above this we ignore I/O")
             ("blocked-reactor-notify-ms", bpo::value<unsigned>()->default_value(2000), "threshold in miliseconds over which the reactor is considered blocked if no progress is made")
             ("blocked-reactor-reports-per-minute", bpo::value<unsigned>()->default_value(5), "Maximum number of backtraces reported by stall detector per minute")
-            ("relaxed-dma", "allow using buffered I/O if DMA is not available (reduces performance)")
+            ("relaxed-dma", bpo::value<bool>()->default_value(false), "allow using buffered I/O if DMA is not available (reduces performance)")
             ("linux-aio-nowait",
                     bpo::value<bool>()->default_value(aio_nowait_supported),
                     "use the Linux NOWAIT AIO feature, which reduces reactor stalls due to aio (autodetected)")
             ("unsafe-bypass-fsync", bpo::value<bool>()->default_value(false), "Bypass fsync(), may result in data loss. Use for testing on consumer drives")
-            ("overprovisioned", "run in an overprovisioned environment (such as docker or a laptop); equivalent to --idle-poll-time-us 0 --thread-affinity 0 --poll-aio 0")
+            ("overprovisioned", bpo::value<bool>->default_value(false), "run in an overprovisioned environment (such as docker or a laptop); equivalent to --idle-poll-time-us 0 --thread-affinity 0 --poll-aio 0")
             ("abort-on-seastar-bad-alloc", "abort when seastar allocator cannot allocate memory")
             ("force-aio-syscalls", bpo::value<bool>()->default_value(false),
                     "Force io_getevents(2) to issue a system call, instead of bypassing the kernel when possible."
@@ -3397,7 +3397,7 @@ namespace seastar {
             ;
         if (cfg.auto_handle_sigint_sigterm) {
             opts.add_options()
-                    ("no-handle-interrupt", "ignore SIGINT (for gdb)")
+                    ("no-handle-interrupt", bpo::value<bool>()->default_value(false), "ignore SIGINT (for gdb)")
                     ;
         }
         opts.add(network_stack_registry::options_description());
@@ -3770,7 +3770,7 @@ namespace seastar {
         _using_dpdk = configuration["dpdk-pmd"].as<bool>();
     #endif
         auto thread_affinity = configuration["thread-affinity"].as<bool>();
-        if (configuration.count("overprovisioned")
+        if (configuration["overprovisioned"].as<bool>()
                && configuration["thread-affinity"].defaulted()) {
             thread_affinity = false;
         }

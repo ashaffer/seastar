@@ -53,7 +53,7 @@ namespace net {
 
 using namespace seastar;
 
-void create_native_net_device(boost::program_options::variables_map opts) {
+void create_native_net_device(const boost::program_options::variables_map& opts) {
 
     bool deprecated_config_used = true;
 
@@ -80,7 +80,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
     if ( deprecated_config_used) {
 // #ifdef SEASTAR_HAVE_DPDK
-        if ( opts.count("dpdk-pmd")) {
+        if (opts["dpdk-pmd"].as<bool>()) {
              devices.push_back(create_dpdk_net_device(opts["dpdk-port-index"].as<unsigned>(), smp::count,
                 !(opts["lro"].as<std::string>() == "off"),
                 !(opts["hw-fc"].as<std::string>() == "off"), fullHash, initialHash, rssSort));
@@ -409,9 +409,7 @@ boost::program_options::options_description nns_options() {
     // boost::program_options::options_description opts(
     //         "Native networking stack options");
     opts.add_options()
-        ("net-config-file",
-                boost::program_options::value<std::string>()->default_value(""),
-                "net config file describing the NIC devices to use")
+        ("net-config-file", boost::program_options::value<std::string>()->default_value(""), "net config file describing the NIC devices to use")
         ("rss-sort", boost::program_options::value<bool>()->default_value(false), "Whether the src/dst IP/port are sorted by value before being passed to the RSS hash")
         ("full-rss-hash", boost::program_options::value<bool>()->default_value(false), "Whether to return the full rss hash, or mirror the low order word")
         ("rss-seed", boost::program_options::value<uint32_t>()->default_value(0xFFFFFFFF), "Initial value to begin hash with for RSS")
@@ -419,7 +417,7 @@ boost::program_options::options_description nns_options() {
                 boost::program_options::value<std::string>()->default_value("tap0"),
                 "tap device to connect to")
         ("host-ipv4-addr",
-                boost::program_options::value<std::vector<std::string>>()->default_value(std::vector<std::string>(), "192.168.122.2"),
+                boost::program_options::value<std::vector<std::string>>()->default_value(std::vector<std::string>{"192.168.122.2"}, "192.168.122.2"),
                 "static IPv4 address to use")
         ("gw-ipv4-addr",
                 boost::program_options::value<std::string>()->default_value("192.168.122.1"),
@@ -437,7 +435,7 @@ boost::program_options::options_description nns_options() {
                 boost::program_options::value<float>()->default_value(1.0f),
                 "Weighing of a hardware network queue relative to a software queue (0=no work, 1=equal share)")
 #ifdef SEASTAR_HAVE_DPDK
-        ("dpdk-pmd", "Use DPDK PMD drivers")
+        ("dpdk-pmd", boost::program_options::value<bool>()->default_value(false), "Use DPDK PMD drivers")
 #endif
         ("lro",
                 boost::program_options::value<std::string>()->default_value("on"),

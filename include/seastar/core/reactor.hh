@@ -698,7 +698,7 @@ namespace seastar {
         future<> update_shares_for_class(io_priority_class pc, uint32_t shares);
         static future<> rename_priority_class(io_priority_class pc, sstring new_name);
 
-        void configure(::boost::program_options::variables_map config);
+        void configure(boost::program_options::variables_map config);
 
         server_socket listen(socket_address sa, listen_options opts = {});
 

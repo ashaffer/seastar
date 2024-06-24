@@ -3767,7 +3767,7 @@ namespace seastar {
         install_oneshot_signal_handler<SIGSEGV, sigsegv_action>();
         install_oneshot_signal_handler<SIGABRT, sigabrt_action>();
     #ifdef SEASTAR_HAVE_DPDK
-        _using_dpdk = configuration.count("dpdk-pmd");
+        _using_dpdk = configuration["dpdk-pmd"].as<bool>();
     #endif
         auto thread_affinity = configuration["thread-affinity"].as<bool>();
         if (configuration.count("overprovisioned")

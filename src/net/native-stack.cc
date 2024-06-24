@@ -127,7 +127,7 @@ void create_native_net_device(boost::program_options::variables_map& opts) {
     uint jj = 0;
     for (auto sdev : devices) {
         for (unsigned i = 0; i < smp::count; i++) {
-            (void)smp::submit_to(i, [&opts, sdev] mutable {
+            (void)smp::submit_to(i, [&opts, sdev] {
                 auto qid = engine().cpu_id();
 
                 if (qid < sdev->hw_queues_count()) {
@@ -157,7 +157,7 @@ void create_native_net_device(boost::program_options::variables_map& opts) {
         jj++;
     }
 
-    (void)sem->wait(smp::count * devices.size()).then([&opts, devices, dev_cfgs] mutable {
+    (void)sem->wait(smp::count * devices.size()).then([&opts, devices, dev_cfgs] {
         printf("Completed device init: awaiting %u devices to signal\n", (uint)devices.size());
         auto sem = std::make_shared<semaphore>(0);
         uint i = 0;
@@ -168,11 +168,11 @@ void create_native_net_device(boost::program_options::variables_map& opts) {
             ++i;
         }
 
-        (void)sem->wait(devices.size()).then([&opts, devices, dev_cfgs] mutable {
+        (void)sem->wait(devices.size()).then([&opts, devices, dev_cfgs] {
             printf("All devices signaled\n");
             printf("Needs preempt: %u\n", need_preempt());
             for (unsigned i = 0; i < smp::count; i++) {
-                (void)smp::submit_to(i, [&opts, devices, dev_cfgs] mutable {
+                (void)smp::submit_to(i, [&opts, devices, dev_cfgs] {
                     create_native_stack(opts, devices, dev_cfgs);
                 });
             }

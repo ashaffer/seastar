@@ -108,7 +108,6 @@ namespace seastar {
                 throw std::runtime_error("test");
             }
             ++stats.reserves;
-            printf("reserve called: %lu new capacity, %lu begin, %lu end, %lu size, %lu old capacity\n", new_cap, head, tail, size(), _capacity);
             stats.print();
             std::size_t sz{size()};
             T *new_storage{traits::allocate(_alloc, new_cap)};

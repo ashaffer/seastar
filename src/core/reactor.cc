@@ -1037,8 +1037,9 @@ namespace seastar {
 
     void
     reactor::request_preemption() {
-        printf("preemption requested: %u\n", cpu_id());
-        printf("backend: 0x%lx\n", (uint64_t)_backend.get());
+        if (_backend->get() == nullptr) {
+            printf("null backend: %u\n", cpu_id());
+        }
         return _backend->request_preemption();
     }
 

@@ -350,11 +350,11 @@ namespace seastar {
         }
         
         inline iterator end () noexcept {
-            return {this, tail + 1};
+            return {this, tail};
         }
         
         inline const_iterator end () const noexcept {
-            return {this, tail + 1};
+            return {this, tail};
         }
         
         inline const_iterator cbegin () const noexcept {
@@ -362,16 +362,16 @@ namespace seastar {
         }
         
         inline const_iterator cend () const noexcept {
-            return {this, tail + 1};
+            return {this, tail};
         }
 
         inline iterator erase (iterator first, iterator last) noexcept {
             static_assert(std::is_nothrow_move_assignable<T>::value, "erase() assumes move assignment does not throw");
 
             while (first != last) {
-
                 ++first;
             }
+
             if (first == last) {
                 return last;
             }

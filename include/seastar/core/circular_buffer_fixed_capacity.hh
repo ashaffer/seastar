@@ -192,7 +192,7 @@ namespace seastar {
             return t;
         }
 
-        T *advance_head () noexcept {
+        T *advance_head (bool bump_tail) noexcept {
             T *t{std::addressof(_storage[head].data)};
 
             if (++head == Capacity) {
@@ -200,7 +200,7 @@ namespace seastar {
             }
 
             if (head == tail) {
-                if (++tail == Capacity) {
+                if (bump_tail && ++tail == Capacity) {
                     tail = 0;
                 }
                 t->~T();
@@ -209,14 +209,14 @@ namespace seastar {
             return t;
         }
 
-        T *dec_tail () noexcept {
+        T *dec_tail (bool bump_head) noexcept {
             if (tail-- == 0) {
                 tail = Capacity - 1;
             }
 
             T *t{std::addressof(_storage[tail].data)};
             if (tail == head) {
-                if (head-- == 0) {
+                if (bump_head && head-- == 0) {
                     head = Capacity - 1;
                 }
                 t->~T();
@@ -263,16 +263,24 @@ namespace seastar {
 
         template <typename... Args>
         inline T& emplace_back (Args&&... args) noexcept {
-            T *t{advance_tail()};
+            T *t{advance_tail(true)};
             new (t)T{std::forward<Args>(args)...};
             return *t;
         }
 
         template <typename... Args>
         inline T& emplace_front (Args&&... args) noexcept {
-            T *t{advance_head()};
+            T *t{advance_head(true)};
             new (t) T(std::forward<Args>(args)...);
             return *t;
+        }
+
+        inline void pop_front () noexcept {
+            advance_head(false);
+        }
+
+        inline void pop_back () noexcept {
+            dec_tail(false);
         }
 
         inline T& front () noexcept {
@@ -281,14 +289,6 @@ namespace seastar {
 
         inline T& back () noexcept {
             return _storage[tail].data;
-        }
-
-        inline void pop_front () noexcept {
-            advance_head();
-        }
-
-        inline void pop_back () noexcept {
-            dec_tail();
         }
 
         inline circular_buffer_fixed_capacity& operator= (circular_buffer_fixed_capacity&& x) noexcept {
@@ -320,7 +320,7 @@ namespace seastar {
         }
 
         inline bool empty () const noexcept {
-            return head + 1 == tail || head == Capacity - 1 == tail;
+            return head == tail;
         }
 
         inline std::size_t size () const noexcept {

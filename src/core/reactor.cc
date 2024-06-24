@@ -923,7 +923,6 @@ namespace seastar {
         _task_queues.push_back(std::make_unique<task_queue>(0, "main", 1000));
         _task_queues.push_back(std::make_unique<task_queue>(1, "atexit", 1000));
         _at_destroy_tasks = _task_queues.back().get();
-        printf("Backend created: %u 0x%lx\n", engine().cpu_id(), (uint64_t)_backend.get());
 
         g_need_preempt = &(this->_preemption_monitor);
         seastar::thread_impl::init();
@@ -2167,7 +2166,6 @@ namespace seastar {
         while (!tasks.empty()) {
             auto tsk = std::move(tasks.front());
             tasks.pop_front();
-            printf("popped task: %u, %lu\n", engine().cpu_id(), tasks.size());
             STAP_PROBE(seastar, reactor_run_tasks_single_start);
             task_histogram_add_task(*tsk);
             tsk->run_and_dispose();
@@ -2191,7 +2189,6 @@ namespace seastar {
 
     #ifdef SEASTAR_SHUFFLE_TASK_QUEUE
     void reactor::shuffle(std::unique_ptr<task>& t, task_queue& q) {
-        printf("shuffling task queue\n");
         static thread_local std::mt19937 gen = std::mt19937(std::default_random_engine()());
         std::uniform_int_distribution<size_t> tasks_dist{0, q._q.size() - 1};
         auto& to_swap = q._q[tasks_dist(gen)];
@@ -2570,9 +2567,7 @@ namespace seastar {
     void
     reactor::insert_activating_task_queues() {
         // Quadratic, but since we expect the common cases in insert_active_task_queue() to dominate, faster
-        printf("activating_task_queues: %u, %lu\n", engine().cpu_id(), _activating_task_queues.size());
         for (auto&& tq : _activating_task_queues) {
-            printf("\t%u\n", engine().cpu_id());
             insert_active_task_queue(tq);
         }
         _activating_task_queues.clear();
@@ -2590,12 +2585,10 @@ namespace seastar {
         STAP_PROBE(seastar, reactor_run_tasks_start);
         _cpu_stall_detector->start_task_run(t_run_completed);
         do {
-            printf("run started: %lu active, %lu activating, %u needs_prompt\n", _active_task_queues.size(), _activating_task_queues.size(), need_preempt());
             auto t_run_started = t_run_completed;
             insert_activating_task_queues();
             auto tq = _active_task_queues.front();
             _active_task_queues.pop_front();
-            _active_task_queues.show_stats();
             sched_print("running tq {} {}", (void*)tq, tq->_name);
             tq->_current = true;
             _last_vruntime = std::max(tq->_vruntime, _last_vruntime);

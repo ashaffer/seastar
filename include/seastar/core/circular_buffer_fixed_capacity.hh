@@ -275,6 +275,26 @@ namespace seastar {
             return *t;
         }
 
+        inline void push_front (const T& data) noexcept {
+            T *t{advance_head(true)};
+            new (t) T(data);
+        }
+
+        inline void push_front (T&& data) noexcept {
+            T *t{advance_head(true)};
+            new (t) T(std::move(data));
+        }
+
+        inline void push_back (const T& data) noexcept {
+            T *t{advance_tail(true)};
+            new (t) T(data);
+        }
+
+        inline void push_back (T&& data) noexcept {
+            T *t{advance_tail(true)};
+            new (t) T(std::move(data));
+        }
+
         inline void pop_front () noexcept {
             advance_head(false);
         }
@@ -297,26 +317,6 @@ namespace seastar {
                 new (this) circular_buffer_fixed_capacity(std::move(x));
             }
             return *this;
-        }
-
-        inline void push_front (const T& data) noexcept {
-            T *t{advance_head()};
-            new (t) T(data);
-        }
-
-        inline void push_front (T&& data) noexcept {
-            T *t{advance_head()};
-            new (t) T(std::move(data));
-        }
-
-        inline void push_back (const T& data) noexcept {
-            T *t{advance_tail()};
-            new (t) T(data);
-        }
-
-        inline void push_back (T&& data) noexcept {
-            T *t{advance_tail()};
-            new (t) T(std::move(data));
         }
 
         inline bool empty () const noexcept {

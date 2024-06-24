@@ -168,7 +168,7 @@ void create_native_net_device(boost::program_options::variables_map& opts) {
             ++i;
         }
 
-        (void)sem->wait(devices.size()).then([&opts, devices, dev_cfgs] {
+        (void)sem->wait(devices.size()).then([&opts, devices, dev_cfgs] mutable {
             printf("All devices signaled\n");
             printf("Needs preempt: %u\n", need_preempt());
             for (unsigned i = 0; i < smp::count; i++) {

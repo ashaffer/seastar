@@ -131,11 +131,6 @@ void create_native_net_device(const boost::program_options::variables_map& opts)
                 auto qid = engine().cpu_id();
 
                 if (qid < sdev->hw_queues_count()) {
-                    printf("opts:\n");
-                    for (auto&& it : opts) {
-                        printf("\t%s\n", it.first.c_str());
-                    }
-                    
                     auto qp = sdev->init_local_queue(opts, qid);
                     std::map<unsigned, float> cpu_weights;
                     for (unsigned i = sdev->hw_queues_count() + qid % sdev->hw_queues_count(); i < smp::count; i+= sdev->hw_queues_count()) {

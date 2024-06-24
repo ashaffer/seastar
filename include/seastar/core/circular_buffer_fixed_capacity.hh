@@ -346,7 +346,7 @@ namespace seastar {
         }
 
         inline std::size_t size () const noexcept {
-            return head < tail
+            return head <= tail
                 ? tail - head
                 : (Capacity - head) + tail;
         }

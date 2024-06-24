@@ -313,7 +313,7 @@ namespace seastar {
 
             virtual uint16_t hw_queues_count() { return 1; }
             virtual future<> link_ready() { return make_ready_future<>(); }
-            virtual std::unique_ptr<qp> init_local_queue(boost::program_options::variables_map opts, uint16_t qid) = 0;
+            virtual std::unique_ptr<qp> init_local_queue(const boost::program_options::variables_map& opts, uint16_t qid) = 0;
             virtual unsigned hash2qid(uint32_t hash) {
                 return hash % hw_queues_count();
             }

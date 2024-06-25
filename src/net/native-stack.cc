@@ -168,6 +168,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             ++i;
         }
 
+        printf("Awaiting semaphore: %lu\n", devices.size());
         (void)sem->wait(devices.size()).then([opts, devices, dev_cfgs] {
             printf("All devices signaled\n");
             printf("Needs preempt: %u\n", need_preempt());

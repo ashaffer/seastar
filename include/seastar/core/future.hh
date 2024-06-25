@@ -899,10 +899,10 @@ private:
             if (__builtin_expect(!_state.available() && !_promise, false)) {
                 abandoned();
             }
-            printf("future schedule\n");
-            ::seastar::schedule(std::make_unique<continuation<Func, T...>>(std::move(func), std::move(_state)));
+            // printf("future schedule\n");
+            seastar::schedule(std::make_unique<continuation<Func, T...>>(std::move(func), std::move(_state)));
         } else {
-            printf("schedule else\n");
+            // printf("schedule else\n");
             assert(_promise);
             detach_promise()->schedule(std::move(func));
         }
@@ -1115,7 +1115,7 @@ private:
         // chain by returning ready future while 'this' future is not ready. The noexcept will call std::terminate if
         // that happens.
         [&] () noexcept {
-            printf("inner then_impl\n");
+            // printf("inner then_impl\n");
             memory::disable_failure_guard dfg;
             schedule([pr = fut.get_promise(), func = std::forward<Func>(func)] (future_state<T...>&& state) mutable {
                 if (state.failed()) {
@@ -1173,7 +1173,7 @@ private:
         // that happens.
         [&] () noexcept {
             memory::disable_failure_guard dfg;
-            printf("inner then_wrapped_impl\n");
+            // printf("inner then_wrapped_impl\n");
             schedule([pr = fut.get_promise(), func = std::forward<Func>(func)] (future_state<T...>&& state) mutable {
                 futurator::apply(std::forward<Func>(func), future(std::move(state))).forward_to(std::move(pr));
             });

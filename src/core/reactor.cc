@@ -2711,7 +2711,7 @@ namespace seastar {
             _network_stack = std::move(stack);
             printf("invoke on all cpu_started signal\n");
             return smp::invoke_on_all([] {
-                printf("cpu started signal: %u\n", engine().cpu_id());
+                // printf("cpu started signal: %u\n", engine().cpu_id());
                 engine()._cpu_started.signal();
             });
         });

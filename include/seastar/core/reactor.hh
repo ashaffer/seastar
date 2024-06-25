@@ -1018,7 +1018,8 @@ namespace seastar {
                     if (!is_future<ret_type>::value) {
                         // printf("submit to non-deferring\n");
                         // Non-deferring function, so don't worry about func lifetime
-                        return futurize_apply(std::forward<Func>(func));
+                        // return futurize_apply(std::forward<Func>(func));
+                        return futurrize<ret_type>::apply(std::forward<Func>(func));
                     } else if (std::is_lvalue_reference<Func>::value) {
                         printf("submit to lvalue\n");
                         // func is an lvalue, so caller worries about its lifetime

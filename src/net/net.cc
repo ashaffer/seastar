@@ -80,7 +80,6 @@ namespace net {
 
 inline
 bool qp::poll_tx() {
-    printf("_tx_packetq: %lu\n", _tx_packetq.size());
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;

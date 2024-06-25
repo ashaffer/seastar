@@ -2764,7 +2764,6 @@ namespace seastar {
         };
         printf("Entering run loop\n");
         while (true) {
-            printf("run some tasks\n");
             run_some_tasks();
             if (_stopped) {
                 printf("if _stopped\n");
@@ -2788,7 +2787,6 @@ namespace seastar {
             }
 
             _polls++;
-            printf("checking for work\n");
             if (check_for_work()) {
                 printf("has work\n");
                 if (idle) {
@@ -2799,7 +2797,6 @@ namespace seastar {
                     idle = false;
                 }
             } else {
-                printf("no work\n");
                 idle_end = sched_clock::now();
                 if (!idle) {
                     printf("not idle\n");
@@ -2819,7 +2816,6 @@ namespace seastar {
                     report_exception("Exception while running idle cpu handler", std::current_exception());
                 }
                 if (go_to_sleep) {
-                    printf("if go to sleep\n");
                     internal::cpu_relax();
                     if (idle_end - idle_start > _max_poll_time) {
                         printf("idle time > max poll time\n");
@@ -4107,7 +4103,6 @@ namespace seastar {
     }
 
     bool smp::poll_queues() {
-        printf("poll queues\n");
         size_t got = 0;
         for (unsigned i = 0; i < count; i++) {
             if (engine().cpu_id() != i) {

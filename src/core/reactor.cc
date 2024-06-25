@@ -2046,6 +2046,7 @@ namespace seastar {
                             engine()._stopped = true;
                         });
                     }).then([&sem]() {
+                        printf("signal semaphore 0 (%u)\n", engine().cpu_id());
                         sem.signal();
                     });
                     return sem.wait().then([this] {
@@ -2705,6 +2706,7 @@ namespace seastar {
         (void)_network_stack_ready_promise.get_future().then([this] (std::unique_ptr<network_stack> stack) {
             _network_stack = std::move(stack);
             return smp::invoke_on_all([] {
+                printf("cpu started signal: %u\n", engine().cpu_id());
                 engine()._cpu_started.signal();
             });
         });
@@ -3237,6 +3239,7 @@ namespace seastar {
                 if (smp_service_groups[ssg_id].clients.size() <= t) {
                     printf("not enough clients: %u, %lu\n", t, smp_service_groups[ssg_id].clients.size());
                 }
+                printf("smp service groups signal %u\n", engine().cpu_id());
                 smp_service_groups[ssg_id].clients[t].signal();
             }
             delete wi;
@@ -3593,6 +3596,7 @@ namespace seastar {
             if (!handled) {
                 handled = true;
                 Func();
+                printf("oneshot signal\n");
                 signal(sig, SIG_DFL);
             }
         };

@@ -193,7 +193,7 @@ public:
         if (_ex) {
             return;
         }
-        if (_count % 100000 == 0) {
+        if (_count % 1000000 == 0) {
             printf("signal: %ld, %lu, %lu, %ld\n", _count, nr, _wait_list.size(), _wait_list.empty() ? 0 : _wait_list.front().nr);
         }
         _count += nr;
@@ -308,6 +308,7 @@ public:
     semaphore_units(const semaphore_units&) = delete;
     ~semaphore_units() noexcept {
         if (_n) {
+            printf("semaphore destructor: %lu\n", _n);
             _sem->signal(_n);
         }
     }

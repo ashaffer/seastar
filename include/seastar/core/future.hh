@@ -1375,6 +1375,7 @@ private:
     void set_callback(std::unique_ptr<continuation_base<T...>> callback) {
         if (_state.available()) {
             callback->set_state(get_available_state());
+            printf("set_callback schedule\n");
             ::seastar::schedule(std::move(callback));
         } else {
             assert(_promise);
@@ -1420,8 +1421,10 @@ void internal::promise_base::make_ready() noexcept {
     if (_task) {
         _state = nullptr;
         if (Urgent == urgent::yes && !need_preempt()) {
+            printf("urgent schedule\n");
             ::seastar::schedule_urgent(std::move(_task));
         } else {
+            printf("make ready schedule\n");
             ::seastar::schedule(std::move(_task));
         }
     }

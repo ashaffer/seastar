@@ -1016,24 +1016,30 @@ namespace seastar {
             if (t == engine().cpu_id()) {
                 try {
                     if (!is_future<ret_type>::value) {
+                        printf("submit to non-deferring\n");
                         // Non-deferring function, so don't worry about func lifetime
                         return futurize<ret_type>::apply(std::forward<Func>(func));
                     } else if (std::is_lvalue_reference<Func>::value) {
+                        printf("submit to lvalue\n");
                         // func is an lvalue, so caller worries about its lifetime
                         return futurize<ret_type>::apply(func);
                     } else {
+                        printf("submit to rvalue\n");
                         // Deferring call on rvalue function, make sure to preserve it across call
                         auto w = std::make_unique<std::decay_t<Func>>(std::move(func));
                         auto ret = futurize<ret_type>::apply(*w);
                         return ret.finally([w = std::move(w)] {});
                     }
                 } catch (...) {
+                    printf("submit to exception\n");
                     // Consistently return a failed future rather than throwing, to simplify callers
                     return futurize<std::invoke_result_t<Func>>::make_exception_future(std::current_exception());
                 }
             } else {
+                printf("submit_to else\n");
                 auto f = _qs[t][engine().cpu_id()].submit(t, ssg, std::forward<Func>(func), ignoreLimits);
                 if (preempt) {
+                    printf("preempt\n");
                     _reactors[t]->request_preemption();
                 }
                 return std::move(f);
@@ -1070,6 +1076,7 @@ namespace seastar {
         static future<> invoke_on_all(Func&& func) {
             static_assert(std::is_same<future<>, typename futurize<std::invoke_result_t<Func>>::type>::value, "bad Func signature");
             return parallel_for_each(all_cpus(), [&func] (unsigned id) {
+                printf("parallel_for_each inner: %u\n", id);
                 return smp::submit_to(id, Func(func));
             });
         }

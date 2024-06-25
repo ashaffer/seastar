@@ -2706,6 +2706,7 @@ namespace seastar {
             last_idle = _total_idle;
             load = std::min(load, 1.0);
             idle_start = idle_end;
+            printf("_loads: %lu\n", _loads.size());
             _loads.push_front(load);
             if (_loads.size() > 5) {
                 auto drop = _loads.back();
@@ -4330,6 +4331,7 @@ namespace seastar {
     }
 
     void add_to_flush_poller(output_stream<char>* os) {
+        printf("_flush_batching: %lu\n", _flush_batching.size());
         engine()._flush_batching.emplace_back(os);
     }
 

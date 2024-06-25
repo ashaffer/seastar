@@ -89,6 +89,7 @@ namespace seastar {
 
         template<std::forward_iterator ConstIt>
         inline ConstIt push (ConstIt begin, ConstIt end) {
+            printf("queue: %lu\n", _q.size());
             while (begin != end && !full()) {
                 push(*begin);
                 ++begin;

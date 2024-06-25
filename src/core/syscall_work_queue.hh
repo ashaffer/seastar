@@ -34,7 +34,7 @@ namespace seastar {
 class syscall_work_queue {
     static constexpr size_t queue_length = 128;
     struct work_item;
-    using lf_queue = boost::lockfree::spsc_queue<::seastar::syscall_work_queue::work_item*, boost::lockfree::capacity<queue_length>>;
+    using lf_queue = boost::lockfree::spsc_queue<seastar::syscall_work_queue::work_item*, boost::lockfree::capacity<queue_length>>;
     lf_queue _pending;
     lf_queue _completed;
     writeable_eventfd _start_eventfd;

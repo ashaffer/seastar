@@ -49,6 +49,7 @@
 #include <boost/program_options.hpp>
 #include <set>
 #include <latch>
+#include <boost/lockfree/spsc_queue.hpp>
 #include <seastar/core/linux-aio.hh>
 #include <seastar/util/eclipse.hh>
 #include <seastar/util/static_vector.hh>
@@ -231,12 +232,11 @@ namespace seastar {
         struct lf_queue_remote {
             reactor* remote;
         };
-        // using lf_queue_base = boost::lockfree::spsc_queue<work_item*,
-        //                         boost::lockfree::capacity<queue_length>>;
-        using lf_queue_base = queue<work_item *>;
+        using lf_queue_base = boost::lockfree::spsc_queue<work_item*, boost::lockfree::capacity<queue_length>>;
+        // using lf_queue_base = queue<work_item *>;
         // use inheritence to control placement order
         struct lf_queue : lf_queue_remote, lf_queue_base {
-            lf_queue(reactor* remote, std::size_t size) : lf_queue_remote{remote}, lf_queue_base{size} {}
+            lf_queue(reactor* remote) : lf_queue_remote{remote}, lf_queue_base{} {}
             void maybe_wakeup();
             ~lf_queue();
         };

@@ -3068,8 +3068,8 @@ namespace seastar {
     }
 
     smp_message_queue::smp_message_queue(reactor* from, reactor* to)
-        : _pending(to, queue_length)
-        , _completed(from, queue_length)
+        : _pending(to)
+        , _completed(from)
     {
     }
 

@@ -2619,8 +2619,10 @@ namespace seastar {
             sched_print("run complete ({} {}); time consumed {} usec; final vruntime {} empty {}",
                     (void*)tq, tq->_name, delta / 1us, tq->_vruntime, tq->_q.empty());
             if (!tq->_q.empty()) {
+                printf("reactivating\n");
                 insert_active_task_queue(tq);
             } else {
+                printf("deactivating\n");
                 tq->_active = false;
             }
         } while (have_more_tasks() && !need_preempt());

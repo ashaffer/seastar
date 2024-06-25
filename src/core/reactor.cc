@@ -2034,28 +2034,26 @@ namespace seastar {
         assert(engine()._id == 0);
         smp::cleanup_cpu();
         if (!_stopping) {
-            // Run exit tasks locally and then stop all other engines
-            // in the background and wait on semaphore for all to complete.
-            // Finally, set _stopped on cpu 0.
-            (void)run_exit_tasks().then([this] {
-                return do_with(semaphore(0), [this] (semaphore& sem) {
-                    // Stop other cpus asynchronously, signal when done.
-                    (void)smp::invoke_on_others(0, [] {
-                        smp::cleanup_cpu();
-                        return engine().run_exit_tasks().then([] {
-                            engine()._stopped = true;
+            run_exit_tasks().then([this] {
+                do_with(semaphore(0), [this] (semaphore& sem) {
+                    for (unsigned i = 1; i < smp::count; i++) {
+                        smp::submit_to<>(i, []() {
+                            smp::cleanup_cpu();
+                            return engine().run_exit_tasks().then([] {
+                                    engine()._stopped = true;
+                            });
+                        }).then([&sem]() {
+                            sem.signal();
                         });
-                    }).then([&sem]() {
-                        printf("signal semaphore 0 (%u)\n", engine().cpu_id());
-                        sem.signal();
-                    });
-                    return sem.wait().then([this] {
+                    }
+                    return sem.wait(smp::count - 1).then([this] {
                         _stopped = true;
                     });
                 });
             });
         }
     }
+
 
     void reactor::exit(int ret) {
         // Run stop() asynchronously on cpu 0.

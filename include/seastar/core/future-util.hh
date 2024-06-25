@@ -110,70 +110,81 @@ iterator_range_estimate_vector_capacity(Iterator begin, Iterator end, std::forwa
 }
 
 /// \cond internal
-
-class parallel_for_each_state final : private continuation_base<> {
-    std::vector<future<>> _incomplete;
-    promise<> _result;
+struct parallel_for_each_state {
     // use optional<> to avoid out-of-line constructor
-    std::optional<std::exception_ptr> _ex;
-private:
-    // Wait for one of the futures in _incomplete to complete, and then
-    // decide what to do: wait for another one, or deliver _result if all
-    // are complete.
-    void wait_for_one() {
-        // Process from back to front, on the assumption that the front
-        // futures are likely to complete earlier than the back futures.
-        // If that's indeed the case, then the front futures will be
-        // available and we won't have to wait for them.
-
-        // Skip over futures that happen to be complete already.
-        while (!_incomplete.empty() && _incomplete.back().available()) {
-            if (_incomplete.back().failed()) {
-                add_exception(_incomplete.back().get_exception());
-            }
-            _incomplete.pop_back();
-        }
-
-        // If there's an incompelete future, wait for it.
-        if (!_incomplete.empty()) {
-            internal::set_callback(_incomplete.back(), std::unique_ptr<continuation_base<>>(this));
-            // This future's state will be collected in run_and_dispose(), so we can drop it.
-            _incomplete.pop_back();
-            return;
-        }
-
-        // Everything completed, report a result.
-        if (__builtin_expect(bool(_ex), false)) {
-            _result.set_exception(std::move(*_ex));
+    std::optional<std::exception_ptr> ex;
+    promise<> pr;
+    ~parallel_for_each_state() {
+        if (ex) {
+            pr.set_exception(std::move(*ex));
         } else {
-            _result.set_value();
+            pr.set_value();
         }
-        delete this;
-    }
-    virtual void run_and_dispose() noexcept override {
-        if (_state.failed()) {
-            _ex = std::move(_state).get_exception();
-        }
-        _state = {};
-        wait_for_one();
-    }
-public:
-    void reserve(size_t n) {
-        _incomplete.reserve(n);
-    }
-    void add_exception(std::exception_ptr ex) {
-        _ex = std::move(ex);
-    }
-    void add_future(future<> f) {
-        _incomplete.push_back(std::move(f));
-    }
-    future<> get_future() {
-        return _result.get_future();
-    }
-    void start() {
-        wait_for_one();
     }
 };
+// class parallel_for_each_state final : private continuation_base<> {
+//     std::vector<future<>> _incomplete;
+//     promise<> _result;
+//     // use optional<> to avoid out-of-line constructor
+//     std::optional<std::exception_ptr> _ex;
+// private:
+//     // Wait for one of the futures in _incomplete to complete, and then
+//     // decide what to do: wait for another one, or deliver _result if all
+//     // are complete.
+//     void wait_for_one() {
+//         // Process from back to front, on the assumption that the front
+//         // futures are likely to complete earlier than the back futures.
+//         // If that's indeed the case, then the front futures will be
+//         // available and we won't have to wait for them.
+
+//         // Skip over futures that happen to be complete already.
+//         while (!_incomplete.empty() && _incomplete.back().available()) {
+//             if (_incomplete.back().failed()) {
+//                 add_exception(_incomplete.back().get_exception());
+//             }
+//             _incomplete.pop_back();
+//         }
+
+//         // If there's an incompelete future, wait for it.
+//         if (!_incomplete.empty()) {
+//             internal::set_callback(_incomplete.back(), std::unique_ptr<continuation_base<>>(this));
+//             // This future's state will be collected in run_and_dispose(), so we can drop it.
+//             _incomplete.pop_back();
+//             return;
+//         }
+
+//         // Everything completed, report a result.
+//         if (__builtin_expect(bool(_ex), false)) {
+//             _result.set_exception(std::move(*_ex));
+//         } else {
+//             _result.set_value();
+//         }
+//         delete this;
+//     }
+//     virtual void run_and_dispose() noexcept override {
+//         if (_state.failed()) {
+//             _ex = std::move(_state).get_exception();
+//         }
+//         _state = {};
+//         wait_for_one();
+//     }
+// public:
+//     void reserve(size_t n) {
+//         _incomplete.reserve(n);
+//     }
+//     void add_exception(std::exception_ptr ex) {
+//         _ex = std::move(ex);
+//     }
+//     void add_future(future<> f) {
+//         _incomplete.push_back(std::move(f));
+//     }
+//     future<> get_future() {
+//         return _result.get_future();
+//     }
+//     void start() {
+//         wait_for_one();
+//     }
+// };
 
 /// \endcond
 
@@ -191,7 +202,7 @@ public:
 /// \return a \c future<> that resolves when all the function invocations
 ///         complete.  If one or more return an exception, the return value
 ///         contains one of the exceptions.
-template <typename Iterator, typename Func>
+/*template <typename Iterator, typename Func>
 GCC6_CONCEPT( requires requires (Func f, Iterator i) { { f(*i++) } -> future<>; } )
 inline
 future<>
@@ -233,6 +244,44 @@ parallel_for_each(Iterator begin, Iterator end, Func&& func) noexcept {
         }
         return make_ready_future<>();
     }
+}
+*/
+template <typename Iterator, typename Func>
+GCC6_CONCEPT( requires requires (Func f, Iterator i) { { f(*i++) } -> future<>; } )
+inline
+future<>
+parallel_for_each(Iterator begin, Iterator end, Func&& func) {
+    lw_shared_ptr<parallel_for_each_state> state;
+    while (begin != end) {
+        auto f = futurize_apply(std::forward<Func>(func), *begin++);
+        if (__builtin_expect(!f.available() || f.failed(), false)) {
+            if (!state) {
+                if (begin == end) {
+                    // Only the last element was not immediately ready (likely if
+                    // there is exactly one element)
+                    return f;
+                }
+              [&state] () noexcept {
+                memory::disable_failure_guard dfg;
+                state = make_lw_shared<parallel_for_each_state>();
+              }();
+            }
+            f.then_wrapped([state] (future<> f) {
+                if (f.failed()) {
+                    // We can only store one exception.  For more, use when_all().
+                    if (!state->ex) {
+                        state->ex = f.get_exception();
+                    } else {
+                        f.ignore_ready_future();
+                    }
+                }
+            });
+        }
+    }
+    if (__builtin_expect(bool(state), false)) {
+        return state->pr.get_future();
+    }
+    return make_ready_future<>();
 }
 
 /// Run tasks in parallel (range version).

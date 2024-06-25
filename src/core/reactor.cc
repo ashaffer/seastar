@@ -3094,7 +3094,7 @@ namespace seastar {
         }
         auto nr = end - begin;
 
-        // _pending.maybe_wakeup();
+        _pending.maybe_wakeup();
         _tx.a.pending_fifo.erase(begin, end);
         printf("post move pending: %lu\n", _tx.a.pending_fifo.size());
         _current_queue_length += nr;
@@ -3148,7 +3148,7 @@ namespace seastar {
             auto ssg_id = internal::smp_service_group_id(item->ssg);
             auto& sem = smp_service_groups[ssg_id].clients[t];
             get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
-                printf("then: %lu\n", _tx.a.pending_fifo.size());
+              printf("then: %lu\n", _tx.a.pending_fifo.size());
               _tx.a.pending_fifo.push_back(item.get());
               // no exceptions from this point
               item.release();

@@ -27,7 +27,6 @@
 #include <algorithm>
 
 namespace seastar {
-
 /// A growable double-ended queue container that can be efficiently
 /// extended (and shrunk) from both ends. Implementation is a single
 /// storage vector.
@@ -54,9 +53,14 @@ namespace seastar {
 ///     * pop_back() will invalidate end().
 ///
 /// reserve() may also invalidate all iterators and references.
+
+
 template <typename T, typename Alloc = std::allocator<T>>
 class circular_buffer {
+    inline static thread_local std::size_t ccbid{0};
+
     struct impl : Alloc {
+        std::size_t id;
         T* storage = nullptr;
         // begin, end interpreted (mod capacity)
         size_t begin = 0;
@@ -272,6 +276,7 @@ template <typename T, typename Alloc>
 inline
 circular_buffer<T, Alloc>::circular_buffer(Alloc alloc) noexcept
     : _impl(std::move(alloc)) {
+        _impl.id = ccbid++;
 }
 
 template <typename T, typename Alloc>
@@ -318,33 +323,37 @@ circular_buffer<T, Alloc>::expand() {
     expand(std::max<size_t>(_impl.capacity * 2, 1));
 }
 
-template <typename T, typename Alloc>
-void
-circular_buffer<T, Alloc>::expand(size_t new_cap) {
-    auto new_storage = _impl.allocate(new_cap);
-    auto p = new_storage;
-    try {
-        for_each([this, &p] (T& obj) {
-            transfer_pass1(_impl, &obj, p);
-            p++;
-        });
-    } catch (...) {
-        while (p != new_storage) {
-            std::allocator_traits<Alloc>::destroy(_impl, --p);
-        }
-        _impl.deallocate(new_storage, new_cap);
-        throw;
-    }
-    p = new_storage;
-    for_each([this, &p] (T& obj) {
-        transfer_pass2(_impl, &obj, p++);
-    });
-    std::swap(_impl.storage, new_storage);
-    std::swap(_impl.capacity, new_cap);
-    _impl.begin = 0;
-    _impl.end = p - _impl.storage;
-    _impl.deallocate(new_storage, new_cap);
-}
+
+// template <typename T, typename Alloc>
+// void
+// circular_buffer<T, Alloc>::expand(size_t new_cap) {
+//     if (new_cap > 8192) {
+//         printf("expanding %u-%lu: %lu begin, %lu end, %lu size, %lu new capacity\n", engine().cpu_id(), _impl.id, _impl.begin, _impl.end, size(), new_cap);
+//     }
+//     auto new_storage = _impl.allocate(new_cap);
+//     auto p = new_storage;
+//     try {
+//         for_each([this, &p] (T& obj) {
+//             transfer_pass1(_impl, &obj, p);
+//             p++;
+//         });
+//     } catch (...) {
+//         while (p != new_storage) {
+//             std::allocator_traits<Alloc>::destroy(_impl, --p);
+//         }
+//         _impl.deallocate(new_storage, new_cap);
+//         throw;
+//     }
+//     p = new_storage;
+//     for_each([this, &p] (T& obj) {
+//         transfer_pass2(_impl, &obj, p++);
+//     });
+//     std::swap(_impl.storage, new_storage);
+//     std::swap(_impl.capacity, new_cap);
+//     _impl.begin = 0;
+//     _impl.end = p - _impl.storage;
+//     _impl.deallocate(new_storage, new_cap);
+// }
 
 template <typename T, typename Alloc>
 inline

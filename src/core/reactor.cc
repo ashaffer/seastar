@@ -2766,21 +2766,16 @@ namespace seastar {
         while (true) {
             run_some_tasks();
             if (_stopped) {
-                printf("if _stopped\n");
                 load_timer.cancel();
                 // Final tasks may include sending the last response to cpu 0, so run them
                 while (have_more_tasks()) {
-                    printf("run more tasks\n");
                     run_some_tasks();
                 }
                 while (!_at_destroy_tasks->_q.empty()) {
-                    printf("run tasks\n");
                     run_tasks(*_at_destroy_tasks);
                 }
-                printf("arrive at loop end\n");
                 smp::arrive_at_event_loop_end();
                 if (_id == 0) {
-                    printf("join all\n");
                     smp::join_all();
                 }
                 break;
@@ -2788,9 +2783,7 @@ namespace seastar {
 
             _polls++;
             if (check_for_work()) {
-                printf("has work\n");
                 if (idle) {
-                    printf("idle\n");
                     _total_idle += idle_end - idle_start;
                     account_idle(idle_end - idle_start);
                     idle_start = idle_end;
@@ -2799,7 +2792,6 @@ namespace seastar {
             } else {
                 idle_end = sched_clock::now();
                 if (!idle) {
-                    printf("not idle\n");
                     idle_start = idle_end;
                     idle = true;
                 }

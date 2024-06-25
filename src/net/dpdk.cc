@@ -1252,7 +1252,7 @@ build_mbuf_cluster:
                     rte_pktmbuf_pool_init(_pool, nullptr);
 
                     printf("rte_mempool_populate_virt: 0x%lx pool, 0x%lx xmem, 0x%lx size, 0x%lx page_size\n", (uint64_t)_pool, (uint64_t)_xmem.get(), xmem_size, page_size);
-                    int res = rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
+                    int res = rte_mempool_populate_iova(_pool, (char*)(_xmem.get()),
                                                   xmem_size, page_size,
                                                   nullptr, nullptr);
                     if (res <= 0) {

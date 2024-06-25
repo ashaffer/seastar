@@ -3098,6 +3098,7 @@ namespace seastar {
     }
 
     void smp_message_queue::move_pending() {
+        printf("move_pending: %lu\n", _tx.a.pending_fifo.size());
         auto begin = _tx.a.pending_fifo.cbegin();
         auto end = _tx.a.pending_fifo.cend();
         end = _pending.push(begin, end);
@@ -3105,8 +3106,10 @@ namespace seastar {
             return;
         }
         auto nr = end - begin;
+
         // _pending.maybe_wakeup();
         _tx.a.pending_fifo.erase(begin, end);
+        printf("post move pending: %lu\n", _tx.a.pending_fifo.size());
         _current_queue_length += nr;
         _last_snt_batch = nr;
         _sent += nr;
@@ -3118,11 +3121,12 @@ namespace seastar {
 
     void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queue::work_item> item, bool ignoreLimits) {
         if (ignoreLimits) {
+            printf("ignoreLimits true\n");
             if (!_pending.push(item.get())) {
-                _tx.a.pending_fifo.push_back(item.get());
-                // if (_tx.a.pending_fifo.size() >= batch_size) {
-                //     move_pending();
-                // }
+                // _tx.a.pending_fifo.push_back(item.get());
+                if (_tx.a.pending_fifo.size() >= batch_size) {
+                    move_pending();
+                }
             } else {
                 _current_queue_length += 1;
                 _last_snt_batch = 1;
@@ -3131,27 +3135,39 @@ namespace seastar {
 
             item.release();
         } else {
+            // auto ssg_id = internal::smp_service_group_id(item->ssg);
+            // auto& sem = smp_service_groups[ssg_id].clients[t];
+
+            // // matching signal() in process_completions()
+            // // FIXME: future is discarded
+            // (void)get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
+            //     u.release();
+
+            //     if (!_pending.push(item.get())) {
+            //         _tx.a.pending_fifo.push_back(item.get());
+            //         // no exceptions from this point
+            //         // if (_tx.a.pending_fifo.size() >= batch_size) {
+            //         //     move_pending();
+            //         // }
+            //     } else {
+            //         _current_queue_length += 1;
+            //         _last_snt_batch = 1;
+            //         _sent += 1;
+            //     }
+
+            //     item.release();
+            // });
+
             auto ssg_id = internal::smp_service_group_id(item->ssg);
             auto& sem = smp_service_groups[ssg_id].clients[t];
-
-            // matching signal() in process_completions()
-            // FIXME: future is discarded
-            (void)get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
-                u.release();
-
-                if (!_pending.push(item.get())) {
-                    _tx.a.pending_fifo.push_back(item.get());
-                    // no exceptions from this point
-                    // if (_tx.a.pending_fifo.size() >= batch_size) {
-                    //     move_pending();
-                    // }
-                } else {
-                    _current_queue_length += 1;
-                    _last_snt_batch = 1;
-                    _sent += 1;
-                }
-
-                item.release();
+            get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
+              _tx.a.pending_fifo.push_back(item.get());
+              // no exceptions from this point
+              item.release();
+              u.release();
+              if (_tx.a.pending_fifo.size() >= batch_size) {
+                  move_pending();
+              }
             });
         }
     }
@@ -3269,6 +3285,7 @@ namespace seastar {
     }
 
     void smp_message_queue::start(unsigned cpuid) {
+        printf("smp message queue start %u\n", cpuid);
         _tx.init();
         namespace sm = seastar::metrics;
         char instance[10];
@@ -3501,6 +3518,7 @@ namespace seastar {
 
     void smp::start_all_queues()
     {
+        printf("start_all_queues\n");
         for (unsigned c = 0; c < count; c++) {
             if (c != engine().cpu_id()) {
                 _qs[c][engine().cpu_id()].start(c);

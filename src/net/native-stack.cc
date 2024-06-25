@@ -178,8 +178,11 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     printf("native stack %u created\n", i);
                 });
             }
+            printf("native stacks done\n");
         });
+        printf("sem->wait done\n");
     });
+    printf("sem->wait2 done\n");
 }
 
 // native_network_stack

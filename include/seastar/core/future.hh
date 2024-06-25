@@ -902,6 +902,7 @@ private:
             printf("future schedule\n");
             ::seastar::schedule(std::make_unique<continuation<Func, T...>>(std::move(func), std::move(_state)));
         } else {
+            printf("schedule else\n");
             assert(_promise);
             detach_promise()->schedule(std::move(func));
         }
@@ -1028,6 +1029,7 @@ private:
         auto thread = thread_impl::get();
         assert(thread);
         thread_wake_task wake_task{thread, this};
+        printf("do_wait\n");
         detach_promise()->schedule(std::unique_ptr<continuation_base<T...>>(&wake_task));
         thread_impl::switch_out(thread);
     }
@@ -1113,6 +1115,7 @@ private:
         // chain by returning ready future while 'this' future is not ready. The noexcept will call std::terminate if
         // that happens.
         [&] () noexcept {
+            printf("inner then_impl\n");
             memory::disable_failure_guard dfg;
             schedule([pr = fut.get_promise(), func = std::forward<Func>(func)] (future_state<T...>&& state) mutable {
                 if (state.failed()) {
@@ -1170,6 +1173,7 @@ private:
         // that happens.
         [&] () noexcept {
             memory::disable_failure_guard dfg;
+            printf("inner then_wrapped_impl\n");
             schedule([pr = fut.get_promise(), func = std::forward<Func>(func)] (future_state<T...>&& state) mutable {
                 futurator::apply(std::forward<Func>(func), future(std::move(state))).forward_to(std::move(pr));
             });
@@ -1379,6 +1383,7 @@ private:
             seastar::schedule(std::move(callback));
         } else {
             assert(_promise);
+            printf("set callback else\n");
             detach_promise()->schedule(std::move(callback));
         }
 

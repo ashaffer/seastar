@@ -4184,7 +4184,7 @@ namespace seastar {
             assert(_state && !_state->available());
             _state->set_to_broken_promise();
             printf("else if expect schedule\n");
-            ::seastar::schedule(std::move(_task));
+            seastar::schedule(std::move(_task));
         }
     }
 

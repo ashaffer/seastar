@@ -1097,6 +1097,7 @@ namespace seastar {
         promise<> p;
         auto f = p.get_future();
         engine().force_poll();
+        printf("later\n");
         schedule(make_task(default_scheduling_group(), [p = std::move(p)] () mutable {
             p.set_value();
         }));

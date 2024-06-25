@@ -137,6 +137,7 @@ bool execution_stage::flush() noexcept {
         return false;
     }
     _stats.tasks_scheduled++;
+    printf("executoin_stage flush\n");
     schedule(make_task(_sg, [this] {
         do_flush();
         _flush_scheduled = false;

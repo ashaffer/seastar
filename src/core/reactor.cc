@@ -2583,7 +2583,6 @@ namespace seastar {
     void
     reactor::insert_activating_task_queues() {
         // Quadratic, but since we expect the common cases in insert_active_task_queue() to dominate, faster
-        printf("_activating_task_queues: %lu\n", _activating_task_queues.size());
         for (auto&& tq : _activating_task_queues) {
             if (tq->_q.size() > 0) {
                 printf("inserting activating queue: %lu\n", tq->_q.size());
@@ -2616,7 +2615,6 @@ namespace seastar {
             tq->_current = true;
             _last_vruntime = std::max(tq->_vruntime, _last_vruntime);
             run_tasks(*tq);
-            printf("ran tasks: %lu, %lu\n", _active_task_queues.size(), tq->_q.size());
             tq->_current = false;
             t_run_completed = FastClock::now();
             auto delta = t_run_completed - t_run_started;
@@ -2624,14 +2622,11 @@ namespace seastar {
             sched_print("run complete ({} {}); time consumed {} usec; final vruntime {} empty {}",
                     (void*)tq, tq->_name, delta / 1us, tq->_vruntime, tq->_q.empty());
             if (!tq->_q.empty()) {
-                printf("reactivating\n");
                 insert_active_task_queue(tq);
             } else {
-                printf("deactivating\n");
                 tq->_active = false;
             }
         } while (have_more_tasks() && !need_preempt());
-        printf("run_some_tasks end\n");
         _cpu_stall_detector->end_task_run(t_run_completed);
         STAP_PROBE(seastar, reactor_run_tasks_end);
         *internal::current_scheduling_group_ptr() = default_scheduling_group(); // Prevent inheritance from last group run

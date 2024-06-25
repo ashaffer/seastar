@@ -1326,6 +1326,7 @@ build_mbuf_cluster:
             if (HugetlbfsMemBackend) {
                 buf->reset_zc();
             }
+            printf("rx packets: %lu\n", _ring.size());
             _ring.push_back(buf);
         }
 
@@ -1389,6 +1390,7 @@ public:
     }
 
     virtual uint32_t send(circular_buffer<packet>& pb) override {
+        printf("cb packet: %lu\n", pb.size());
         if (HugetlbfsMemBackend) {
             // Zero-copy send
             return _send(pb, [&] (packet&& p) {
@@ -1420,6 +1422,7 @@ private:
                     break;
                 }
 
+                printf("_tx_burst: %lu\n", _tx_burst.size());
                 _tx_burst.push_back(buf->rte_mbuf_p());
             }
         }

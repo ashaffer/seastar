@@ -504,8 +504,8 @@ add_library (seastar STATIC
   include/seastar/net/toeplitz.hh
   include/seastar/net/udp.hh
   include/seastar/net/unix_address.hh
-#  include/seastar/net/virtio-interface.hh
-#  include/seastar/net/virtio.hh
+  include/seastar/net/virtio-interface.hh
+  include/seastar/net/virtio.hh
   include/seastar/rpc/lz4_compressor.hh
   include/seastar/rpc/lz4_fragmented_compressor.hh
   include/seastar/rpc/multi_algo_compressor_factory.hh
@@ -599,7 +599,7 @@ add_library (seastar STATIC
   src/net/tls.cc
   src/net/udp.cc
   src/net/unix_address.cc
- # src/net/virtio.cc
+  src/net/virtio.cc
   src/rpc/lz4_compressor.cc
   src/rpc/lz4_fragmented_compressor.cc
   src/rpc/rpc.cc

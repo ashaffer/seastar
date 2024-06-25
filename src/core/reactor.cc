@@ -2604,13 +2604,14 @@ namespace seastar {
             auto t_run_started = t_run_completed;
             insert_activating_task_queues();
             auto tq = _active_task_queues.front();
-            printf("pre-pop: %lu\n", tq->_q.size());
+            printf("pre-pop: %lu, %lu\n", _active_task_queues.size(), tq->_q.size());
             _active_task_queues.pop_front();
-            printf("popping task queue: %lu\n", tq->_q.size());
+            printf("popping task queue: %lu, %lu\n", _active_task_queues.size(), tq->_q.size());
             sched_print("running tq {} {}", (void*)tq, tq->_name);
             tq->_current = true;
             _last_vruntime = std::max(tq->_vruntime, _last_vruntime);
             run_tasks(*tq);
+            printf("ran tasks: %lu, %lu\n", _active_task_queues.size(), tq->_q.size());
             tq->_current = false;
             t_run_completed = FastClock::now();
             auto delta = t_run_completed - t_run_started;

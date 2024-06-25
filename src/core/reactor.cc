@@ -4036,22 +4036,31 @@ namespace seastar {
                 new (&smp::_qs[i][j]) smp_message_queue(_reactors[j], _reactors[i]);
             }
         }
+        printf("Starting al queues...\n");
 
         alien::smp::_qs = alien::smp::create_qs(_reactors);
+        printf("Queues constructed\n");
         smp_queues_constructed.arrive_and_wait();
+        printf("Waited\n");
         start_all_queues();
+        printf("All queues started\n");
 
         for (auto& dev_id : disk_config.device_ids()) {
             assign_io_queue(0, dev_id);
         }
-        inited.arrive_and_wait();
 
+        printf("IO Queues assigned\n");
+        inited.arrive_and_wait();
+        printf("Waited again\n");
         engine().configure(configuration);
+        printf("Engine configured\n");
         // The raw `new` is necessary because of the private constructor of `lowres_clock_impl`.
         engine()._lowres_clock_impl = std::unique_ptr<lowres_clock_impl>(new lowres_clock_impl);
+        printf("Clock set\n");
     }
 
     bool smp::poll_queues() {
+        printf("poll queues\n");
         size_t got = 0;
         for (unsigned i = 0; i < count; i++) {
             if (engine().cpu_id() != i) {
@@ -4068,6 +4077,7 @@ namespace seastar {
     }
 
     bool smp::pure_poll_queues() {
+        printf("pure poll queues\n");
         for (unsigned i = 0; i < count; i++) {
             if (engine().cpu_id() != i) {
                 auto& rxq = _qs[engine().cpu_id()][i];

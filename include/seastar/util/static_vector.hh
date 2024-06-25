@@ -203,11 +203,11 @@ namespace seastar {
             }
 
             iterator cur{first};
-            iterator last_occupied = end() - 1;
+            iterator last_occupied = end();
             iterator p{begin()};
 
             while (cur++ != last_occupied) {
-                *(p++) = std::move(*cur);;
+                *(p++) = std::move(*cur);
             }
 
             while (cur++ != last) {
@@ -256,7 +256,7 @@ namespace seastar {
             size_type n{size()};
 
             while (n != 0) {
-                _data[--nth].~T();
+               std::move( _data[--nth]);
             }
 
             return n;

@@ -776,6 +776,7 @@ namespace seastar {
 
         template <typename Func>
         void at_destroy(Func&& func) {
+            printf("_at_destroy: %lu\n", _at_destroy_tasks->_q.size());
             _at_destroy_tasks->_q.push_back(make_task(default_scheduling_group(), std::forward<Func>(func)));
         }
 
@@ -787,6 +788,9 @@ namespace seastar {
             auto sg = t->group();
             auto* q = _task_queues[sg._id].get();
             bool was_empty = q->_q.empty();
+            if (q->_q.size() > 1024) {
+                printf("add task size: %lu\n", q->_q.size());
+            }
             q->_q.push_back(std::move(t));
     #ifdef SEASTAR_SHUFFLE_TASK_QUEUE
             shuffle(q->_q.back(), *q);
@@ -799,6 +803,9 @@ namespace seastar {
             auto sg = t->group();
             auto* q = _task_queues[sg._id].get();
             bool was_empty = q->_q.empty();
+            if (q->_q.size() > 1024) {
+                printf("add_urgent_task size: %lu\n", q->_q.size());
+            }
             q->_q.push_front(std::move(t));
     #ifdef SEASTAR_SHUFFLE_TASK_QUEUE
             shuffle(q->_q.front(), *q);

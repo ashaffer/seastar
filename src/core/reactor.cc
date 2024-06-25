@@ -2556,6 +2556,9 @@ namespace seastar {
         if (atq.size() > 1024) {
             printf("atq size: %lu\n", atq.size());
         }
+        if (tq->_q.size() > 1024) {
+            printf("tq size: %lu\n", tq->_q.size());
+        }
         if (atq.empty() || less(atq.back(), tq)) {
             // Common case: idle->working
             // Common case: CPU intensive task queue going to the back
@@ -2961,6 +2964,7 @@ namespace seastar {
     void syscall_work_queue::submit_item(std::unique_ptr<syscall_work_queue::work_item> item) {
         // FIXME: future is discarded
         (void)_queue_has_room.wait().then([this, item = std::move(item)] () mutable {
+            printf("_pending: %lu\n", _pending.size());
             _pending.push_back(item.release());
             _start_eventfd.signal(1);
         });
@@ -3116,6 +3120,7 @@ namespace seastar {
     }
 
     void smp_message_queue::respond(work_item* item) {
+        printf("completed_fifo: %lu\n", _completed_fifo.size());
         _completed_fifo.push_back(item);
         if (_completed_fifo.size() >= batch_size || engine()._stopped) {
             flush_response_batch();

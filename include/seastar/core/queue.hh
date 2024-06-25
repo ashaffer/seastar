@@ -68,6 +68,7 @@ namespace seastar {
         ///
         /// Returns false if the queue was full and the item was not pushed.
         inline bool push (T&& data) {
+            printf("queue1: %lu\n", _q.size());
             if (_q.size() < _max) {
                 _q.push(std::move(data));
                 notify_not_empty();
@@ -78,7 +79,7 @@ namespace seastar {
         }
 
         inline bool push (const_reference data) {
-            printf("queue: %lu\n", _q.size());            
+            printf("queue2: %lu\n", _q.size());            
             if (_q.size() < _max) {
                 _q.push(data);
                 notify_not_empty();
@@ -90,7 +91,7 @@ namespace seastar {
 
         template<std::forward_iterator ConstIt>
         inline ConstIt push (ConstIt begin, ConstIt end) {
-            printf("queue: %lu\n", _q.size());
+            printf("queue3: %lu\n", _q.size());
             while (begin != end && !full()) {
                 push(*begin);
                 ++begin;

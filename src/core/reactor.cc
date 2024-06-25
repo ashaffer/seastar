@@ -1502,6 +1502,7 @@ namespace seastar {
             set_nowait(io, true);
         }
         set_user_data(io, desc);
+        printf("_pending_aio push\n");
         _pending_aio.push_back(&io);
     }
 
@@ -1613,6 +1614,7 @@ namespace seastar {
             if (ev[i].res == -EAGAIN) {
                 ++nr_retry;
                 set_nowait(*iocb, false);
+                printf("_pending_aio_retry push\n");
                 _pending_aio_retry.push_back(iocb);
                 continue;
             }
@@ -2015,6 +2017,7 @@ namespace seastar {
 
     void reactor::at_exit(std::function<future<> ()> func) {
         assert(!_stopping);
+        printf("at_exit push\n");
         _exit_funcs.push_back(std::move(func));
     }
 
@@ -2550,6 +2553,9 @@ namespace seastar {
         auto& atq = _active_task_queues;
         printf("atq: %lu\n", atq.size());
         auto less = task_queue::indirect_compare();
+        if (atq.size() > 1024) {
+            printf("atq size: %lu\n", atq.size());
+        }
         if (atq.empty() || less(atq.back(), tq)) {
             // Common case: idle->working
             // Common case: CPU intensive task queue going to the back

@@ -1036,7 +1036,7 @@ namespace seastar {
                     return futurize<std::invoke_result_t<Func>>::make_exception_future(std::current_exception());
                 }
             } else {
-                printf("submit_to else\n");
+                // printf("submit_to else\n");
                 auto f = _qs[t][engine().cpu_id()].submit(t, ssg, std::forward<Func>(func), ignoreLimits);
                 if (preempt) {
                     printf("preempt\n");

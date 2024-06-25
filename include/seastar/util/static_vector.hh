@@ -203,7 +203,7 @@ namespace seastar {
             }
 
             iterator cur{first};
-            iterator last_occupied = end();
+            iterator last_occupied = end() - 1;
             iterator p{begin()};
 
             while (cur++ != last_occupied) {
@@ -246,15 +246,20 @@ namespace seastar {
             if (!empty()) {
                 // This looks like a pessimizing move, but it isn't. We want the empty space to be in a moved
                 // from state.
-                --nth;
-                return std::move(*end());
+                return std::move(_data[--nth]);
             }
 
             return {};
        }
 
        size_type clear () noexcept (nothrow_erasable) {
-            return erase(begin(), end());
+            size_type n{size()};
+
+            while (n != 0) {
+                _data[--nth].~T();
+            }
+
+            return n;
        }
 
         /**

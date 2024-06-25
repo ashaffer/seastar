@@ -2708,7 +2708,7 @@ namespace seastar {
         (void)_network_stack_ready_promise.get_future().then([this] (std::unique_ptr<network_stack> stack) {
             _network_stack = std::move(stack);
             return smp::invoke_on_all([] {
-                printf("cpu started signal: %u\n", engine().cpu_id());
+                // printf("cpu started signal: %u\n", engine().cpu_id());
                 engine()._cpu_started.signal();
             });
         });
@@ -2808,7 +2808,6 @@ namespace seastar {
                     // we can't run check_for_work(), because that can run tasks in the context
                     // of the idle handler which change its state, without the idle handler expecting
                     // it.  So run pure_check_for_work() instead.
-                    printf("sleeping\n");
                     auto handler_result = _idle_cpu_handler(pure_check_for_work);
                     go_to_sleep = handler_result == idle_cpu_handler_result::no_more_work;
                 } catch (...) {
@@ -3156,7 +3155,6 @@ namespace seastar {
 
             auto ssg_id = internal::smp_service_group_id(item->ssg);
             auto& sem = smp_service_groups[ssg_id].clients[t];
-            printf("submit_item\n");
             get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
                 printf("then: %lu\n", _tx.a.pending_fifo.size());
               _tx.a.pending_fifo.push_back(item.get());

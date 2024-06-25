@@ -2578,6 +2578,7 @@ namespace seastar {
     void
     reactor::insert_activating_task_queues() {
         // Quadratic, but since we expect the common cases in insert_active_task_queue() to dominate, faster
+        printf("_activating_task_queues: %lu\n", _activating_task_queues.size());
         for (auto&& tq : _activating_task_queues) {
             if (tq->_q.size() > 0) {
                 printf("inserting activating queue: %lu\n", tq->_q.size());
@@ -2604,6 +2605,7 @@ namespace seastar {
             insert_activating_task_queues();
             auto tq = _active_task_queues.front();
             _active_task_queues.pop_front();
+            printf("popping task queue\n");
             sched_print("running tq {} {}", (void*)tq, tq->_name);
             tq->_current = true;
             _last_vruntime = std::max(tq->_vruntime, _last_vruntime);

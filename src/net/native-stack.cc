@@ -172,8 +172,10 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             printf("All devices signaled\n");
             printf("Needs preempt: %u\n", need_preempt());
             for (unsigned i = 0; i < smp::count; i++) {
-                (void)smp::submit_to(i, [opts, devices, dev_cfgs] {
+                (void)smp::submit_to(i, [i, opts, devices, dev_cfgs] {
+                    printf("creating native stack %u\n", i);
                     create_native_stack(opts, devices, dev_cfgs);
+                    printf("native stack %u created\n", i);
                 });
             }
         });

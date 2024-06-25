@@ -899,6 +899,7 @@ private:
             if (__builtin_expect(!_state.available() && !_promise, false)) {
                 abandoned();
             }
+            printf("future schedule\n");
             ::seastar::schedule(std::make_unique<continuation<Func, T...>>(std::move(func), std::move(_state)));
         } else {
             assert(_promise);

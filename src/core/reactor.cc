@@ -2928,6 +2928,7 @@ namespace seastar {
         // the poller instead.
         auto task = std::make_unique<registration_task>(this);
         auto tmp = task.get();
+        printf("do register\n");
         engine().add_task(std::move(task));
         _registration_task = tmp;
     }
@@ -2949,6 +2950,7 @@ namespace seastar {
                 auto dummy = make_pollfn([] { return false; });
                 auto dummy_p = dummy.get();
                 auto task = std::make_unique<deregistration_task>(std::move(dummy));
+                printf("~poller add_task\n");
                 engine().add_task(std::move(task));
                 engine().replace_poller(_pollfn.get(), dummy_p);
             }
@@ -3285,6 +3287,7 @@ namespace seastar {
     }
 
     void schedule(std::unique_ptr<task>&& t) noexcept {
+        printf("schedule add_task\n");
         engine().add_task(std::move(t));
     }
 

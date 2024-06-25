@@ -2754,36 +2754,47 @@ namespace seastar {
         std::function<bool()> pure_check_for_work = [this] () {
             return pure_poll_once() || have_more_tasks();
         };
+        printf("Entering run loop\n");
         while (true) {
+            printf("run some tasks\n");
             run_some_tasks();
             if (_stopped) {
+                printf("if _stopped\n");
                 load_timer.cancel();
                 // Final tasks may include sending the last response to cpu 0, so run them
                 while (have_more_tasks()) {
+                    printf("run more tasks\n");
                     run_some_tasks();
                 }
                 while (!_at_destroy_tasks->_q.empty()) {
+                    printf("run tasks\n");
                     run_tasks(*_at_destroy_tasks);
                 }
+                printf("arrive at loop end\n");
                 smp::arrive_at_event_loop_end();
                 if (_id == 0) {
+                    printf("join all\n");
                     smp::join_all();
                 }
                 break;
             }
 
             _polls++;
-
+            printf("checking for work\n");
             if (check_for_work()) {
+                printf("has work\n");
                 if (idle) {
+                    printf("idle\n");
                     _total_idle += idle_end - idle_start;
                     account_idle(idle_end - idle_start);
                     idle_start = idle_end;
                     idle = false;
                 }
             } else {
+                printf("no work\n");
                 idle_end = sched_clock::now();
                 if (!idle) {
+                    printf("not idle\n");
                     idle_start = idle_end;
                     idle = true;
                 }
@@ -2792,14 +2803,18 @@ namespace seastar {
                     // we can't run check_for_work(), because that can run tasks in the context
                     // of the idle handler which change its state, without the idle handler expecting
                     // it.  So run pure_check_for_work() instead.
+                    printf("sleeping\n");
                     auto handler_result = _idle_cpu_handler(pure_check_for_work);
                     go_to_sleep = handler_result == idle_cpu_handler_result::no_more_work;
                 } catch (...) {
+                    printf("sleep exception\n");
                     report_exception("Exception while running idle cpu handler", std::current_exception());
                 }
                 if (go_to_sleep) {
+                    printf("if go to sleep\n");
                     internal::cpu_relax();
                     if (idle_end - idle_start > _max_poll_time) {
+                        printf("idle time > max poll time\n");
                         // Turn off the task quota timer to avoid spurious wakeups
                         struct itimerspec zero_itimerspec = {};
                         _task_quota_timer.timerfd_settime(0, zero_itimerspec);
@@ -2813,12 +2828,14 @@ namespace seastar {
                         _task_quota_timer.timerfd_settime(0, task_quote_itimerspec);
                     }
                 } else {
+                    printf("check for work again\n");
                     // We previously ran pure_check_for_work(), might not actually have performed
                     // any work.
                     check_for_work();
                 }
             }
         }
+        printf("exited run loop\n");
         // To prevent ordering issues from rising, destroy the I/O queue explicitly at this point.
         // This is needed because the reactor is destroyed from the thread_local destructors. If
         // the I/O queue happens to use any other infrastructure that is also kept this way (for
@@ -4149,6 +4166,7 @@ namespace seastar {
         } else if (__builtin_expect(bool(_task), false)) {
             assert(_state && !_state->available());
             _state->set_to_broken_promise();
+            printf("else if expect schedule\n");
             ::seastar::schedule(std::move(_task));
         }
     }

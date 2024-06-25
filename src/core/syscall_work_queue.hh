@@ -26,16 +26,15 @@
 #include <seastar/core/semaphore.hh>
 #include <seastar/util/std-compat.hh>
 #include <seastar/util/noncopyable_function.hh>
-// #include <boost/lockfree/spsc_queue.hpp>
-#include <seastar/util/ring_buffer.hh>
+#include <boost/lockfree/spsc_queue.hpp>
+// #include <seastar/util/ring_buffer.hh>
 
 namespace seastar {
 
 class syscall_work_queue {
     static constexpr size_t queue_length = 128;
     struct work_item;
-    using lf_queue = ring_buffer<seastar::syscall_work_queue::work_item *, queue_length>;//::boost::lockfree::spsc_queue<::seastar::syscall_work_queue::work_item*,
-                       //     ::boost::lockfree::capacity<queue_length>>;
+    using lf_queue = boost::lockfree::spsc_queue<::seastar::syscall_work_queue::work_item*, boost::lockfree::capacity<queue_length>>;
     lf_queue _pending;
     lf_queue _completed;
     writeable_eventfd _start_eventfd;

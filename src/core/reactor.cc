@@ -2996,8 +2996,8 @@ namespace seastar {
     void syscall_work_queue::submit_item(std::unique_ptr<syscall_work_queue::work_item> item) {
         // FIXME: future is discarded
         (void)_queue_has_room.wait().then([this, item = std::move(item)] () mutable {
-            printf("_pending: %lu\n", _pending.size());
-            _pending.push_back(item.release());
+            printf("_pending: %lu, %lu\n", _pending.read_available(), _pending.write_available());
+            _pending.push(item.release());
             _start_eventfd.signal(1);
         });
     }

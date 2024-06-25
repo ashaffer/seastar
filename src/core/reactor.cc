@@ -2711,8 +2711,9 @@ namespace seastar {
         // Wait for network stack in the background and then signal all cpus.
         (void)_network_stack_ready_promise.get_future().then([this] (std::unique_ptr<network_stack> stack) {
             _network_stack = std::move(stack);
+            printf("invoke on all cpu_started signal\n");
             return smp::invoke_on_all([] {
-                // printf("cpu started signal: %u\n", engine().cpu_id());
+                printf("cpu started signal: %u\n", engine().cpu_id());
                 engine()._cpu_started.signal();
             });
         });

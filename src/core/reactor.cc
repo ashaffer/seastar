@@ -2178,7 +2178,7 @@ namespace seastar {
             task_histogram_add_task(*tsk);
             tsk->run_and_dispose();
             tsk.release();
-            printf("\t post iter2: %lu\n", tasks.size());
+            printf("\tpost iter2: %lu\n", tasks.size());
 
             STAP_PROBE(seastar, reactor_run_tasks_single_end);
             ++tq._tasks_processed;
@@ -2642,9 +2642,9 @@ namespace seastar {
 
     void
     reactor::activate(task_queue& tq) {
-        printf("activating...\n");
+        printf("activating %lu\n", tq._q.size());
         if (tq._active) {
-            printf("already active\n");
+            printf("already active, %lu\n", tq._q.size());
             return;
         }
         sched_print("activating {} {}", (void*)&tq, tq._name);
@@ -2658,7 +2658,7 @@ namespace seastar {
             sched_print("tq {} {} losing vruntime {} due to sleep", (void*)&tq, tq._name, _last_vruntime - tq._vruntime);
         }
         tq._vruntime = std::max(_last_vruntime, tq._vruntime);
-        printf("adding to activating queue...\n");
+        printf("adding to activating queue, %lu...\n", tq._q.size());
         _activating_task_queues.push_back(&tq);
     }
 

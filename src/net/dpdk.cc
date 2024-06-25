@@ -1936,7 +1936,7 @@ void dpdk_device::init_port_fini()
     printf("Created DPDK device\n");
 }
 
-// template <bool HugetlbfsMemBackend>
+template <bool HugetlbfsMemBackend>
 void* dpdk_qp<HugetlbfsMemBackend>::alloc_mempool_xmem(
     uint16_t num_bufs, uint16_t buf_sz, size_t& xmem_size)
 {

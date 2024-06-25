@@ -3122,19 +3122,19 @@ namespace seastar {
     void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queue::work_item> item, bool ignoreLimits) {
         if (ignoreLimits) {
             printf("ignoreLimits true\n");
-            if (!_pending.push(item.get())) {
-                // _tx.a.pending_fifo.push_back(item.get());
-                if (_tx.a.pending_fifo.size() >= batch_size) {
-                    move_pending();
-                }
-            } else {
-                _current_queue_length += 1;
-                _last_snt_batch = 1;
-                _sent += 1;
-            }
+            // if (!_pending.push(item.get())) {
+            //     // _tx.a.pending_fifo.push_back(item.get());
+            //     if (_tx.a.pending_fifo.size() >= batch_size) {
+            //         move_pending();
+            //     }
+            // } else {
+            //     _current_queue_length += 1;
+            //     _last_snt_batch = 1;
+            //     _sent += 1;
+            // }
 
-            item.release();
-        } else {
+            // item.release();
+        } // else {
             // auto ssg_id = internal::smp_service_group_id(item->ssg);
             // auto& sem = smp_service_groups[ssg_id].clients[t];
 
@@ -3160,7 +3160,9 @@ namespace seastar {
 
             auto ssg_id = internal::smp_service_group_id(item->ssg);
             auto& sem = smp_service_groups[ssg_id].clients[t];
+            printf("submit_item\n");
             get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
+                printf("then: %lu\n", _tx.a.pending_fifo.size());
               _tx.a.pending_fifo.push_back(item.get());
               // no exceptions from this point
               item.release();
@@ -3168,8 +3170,9 @@ namespace seastar {
               if (_tx.a.pending_fifo.size() >= batch_size) {
                   move_pending();
               }
+              printf("then after: %lu\n", _tx.a.pending_fifo.size());
             });
-        }
+       // }
     }
 
     void smp_message_queue::respond(work_item* item) {

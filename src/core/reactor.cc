@@ -2702,7 +2702,9 @@ namespace seastar {
         // Start initialization in the background.
         // Communicate when done using _start_promise.
         (void)_cpu_started.wait(smp::count).then([this] {
+            printf("CPU started\n");
             (void)_network_stack->initialize().then([this] {
+                printf("Network stack initialized\n");
                 _start_promise.set_value();
             });
         });

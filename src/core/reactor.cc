@@ -3315,7 +3315,6 @@ namespace seastar {
     }
 
     void schedule(std::unique_ptr<task>&& t) noexcept {
-        printf("schedule add_task\n");
         engine().add_task(std::move(t));
     }
 

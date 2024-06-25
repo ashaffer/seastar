@@ -255,7 +255,7 @@ namespace seastar {
        size_type clear () noexcept (nothrow_erasable) {
             size_type n{size()};
 
-            while (n != 0) {
+            while (nth != 0) {
                 std::destroy_at(std::addressof(_data[--nth]));
             }
 

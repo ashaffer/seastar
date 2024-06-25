@@ -256,7 +256,7 @@ namespace seastar {
             size_type n{size()};
 
             while (n != 0) {
-               std::move( _data[--nth]);
+                std::destroy_at(std::addressof(_data[--nth]));
             }
 
             return n;

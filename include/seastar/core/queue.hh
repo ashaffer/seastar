@@ -78,6 +78,7 @@ namespace seastar {
         }
 
         inline bool push (const_reference data) {
+            printf("queue: %lu\n", _q.size());            
             if (_q.size() < _max) {
                 _q.push(data);
                 notify_not_empty();

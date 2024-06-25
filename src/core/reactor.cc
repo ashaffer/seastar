@@ -4331,7 +4331,7 @@ namespace seastar {
     }
 
     void add_to_flush_poller(output_stream<char>* os) {
-        printf("_flush_batching: %lu\n", _flush_batching.size());
+        printf("_flush_batching: %lu\n", engine()._flush_batching.size());
         engine()._flush_batching.emplace_back(os);
     }
 

@@ -202,7 +202,7 @@ public:
             _count -= x.nr;
             x.pr.set_value();
             _wait_list.pop_front();
-            printf("_wait_list popped: %lu, %ld, %lu, %ld\n", _wait_list.size(), count, nr, x.nr);
+            printf("_wait_list popped: %lu, %ld, %lu, %ld\n", _wait_list.size(), _count, nr, x.nr);
         }
     }
 

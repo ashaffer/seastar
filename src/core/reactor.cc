@@ -2167,13 +2167,19 @@ namespace seastar {
         // Make sure new tasks will inherit our scheduling group
         *internal::current_scheduling_group_ptr() = scheduling_group(tq._id);
         auto& tasks = tq._q;
+        printf("run_tasks: %u, %lu\n", tasks.empty(), tasks.size());
         while (!tasks.empty()) {
+            printf("\titer: %lu\n", tasks.size());
             auto tsk = std::move(tasks.front());
             tasks.pop_front();
+            printf("\tpost iter: %lu\n", tasks.size());
+
             STAP_PROBE(seastar, reactor_run_tasks_single_start);
             task_histogram_add_task(*tsk);
             tsk->run_and_dispose();
             tsk.release();
+            printf("\t post iter2: %lu\n", tasks.size());
+
             STAP_PROBE(seastar, reactor_run_tasks_single_end);
             ++tq._tasks_processed;
             ++_global_tasks_processed;

@@ -193,7 +193,7 @@ public:
         if (_ex) {
             return;
         }
-        printf("signal: %ld, %lu, %lu, %ld\n", _count, nr, _wait_list.size(), _wait_list.empty() ? 0 : _wait_list.front().nr());
+        printf("signal: %ld, %lu, %lu, %ld\n", _count, nr, _wait_list.size(), _wait_list.empty() ? 0 : _wait_list.front().nr);
         _count += nr;
         while (!_wait_list.empty() && has_available_units(_wait_list.front().nr)) {
             auto& x = _wait_list.front();

@@ -242,7 +242,7 @@ namespace seastar {
             circular_buffer<::seastar::net::packet> _proxy_packetq;
             stream<::seastar::net::packet> _rx_stream;
             reactor::poller _tx_poller;
-            circular_buffer<::seastar::net::packet> _tx_packetq;
+            circular_buffer<seastar::net::packet> _tx_packetq;
 
         protected:
             const std::string _stats_plugin_name;

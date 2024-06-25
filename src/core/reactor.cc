@@ -2546,7 +2546,9 @@ namespace seastar {
 
     void reactor::insert_active_task_queue(task_queue* tq) {
         tq->_active = true;
+        printf("task_queue: %lu\n", tq->_q.size());
         auto& atq = _active_task_queues;
+        printf("atq: %lu\n", atq.size());
         auto less = task_queue::indirect_compare();
         if (atq.empty() || less(atq.back(), tq)) {
             // Common case: idle->working

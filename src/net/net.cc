@@ -80,6 +80,7 @@ namespace net {
 
 inline
 bool qp::poll_tx() {
+    printf("_tx_packetq: %lu\n", _tx_packetq.size());
     if (_tx_packetq.size() < 16) {
         // refill send queue from upper layers
         uint32_t work;
@@ -210,6 +211,7 @@ void qp::configure_proxies(const std::map<unsigned, float>& cpu_weights) {
     register_packet_provider([this] {
         std::optional<packet> p;
         if (!_proxy_packetq.empty()) {
+            printf("proxy_packetq: %lu\n", _proxy_packetq.size());
             p = std::move(_proxy_packetq.front());
             _proxy_packetq.pop_front();
         }

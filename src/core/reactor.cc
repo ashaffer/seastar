@@ -2719,7 +2719,9 @@ namespace seastar {
         (void)_network_stack_ready_promise.get_future().then([this] (std::unique_ptr<network_stack> stack) {
             _network_stack = std::move(stack);
             for (unsigned c = 0; c < smp::count; c++) {
-                smp::submit_to(c, [] {
+                printf("submitting to cpu: %u\n", c);
+                smp::submit_to(c, [c] {
+                    printf("cpu started signal: %u\n", c);
                         engine()._cpu_started.signal();
                 });
             }

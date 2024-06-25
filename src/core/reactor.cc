@@ -2169,9 +2169,7 @@ namespace seastar {
         auto& tasks = tq._q;
         while (!tasks.empty()) {
             auto tsk = std::move(tasks.front());
-            printf("running tasks: %lu\n", tasks.size());
             tasks.pop_front();
-            printf("post tasks pop: %lu\n", tasks.size());
             STAP_PROBE(seastar, reactor_run_tasks_single_start);
             task_histogram_add_task(*tsk);
             tsk->run_and_dispose();
@@ -3148,7 +3146,6 @@ namespace seastar {
             auto ssg_id = internal::smp_service_group_id(item->ssg);
             auto& sem = smp_service_groups[ssg_id].clients[t];
             get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
-              printf("then: %lu\n", _tx.a.pending_fifo.size());
               _tx.a.pending_fifo.push_back(item.get());
               // no exceptions from this point
               item.release();
@@ -3162,7 +3159,6 @@ namespace seastar {
     }
 
     void smp_message_queue::respond(work_item* item) {
-        printf("completed_fifo: %lu\n", _completed_fifo.size());
         _completed_fifo.push_back(item);
         if (_completed_fifo.size() >= batch_size || engine()._stopped) {
             flush_response_batch();

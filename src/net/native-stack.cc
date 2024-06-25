@@ -151,6 +151,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);
                 }
             }).then([sem, sdev] {
+                printf("Queue start signal: %u\n", engine().cpu_id());
                 sem->signal();
             });
         }
@@ -163,6 +164,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         uint i = 0;
         for (auto sdev : devices) {
             (void)sdev->link_ready().then([sem] {
+                printf("link ready signal: %u\n", engine().cpu_id());
                 sem->signal();
             });
             ++i;
@@ -339,6 +341,7 @@ future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
                     ns.set_ipv4_packet_filter(inet, nullptr);
                 }).then(std::bind(&net::native_network_stack::on_dhcp, this, inet, lease, is_renew));
             }).finally([sem, d = std::move(d)] {
+                printf("dhcp signal: %u\n", engine().cpu_id());
                 sem->signal();
             });
         });

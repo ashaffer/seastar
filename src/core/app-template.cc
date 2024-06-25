@@ -190,10 +190,13 @@ app_template::run_deprecated(int argc, const char * const * const argv, std::fun
     // No need to wait for this future.
     // func is waited on via engine().run()
     (void)engine().when_started().then([this] {
+        printf("when_started\n");
         return seastar::metrics::configure(this->configuration()).then([this] {
+            printf("metrics configured, calling scollect\n");
             // set scollectd use the metrics configuration, so the later
             // need to be set first
-            scollectd::configure( this->configuration());
+            scollectd::configure(this->configuration());
+            printf("scollected\n");
         });
     }).then(
         std::move(func)

@@ -3103,7 +3103,7 @@ namespace seastar {
     }
 
     bool smp_message_queue::pure_poll_tx() const {
-        return !_completed.empty();
+        return _completed.read_available() > 0;
     }
 
     void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queue::work_item> item, bool ignoreLimits) {
@@ -3187,7 +3187,7 @@ namespace seastar {
     }
 
     bool smp_message_queue::pure_poll_rx() const {
-        return !_pending.empty();
+        return _pending.read_available() > 0;
     }
 
     void

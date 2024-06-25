@@ -1016,9 +1016,9 @@ namespace seastar {
             if (t == engine().cpu_id()) {
                 try {
                     if (!is_future<ret_type>::value) {
-                        printf("submit to non-deferring\n");
+                        // printf("submit to non-deferring\n");
                         // Non-deferring function, so don't worry about func lifetime
-                        return futurize<ret_type>::apply(std::forward<Func>(func));
+                        return futurize_apply<ret_type>(std::forward<Func>(func));
                     } else if (std::is_lvalue_reference<Func>::value) {
                         printf("submit to lvalue\n");
                         // func is an lvalue, so caller worries about its lifetime

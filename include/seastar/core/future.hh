@@ -899,6 +899,7 @@ private:
             if (__builtin_expect(!_state.available() && !_promise, false)) {
                 abandoned();
             }
+            printf("future schedule\n");
             ::seastar::schedule(std::make_unique<continuation<Func, T...>>(std::move(func), std::move(_state)));
         } else {
             assert(_promise);
@@ -1375,7 +1376,7 @@ private:
         if (_state.available()) {
             callback->set_state(get_available_state());
             printf("set_callback schedule\n");
-            ::seastar::schedule(std::move(callback));
+            seastar::schedule(std::move(callback));
         } else {
             assert(_promise);
             detach_promise()->schedule(std::move(callback));
@@ -1421,10 +1422,10 @@ void internal::promise_base::make_ready() noexcept {
         _state = nullptr;
         if (Urgent == urgent::yes && !need_preempt()) {
             printf("urgent schedule\n");
-            ::seastar::schedule_urgent(std::move(_task));
+            seastar::schedule_urgent(std::move(_task));
         } else {
             printf("make ready schedule\n");
-            ::seastar::schedule(std::move(_task));
+            seastar::schedule(std::move(_task));
         }
     }
 }
@@ -1473,7 +1474,7 @@ template<typename T>
 template<typename Func, typename... FuncArgs>
 typename futurize<T>::type futurize<T>::apply(Func&& func, std::tuple<FuncArgs...>&& args) noexcept {
     try {
-        return convert(::seastar::apply(std::forward<Func>(func), std::move(args)));
+        return convert(seastar::apply(std::forward<Func>(func), std::move(args)));
     } catch (...) {
         return make_exception_future(std::current_exception());
     }

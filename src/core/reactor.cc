@@ -2169,7 +2169,9 @@ namespace seastar {
         auto& tasks = tq._q;
         while (!tasks.empty()) {
             auto tsk = std::move(tasks.front());
+            printf("running tasks: %lu\n", tasks.size());
             tasks.pop_front();
+            printf("post tasks pop: %lu\n", tasks.size());
             STAP_PROBE(seastar, reactor_run_tasks_single_start);
             task_histogram_add_task(*tsk);
             tsk->run_and_dispose();

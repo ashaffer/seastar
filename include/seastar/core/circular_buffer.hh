@@ -113,8 +113,8 @@ public:
     size_t capacity() const noexcept;
     void reserve(size_t);
     void clear() noexcept;
-    T& operator[](size_t idx) noexcept;
-    const T& operator[](size_t idx) const noexcept;
+    T& operator[](std::size_t idx) noexcept;
+    const T& operator[](std::size_t idx) const noexcept;
     template <typename Func>
     void for_each(Func func);
     // access an element, may return wrong or destroyed element
@@ -122,9 +122,9 @@ public:
     T& access_element_unsafe(size_t idx) noexcept;
 private:
     void expand();
-    void expand(size_t);
-    void maybe_expand(size_t nr = 1);
-    size_t mask(size_t idx) const;
+    void expand(std::size_t);
+    void maybe_expand(std::size_t nr = 1);
+    size_t mask(std::size_t idx) const;
 
     template<typename CB, typename ValueType>
     struct cbiterator {
@@ -258,16 +258,6 @@ circular_buffer<T, Alloc>::capacity() const noexcept {
 template <typename T, typename Alloc>
 inline
 void
-circular_buffer<T, Alloc>::reserve(size_t size) {
-    if (capacity() < size) {
-        // Make sure that the new capacity is a power of two.
-        expand(size_t(1) << log2ceil(size));
-    }
-}
-
-template <typename T, typename Alloc>
-inline
-void
 circular_buffer<T, Alloc>::clear() noexcept {
     erase(begin(), end());
 }
@@ -297,24 +287,44 @@ circular_buffer<T, Alloc>& circular_buffer<T, Alloc>::operator=(circular_buffer&
 }
 
 template <typename T, typename Alloc>
-template <typename Func>
-inline
 void
-circular_buffer<T, Alloc>::for_each(Func func) {
-    auto s = _impl.storage;
-    auto m = _impl.capacity - 1;
-    for (auto i = _impl.begin; i != _impl.end; ++i) {
-        func(s[i & m]);
+circular_buffer<T, Alloc>::expand(std::size_t new_cap) {
+    if (new_cap > 8192) {
+        printf("expanding %lu: %lu begin, %lu end, %lu size, %lu new capacity\n", _impl.id, _impl.begin, _impl.end, size(), new_cap);
     }
+    auto new_storage = _impl.allocate(new_cap);
+    auto p = new_storage;
+    try {
+        for_each([this, &p] (T& obj) {
+            transfer_pass1(_impl, &obj, p);
+            p++;
+        });
+    } catch (...) {
+        while (p != new_storage) {
+            std::allocator_traits<Alloc>::destroy(_impl, --p);
+        }
+        _impl.deallocate(new_storage, new_cap);
+        throw;
+    }
+    p = new_storage;
+    for_each([this, &p] (T& obj) {
+        transfer_pass2(_impl, &obj, p++);
+    });
+    std::swap(_impl.storage, new_storage);
+    std::swap(_impl.capacity, new_cap);
+    _impl.begin = 0;
+    _impl.end = p - _impl.storage;
+    _impl.deallocate(new_storage, new_cap);
 }
 
 template <typename T, typename Alloc>
 inline
-circular_buffer<T, Alloc>::~circular_buffer() {
-    for_each([this] (T& obj) {
-        std::allocator_traits<Alloc>::destroy(_impl, &obj);
-    });
-    _impl.deallocate(_impl.storage, _impl.capacity);
+void
+circular_buffer<T, Alloc>::reserve(size_t size) {
+    if (capacity() < size) {
+        // Make sure that the new capacity is a power of two.
+        expand(size_t(1) << log2ceil(size));
+    }
 }
 
 template <typename T, typename Alloc>
@@ -322,38 +332,6 @@ void
 circular_buffer<T, Alloc>::expand() {
     expand(std::max<size_t>(_impl.capacity * 2, 1));
 }
-
-
-// template <typename T, typename Alloc>
-// void
-// circular_buffer<T, Alloc>::expand(size_t new_cap) {
-//     if (new_cap > 8192) {
-//         printf("expanding %u-%lu: %lu begin, %lu end, %lu size, %lu new capacity\n", engine().cpu_id(), _impl.id, _impl.begin, _impl.end, size(), new_cap);
-//     }
-//     auto new_storage = _impl.allocate(new_cap);
-//     auto p = new_storage;
-//     try {
-//         for_each([this, &p] (T& obj) {
-//             transfer_pass1(_impl, &obj, p);
-//             p++;
-//         });
-//     } catch (...) {
-//         while (p != new_storage) {
-//             std::allocator_traits<Alloc>::destroy(_impl, --p);
-//         }
-//         _impl.deallocate(new_storage, new_cap);
-//         throw;
-//     }
-//     p = new_storage;
-//     for_each([this, &p] (T& obj) {
-//         transfer_pass2(_impl, &obj, p++);
-//     });
-//     std::swap(_impl.storage, new_storage);
-//     std::swap(_impl.capacity, new_cap);
-//     _impl.begin = 0;
-//     _impl.end = p - _impl.storage;
-//     _impl.deallocate(new_storage, new_cap);
-// }
 
 template <typename T, typename Alloc>
 inline
@@ -425,6 +403,61 @@ circular_buffer<T, Alloc>::emplace_back(Args&&... args) {
     std::allocator_traits<Alloc>::construct(_impl, p, std::forward<Args>(args)...);
     ++_impl.end;
 }
+
+template <typename T, typename Alloc>
+template <typename Func>
+inline
+void
+circular_buffer<T, Alloc>::for_each(Func func) {
+    auto s = _impl.storage;
+    auto m = _impl.capacity - 1;
+    for (auto i = _impl.begin; i != _impl.end; ++i) {
+        func(s[i & m]);
+    }
+}
+
+template <typename T, typename Alloc>
+inline
+circular_buffer<T, Alloc>::~circular_buffer() {
+    for_each([this] (T& obj) {
+        std::allocator_traits<Alloc>::destroy(_impl, &obj);
+    });
+    _impl.deallocate(_impl.storage, _impl.capacity);
+}
+
+
+// template <typename T, typename Alloc>
+// void
+// circular_buffer<T, Alloc>::expand(size_t new_cap) {
+//     if (new_cap > 8192) {
+//         printf("expanding %u-%lu: %lu begin, %lu end, %lu size, %lu new capacity\n", engine().cpu_id(), _impl.id, _impl.begin, _impl.end, size(), new_cap);
+//     }
+//     auto new_storage = _impl.allocate(new_cap);
+//     auto p = new_storage;
+//     try {
+//         for_each([this, &p] (T& obj) {
+//             transfer_pass1(_impl, &obj, p);
+//             p++;
+//         });
+//     } catch (...) {
+//         while (p != new_storage) {
+//             std::allocator_traits<Alloc>::destroy(_impl, --p);
+//         }
+//         _impl.deallocate(new_storage, new_cap);
+//         throw;
+//     }
+//     p = new_storage;
+//     for_each([this, &p] (T& obj) {
+//         transfer_pass2(_impl, &obj, p++);
+//     });
+//     std::swap(_impl.storage, new_storage);
+//     std::swap(_impl.capacity, new_cap);
+//     _impl.begin = 0;
+//     _impl.end = p - _impl.storage;
+//     _impl.deallocate(new_storage, new_cap);
+// }
+
+
 
 template <typename T, typename Alloc>
 inline

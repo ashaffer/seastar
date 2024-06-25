@@ -788,7 +788,7 @@ namespace seastar {
             auto sg = t->group();
             auto* q = _task_queues[sg._id].get();
             bool was_empty = q->_q.empty();
-            if (q->_q.size() % 1000 == 0) {
+            if (q->_q.size() % 500000 == 0) {
                 printf("add task size: %lu\n", q->_q.size());
             }
             q->_q.push_back(std::move(t));

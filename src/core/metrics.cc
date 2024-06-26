@@ -87,14 +87,13 @@ namespace seastar {
                             == std::tie(id2.key(), id2.value());
         }
 
-
         static std::string get_hostname() {
-            char hostname[PATH_MAX];
-            gethostname(hostname, sizeof(hostname));
-            hostname[PATH_MAX-1] = '\0';
+            static char _hostname[PATH_MAX];
+            gethostname(_hostname, sizeof(_hostname));
+            _hostname[PATH_MAX-1] = '\0';
+            static std::string hostname{_hostname};
             return hostname;
         }
-
 
         boost::program_options::options_description get_options_description() {
             namespace bpo = boost::program_options;
@@ -111,7 +110,6 @@ namespace seastar {
                 impl::get_local_impl()->set_config(c);
             });
         }
-
 
         bool label_instance::operator!=(const label_instance& id2) const {
             auto& id1 = *this;

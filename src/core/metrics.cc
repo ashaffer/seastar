@@ -99,14 +99,12 @@ namespace seastar {
         boost::program_options::options_description get_options_description() {
             namespace bpo = boost::program_options;
             bpo::options_description opts{};
-            opts.add_options()(
-                    "metrics-hostname",
-                    bpo::value<std::string>()->default_value(get_hostname()),
-                    "set the hostname used by the metrics, if not set, the local hostname will be used");
+            opts.add_options()
+                ("metrics-hostname", bpo::value<std::string>()->default_value(get_hostname()), "set the hostname used by the metrics, if not set, the local hostname will be used");
             return opts;
         }
 
-        future<> configure(const boost::program_options::variables_map & opts) {
+        future<> configure(boost::program_options::variables_map opts) {
             impl::config c;
             c.hostname = opts["metrics-hostname"].as<std::string>();
             return smp::invoke_on_all([c] {

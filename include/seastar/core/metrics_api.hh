@@ -376,7 +376,7 @@ std::unique_ptr<metric_groups_def> create_metric_groups();
 /*!
  * \brief set the metrics configuration
  */
-future<> configure(const boost::program_options::variables_map & opts);
+future<> configure(boost::program_options::variables_map opts);
 
 /*!
  * \brief get the metrics configuration desciprtion

@@ -66,6 +66,10 @@ namespace seastar {
             explicit ipv4_address(uint32_t ip) : ip(ip) {}
             explicit ipv4_address(const std::string& addr);
             ipv4_address(seastar::ipv4_addr addr) {
+                char buf[64]{0};
+                inet_ntop((int)AF_INET, &ip.ip, buf, sizeof(buf) - 1);
+                printf("ipv4_address: %s\n", buf);
+
                 ip = addr.ip;
             }
 

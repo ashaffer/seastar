@@ -123,7 +123,9 @@ public:
     /// an unlocked mutex.
     ///
     /// \param count number of initial units present in the counter.
-    basic_semaphore(size_t count) : _count(count) {}
+    basic_semaphore(size_t count) : _count(count) {
+        printf("constructed semaphore: %lu, %ld\n", count, _count);
+    }
     /// Waits until at least a specific number of units are available in the
     /// counter, and reduces the counter by that amount of units.
     ///
@@ -155,6 +157,9 @@ public:
             printf("pre semaphore, %lu, %ld, %u\n", nr, _count, may_proceed(nr));
             _count -= nr;
             printf("semaphore wait make_ready_future, %lu, %ld\n", nr, _count);
+            if (_count > 100000) {
+                throw std::runtime_error("semaphore invalid");
+            }
             return make_ready_future<>();
         }
         if (_ex) {
@@ -370,6 +375,7 @@ public:
 template<typename ExceptionFactory, typename Clock = typename timer<>::clock>
 future<semaphore_units<ExceptionFactory, Clock>>
 get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units) {
+    printf("get_units3\n");
     return sem.wait(units).then([&sem, units] {
         return semaphore_units<ExceptionFactory, Clock>{ sem, units };
     });
@@ -392,6 +398,7 @@ get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units) {
 template<typename ExceptionFactory, typename Clock = typename timer<>::clock>
 future<semaphore_units<ExceptionFactory, Clock>>
 get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename basic_semaphore<ExceptionFactory, Clock>::time_point timeout) {
+    printf("get_units2\n");
     return sem.wait(timeout, units).then([&sem, units] {
         return semaphore_units<ExceptionFactory, Clock>{ sem, units };
     });
@@ -415,6 +422,7 @@ get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename 
 template<typename ExceptionFactory, typename Clock>
 future<semaphore_units<ExceptionFactory, Clock>>
 get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename basic_semaphore<ExceptionFactory, Clock>::duration timeout) {
+    printf("get_units1\n");
     return sem.wait(timeout, units).then([&sem, units] {
         return semaphore_units<ExceptionFactory, Clock>{ sem, units };
     });
@@ -436,6 +444,7 @@ get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename 
 template<typename ExceptionFactory, typename Clock = typename timer<>::clock>
 semaphore_units<ExceptionFactory, Clock>
 consume_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units) {
+    printf("consume: %lu\n", units);
     sem.consume(units);
     return semaphore_units<ExceptionFactory, Clock>{ sem, units };
 }
@@ -465,6 +474,7 @@ template <typename ExceptionFactory, typename Func, typename Clock = typename ti
 inline
 futurize_t<std::invoke_result_t<Func>>
 with_semaphore(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, Func&& func) {
+    printf("with_semaphore2\n");
     return get_units(sem, units).then([func = std::forward<Func>(func)] (auto units) mutable {
         return futurize_apply(std::forward<Func>(func)).finally([units = std::move(units)] {});
     });
@@ -474,6 +484,7 @@ template <typename ExceptionFactory, typename Func, typename Clock = typename ti
 inline
 futurize_t<std::invoke_result_t<Func>>
 with_semaphore_sync(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, Func&& func) {
+    printf("with_semaphore_sync\n");
     return get_units(sem, units).then_sync([func = std::forward<Func>(func)] (auto units) mutable {
         return futurize_apply(std::forward<Func>(func)).finally([units = std::move(units)] {});
     });
@@ -508,6 +519,7 @@ template <typename ExceptionFactory, typename Clock, typename Func>
 inline
 futurize_t<std::invoke_result_t<Func>>
 with_semaphore(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename basic_semaphore<ExceptionFactory, Clock>::duration timeout, Func&& func) {
+    printf("with_semaphore1\n");
     return get_units(sem, units, timeout).then([func = std::forward<Func>(func)] (auto units) mutable {
         return futurize_apply(std::forward<Func>(func)).finally([units = std::move(units)] {});
     });

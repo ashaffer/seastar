@@ -677,6 +677,7 @@ qp::rxq::prepare_buffers() {
     auto& available = _ring.available_descriptors();
     return available.wait(1).then([this, &available] {
         unsigned count = 1;
+        printf("virtio try_wait\n");
         auto opportunistic = available.current();
         if (available.try_wait(opportunistic)) {
             count += opportunistic;

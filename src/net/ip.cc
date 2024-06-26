@@ -545,7 +545,7 @@ void icmp::received(packet p, ipaddr from, ipaddr to) {
     checksummer csum;
     csum.sum(reinterpret_cast<char*>(hdr), p.len());
     hdr->csum = csum.get();
-
+    printf("IP try wait\n");
     if (_queue_space.try_wait(p.len())) { // drop packets that do not fit the queue
         // FIXME: future is discarded        
         (void)_inet.get_l2_dst_address(from).then([this, from, to, p = std::move(p)] (ethernet_address e_dst) mutable {

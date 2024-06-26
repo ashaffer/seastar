@@ -238,6 +238,7 @@ public:
     /// \return `true` if the counter had sufficient units, and was decremented.
     bool try_wait(size_t nr = 1) {
         if (may_proceed(nr)) {
+            printf("try_wait %ld, %lu\n", _count, nr);
             _count -= nr;
             return true;
         } else {

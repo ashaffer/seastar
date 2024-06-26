@@ -375,7 +375,7 @@ public:
 template<typename ExceptionFactory, typename Clock = typename timer<>::clock>
 future<semaphore_units<ExceptionFactory, Clock>>
 get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units) {
-    printf("get_units3\n");
+    printf("get_units3 %lu\n", units);
     return sem.wait(units).then([&sem, units] {
         return semaphore_units<ExceptionFactory, Clock>{ sem, units };
     });

@@ -3160,6 +3160,7 @@ namespace seastar {
 
             auto ssg_id = internal::smp_service_group_id(item->ssg);
             auto& sem = smp_service_groups[ssg_id].clients[t];
+            printf("reactor get_units 1\n");
             get_units(sem, 1).then([this, item = std::move(item)] (semaphore_units<> u) mutable {
               _tx.a.pending_fifo.push_back(item.get());
               // no exceptions from this point

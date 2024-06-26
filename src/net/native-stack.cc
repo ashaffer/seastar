@@ -160,18 +160,18 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
     (void)sem->wait(smp::count * devices.size()).then([opts, devices, dev_cfgs] {
         printf("Completed device init: awaiting %u devices to signal\n", (uint)devices.size());
-        auto sem = std::make_shared<semaphore>(0);
+        auto sem2 = std::make_shared<semaphore>(0);
         uint i = 0;
         for (auto sdev : devices) {
-            (void)sdev->link_ready().then([sem] {
+            (void)sdev->link_ready().then([sem2] {
                 printf("link ready signal: %u\n", engine().cpu_id());
-                sem->signal();
+                sem2->signal();
             });
             ++i;
         }
 
         printf("Awaiting semaphore: %lu\n", devices.size());
-        (void)sem->wait(devices.size()).then([opts, devices, dev_cfgs] {
+        (void)sem2->wait(devices.size()).then([opts, devices, dev_cfgs] {
             printf("All devices signaled\n");
             printf("Needs preempt: %u\n", need_preempt());
             for (unsigned i = 0; i < smp::count; i++) {

@@ -78,82 +78,13 @@ namespace seastar {
             }
         }
 
-        inline bool push (const_reference data) {
-            printf("queue2: %lu\n", _q.size());            
-            if (_q.size() < _max) {
-                _q.push(data);
-                notify_not_empty();
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        template<std::forward_iterator ConstIt>
-        inline ConstIt push (ConstIt begin, ConstIt end) {
-            printf("queue3: %lu\n", _q.size());
-            while (begin != end && !full()) {
-                push(*begin);
-                ++begin;
-            }
-
-            return begin;
-        }
-
-        /// \brief Pop an item.
-        ///
-        /// Popping from an empty queue will result in undefined behavior.
-        template<std::size_t N>
-        inline std::size_t pop (T (&t)[N]) {
-            return pop(t, N);
-        }
-
-        inline future<T> pop_ready () {
+        inline T pop () {
             if (_q.size() == _max) {
                 notify_not_full();
             }
-            if (_q.size() == 0) {
-                return make_exception_future<T>(_ex);
-            }
-
-            T t{std::move(_q.front())};
+            T data = std::move(_q.front());
             _q.pop();
-            return make_ready_future<T>(std::move(t));
-        }
-
-        inline bool pop () {
-            if (_q.size() == _max) {
-                notify_not_full();
-            }
-            if (_q.size() == 0) {
-                return false;
-            }
-
-            _q.pop();
-            return true;
-        }
-
-        inline bool pop (T& t) {
-            if (_q.size() == _max) {
-                notify_not_full();
-            }
-            if (_q.size() == 0) {
-                return false;
-            }
-
-            t = std::move(_q.front());
-            _q.pop();
-            return true;
-        }
-
-        inline std::size_t pop (T *t, std::size_t n) {
-            n = std::min(_q.size(), n);
-            for (std::size_t i = 0; i < n; i++) {
-                t[i] = std::move(_q.front());
-                _q.pop();
-            }
-
-            return n;
+            return data;
         }
 
         /// Pops element now or when there is some. Returns a future that becomes
@@ -170,11 +101,11 @@ namespace seastar {
                     if (_ex) {
                         return make_exception_future<T>(_ex);
                     } else {
-                        return pop_ready();
+                        return make_ready_future<T>(pop());
                     }
                 });
             } else {
-                return pop_ready();
+                return make_ready_future<T>(pop());
             }
         }
 
@@ -255,11 +186,6 @@ namespace seastar {
                 _not_full = promise<>();
                 return _not_full->get_future();
             }
-        }
-
-        template<typename Func>
-        inline bool consume_all (Func&& func) { 
-            return consume(func); 
         }
 
         constexpr reference front () noexcept {

@@ -862,7 +862,7 @@ public:
         }
         future<connection> accept() {
             return _q.not_empty().then([this] {
-                return _q.pop_ready();
+                return seastar::make_ready_future<connection>(_q.pop());
             });
         }
         void abort_accept() {

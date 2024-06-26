@@ -222,6 +222,7 @@ public:
         if (_ex) {
             return;
         }
+        printf("consume %lu\n", nr);
         _count -= nr;
     }
 

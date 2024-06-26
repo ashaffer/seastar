@@ -206,8 +206,8 @@ public:
         _count += nr;
         printf("signal: %ld, %lu, %lu\n", _count, nr, _wait_list.size());
         while (!_wait_list.empty() && has_available_units(_wait_list.front().nr)) {
-            printf("in wait list while loop: %lu, %lu, %ld\n", nr, x.nr, _count);
             auto& x = _wait_list.front();
+            printf("in wait list while loop: %lu, %lu, %ld\n", nr, x.nr, _count);            
             _count -= x.nr;
             x.pr.set_value();
             _wait_list.pop_front();

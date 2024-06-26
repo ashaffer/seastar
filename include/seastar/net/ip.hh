@@ -415,9 +415,9 @@ namespace seastar {
             };
 
             ipv4_udp(ipv4& inet);
-            ::seastar::net::udp_channel make_channel(::seastar::ipv4_addr addr);
-            virtual void received(::seastar::net::packet p, ipv4_address from, ipv4_address to) override;
-            void send(uint16_t src_port, ::seastar::ipv4_addr dst, ::seastar::net::packet &&p);
+            seastar::net::udp_channel make_channel(seastar::ipv4_addr addr);
+            virtual void received(seastar::net::packet p, ipv4_address from, ipv4_address to) override;
+            void send(uint16_t src_port, seastar::ipv4_addr dst, ::seastar::net::packet &&p);
             bool forward(forward_hash& out_hash_data, ::seastar::net::packet& p, size_t off) override;
             void set_queue_size(int size) { _queue_size = size; }
 
@@ -430,7 +430,7 @@ namespace seastar {
 
         struct ip_packet_filter {
             virtual ~ip_packet_filter() {};
-            virtual future<> handle(::seastar::net::packet& p, ip_hdr* iph, ethernet_address from, bool & handled) = 0;
+            virtual future<> handle(seastar::net::packet& p, ip_hdr* iph, ethernet_address from, bool & handled) = 0;
         };
 
         struct ipv4_frag_id {
@@ -467,10 +467,10 @@ namespace seastar {
             using address_type = ipv4_address;
             using proto_type = uint16_t;
             static address_type broadcast_address() { return ipv4_address(0xffffffff); }
-            static proto_type arp_protocol_type() { return proto_type(::seastar::net::eth_protocol_num::ipv4); }
+            static proto_type arp_protocol_type() { return proto_type(seastar::net::eth_protocol_num::ipv4); }
         private:
             interface* _netif;
-            ::std::vector<ipv4_traits::packet_provider_type> _pkt_providers;
+            std::vector<ipv4_traits::packet_provider_type> _pkt_providers;
             arp _global_arp;
             arp_for<ipv4> _arp;
             ipv4_address _host_address;
@@ -507,8 +507,8 @@ namespace seastar {
             metrics::metric_groups _metrics;
 
         private:
-            future<> handle_received_packet(::seastar::net::packet p, ethernet_address from);
-            bool forward(forward_hash& out_hash_data, ::seastar::net::packet& p, size_t off);
+            future<> handle_received_packet(seastar::net::packet p, ethernet_address from);
+            bool forward(forward_hash& out_hash_data, seastar::net::packet& p, size_t off);
             ::std::optional<l3_protocol::l3packet> get_packet();
             bool in_my_netmask(ipv4_address a) const;
             void frag_limit_mem();
@@ -542,8 +542,8 @@ namespace seastar {
             // But for now, a simple single raw pointer suffices
             void set_packet_filter(ip_packet_filter *);
             ip_packet_filter * packet_filter() const;
-            void send(ipv4_address from, ipv4_address to, ::seastar::net::ip_protocol_num proto_num, ::seastar::net::packet p, ethernet_address e_dst);
-            void send_immediate(ipv4_address from, ipv4_address to, ::seastar::net::ip_protocol_num proto_num, ::seastar::net::packet p, ethernet_address e_dst);
+            void send(ipv4_address from, ipv4_address to, seastar::net::ip_protocol_num proto_num, seastar::net::packet p, ethernet_address e_dst);
+            void send_immediate(ipv4_address from, ipv4_address to, seastar::net::ip_protocol_num proto_num, seastar::net::packet p, ethernet_address e_dst);
             inline void flush() {
                 _netif->flush();
             }

@@ -67,7 +67,7 @@ seastar::net::inet_address::inet_address(const sstring& addr)
 {}
 
 seastar::net::inet_address::inet_address(const ipv4_address& in)
-    : inet_address(::in_addr{hton(in.ip)})
+    : inet_address(::in_addr{htonl(in.ip)})
 {}
 
 seastar::net::inet_address::inet_address(const ipv6_address& in)
@@ -80,7 +80,7 @@ seastar::net::inet_address::inet_address(const ipv6_address& in)
 
 seastar::net::ipv4_address seastar::net::inet_address::as_ipv4_address() const {
     in_addr in = *this;
-    return ipv4_address(ntoh(in.s_addr));
+    return ipv4_address(ntohl(in.s_addr));
 }
 
 seastar::net::ipv6_address seastar::net::inet_address::as_ipv6_address() const {

@@ -247,16 +247,12 @@ device::receive(std::function<future<> (packet)> next_packet) {
 }
 
 void device::set_local_queue(std::unique_ptr<qp> dev, uint qid) {
-    printf("setting local queue: %u, %u\n", engine().cpu_id(), qid);
     assert(!_queues[engine().cpu_id()]);
-    printf("setting queue...\n");
     _queues[engine().cpu_id()] = dev.get();
-    printf("queue set, setting destructor...\n");
     // _qid2cpuid[qid] = engine().cpu_id();
     engine().at_destroy([dev = std::move(dev)] {
         printf("destroying dev: %lu packets\n", dev->num_packets());
     });
-    printf("destructor set\n");
 }
 
 

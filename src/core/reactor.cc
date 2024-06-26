@@ -4079,12 +4079,10 @@ namespace seastar {
                 new (&smp::_qs[i][j]) smp_message_queue(_reactors[j], _reactors[i]);
             }
         }
-        printf("Starting al queues...\n");
 
         alien::smp::_qs = alien::smp::create_qs(_reactors);
         printf("Queues constructed\n");
         smp_queues_constructed.arrive_and_wait();
-        printf("Waited\n");
         start_all_queues();
         printf("All queues started\n");
 
@@ -4099,7 +4097,6 @@ namespace seastar {
         printf("Engine configured\n");
         // The raw `new` is necessary because of the private constructor of `lowres_clock_impl`.
         engine()._lowres_clock_impl = std::unique_ptr<lowres_clock_impl>(new lowres_clock_impl);
-        printf("Clock set\n");
     }
 
     bool smp::poll_queues() {

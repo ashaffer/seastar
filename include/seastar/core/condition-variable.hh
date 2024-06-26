@@ -79,9 +79,7 @@ public:
     /// Constructs a condition_variable object.
     /// Initialzie the semaphore with a default value of 0 to enusre
     /// the first call to wait() before signal() won't be waken up immediately.
-    condition_variable() : _sem(0) {
-        printf("condition variable\n");
-    }
+    condition_variable() : _sem(0) {}
 
     /// Waits until condition variable is signaled, may wake up without condition been met
     ///

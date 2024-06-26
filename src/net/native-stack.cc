@@ -123,7 +123,6 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         printf("*NOT* using huge pages, cannot use zerocopy processing in the dpdk driver\n");
     }
 
-    printf("native stack make semaphore1\n");
     auto sem = std::make_shared<semaphore>(0);
     uint jj = 0;
     for (auto sdev : devices) {
@@ -133,9 +132,6 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
                 if (qid < sdev->hw_queues_count()) {
                     auto qp = sdev->init_local_queue(opts, qid);
-                    printf("here: 0x%lx\n", (uint64_t)sdev.get());
-                    printf("there: %u, %u\n", smp::count, qid);
-                    printf("test: %u\n", sdev->hw_queues_count());
                     std::map<unsigned, float> cpu_weights;
                     for (unsigned i = sdev->hw_queues_count() + qid % sdev->hw_queues_count(); i < smp::count; i+= sdev->hw_queues_count()) {
                         cpu_weights[i] = 1;
@@ -178,16 +174,13 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             printf("Needs preempt: %u\n", need_preempt());
             for (unsigned i = 0; i < smp::count; i++) {
                 (void)smp::submit_to(i, [i, opts, devices, dev_cfgs] {
-                    printf("creating native stack %u\n", i);
                     create_native_stack(opts, devices, dev_cfgs);
-                    printf("native stack %u created\n", i);
+                    printf("Native stack %u created\n", i);
                 });
             }
-            printf("native stacks done\n");
+            printf("Native stacks done\n");
         });
-        printf("sem->wait done\n");
     });
-    printf("sem->wait2 done\n");
 }
 
 // native_network_stack

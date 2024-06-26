@@ -776,7 +776,6 @@ namespace seastar {
 
         template <typename Func>
         void at_destroy(Func&& func) {
-            printf("_at_destroy: %lu\n", _at_destroy_tasks->_q.size());
             _at_destroy_tasks->_q.push_back(make_task(default_scheduling_group(), std::forward<Func>(func)));
         }
 

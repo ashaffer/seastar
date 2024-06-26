@@ -2695,7 +2695,7 @@ namespace seastar {
                 printf("Network stack initialized: %u\n", engine().cpu_id());
                 _start_promise.set_value();
             });
-        });
+        }, 1);
         // Wait for network stack in the background and then signal all cpus.
         // (void)_network_stack_ready_promise.get_future().then([this] (std::unique_ptr<network_stack> stack) {
         //     _network_stack = std::move(stack);

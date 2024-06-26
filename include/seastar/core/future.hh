@@ -1069,7 +1069,10 @@ public:
     template <typename Func, typename Result = futurize_t<std::invoke_result_t<Func, T&&...>>>
     GCC6_CONCEPT( requires ::seastar::CanApply<Func, T...> )
     Result
-    then(Func&& func) noexcept {
+    then(Func&& func, unsigned id = 0) noexcept {
+        if (id != 0) {
+            printf("then %u\n", id);
+        }
 #ifndef SEASTAR_TYPE_ERASE_MORE
         return then_impl(std::move(func));
 #else
@@ -1101,7 +1104,10 @@ private:
 
     template <typename Func, typename Result = futurize_t<std::invoke_result_t<Func, T&&...>>>
     Result
-    then_impl(Func&& func) noexcept {
+    then_impl(Func&& func, unsigned id = 0) noexcept {
+        if (id != 0) {
+            printf("then_impl id: %u\n", id);
+        }
         using futurator = futurize<std::invoke_result_t<Func, T&&...>>;
         if (available() && !need_preempt()) {
             if (failed()) {

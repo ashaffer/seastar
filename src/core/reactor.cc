@@ -2675,9 +2675,6 @@ namespace seastar {
         printf("Awaiting CPU start: %u\n", engine().cpu_id());
         (void)_cpu_started.wait(smp::count).then([this] {
             printf("CPU started: %u\n", engine().cpu_id());
-            if (engine().cpu_id() != 0) {
-                throw std::runtime_error("bad cpu");
-            }
             (void)_network_stack->initialize().then([this] {
                 printf("Network stack initialized: %u\n", engine().cpu_id());
                 _start_promise.set_value();
@@ -2696,9 +2693,7 @@ namespace seastar {
         (void)_network_stack_ready_promise.get_future().then([this] (std::unique_ptr<network_stack> stack) {
             _network_stack = std::move(stack);
             for (unsigned c = 0; c < smp::count; c++) {
-                printf("submitting to cpu: %u, %u\n", c, engine().cpu_id());
-                smp::submit_to(c, [c] {
-                    printf("cpu started signal: %u, %u\n", c, engine().cpu_id());
+                smp::submit_to(c, [] {
                     engine()._cpu_started.signal();
                 });
             }

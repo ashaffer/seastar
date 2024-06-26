@@ -899,10 +899,8 @@ private:
             if (__builtin_expect(!_state.available() && !_promise, false)) {
                 abandoned();
             }
-            // printf("future schedule\n");
             seastar::schedule(std::make_unique<continuation<Func, T...>>(std::move(func), std::move(_state)));
         } else {
-            // printf("schedule else\n");
             assert(_promise);
             detach_promise()->schedule(std::move(func));
         }
@@ -1029,7 +1027,6 @@ private:
         auto thread = thread_impl::get();
         assert(thread);
         thread_wake_task wake_task{thread, this};
-        printf("do_wait\n");
         detach_promise()->schedule(std::unique_ptr<continuation_base<T...>>(&wake_task));
         thread_impl::switch_out(thread);
     }
@@ -1069,10 +1066,7 @@ public:
     template <typename Func, typename Result = futurize_t<std::invoke_result_t<Func, T&&...>>>
     GCC6_CONCEPT( requires ::seastar::CanApply<Func, T...> )
     Result
-    then(Func&& func, unsigned id = 0) noexcept {
-        if (id != 0) {
-            printf("then %u\n", id);
-        }
+    then(Func&& func) noexcept {
 #ifndef SEASTAR_TYPE_ERASE_MORE
         return then_impl(std::move(func));
 #else
@@ -1104,10 +1098,7 @@ private:
 
     template <typename Func, typename Result = futurize_t<std::invoke_result_t<Func, T&&...>>>
     Result
-    then_impl(Func&& func, unsigned id = 0) noexcept {
-        if (id != 0) {
-            printf("then_impl id: %u\n", id);
-        }
+    then_impl(Func&& func) noexcept {
         using futurator = futurize<std::invoke_result_t<Func, T&&...>>;
         if (available() && !need_preempt()) {
             if (failed()) {
@@ -1121,7 +1112,6 @@ private:
         // chain by returning ready future while 'this' future is not ready. The noexcept will call std::terminate if
         // that happens.
         [&] () noexcept {
-            // printf("inner then_impl\n");
             memory::disable_failure_guard dfg;
             schedule([pr = fut.get_promise(), func = std::forward<Func>(func)] (future_state<T...>&& state) mutable {
                 if (state.failed()) {
@@ -1179,7 +1169,6 @@ private:
         // that happens.
         [&] () noexcept {
             memory::disable_failure_guard dfg;
-            // printf("inner then_wrapped_impl\n");
             schedule([pr = fut.get_promise(), func = std::forward<Func>(func)] (future_state<T...>&& state) mutable {
                 futurator::apply(std::forward<Func>(func), future(std::move(state))).forward_to(std::move(pr));
             });
@@ -1385,11 +1374,9 @@ private:
     void set_callback(std::unique_ptr<continuation_base<T...>> callback) {
         if (_state.available()) {
             callback->set_state(get_available_state());
-            printf("set_callback schedule\n");
             seastar::schedule(std::move(callback));
         } else {
             assert(_promise);
-            printf("set callback else\n");
             detach_promise()->schedule(std::move(callback));
         }
 
@@ -1432,10 +1419,8 @@ void internal::promise_base::make_ready() noexcept {
     if (_task) {
         _state = nullptr;
         if (Urgent == urgent::yes && !need_preempt()) {
-            printf("urgent schedule\n");
             seastar::schedule_urgent(std::move(_task));
         } else {
-            printf("make ready schedule\n");
             seastar::schedule(std::move(_task));
         }
     }

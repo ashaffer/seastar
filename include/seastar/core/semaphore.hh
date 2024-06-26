@@ -199,8 +199,9 @@ public:
         // if (_count % 10000000 == 0) {
         // }
         _count += nr;
-
-        printf("signal: %ld, %lu, %lu\n", _count, nr, _wait_list.size());
+        if (_wait_list.size() < 64) {
+            printf("signal: %ld, %lu, %lu\n", _count, nr, _wait_list.size());
+        }
         while (!_wait_list.empty() && has_available_units(_wait_list.front().nr)) {
             auto& x = _wait_list.front();
             _count -= x.nr;

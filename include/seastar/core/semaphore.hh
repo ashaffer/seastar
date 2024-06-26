@@ -152,6 +152,7 @@ public:
     ///         \ref broken(), may contain an exception.
     future<> wait(time_point timeout, size_t nr = 1) {
         if (may_proceed(nr)) {
+            printf("pre semaphore, %lu, %ld, %u\n", nr, _count, may_proceed(nr));
             _count -= nr;
             printf("semaphore wait make_ready_future, %lu, %ld\n", nr, _count);
             return make_ready_future<>();

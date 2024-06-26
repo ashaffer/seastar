@@ -985,9 +985,9 @@ namespace seastar {
         using returns_future = is_future<std::invoke_result_t<Func>>;
         template <typename Func>
         using returns_void = std::is_same<std::invoke_result_t<Func>, void>;
-        static ::boost::program_options::options_description get_options_description();
+        static boost::program_options::options_description get_options_description();
         static void register_network_stacks();
-        static void configure(::boost::program_options::variables_map& vm, reactor_config cfg = {});
+        static void configure(boost::program_options::variables_map& vm, reactor_config cfg = {});
         static void cleanup();
         static void cleanup_cpu();
         static void arrive_at_event_loop_end();

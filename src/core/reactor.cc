@@ -3030,6 +3030,7 @@ namespace seastar {
     future<smp_service_group> create_smp_service_group(smp_service_group_config ssgc) {
         ssgc.max_nonlocal_requests = std::max(ssgc.max_nonlocal_requests, smp::count - 1);
         return smp::submit_to(0, [ssgc] {
+            printf("reactor1 with_sempaphore\n");
             return with_semaphore(smp_service_group_management_sem, 1, [ssgc] {
                 auto it = std::find_if(smp_service_groups.begin(), smp_service_groups.end(), [&] (smp_service_group_impl& ssgi) { return ssgi.clients.empty(); });
                 size_t id = it - smp_service_groups.begin();
@@ -3060,6 +3061,7 @@ namespace seastar {
 
     future<> destroy_smp_service_group(smp_service_group ssg) {
         return smp::submit_to(0, [ssg] {
+            printf("reactor2 with_semaphore\n");
             return with_semaphore(smp_service_group_management_sem, 1, [ssg] {
                 auto id = internal::smp_service_group_id(ssg);
                 return smp::invoke_on_all([id] {

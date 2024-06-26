@@ -1097,8 +1097,11 @@ public:
                 // make sure to wait for handshake attempt to leave semaphores. Must be in same order as
                 // handshake aqcuire, because in worst case, we get here while a reader is attempting
                 // re-handshake.
+                printf("tls _in_sem wait\n");
                 return _in_sem.wait().then([this] {
+                    printf("tls _out_sem wait\n");
                     return _out_sem.wait().then([this] () {
+                        printf("tls _out_sem lambda\n");
                         out_sem_reason = 3;
                     });
                 });

@@ -2688,6 +2688,9 @@ namespace seastar {
         printf("Awaiting CPU start: %u\n", engine().cpu_id());
         (void)_cpu_started.wait(smp::count).then([this] {
             printf("CPU started: %u\n", engine().cpu_id());
+            if (engine().cpu_id() != 0) {
+                throw std::runtime_error("bad cpu");
+            }
             (void)_network_stack->initialize().then([this] {
                 printf("Network stack initialized: %u\n", engine().cpu_id());
                 _start_promise.set_value();

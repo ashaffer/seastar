@@ -167,7 +167,7 @@ public:
         }
         promise<> pr;
         auto fut = pr.get_future();
-        printf("_wait_list push back\n");
+        printf("_wait_list push back: %lu, %ld\n", nr, _count);
         _wait_list.push_back(entry(std::move(pr), nr), timeout);
         return fut;
     }

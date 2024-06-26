@@ -3016,7 +3016,6 @@ namespace seastar {
             wi->complete();
             delete wi;
         }
-        printf("complete -> queue has room %lu\n", nr);
         _queue_has_room.signal(nr);
         return nr;
     }

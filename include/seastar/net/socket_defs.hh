@@ -128,7 +128,10 @@ namespace seastar {
 
         static inline ipv4_addr from_string (const char *str, std::error_code& ec) noexcept {
             ipv4_addr ip;
+            printf("inet_pton: %s\n", str);
             int res = inet_pton(AF_INET, str, &ip.ip);
+            char buf[64]{0};
+            inet_ntop((int)AF_INET, &ip.ip, buf, sizeof(buf) - 1);
             if (res != 1) {
                 printf("ipv4_addr from_string error: %s\n", ec.message().c_str());
                 ec = std::make_error_code(std::errc::invalid_argument);

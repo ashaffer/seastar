@@ -64,17 +64,17 @@ namespace seastar {
         struct ipv4_address {
             ipv4_address() : ip(0) {}
             explicit ipv4_address(uint32_t ip) : ip(ip) {}
-            explicit ipv4_address(const ::std::string& addr);
-            ipv4_address(::seastar::ipv4_addr addr) {
+            explicit ipv4_address(const std::string& addr);
+            ipv4_address(seastar::ipv4_addr addr) {
                 ip = addr.ip;
             }
 
-            ::seastar::net::packed<uint32_t> ip;
+            seastar::net::packed<uint32_t> ip;
 
             template <typename Adjuster>
             auto adjust_endianness(Adjuster a) { return a(ip); }
 
-            friend ::std::ostream& operator<<(::std::ostream& os, const ipv4_address&& addr);
+            friend std::ostream& operator<<(std::ostream& os, const ipv4_address&& addr);
 
             friend bool operator==(ipv4_address x, ipv4_address y) {
                 return x.ip == y.ip;
@@ -100,7 +100,7 @@ namespace seastar {
                 produce_be<uint32_t>(p, ip);
             }
 
-            ::std::string to_string () {
+            std::string to_string () {
                 char s[32] = {0};
                 sprintf(s, "%u.%u.%u.%u",
                     (uint8_t)((ip >> 24) & 0xFF),

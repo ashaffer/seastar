@@ -43,7 +43,7 @@ seastar::net::inet_address::inet_address(family f)
 seastar::net::inet_address::inet_address(::in_addr i)
                 : _in_family(family::INET), _in(i) {
     char buffer[64]{0};
-    const char *s = inet_ntop(int(_in_family), i, buffer, sizeof(buffer) - 1);
+    const char *s = inet_ntop(int(_in_family), addr().data(), buffer, sizeof(buffer) - 1);
     printf("constructed inet_address: %s\n", s);
 }
 

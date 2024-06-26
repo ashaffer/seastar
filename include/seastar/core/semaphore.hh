@@ -159,7 +159,7 @@ public:
             printf("semaphore wait make_ready_future, %lu, %ld\n", nr, _count);
             return make_ready_future<>();
         } else {
-            printf("semaphore wait may not proceed: %lu, %d\n", nr, _count);
+            printf("semaphore wait may not proceed: %lu, %ld\n", nr, _count);
         }
         if (_ex) {
             printf("semaphore make_exception_future\n");

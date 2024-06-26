@@ -152,13 +152,14 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);
                 }
             }).then([sem, sdev] {
-                printf("Queue start signal: %u\n", engine().cpu_id());
+                printf("Queue start signal: %u, %lu\n", engine().cpu_id(), smp::count);
                 sem->signal();
             });
         }
         jj++;
     }
 
+    printf("awaiting %lu\n", smp::count * devices.size());
     (void)sem->wait(smp::count * devices.size()).then([opts, devices, dev_cfgs] {
         printf("Completed device init: awaiting %u devices to signal\n", (uint)devices.size());
         auto sem2 = std::make_shared<semaphore>(0);

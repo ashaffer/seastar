@@ -158,6 +158,8 @@ public:
             _count -= nr;
             printf("semaphore wait make_ready_future, %lu, %ld\n", nr, _count);
             return make_ready_future<>();
+        } else {
+            printf("semaphore wait may not proceed: %lu, %d\n", nr, _count);
         }
         if (_ex) {
             printf("semaphore make_exception_future\n");
@@ -201,7 +203,7 @@ public:
         }
 
         _count += nr;
-        if (_count < 64) {
+        if (_count < 120) {
             printf("signal: %ld, %lu, %lu\n", _count, nr, _wait_list.size());
         }
         while (!_wait_list.empty() && has_available_units(_wait_list.front().nr)) {

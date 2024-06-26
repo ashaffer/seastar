@@ -1286,6 +1286,7 @@ struct tuple_to_future<std::tuple<Elements...>> {
 template<typename... Futures>
 class extract_values_from_futures_tuple {
     static auto transform(std::tuple<Futures...> futures) {
+        printf("future transform\n");
         auto prepare_result = [] (auto futures) {
             auto fs = tuple_filter_by_type<internal::future_has_value>(std::move(futures));
             return tuple_map(std::move(fs), [] (auto&& e) {
@@ -1309,6 +1310,7 @@ class extract_values_from_futures_tuple {
             return tuple_futurizer::make_failed(std::move(excp));
         }
 
+        printf("future transform make_ready\n");
         return tuple_futurizer::make_ready(prepare_result(std::move(futures)));
     }
 public:
@@ -1316,10 +1318,12 @@ public:
     using promise_type = typename future_type::promise_type;
 
     static void set_promise(promise_type& p, std::tuple<Futures...> tuple) {
+        printf("future set_promise\n");
         transform(std::move(tuple)).forward_to(std::move(p));
     }
 
     static future_type make_ready_future(std::tuple<Futures...> tuple) {
+        printf("future make_ready_future\n");
         return transform(std::move(tuple));
     }
 };

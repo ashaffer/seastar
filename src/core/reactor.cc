@@ -2697,9 +2697,9 @@ namespace seastar {
         // Start initialization in the background.
         // Communicate when done using _start_promise.
         (void)_cpu_started.wait(smp::count).then([this] {
-            printf("CPU started\n");
+            printf("CPU started: %u\n", engine().cpu_id());
             (void)_network_stack->initialize().then([this] {
-                printf("Network stack initialized\n");
+                printf("Network stack initialized: %u\n", engine().cpu_id());
                 _start_promise.set_value();
             });
         });
@@ -3338,10 +3338,12 @@ namespace seastar {
     }
 
     void schedule(std::unique_ptr<task>&& t) noexcept {
+        printf("seastar::schedule\n");
         engine().add_task(std::move(t));
     }
 
     void schedule_urgent(std::unique_ptr<task>&& t) noexcept {
+        printf("seastar::schedule_urgent\n");
         engine().add_urgent_task(std::move(t));
     }
 };

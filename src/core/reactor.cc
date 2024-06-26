@@ -2035,6 +2035,7 @@ namespace seastar {
         smp::cleanup_cpu();
         if (!_stopping) {
             run_exit_tasks().then([this] {
+                printf("reactor stop semaphore\n");
                 do_with(semaphore(0), [this] (semaphore& sem) {
                     for (unsigned i = 1; i < smp::count; i++) {
                         smp::submit_to<>(i, []() {
@@ -3076,6 +3077,7 @@ namespace seastar {
         auto& ssg0 = smp_service_groups.back();
         ssg0.clients.reserve(smp::count);
         for (unsigned i = 0; i != smp::count; ++i) {
+            printf("reactor emplace back max counter: %lu, %ld\n", semaphore::max_counter(), (ssize_t)semaphore::max_counter());
             ssg0.clients.emplace_back(semaphore::max_counter());
         }
     }

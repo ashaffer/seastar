@@ -123,6 +123,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         printf("*NOT* using huge pages, cannot use zerocopy processing in the dpdk driver\n");
     }
 
+    printf("native stack make semaphore1\n");
     auto sem = std::make_shared<semaphore>(0);
     uint jj = 0;
     for (auto sdev : devices) {
@@ -323,6 +324,7 @@ seastar::socket native_network_stack::socket(socket_address sa) {
 using namespace std::chrono_literals;
 
 future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
+    printf("native stack dhcp semaphore\n");
     auto sem = std::make_shared<semaphore>(0);
 
     for (auto ii : _inet_map) {

@@ -42,6 +42,9 @@ seastar::net::inet_address::inet_address(family f)
 
 seastar::net::inet_address::inet_address(::in_addr i)
                 : _in_family(family::INET), _in(i) {
+    char buffer[64]{0};
+    char *s = inet_ntop(int(in_family), i, buffer, sizeof(buffer) - 1);
+    printf("constructed inet_address: %s\n", s);
 }
 
 seastar::net::inet_address::inet_address(::in6_addr i)
@@ -286,8 +289,8 @@ size_t std::hash<seastar::ipv4_addr>::operator()(const seastar::ipv4_addr& x) co
 }
 
 std::ostream& seastar::net::operator<<(std::ostream& os, const inet_address& addr) {
-    char buffer[64];
-    return os << inet_ntop(int(addr.in_family()), addr.data(), buffer, sizeof(buffer));
+    char buffer[64]{0};
+    return os << inet_ntop(int(addr.in_family()), addr.data(), buffer, sizeof(buffer) - 1);
 }
 
 std::ostream& seastar::net::operator<<(std::ostream& os, const inet_address::family& f) {

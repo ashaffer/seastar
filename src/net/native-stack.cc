@@ -350,6 +350,7 @@ future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
         });
     }
 
+    printf("run_dhcp sem wait: %lu\n", _inet_map.size());
     return sem->wait(_inet_map.size());
 }
 

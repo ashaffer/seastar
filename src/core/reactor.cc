@@ -3145,7 +3145,7 @@ namespace seastar {
                 u.release();
 
                 if (!_pending.push(item.get())) {
-                    _tx.a.pending_fifo.push_back(std::move(item));
+                    _tx.a.pending_fifo.push_back(item.get());
                     // no exceptions from this point
                     // if (_tx.a.pending_fifo.size() >= batch_size) {
                     //     move_pending();

@@ -206,7 +206,7 @@ private:
 public:
     explicit native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs);
     virtual server_socket listen(socket_address sa, listen_options opt) override;
-    virtual ::seastar::socket socket(socket_address local = {}) override;
+    virtual seastar::socket socket(socket_address local = {}) override;
     virtual udp_channel make_udp_channel(const socket_address& addr) override;
     virtual future<> initialize() override;
     static future<std::unique_ptr<network_stack>> create(boost::program_options::variables_map opts) {
@@ -309,9 +309,11 @@ seastar::socket native_network_stack::socket(socket_address sa) {
     socket_address lh{};
 
     if (sa == lh) {
+        printf("local address\n");
         return tcpv4_socket(default_device->get_tcp());
     }
     
+    printf("contains addr: %lu\n", _inet_map.count(sa.addr()));
     return tcpv4_socket(_inet_map[sa.addr()]->get_tcp());
 }
 

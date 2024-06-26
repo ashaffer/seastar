@@ -2718,7 +2718,7 @@ namespace seastar {
             for (unsigned c = 0; c < smp::count; c++) {
                 printf("submitting to cpu: %u, %u\n", c, engine().cpu_id());
                 smp::submit_to(c, [c] {
-                    printf("cpu started signal: %u, %u\n", c. engine().cpu_id());
+                    printf("cpu started signal: %u, %u\n", c, engine().cpu_id());
                     engine()._cpu_started.signal();
                 });
             }

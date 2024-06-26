@@ -2166,18 +2166,14 @@ namespace seastar {
         // Make sure new tasks will inherit our scheduling group
         *internal::current_scheduling_group_ptr() = scheduling_group(tq._id);
         auto& tasks = tq._q;
-        printf("run_tasks: %u, %lu\n", tasks.empty(), tasks.size());
         while (!tasks.empty()) {
-            printf("\titer: %lu\n", tasks.size());
             auto tsk = std::move(tasks.front());
             tasks.pop_front();
-            printf("\tpost iter: %lu\n", tasks.size());
 
             STAP_PROBE(seastar, reactor_run_tasks_single_start);
             task_histogram_add_task(*tsk);
             tsk->run_and_dispose();
             tsk.release();
-            printf("\tpost iter2: %lu\n", tasks.size());
 
             STAP_PROBE(seastar, reactor_run_tasks_single_end);
             ++tq._tasks_processed;
@@ -2555,16 +2551,8 @@ namespace seastar {
 
     void reactor::insert_active_task_queue(task_queue* tq) {
         tq->_active = true;
-        printf("task_queue: %lu\n", tq->_q.size());
         auto& atq = _active_task_queues;
-        printf("atq: %lu\n", atq.size());
         auto less = task_queue::indirect_compare();
-        if (atq.size() > 1024) {
-            printf("atq size: %lu\n", atq.size());
-        }
-        if (tq->_q.size() > 1024) {
-            printf("tq size: %lu\n", tq->_q.size());
-        }
         if (atq.empty() || less(atq.back(), tq)) {
             // Common case: idle->working
             // Common case: CPU intensive task queue going to the back
@@ -2697,6 +2685,7 @@ namespace seastar {
 
         // Start initialization in the background.
         // Communicate when done using _start_promise.
+        printf("Awaiting CPU start: %u\n", engine().cpu_id());
         (void)_cpu_started.wait(smp::count).then([this] {
             printf("CPU started: %u\n", engine().cpu_id());
             (void)_network_stack->initialize().then([this] {

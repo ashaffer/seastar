@@ -532,23 +532,56 @@ circular_buffer<T, Alloc>::erase(iterator first, iterator last) noexcept {
     if (first == last) {
         return last;
     }
+
     // Move to the left or right depending on which would result in least amount of moves.
     // This also guarantees that iterators will be stable when removing from either front or back.
     if (std::distance(begin(), first) < std::distance(last, end())) {
         auto new_start = std::move_backward(begin(), first, last);
-        for (auto i = begin(); i < new_start; ++i) {
-            std::allocator_traits<Alloc>::destroy(_impl, &*i);
+        auto i = begin();
+        while (i < new_start) {
+            std::allocator_traits<Alloc>::destroy(_impl, &*i++);
+            // _impl.destroy(&*i++);
         }
         _impl.begin = new_start.idx;
         return last;
     } else {
         auto new_end = std::move(last, end(), first);
-        for (auto i = new_end, e = end(); i < e; ++i) {
-            std::allocator_traits<Alloc>::destroy(_impl, &*i);
+        auto i = new_end;
+        auto e = end();
+        while (i < e) {
+            std::allocator_traits<Alloc>::destroy(_impl, &*i++);
+            // _impl.destroy(&*i++);
         }
         _impl.end = new_end.idx;
         return first;
     }
 }
+
+// template <typename T, typename Alloc>
+// inline
+// typename circular_buffer<T, Alloc>::iterator
+// circular_buffer<T, Alloc>::erase(iterator first, iterator last) noexcept {
+//     static_assert(std::is_nothrow_move_assignable_v<T>, "erase() assumes move assignment does not throw");
+//     if (first == last) {
+//         return last;
+//     }
+//     // Move to the left or right depending on which would result in least amount of moves.
+//     // This also guarantees that iterators will be stable when removing from either front or back.
+//     if (std::distance(begin(), first) < std::distance(last, end())) {
+//         auto new_start = std::move_backward(begin(), first, last);
+//         for (auto i = begin(); i < new_start; ++i) {
+//             std::allocator_traits<Alloc>::destroy(_impl, &*i++);
+//         }
+//         _impl.begin = new_start.idx;
+//         return last;
+//     } else {
+//         auto new_end = std::move(last, end(), first);
+//         for (auto i = new_end, e = end(); i < e; ++i) {
+//             std::allocator_traits<Alloc>::destroy(_impl, &*i++);
+//         }
+//         _impl.end = new_end.idx;
+//         return first;
+//     }
+// }
 
 }

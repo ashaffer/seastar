@@ -106,9 +106,10 @@ namespace seastar {
         future<> configure(boost::program_options::variables_map opts) {
             impl::config c;
             // c.hostname = opts["metrics-hostname"].as<std::string>();
-            return smp::invoke_on_all([c] {
-                impl::get_local_impl()->set_config(c);
-            });
+            return seastar::make_ready_future<>();
+            // smp::invoke_on_all([c] {
+            //     impl::get_local_impl()->set_config(c);
+            // });
         }
 
         bool label_instance::operator!=(const label_instance& id2) const {

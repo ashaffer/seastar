@@ -153,9 +153,11 @@ public:
     future<> wait(time_point timeout, size_t nr = 1) {
         if (may_proceed(nr)) {
             _count -= nr;
+            printf("semaphore wait make_ready_future, %lu, %ld\n", nr, _count);
             return make_ready_future<>();
         }
         if (_ex) {
+            printf("semaphore make_exception_future\n");
             return make_exception_future(_ex);
         }
         promise<> pr;

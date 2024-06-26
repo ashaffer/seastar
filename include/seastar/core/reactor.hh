@@ -788,9 +788,6 @@ namespace seastar {
             auto sg = t->group();
             auto* q = _task_queues[sg._id].get();
             bool was_empty = q->_q.empty();
-            if (q->_q.size() % 500000 == 0) {
-                printf("add task size: %lu\n", q->_q.size());
-            }
             q->_q.push_back(std::move(t));
     #ifdef SEASTAR_SHUFFLE_TASK_QUEUE
             shuffle(q->_q.back(), *q);
@@ -803,9 +800,6 @@ namespace seastar {
             auto sg = t->group();
             auto* q = _task_queues[sg._id].get();
             bool was_empty = q->_q.empty();
-            if (q->_q.size() > 1024) {
-                printf("add_urgent_task size: %lu\n", q->_q.size());
-            }
             q->_q.push_front(std::move(t));
     #ifdef SEASTAR_SHUFFLE_TASK_QUEUE
             shuffle(q->_q.front(), *q);
@@ -1016,23 +1010,19 @@ namespace seastar {
             if (t == engine().cpu_id()) {
                 try {
                     if (!is_future<ret_type>::value) {
-                        // printf("submit to non-deferring\n");
                         // Non-deferring function, so don't worry about func lifetime
                         // return futurize_apply(std::forward<Func>(func));
                         return futurize<ret_type>::apply(std::forward<Func>(func));
                     } else if (std::is_lvalue_reference<Func>::value) {
-                        printf("submit to lvalue\n");
                         // func is an lvalue, so caller worries about its lifetime
                         return futurize<ret_type>::apply(func);
                     } else {
-                        printf("submit to rvalue\n");
                         // Deferring call on rvalue function, make sure to preserve it across call
                         auto w = std::make_unique<std::decay_t<Func>>(std::move(func));
                         auto ret = futurize<ret_type>::apply(*w);
                         return ret.finally([w = std::move(w)] {});
                     }
                 } catch (...) {
-                    printf("submit to exception\n");
                     // Consistently return a failed future rather than throwing, to simplify callers
                     return futurize<std::invoke_result_t<Func>>::make_exception_future(std::current_exception());
                 }
@@ -1040,7 +1030,6 @@ namespace seastar {
                 // printf("submit_to else\n");
                 auto f = _qs[t][engine().cpu_id()].submit(t, ssg, std::forward<Func>(func), ignoreLimits);
                 if (preempt) {
-                    printf("preempt\n");
                     _reactors[t]->request_preemption();
                 }
                 return std::move(f);
@@ -1077,7 +1066,6 @@ namespace seastar {
         static future<> invoke_on_all(Func&& func) {
             static_assert(std::is_same<future<>, typename futurize<std::invoke_result_t<Func>>::type>::value, "bad Func signature");
             return parallel_for_each(all_cpus(), [&func] (unsigned id) {
-                // printf("parallel_for_each inner: %u\n", id);
                 return smp::submit_to(id, Func(func));
             });
         }
@@ -1094,7 +1082,6 @@ namespace seastar {
         promise<> p;
         auto f = p.get_future();
         engine().force_poll();
-        printf("later\n");
         schedule(make_task(default_scheduling_group(), [p = std::move(p)] () mutable {
             p.set_value();
         }));

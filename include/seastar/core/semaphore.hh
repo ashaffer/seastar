@@ -154,20 +154,15 @@ public:
     ///         \ref broken(), may contain an exception.
     future<> wait(time_point timeout, size_t nr = 1) {
         if (may_proceed(nr)) {
-            printf("pre semaphore, %lu, %ld, %u\n", nr, _count, may_proceed(nr));
             _count -= nr;
-            printf("semaphore wait make_ready_future, %lu, %ld\n", nr, _count);
             return make_ready_future<>();
-        } else {
-            printf("semaphore wait may not proceed: %lu, %ld\n", nr, _count);
         }
+
         if (_ex) {
-            printf("semaphore make_exception_future\n");
             return make_exception_future(_ex);
         }
         promise<> pr;
         auto fut = pr.get_future();
-        printf("_wait_list push back: %lu, %ld\n", nr, _count);
         _wait_list.push_back(entry(std::move(pr), nr), timeout);
         return fut;
     }
@@ -203,16 +198,11 @@ public:
         }
 
         _count += nr;
-        if (_count < 120) {
-            printf("signal: %ld, %lu, %lu\n", _count, nr, _wait_list.size());
-        }
         while (!_wait_list.empty() && has_available_units(_wait_list.front().nr)) {
             auto& x = _wait_list.front();
-            printf("in wait list while loop: %lu, %lu, %ld\n", nr, x.nr, _count);            
             _count -= x.nr;
             x.pr.set_value();
             _wait_list.pop_front();
-            printf("_wait_list popped: %lu, %ld, %lu, %ld\n", _wait_list.size(), _count, nr, x.nr);
         }
     }
 
@@ -227,7 +217,6 @@ public:
         if (_ex) {
             return;
         }
-        printf("consume %lu\n", nr);
         _count -= nr;
     }
 
@@ -243,7 +232,6 @@ public:
     /// \return `true` if the counter had sufficient units, and was decremented.
     bool try_wait(size_t nr = 1) {
         if (may_proceed(nr)) {
-            printf("try_wait %ld, %lu\n", _count, nr);
             _count -= nr;
             return true;
         } else {
@@ -320,7 +308,6 @@ public:
     semaphore_units(const semaphore_units&) = delete;
     ~semaphore_units() noexcept {
         if (_n) {
-            printf("semaphore destructor: %lu\n", _n);
             _sem->signal(_n);
         }
     }
@@ -374,7 +361,6 @@ public:
 template<typename ExceptionFactory, typename Clock = typename timer<>::clock>
 future<semaphore_units<ExceptionFactory, Clock>>
 get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units) {
-    printf("get_units3 %lu\n", units);
     return sem.wait(units).then([&sem, units] {
         return semaphore_units<ExceptionFactory, Clock>{ sem, units };
     });
@@ -397,7 +383,6 @@ get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units) {
 template<typename ExceptionFactory, typename Clock = typename timer<>::clock>
 future<semaphore_units<ExceptionFactory, Clock>>
 get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename basic_semaphore<ExceptionFactory, Clock>::time_point timeout) {
-    printf("get_units2\n");
     return sem.wait(timeout, units).then([&sem, units] {
         return semaphore_units<ExceptionFactory, Clock>{ sem, units };
     });
@@ -421,7 +406,6 @@ get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename 
 template<typename ExceptionFactory, typename Clock>
 future<semaphore_units<ExceptionFactory, Clock>>
 get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename basic_semaphore<ExceptionFactory, Clock>::duration timeout) {
-    printf("get_units1\n");
     return sem.wait(timeout, units).then([&sem, units] {
         return semaphore_units<ExceptionFactory, Clock>{ sem, units };
     });
@@ -443,7 +427,6 @@ get_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename 
 template<typename ExceptionFactory, typename Clock = typename timer<>::clock>
 semaphore_units<ExceptionFactory, Clock>
 consume_units(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units) {
-    printf("consume: %lu\n", units);
     sem.consume(units);
     return semaphore_units<ExceptionFactory, Clock>{ sem, units };
 }
@@ -473,7 +456,6 @@ template <typename ExceptionFactory, typename Func, typename Clock = typename ti
 inline
 futurize_t<std::invoke_result_t<Func>>
 with_semaphore(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, Func&& func) {
-    printf("with_semaphore2\n");
     return get_units(sem, units).then([func = std::forward<Func>(func)] (auto units) mutable {
         return futurize_apply(std::forward<Func>(func)).finally([units = std::move(units)] {});
     });
@@ -483,7 +465,6 @@ template <typename ExceptionFactory, typename Func, typename Clock = typename ti
 inline
 futurize_t<std::invoke_result_t<Func>>
 with_semaphore_sync(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, Func&& func) {
-    printf("with_semaphore_sync\n");
     return get_units(sem, units).then_sync([func = std::forward<Func>(func)] (auto units) mutable {
         return futurize_apply(std::forward<Func>(func)).finally([units = std::move(units)] {});
     });
@@ -518,7 +499,6 @@ template <typename ExceptionFactory, typename Clock, typename Func>
 inline
 futurize_t<std::invoke_result_t<Func>>
 with_semaphore(basic_semaphore<ExceptionFactory, Clock>& sem, size_t units, typename basic_semaphore<ExceptionFactory, Clock>::duration timeout, Func&& func) {
-    printf("with_semaphore1\n");
     return get_units(sem, units, timeout).then([func = std::forward<Func>(func)] (auto units) mutable {
         return futurize_apply(std::forward<Func>(func)).finally([units = std::move(units)] {});
     });

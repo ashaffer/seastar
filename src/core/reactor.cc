@@ -1502,7 +1502,6 @@ namespace seastar {
             set_nowait(io, true);
         }
         set_user_data(io, desc);
-        printf("_pending_aio push\n");
         _pending_aio.push_back(&io);
     }
 
@@ -1614,7 +1613,6 @@ namespace seastar {
             if (ev[i].res == -EAGAIN) {
                 ++nr_retry;
                 set_nowait(*iocb, false);
-                printf("_pending_aio_retry push\n");
                 _pending_aio_retry.push_back(iocb);
                 continue;
             }
@@ -2017,7 +2015,6 @@ namespace seastar {
 
     void reactor::at_exit(std::function<future<> ()> func) {
         assert(!_stopping);
-        printf("at_exit push\n");
         _exit_funcs.push_back(std::move(func));
     }
 
@@ -2035,7 +2032,6 @@ namespace seastar {
         smp::cleanup_cpu();
         if (!_stopping) {
             run_exit_tasks().then([this] {
-                printf("reactor stop semaphore\n");
                 do_with(semaphore(0), [this] (semaphore& sem) {
                     for (unsigned i = 1; i < smp::count; i++) {
                         smp::submit_to<>(i, []() {
@@ -2573,9 +2569,6 @@ namespace seastar {
     reactor::insert_activating_task_queues() {
         // Quadratic, but since we expect the common cases in insert_active_task_queue() to dominate, faster
         for (auto&& tq : _activating_task_queues) {
-            if (tq->_q.size() > 0) {
-                printf("inserting activating queue: %lu\n", tq->_q.size());
-            }
             insert_active_task_queue(tq);
         }
         _activating_task_queues.clear();
@@ -2592,14 +2585,11 @@ namespace seastar {
         sched_clock::time_point t_run_completed = FastClock::now();
         STAP_PROBE(seastar, reactor_run_tasks_start);
         _cpu_stall_detector->start_task_run(t_run_completed);
-        printf("running some tasks...\n");
         do {
             auto t_run_started = t_run_completed;
             insert_activating_task_queues();
             auto tq = _active_task_queues.front();
-            printf("pre-pop: %lu, %lu\n", _active_task_queues.size(), tq->_q.size());
             _active_task_queues.pop_front();
-            printf("popping task queue: %lu, %lu\n", _active_task_queues.size(), tq->_q.size());
             sched_print("running tq {} {}", (void*)tq, tq->_name);
             tq->_current = true;
             _last_vruntime = std::max(tq->_vruntime, _last_vruntime);
@@ -2624,9 +2614,7 @@ namespace seastar {
 
     void
     reactor::activate(task_queue& tq) {
-        printf("activating %lu\n", tq._q.size());
         if (tq._active) {
-            printf("already active, %lu\n", tq._q.size());
             return;
         }
         sched_print("activating {} {}", (void*)&tq, tq._name);
@@ -2640,7 +2628,6 @@ namespace seastar {
             sched_print("tq {} {} losing vruntime {} due to sleep", (void*)&tq, tq._name, _last_vruntime - tq._vruntime);
         }
         tq._vruntime = std::max(_last_vruntime, tq._vruntime);
-        printf("adding to activating queue, %lu...\n", tq._q.size());
         _activating_task_queues.push_back(&tq);
     }
 
@@ -2737,7 +2724,6 @@ namespace seastar {
             last_idle = _total_idle;
             load = std::min(load, 1.0);
             idle_start = idle_end;
-            printf("_loads: %lu\n", _loads.size());
             _loads.push_front(load);
             if (_loads.size() > 5) {
                 auto drop = _loads.back();
@@ -2807,13 +2793,11 @@ namespace seastar {
                     auto handler_result = _idle_cpu_handler(pure_check_for_work);
                     go_to_sleep = handler_result == idle_cpu_handler_result::no_more_work;
                 } catch (...) {
-                    printf("sleep exception\n");
                     report_exception("Exception while running idle cpu handler", std::current_exception());
                 }
                 if (go_to_sleep) {
                     internal::cpu_relax();
                     if (idle_end - idle_start > _max_poll_time) {
-                        printf("idle time > max poll time\n");
                         // Turn off the task quota timer to avoid spurious wakeups
                         struct itimerspec zero_itimerspec = {};
                         _task_quota_timer.timerfd_settime(0, zero_itimerspec);
@@ -2827,14 +2811,12 @@ namespace seastar {
                         _task_quota_timer.timerfd_settime(0, task_quote_itimerspec);
                     }
                 } else {
-                    printf("check for work again\n");
                     // We previously ran pure_check_for_work(), might not actually have performed
                     // any work.
                     check_for_work();
                 }
             }
         }
-        printf("exited run loop\n");
         // To prevent ordering issues from rising, destroy the I/O queue explicitly at this point.
         // This is needed because the reactor is destroyed from the thread_local destructors. If
         // the I/O queue happens to use any other infrastructure that is also kept this way (for
@@ -2954,7 +2936,6 @@ namespace seastar {
         // the poller instead.
         auto task = std::make_unique<registration_task>(this);
         auto tmp = task.get();
-        printf("do register\n");
         engine().add_task(std::move(task));
         _registration_task = tmp;
     }
@@ -2976,7 +2957,6 @@ namespace seastar {
                 auto dummy = make_pollfn([] { return false; });
                 auto dummy_p = dummy.get();
                 auto task = std::make_unique<deregistration_task>(std::move(dummy));
-                printf("~poller add_task\n");
                 engine().add_task(std::move(task));
                 engine().replace_poller(_pollfn.get(), dummy_p);
             }
@@ -2992,7 +2972,6 @@ namespace seastar {
     void syscall_work_queue::submit_item(std::unique_ptr<syscall_work_queue::work_item> item) {
         // FIXME: future is discarded
         (void)_queue_has_room.wait().then([this, item = std::move(item)] () mutable {
-            printf("_pending: %lu, %lu\n", _pending.read_available(), _pending.write_available());
             _pending.push(item.release());
             _start_eventfd.signal(1);
         });
@@ -3023,7 +3002,6 @@ namespace seastar {
     future<smp_service_group> create_smp_service_group(smp_service_group_config ssgc) {
         ssgc.max_nonlocal_requests = std::max(ssgc.max_nonlocal_requests, smp::count - 1);
         return smp::submit_to(0, [ssgc] {
-            printf("reactor1 with_sempaphore\n");
             return with_semaphore(smp_service_group_management_sem, 1, [ssgc] {
                 auto it = std::find_if(smp_service_groups.begin(), smp_service_groups.end(), [&] (smp_service_group_impl& ssgi) { return ssgi.clients.empty(); });
                 size_t id = it - smp_service_groups.begin();
@@ -3054,7 +3032,6 @@ namespace seastar {
 
     future<> destroy_smp_service_group(smp_service_group ssg) {
         return smp::submit_to(0, [ssg] {
-            printf("reactor2 with_semaphore\n");
             return with_semaphore(smp_service_group_management_sem, 1, [ssg] {
                 auto id = internal::smp_service_group_id(ssg);
                 return smp::invoke_on_all([id] {
@@ -3069,7 +3046,6 @@ namespace seastar {
         auto& ssg0 = smp_service_groups.back();
         ssg0.clients.reserve(smp::count);
         for (unsigned i = 0; i != smp::count; ++i) {
-            printf("reactor emplace back max counter: %lu, %ld\n", semaphore::max_counter(), (ssize_t)semaphore::max_counter());
             ssg0.clients.emplace_back(semaphore::max_counter());
         }
     }
@@ -3092,7 +3068,6 @@ namespace seastar {
     }
 
     void smp_message_queue::move_pending() {
-        printf("move_pending: %lu\n", _tx.a.pending_fifo.size());
         auto begin = _tx.a.pending_fifo.cbegin();
         auto end = _tx.a.pending_fifo.cend();
         end = _pending.push(begin, end);
@@ -3103,7 +3078,6 @@ namespace seastar {
 
         _pending.maybe_wakeup();
         _tx.a.pending_fifo.erase(begin, end);
-        printf("post move pending: %lu\n", _tx.a.pending_fifo.size());
         _current_queue_length += nr;
         _last_snt_batch = nr;
         _sent += nr;
@@ -3291,7 +3265,6 @@ namespace seastar {
                 if (smp_service_groups[ssg_id].clients.size() <= t) {
                     printf("not enough clients: %u, %lu\n", t, smp_service_groups[ssg_id].clients.size());
                 }
-                printf("smp service groups signal %u\n", engine().cpu_id());
                 smp_service_groups[ssg_id].clients[t].signal();
             }
             delete wi;
@@ -3319,7 +3292,6 @@ namespace seastar {
     }
 
     void smp_message_queue::start(unsigned cpuid) {
-        printf("smp message queue start %u\n", cpuid);
         _tx.init();
         namespace sm = seastar::metrics;
         char instance[10];
@@ -3374,12 +3346,10 @@ namespace seastar {
     }
 
     void schedule(std::unique_ptr<task>&& t) noexcept {
-        printf("seastar::schedule\n");
         engine().add_task(std::move(t));
     }
 
     void schedule_urgent(std::unique_ptr<task>&& t) noexcept {
-        printf("seastar::schedule_urgent\n");
         engine().add_urgent_task(std::move(t));
     }
 };
@@ -3554,7 +3524,6 @@ namespace seastar {
 
     void smp::start_all_queues()
     {
-        printf("start_all_queues\n");
         for (unsigned c = 0; c < count; c++) {
             if (c != engine().cpu_id()) {
                 _qs[c][engine().cpu_id()].start(c);
@@ -3652,7 +3621,6 @@ namespace seastar {
             if (!handled) {
                 handled = true;
                 Func();
-                printf("oneshot signal\n");
                 signal(sig, SIG_DFL);
             }
         };
@@ -4156,7 +4124,6 @@ namespace seastar {
     }
 
     bool smp::pure_poll_queues() {
-        printf("pure poll queues\n");
         for (unsigned i = 0; i < count; i++) {
             if (engine().cpu_id() != i) {
                 auto& rxq = _qs[engine().cpu_id()][i];
@@ -4228,7 +4195,6 @@ namespace seastar {
         } else if (__builtin_expect(bool(_task), false)) {
             assert(_state && !_state->available());
             _state->set_to_broken_promise();
-            printf("else if expect schedule\n");
             seastar::schedule(std::move(_task));
         }
     }
@@ -4445,7 +4411,6 @@ namespace seastar {
     }
 
     void add_to_flush_poller(output_stream<char>* os) {
-        printf("_flush_batching: %lu\n", engine()._flush_batching.size());
         engine()._flush_batching.emplace_back(os);
     }
 

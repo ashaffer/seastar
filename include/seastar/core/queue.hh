@@ -68,7 +68,6 @@ namespace seastar {
         ///
         /// Returns false if the queue was full and the item was not pushed.
         inline bool push (T&& data) {
-            printf("queue1: %lu\n", _q.size());
             if (_q.size() < _max) {
                 _q.push(std::move(data));
                 notify_not_empty();

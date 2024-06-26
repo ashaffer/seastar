@@ -157,9 +157,6 @@ public:
             printf("pre semaphore, %lu, %ld, %u\n", nr, _count, may_proceed(nr));
             _count -= nr;
             printf("semaphore wait make_ready_future, %lu, %ld\n", nr, _count);
-            if (_count > 100000) {
-                throw std::runtime_error("semaphore invalid");
-            }
             return make_ready_future<>();
         }
         if (_ex) {
@@ -204,7 +201,7 @@ public:
         }
 
         _count += nr;
-        if (_count != 128) {
+        if (_count < 64) {
             printf("signal: %ld, %lu, %lu\n", _count, nr, _wait_list.size());
         }
         while (!_wait_list.empty() && has_available_units(_wait_list.front().nr)) {

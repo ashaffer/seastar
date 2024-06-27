@@ -247,6 +247,7 @@ bool seastar::ipv6_addr::is_ip_unspecified() const {
 seastar::net::inet_address seastar::socket_address::addr() const {
     switch (family()) {
     case AF_INET:
+        printf("socket_address addr\n");
         return net::inet_address(as_posix_sockaddr_in().sin_addr);
     case AF_INET6:
         return net::inet_address(as_posix_sockaddr_in6().sin6_addr);

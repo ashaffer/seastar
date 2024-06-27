@@ -223,6 +223,7 @@ public:
 
     future<inet_address> resolve_name(sstring name, opt_family family) {
         return get_host_by_name(std::move(name), family).then([](hostent h) {
+            printf("resolve name\n");
             return make_ready_future<inet_address>(h.addr_list.front());
         });
     }

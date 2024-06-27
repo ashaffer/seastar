@@ -53,9 +53,9 @@ namespace seastar {
     // struct ipv6_addr;
     namespace net {
         class ipv4;
-        template <::seastar::net::ip_protocol_num ProtoNum>
+        template <seastar::net::ip_protocol_num ProtoNum>
         class ipv4_l4;
-        // struct ipv4_address;
+        // struct ipv4_address; 
 
 
         template <typename InetTraits>
@@ -78,7 +78,7 @@ namespace seastar {
             template <typename Adjuster>
             auto adjust_endianness(Adjuster a) { return a(ip); }
 
-            friend std::ostream& operator<<(std::ostream& os, const ipv4_address&& addr);
+            friend std::ostream& operator<<(std::ostream& os, const ipv4_address& addr);
 
             friend bool operator==(ipv4_address x, ipv4_address y) {
                 return x.ip == y.ip;
@@ -125,7 +125,7 @@ namespace seastar {
 
         // IPv6
         struct ipv6_address {
-            using ipv6_bytes = ::std::array<uint8_t, 16>;
+            using ipv6_bytes = std::array<uint8_t, 16>;
 
             static_assert(alignof(ipv6_bytes) == 1, "ipv6_bytes should be byte-aligned");
             static_assert(sizeof(ipv6_bytes) == 16, "ipv6_bytes should be 16 bytes");
@@ -133,8 +133,8 @@ namespace seastar {
             ipv6_address();
             explicit ipv6_address(const ::in6_addr&);
             explicit ipv6_address(const ipv6_bytes&);
-            explicit ipv6_address(const ::std::string&);
-            ipv6_address(const ::seastar::ipv6_addr& addr);
+            explicit ipv6_address(const std::string&);
+            ipv6_address(const seastar::ipv6_addr& addr);
 
             // No need to use packed - we only store
             // as byte array. If we want to read as
@@ -155,7 +155,7 @@ namespace seastar {
                 return ip;
             }
 
-            friend ::std::ostream& operator<<(::std::ostream& os, const ipv6_address&& a);
+            friend std::ostream& operator<<(std::ostream& os, const ipv6_address&& a);
 
             bool is_unspecified() const;
 
@@ -186,25 +186,25 @@ namespace seastar {
     namespace net {
         struct ipv4_traits {
             using address_type = ipv4_address;
-            using inet_type = ipv4_l4<::seastar::net::ip_protocol_num::tcp>;
+            using inet_type = ipv4_l4<seastar::net::ip_protocol_num::tcp>;
             struct l4packet {
                 ipv4_address from;
                 ipv4_address to;
-                ::seastar::net::packet p;
+                seastar::net::packet p;
                 ethernet_address e_dst;
-                ::seastar::net::ip_protocol_num proto_num;
+                seastar::net::ip_protocol_num proto_num;
             };
-            using packet_provider_type = ::std::function<::std::optional<l4packet> ()>;
+            using packet_provider_type = std::function<std::optional<l4packet> ()>;
             static void tcp_pseudo_header_checksum(checksummer& csum, ipv4_address src, ipv4_address dst, uint16_t len) {
-                csum.sum_many(src.ip.raw, dst.ip.raw, uint8_t(0), uint8_t(::seastar::net::ip_protocol_num::tcp), len);
+                csum.sum_many(src.ip.raw, dst.ip.raw, uint8_t(0), uint8_t(seastar::net::ip_protocol_num::tcp), len);
             }
             static void udp_pseudo_header_checksum(checksummer& csum, ipv4_address src, ipv4_address dst, uint16_t len) {
-                csum.sum_many(src.ip.raw, dst.ip.raw, uint8_t(0), uint8_t(::seastar::net::ip_protocol_num::udp), len);
+                csum.sum_many(src.ip.raw, dst.ip.raw, uint8_t(0), uint8_t(seastar::net::ip_protocol_num::udp), len);
             }
-            static constexpr uint8_t ip_hdr_len_min = ::seastar::net::ipv4_hdr_len_min;
+            static constexpr uint8_t ip_hdr_len_min = seastar::net::ipv4_hdr_len_min;
         };
 
-        template <::seastar::net::ip_protocol_num ProtoNum>
+        template <seastar::net::ip_protocol_num ProtoNum>
         class ipv4_l4 {
         public:
             ipv4& _inet;
@@ -212,7 +212,7 @@ namespace seastar {
             ipv4_l4(ipv4& inet) : _inet(inet) {}
             void register_packet_provider(ipv4_traits::packet_provider_type func);
             void decorate(ipv4_traits::l4packet& l4p);
-            inline ::seastar::net::ip_protocol_num get_proto_num() {
+            inline seastar::net::ip_protocol_num get_proto_num() {
                 return ProtoNum;
             }
 
@@ -231,8 +231,8 @@ namespace seastar {
         class ip_protocol {
         public:
             virtual ~ip_protocol() {}
-            virtual void received(::seastar::net::packet p, ipv4_address from, ipv4_address to) = 0;
-            virtual bool forward(forward_hash& out_hash_data, ::seastar::net::packet& p, size_t off) { return true; }
+            virtual void received(seastar::net::packet p, ipv4_address from, ipv4_address to) = 0;
+            virtual bool forward(forward_hash& out_hash_data, seastar::net::packet& p, size_t off) { return true; }
         };
 
         template <typename InetTraits>
@@ -327,13 +327,13 @@ namespace seastar {
         };
 
         class ipv4_tcp final : public ip_protocol {
-            ipv4_l4<::seastar::net::ip_protocol_num::tcp> _inet_l4;
-            ::std::unique_ptr<tcp<ipv4_traits>> _tcp;
+            ipv4_l4<seastar::net::ip_protocol_num::tcp> _inet_l4;
+            std::unique_ptr<tcp<ipv4_traits>> _tcp;
         public:
             ipv4_tcp(ipv4& inet);
             ~ipv4_tcp();
-            virtual void received(::seastar::net::packet p, ipv4_address from, ipv4_address to) override;
-            virtual bool forward(forward_hash& out_hash_data, ::seastar::net::packet& p, size_t off) override;
+            virtual void received(seastar::net::packet p, ipv4_address from, ipv4_address to) override;
+            virtual bool forward(forward_hash& out_hash_data, seastar::net::packet& p, size_t off) override;
             friend class ipv4;
         };
 
@@ -344,8 +344,8 @@ namespace seastar {
             };
             msg_type type;
             uint8_t code;
-            ::seastar::net::packed<uint16_t> csum;
-            ::seastar::net::packed<uint32_t> rest;
+            seastar::net::packed<uint16_t> csum;
+            seastar::net::packed<uint32_t> rest;
             template <typename Adjuster>
             auto adjust_endianness(Adjuster a) {
                 return a(csum);
@@ -356,10 +356,10 @@ namespace seastar {
         class icmp {
         public:
             using ipaddr = ipv4_address;
-            using inet_type = ipv4_l4<::seastar::net::ip_protocol_num::icmp>;
+            using inet_type = ipv4_l4<seastar::net::ip_protocol_num::icmp>;
             explicit icmp(inet_type& inet) : _inet(inet) {
                 _inet.register_packet_provider([this] {
-                    ::std::optional<ipv4_traits::l4packet> l4p;
+                    std::optional<ipv4_traits::l4packet> l4p;
                     if (!_packetq.empty()) {
                         l4p = ::std::move(_packetq.front());
                         _packetq.pop_front();
@@ -368,7 +368,7 @@ namespace seastar {
                     return l4p;
                 });
             }
-            void received(::seastar::net::packet p, ipaddr from, ipaddr to);
+            void received(seastar::net::packet p, ipaddr from, ipaddr to);
         private:
             inet_type& _inet;
             circular_buffer<ipv4_traits::l4packet> _packetq;
@@ -376,12 +376,12 @@ namespace seastar {
         };
 
         class ipv4_icmp final : public ip_protocol {
-            ipv4_l4<::seastar::net::ip_protocol_num::icmp> _inet_l4;
+            ipv4_l4<seastar::net::ip_protocol_num::icmp> _inet_l4;
             icmp _icmp;
         public:
             ipv4_icmp(ipv4& inet) : _inet_l4(inet), _icmp(_inet_l4) {}
-            virtual void received(::seastar::net::packet p, ipv4_address from, ipv4_address to) {
-                _icmp.received(::std::move(p), from, to);
+            virtual void received(seastar::net::packet p, ipv4_address from, ipv4_address to) {
+                _icmp.received(std::move(p), from, to);
             }
             friend class ipv4;
         };

@@ -64,11 +64,19 @@ seastar::net::inet_address::inet_address(const sstring& addr)
     }
     throw std::invalid_argument(addr);
 }())
-{}
+{
+    char buffer[64]{0};
+    const char *s = inet_ntop(int(_in_family), data(), buffer, sizeof(buffer) - 1);
+    printf("inet_address std::string %s\n", buffer);
+}
 
 seastar::net::inet_address::inet_address(const ipv4_address& in)
     : inet_address(::in_addr{htonl(in.ip)})
-{}
+{
+    char buffer[64]{0};
+    const char *s = inet_ntop(int(_in_family), data(), buffer, sizeof(buffer) - 1);
+    printf("inet_address ipv4_address %s\n", biffer);
+}
 
 seastar::net::inet_address::inet_address(const ipv6_address& in)
     : inet_address([&] {

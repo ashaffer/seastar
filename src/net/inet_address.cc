@@ -75,7 +75,7 @@ seastar::net::inet_address::inet_address(const ipv4_address& in)
 {
     char buffer[64]{0};
     const char *s = inet_ntop(int(_in_family), data(), buffer, sizeof(buffer) - 1);
-    printf("inet_address ipv4_address %s\n", biffer);
+    printf("inet_address ipv4_address %s\n", buffer);
 }
 
 seastar::net::inet_address::inet_address(const ipv6_address& in)

@@ -67,7 +67,7 @@ seastar::net::inet_address::inet_address(const sstring& addr)
 {
     char buffer[64]{0};
     const char *s = inet_ntop(int(_in_family), data(), buffer, sizeof(buffer) - 1);
-    printf("inet_address std::string %s\n", buffer);
+    printf("inet_address std::string %s\n", s);
 }
 
 seastar::net::inet_address::inet_address(const ipv4_address& in)
@@ -75,7 +75,7 @@ seastar::net::inet_address::inet_address(const ipv4_address& in)
 {
     char buffer[64]{0};
     const char *s = inet_ntop(int(_in_family), data(), buffer, sizeof(buffer) - 1);
-    printf("inet_address ipv4_address %s\n", buffer);
+    printf("inet_address ipv4_address %s\n", s);
 }
 
 seastar::net::inet_address::inet_address(const ipv6_address& in)

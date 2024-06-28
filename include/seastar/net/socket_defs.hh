@@ -132,9 +132,6 @@ namespace seastar {
             int res = inet_pton(AF_INET, str, &ip.ip);
             // This needs to be returned in host byte order, but inet_pton constructs IP in network byte order
             ip.ip = htonl(ip.ip);
-            char buf[64]{0};
-            inet_ntop((int)AF_INET, &ip.ip, buf, sizeof(buf) - 1);
-            printf("ipv4_addr: %s\n", buf);
             if (res != 1) {
                 printf("ipv4_addr from_string error: %s\n", ec.message().c_str());
                 ec = std::make_error_code(std::errc::invalid_argument);

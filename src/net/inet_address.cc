@@ -41,10 +41,7 @@ seastar::net::inet_address::inet_address(family f)
 }
 
 seastar::net::inet_address::inet_address(::in_addr i)
-                : _in_family(family::INET), _in(i) {
-    char buffer[64]{0};
-    const char *s = inet_ntop(int(_in_family), data(), buffer, sizeof(buffer) - 1);
-}
+                : _in_family(family::INET), _in(i) {}
 
 seastar::net::inet_address::inet_address(::in6_addr i)
                 : _in_family(family::INET6), _in6(i) {
@@ -63,17 +60,11 @@ seastar::net::inet_address::inet_address(const sstring& addr)
     }
     throw std::invalid_argument(addr);
 }())
-{
-    char buffer[64]{0};
-    const char *s = inet_ntop(int(_in_family), data(), buffer, sizeof(buffer) - 1);
-}
+{}
 
 seastar::net::inet_address::inet_address(const ipv4_address& in)
     : inet_address(::in_addr{hton(in.ip)})
-{
-    char buffer[64]{0};
-    const char *s = inet_ntop(int(_in_family), data(), buffer, sizeof(buffer) - 1);
-}
+{}
 
 seastar::net::inet_address::inet_address(const ipv6_address& in)
     : inet_address([&] {

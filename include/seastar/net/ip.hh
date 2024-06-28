@@ -104,7 +104,7 @@ namespace seastar {
                 produce_be<uint32_t>(p, ip);
             }
 
-            std::string to_string () {
+            std::string to_string () const {
                 char s[32] = {0};
                 sprintf(s, "%u.%u.%u.%u",
                     (uint8_t)((ip >> 24) & 0xFF),

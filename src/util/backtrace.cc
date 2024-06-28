@@ -105,10 +105,12 @@ size_t saved_backtrace::hash() const {
 std::ostream& operator<<(std::ostream& out, const saved_backtrace& b) {
     for (auto f : b._frames) {
         out << "  ";
-        if (!f.so->name.empty()) {
+        if (f.so == nullptr) {
+            out << std::format("Empty line\n");
+        } else if (!f.so->name.empty()) {
             out << f.so->name << "+";
+            out << std::format("0x{:x}", f.addr) << "\n";
         }
-        out << std::format("0x{:x}", f.addr) << "\n";
     }
     return out;
 }

@@ -37,6 +37,7 @@ seastar::net::inet_address::inet_address()
 seastar::net::inet_address::inet_address(family f)
                 : _in_family(f)
 {
+    printf("inet_address family\n");
     memset(&_in6, 0, sizeof(_in6));
 }
 
@@ -49,10 +50,12 @@ seastar::net::inet_address::inet_address(::in_addr i)
 
 seastar::net::inet_address::inet_address(::in6_addr i)
                 : _in_family(family::INET6), _in6(i) {
+    printf("inet_address ipv6 in_addr\n");
 }
 
 seastar::net::inet_address::inet_address(const sstring& addr)
                 : inet_address([&addr] {
+    printf("inet_address sstring: %s\n", addr.c_str());
     inet_address in;
     if (::inet_pton(AF_INET, addr.c_str(), &in._in)) {
         in._in_family = family::INET;
@@ -80,6 +83,7 @@ seastar::net::inet_address::inet_address(const ipv4_address& in)
 
 seastar::net::inet_address::inet_address(const ipv6_address& in)
     : inet_address([&] {
+        printf("inet_address ipv6\n");
         ::in6_addr tmp;
         std::copy(in.bytes().begin(), in.bytes().end(), tmp.s6_addr);
         return tmp;

@@ -313,7 +313,6 @@ seastar::socket native_network_stack::socket(socket_address sa) {
     socket_address lh{};
 
     if (sa == lh) {
-        printf("local address\n");
         return tcpv4_socket(default_device->get_tcp());
     }
     

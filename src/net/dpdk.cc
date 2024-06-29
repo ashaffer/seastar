@@ -807,7 +807,7 @@ build_mbuf_cluster:
 
             // Create a HEAD of the fragmented packet
             if (!translate_one_frag(qp, p.frag(0), head, last_seg, nsegs)) {
-                printf("dpdk translate_one_frag failed\n");
+                printf("dpdk translate_one_frag failed: 0x%lx, %u\n", (uint64_t)p.frag(0), nsegs);
                 return nullptr;
             }
 

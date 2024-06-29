@@ -20,7 +20,7 @@
  */
 
 #include <seastar/core/sharded.hh>
-#include <seastar/util/counterator.hh>
+#include <boost/range/irange.hpp>
 
 namespace seastar {
 
@@ -29,7 +29,7 @@ namespace internal {
 
 future<>
 sharded_parallel_for_each(unsigned nr_shards, on_each_shard_func on_each_shard) {
-    return parallel_for_each(counterator<unsigned>{nr_shards}, std::move(on_each_shard));
+    return parallel_for_each(boost::irange<unsigned>(0, nr_shards), std::move(on_each_shard));
 }
 
 }

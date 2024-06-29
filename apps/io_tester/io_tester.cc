@@ -83,7 +83,7 @@ class shard_config {
     std::unordered_set<unsigned> _shards;
 public:
     shard_config()
-        : _shards(::boost::copy_range<std::unordered_set<unsigned>>(::boost::irange(0u, smp::count))) {}
+        : _shards(::boost::copy_range<std::unordered_set<unsigned>>(::boost::integer_range(0u, smp::count))) {}
     shard_config(std::unordered_set<unsigned> s) : _shards(std::move(s)) {}
 
     bool is_set(unsigned cpu) const {
@@ -149,7 +149,7 @@ public:
     future<> issue_requests(std::chrono::steady_clock::time_point stop) {
         _start = std::chrono::steady_clock::now();
         return with_scheduling_group(_sg, [this, stop] {
-            return parallel_for_each(::boost::irange(0u, parallelism()), [this, stop] (auto dummy) mutable {
+            return parallel_for_each(::boost::integer_range(0u, parallelism()), [this, stop] (auto dummy) mutable {
                 auto bufptr = allocate_aligned_buffer<char>(this->req_size(), _alignment);
                 auto buf = bufptr.get();
                 return do_until([stop] { return std::chrono::steady_clock::now() > stop; }, [this, buf, stop] () mutable {
@@ -291,7 +291,7 @@ public:
         }).then([this, fname] {
             return do_with(seastar::semaphore(64), [this] (auto& write_parallelism) mutable {
                 auto bufsize = 256ul << 10;
-                auto pos = ::boost::irange(0ul, (file_data_size / bufsize) + 1);
+                auto pos = boost::irange(0ul, (file_data_size / bufsize) + 1);
                 return parallel_for_each(pos.begin(), pos.end(), [this, bufsize, &write_parallelism] (auto pos) mutable {
                     return get_units(write_parallelism, 1).then([this, bufsize, pos] (auto perm) mutable {
                         auto bufptr = allocate_aligned_buffer<char>(bufsize, 4096);

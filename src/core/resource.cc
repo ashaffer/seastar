@@ -30,7 +30,7 @@
 #include <seastar/core/align.hh>
 #include <seastar/core/print.hh>
 #include <seastar/util/read_first_line.hh>
-#include <seastar/util/counterator.hh>
+#include <boost/range/irange.hpp>
 #include <stdlib.h>
 #include <limits>
 #include "cgroup.hh"
@@ -241,7 +241,7 @@ allocate_io_queues(hwloc_topology_t& topology, std::vector<cpu> cpus, unsigned n
     // above, hwloc won't do us any good here. Later on, we will use this information to assign
     // shards to coordinators that are node-local to themselves.
     std::unordered_map<unsigned, std::set<unsigned>> numa_nodes;
-    for (auto shard : counterator<unsigned>{(unsigned)cpus.size()}) {
+    for (auto shard : boost::irange(0, int(cpus.size()))) {
         auto node_id = node_of_shard(shard);
 
         if (numa_nodes.count(node_id) == 0) {

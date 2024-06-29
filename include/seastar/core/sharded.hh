@@ -26,6 +26,7 @@
 #include <seastar/util/is_smart_ptr.hh>
 #include <seastar/util/tuple_utils.hh>
 #include <seastar/core/do_with.hh>
+#include <boost/range/irange.hpp>
 #include <boost/iterator/counting_iterator.hpp>
 #include <functional>
 
@@ -286,7 +287,7 @@ public:
     map_reduce(Reducer&& r, Ret (Service::*func)(FuncArgs...), Args&&... args)
         -> typename reducer_traits<Reducer>::future_type
     {
-        return ::seastar::map_reduce(boost::make_counting_iterator<unsigned>(0),
+        return seastar::map_reduce(boost::make_counting_iterator<unsigned>(0),
                             boost::make_counting_iterator<unsigned>(_instances.size()),
             [this, func, args = std::make_tuple(std::forward<Args>(args)...)] (unsigned c) mutable {
                 return smp::submit_to(c, [this, func, args] () mutable {
@@ -366,7 +367,7 @@ public:
         return do_with(std::vector<return_type>(),
                 [&mapper, this] (std::vector<return_type>& vec) mutable {
             vec.resize(smp::count);
-            return parallel_for_each(counterator<unsigned>{_instances.size()}, [this, &vec, mapper] (unsigned c) {
+            return parallel_for_each(boost::irange<unsigned>(0, _instances.size()), [this, &vec, mapper] (unsigned c) {
                 return smp::submit_to(c, [this, mapper] {
                     auto inst = get_local_service();
                     return mapper(*inst);

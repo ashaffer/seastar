@@ -71,11 +71,11 @@
 #include <seastar/core/timer.hh>
 #include <seastar/core/condition-variable.hh>
 #include <seastar/util/log.hh>
-#include <seastar/util/counterator.hh>
 #include <seastar/core/lowres_clock.hh>
 #include <seastar/core/manual_clock.hh>
 #include <seastar/core/metrics_registration.hh>
 #include <seastar/core/scheduling.hh>
+#include <boost/range/irange.hpp>
 #include "internal/pollable_fd.hh"
 #include "internal/poll.hh"
 
@@ -1054,9 +1054,10 @@ namespace seastar {
         }
         static bool poll_queues();
         static bool pure_poll_queues();
-        static auto all_cpus () {
-            return counterator<unsigned>{smp::count};
+        static boost::integer_range<unsigned> all_cpus () {
+            return boost::irange(0u, smp::count); 
         }
+
         // Invokes func on all shards.
         // The returned future resolves when all async invocations finish.
         // The func may return void or future<>.
@@ -1066,12 +1067,6 @@ namespace seastar {
             static_assert(std::is_same<future<>, typename futurize<std::invoke_result_t<Func>>::type>::value, "bad Func signature");
             printf("invoke_on_all\n");
             return parallel_for_each(all_cpus(), [&func] (unsigned id) {
-                auto z{all_cpus()};
-                printf("all cpus:");
-                for (auto c : z) {
-                    printf(" %u", c);
-                }
-                printf("\n");
                 printf("invoke_on_all submit_to: %u (%u)\n", id, engine().cpu_id());
                 return smp::submit_to(id, Func(func));
             });

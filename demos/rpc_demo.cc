@@ -24,7 +24,7 @@
 #include <seastar/rpc/rpc.hh>
 #include <seastar/core/sleep.hh>
 #include <seastar/rpc/lz4_compressor.hh>
-#include <seastar/util/counterator.hh>
+#include <boost/range/irange.hpp>
 
 using namespace seastar;
 
@@ -228,7 +228,7 @@ int main(int ac, char** av) {
             (void)sleep(400ms).then([test12] () mutable {
                 // server is configured for 10MB max, throw 25MB worth of requests at it.
                 auto now = rpc::rpc_clock_type::now();
-                return parallel_for_each(counterator<unsigned>{0, 25}, [test12, now] (int idx) mutable {
+                return parallel_for_each(boost::integer_range<unsigned>{0, 25}, [test12, now] (int idx) mutable {
                     return test12(*client, 100, sstring(sstring::initialized_later(), 1'000'000)).then([idx, now] {
                         auto later = rpc::rpc_clock_type::now();
                         auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(later - now);

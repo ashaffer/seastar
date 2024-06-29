@@ -488,15 +488,15 @@ namespace seastar {
             array_map<ip_protocol*, 256> _l4;
             ip_packet_filter * _packet_filter = nullptr;
             struct frag {
-                ::seastar::net::packet header;
+                seastar::net::packet header;
                 ipv4_packet_merger data;
                 clock_type::time_point rx_time;
                 uint32_t mem_size = 0;
                 // fragment with MF == 0 inidates it is the last fragment
                 bool last_frag_received = false;
 
-                ::seastar::net::packet get_assembled_packet(ethernet_address from, ethernet_address to);
-                int32_t merge(ip_hdr &h, uint16_t offset, ::seastar::net::packet p);
+                seastar::net::packet get_assembled_packet(ethernet_address from, ethernet_address to);
+                int32_t merge(ip_hdr &h, uint16_t offset, seastar::net::packet p);
                 bool is_complete();
             };
             std::unordered_map<ipv4_frag_id, frag, ipv4_frag_id::hash> _frags;
@@ -513,7 +513,7 @@ namespace seastar {
         private:
             future<> handle_received_packet(seastar::net::packet p, ethernet_address from);
             bool forward(forward_hash& out_hash_data, seastar::net::packet& p, size_t off);
-            ::std::optional<l3_protocol::l3packet> get_packet();
+            std::optional<l3_protocol::l3packet> get_packet();
             bool in_my_netmask(ipv4_address a) const;
             void frag_limit_mem();
             void frag_timeout();
@@ -555,7 +555,7 @@ namespace seastar {
             ipv4_udp& get_udp() { return _udp; }
             void register_l4(proto_type id, ip_protocol* handler);
             const net::hw_features& hw_features() const { return _netif->hw_features(); }
-            static bool needs_frag(::seastar::net::packet& p, ::seastar::net::ip_protocol_num proto_num, net::hw_features hw_features);
+            static bool needs_frag(::seastar::net::packet& p, seastar::net::ip_protocol_num proto_num, net::hw_features hw_features);
             void learn(ethernet_address l2, ipv4_address l3) {
                 _arp.learn(l2, l3);
             }
@@ -565,7 +565,7 @@ namespace seastar {
             future<ethernet_address> get_l2_dst_address(ipv4_address to);
         };
 
-        template <::seastar::net::ip_protocol_num ProtoNum>
+        template <seastar::net::ip_protocol_num ProtoNum>
         inline void ipv4_l4<ProtoNum>::register_packet_provider(ipv4_traits::packet_provider_type func) {
             _inet.register_packet_provider([this, func = ::std::move(func)] {
                 auto l4p = func();
@@ -577,12 +577,12 @@ namespace seastar {
             });
         }
 
-        template <::seastar::net::ip_protocol_num ProtoNum>
+        template <seastar::net::ip_protocol_num ProtoNum>
         inline void ipv4_l4<ProtoNum>::decorate(ipv4_traits::l4packet& l4p) {
             l4p.proto_num = ProtoNum;
         }
 
-        template <::seastar::net::ip_protocol_num ProtoNum>
+        template <seastar::net::ip_protocol_num ProtoNum>
         inline future<ethernet_address> ipv4_l4<ProtoNum>::get_l2_dst_address(ipv4_address to) {
             return _inet.get_l2_dst_address(to);
         }
@@ -592,13 +592,13 @@ namespace seastar {
             uint8_t ver : 4;
             uint8_t dscp : 6;
             uint8_t ecn : 2;
-            ::seastar::net::packed<uint16_t> len;
-            ::seastar::net::packed<uint16_t> id;
-            ::seastar::net::packed<uint16_t> frag;
+            seastar::net::packed<uint16_t> len;
+            seastar::net::packed<uint16_t> id;
+            seastar::net::packed<uint16_t> frag;
             enum class frag_bits : uint8_t { mf = 13, df = 14, reserved = 15, offset_shift = 3 };
             uint8_t ttl;
             uint8_t ip_proto;
-            ::seastar::net::packed<uint16_t> csum;
+            seastar::net::packed<uint16_t> csum;
             ipv4_address src_ip;
             ipv4_address dst_ip;
             uint8_t options[0];
@@ -625,13 +625,13 @@ namespace seastar {
 
         void arp_learn(ethernet_address l2, ipv4_address l3);
 
-        template <::seastar::net::ip_protocol_num ProtoNum>
+        template <seastar::net::ip_protocol_num ProtoNum>
         template <typename... Args>
         inline void ipv4_l4<ProtoNum>::send_immediate(Args&&... args) {
-            return _inet.send_immediate(::std::forward<Args>(args)...);
+            return _inet.send_immediate(std::forward<Args>(args)...);
         }
 
-        template <::seastar::net::ip_protocol_num ProtoNum>
+        template <seastar::net::ip_protocol_num ProtoNum>
         inline void ipv4_l4<ProtoNum>::flush() {
             _inet.flush();
         }

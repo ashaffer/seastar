@@ -95,19 +95,19 @@ namespace seastar {
         class l3_protocol {
         public:
             struct l3packet {
-                ::seastar::net::eth_protocol_num proto_num;
+                seastar::net::eth_protocol_num proto_num;
                 ethernet_address to;
-                ::seastar::net::packet p;
+                seastar::net::packet p;
             };
             using packet_provider_type = std::function<std::optional<l3packet> ()>;
         private:
             interface* _netif;
             ::seastar::net::eth_protocol_num _proto_num;
         public:
-            explicit l3_protocol(interface* netif, ::seastar::net::eth_protocol_num proto_num, packet_provider_type func);
-            subscription<::seastar::net::packet, ethernet_address> receive(
-                    std::function<future<> (::seastar::net::packet, ethernet_address)> rx_fn,
-                    std::function<bool (forward_hash&, ::seastar::net::packet&, size_t)> forward);
+            explicit l3_protocol(interface* netif, seastar::net::eth_protocol_num proto_num, packet_provider_type func);
+            subscription<seastar::net::packet, ethernet_address> receive(
+                    std::function<future<> (seastar::net::packet, ethernet_address)> rx_fn,
+                    std::function<bool (forward_hash&, seastar::net::packet&, size_t)> forward);
 
         private:
             friend class interface;
@@ -117,8 +117,8 @@ namespace seastar {
             struct l3_rx_stream {
                 stream<::seastar::net::packet, ethernet_address> packet_stream;
                 future<> ready;
-                std::function<bool (forward_hash&, ::seastar::net::packet&, size_t)> forward;
-                l3_rx_stream(std::function<bool (forward_hash&, ::seastar::net::packet&, size_t)>&& fw) : ready(packet_stream.started()), forward(fw) {}
+                std::function<bool (forward_hash&, seastar::net::packet&, size_t)> forward;
+                l3_rx_stream(std::function<bool (forward_hash&, seastar::net::packet&, size_t)>&& fw) : ready(packet_stream.started()), forward(fw) {}
             };
             std::unordered_map<uint16_t, l3_rx_stream> _proto_map;
             std::shared_ptr<device> _dev;
@@ -133,10 +133,10 @@ namespace seastar {
             ~interface();
             ethernet_address hw_address() { return _hw_address; }
             const net::hw_features& hw_features() const { return _hw_features; }
-            subscription<::seastar::net::packet, ethernet_address> register_l3(::seastar::net::eth_protocol_num proto_num,
-                    std::function<future<> (::seastar::net::packet p, ethernet_address from)> next,
-                    std::function<bool (forward_hash&, ::seastar::net::packet&, size_t)> forward);
-            void forward(unsigned cpuid, ::seastar::net::packet p);
+            subscription<seastar::net::packet, ethernet_address> register_l3(::seastar::net::eth_protocol_num proto_num,
+                    std::function<future<> (seastar::net::packet p, ethernet_address from)> next,
+                    std::function<bool (forward_hash&, seastar::net::packet&, size_t)> forward);
+            void forward(unsigned cpuid, seastar::net::packet p);
             unsigned hash2cpu(uint32_t hash);
             void register_packet_provider(l3_protocol::packet_provider_type func) {
                 _pkt_providers.push_back(std::move(func));
@@ -150,7 +150,7 @@ namespace seastar {
                 eh->dst_mac = l3pv.to;
                 eh->src_mac = _hw_address;
                 eh->eth_proto = uint16_t(l3pv.proto_num);
-                *eh = ::seastar::net::hton(*eh);
+                *eh = seastar::net::hton(*eh);
             }
 
             void send(l3_protocol::l3packet l3pv);

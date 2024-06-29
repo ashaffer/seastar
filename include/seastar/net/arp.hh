@@ -269,6 +269,7 @@ arp_for<L3>::is_self(l3addr paddr) {
 template <typename L3>
 future<>
 arp_for<L3>::received(::seastar::net::packet p) {
+    printf("received arp packet\n");
     auto ah = p.get_header(0, arp_hdr::size());
     if (!ah) {
         return make_ready_future<>();

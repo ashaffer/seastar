@@ -1379,7 +1379,9 @@ build_mbuf_cluster:
          * @return a single tx_buf that has been completed by HW.
          */
         tx_buf* get_one_completed() {
-            return tx_buf::me(rte_pktmbuf_alloc(_pool));
+            auto *buf{rte_pktmbuf_alloc(_pool)};
+            printf("dpdk get_one_completed: 0x%lx (0x%lx)\n", (uint64_t)buf, (uint64_t)_pool);
+            return tx_buf::me(buf);
         }
 
     private:

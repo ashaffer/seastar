@@ -274,16 +274,21 @@ arp_for<L3>::received(::seastar::net::packet p) {
         return make_ready_future<>();
     }
     auto h = arp_hdr::read(ah);
+
     if (h.hlen != sizeof(l2addr) || h.plen != sizeof(l3addr)) {
         return make_ready_future<>();
     }
+    printf("arp packet received: %hu\n", h.oper);
     switch (h.oper) {
     case op_request:
+        printf("op_request\n");
         return handle_request(&h);
     case op_reply:
+        printf("arp op_reply: %s\n", h.sender_paddr.to_string().c_str());
         arp_learn(h.sender_hwaddr, h.sender_paddr);
         return make_ready_future<>();
     default:
+        printf("arp default\n");
         return make_ready_future<>();
     }
 }

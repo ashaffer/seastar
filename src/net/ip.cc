@@ -55,7 +55,6 @@ ipv4::ipv4(interface* netif)
     , _netmask(0)
     , _l3(netif, eth_protocol_num::ipv4, [this] { return get_packet(); })
     , _rx_packets(_l3.receive([this] (packet p, ethernet_address ea) {
-        printf("received IP packet\n");
         return handle_received_packet(std::move(p), ea); },
       [this] (forward_hash& out_hash_data, packet& p, size_t off) {
         return forward(out_hash_data, p, off);}))
@@ -149,7 +148,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     
     inet_ntop(AF_INET, &iph->src_ip, src_ip, sizeof(src_ip) - 1);
     inet_ntop(AF_INET, &iph->dst_ip, dst_ip, sizeof(dst_ip) - 1);
-    printf("IP received: %s src, %s dst\n", src_ip, dst_ip);
+    printf("IP received: %s src, %s dst (%u cpu)\n", src_ip, dst_ip, engine().cpu_id());
 
     auto h = ntoh(*iph);
     unsigned ip_len = h.len;

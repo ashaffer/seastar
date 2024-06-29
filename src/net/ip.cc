@@ -264,6 +264,7 @@ future<ethernet_address> ipv4::get_l2_dst_address(ipv4_address to) {
 }
 
 void ipv4::send(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst) {
+    printf("ipv4 send\n");
     auto needs_frag = this->needs_frag(p, proto_num, hw_features());
 
     auto send_pkt = [this, to, proto_num, needs_frag, e_dst, from] (packet& pkt, uint16_t remaining, uint16_t offset) mutable  {
@@ -356,6 +357,7 @@ void ipv4::send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num pr
             iph->csum = csum.get();
         }
 
+        printf("ipv4 send_immediate\n");
         _netif->send(l3_protocol::l3packet{eth_protocol_num::ipv4, e_dst, std::move(pkt)});
     };
 
@@ -388,6 +390,7 @@ std::optional<l3_protocol::l3packet> ipv4::get_packet() {
             }
             if (l4p) {
                 auto l4pv = std::move(l4p.value());
+                printf("ipv4 get_packet send\n");
                 send(l4pv.from, l4pv.to, l4pv.proto_num, std::move(l4pv.p), l4pv.e_dst);
                 break;
             }

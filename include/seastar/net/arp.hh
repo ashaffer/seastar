@@ -191,6 +191,7 @@ void arp_for<L3>::send(l2addr to, seastar::net::packet p) {
 template <typename L3>
 future<>
 arp_for<L3>::send_query(const l3addr& paddr) {
+    printf("arp send_query\n");
     send(ethernet::broadcast_address(), make_query_packet(paddr));
     return make_ready_future<>();
 }

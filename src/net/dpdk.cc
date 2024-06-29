@@ -807,7 +807,7 @@ build_mbuf_cluster:
 
             // Create a HEAD of the fragmented packet
             if (!translate_one_frag(qp, p.frag(0), head, last_seg, nsegs)) {
-                printf("dpdk translate_one_frag failed: 0x%lx, %u\n", (uint64_t)p.frag(0), nsegs);
+                printf("dpdk translate_one_frag failed: 0x%lx, %u\n", (uint64_t)&p.frag(0), nsegs);
                 return nullptr;
             }
 
@@ -994,6 +994,7 @@ build_mbuf_cluster:
             // Create a HEAD of mbufs' cluster and set the first bytes into it
             len = do_one_buf(qp, head, base, left_to_set);
             if (!len) {
+                printf("dpdk do_one_frag !len\n");
                 return false;
             }
 
@@ -1010,6 +1011,7 @@ build_mbuf_cluster:
                 len = do_one_buf(qp, m, base, left_to_set);
                 if (!len) {
                     me(head)->recycle();
+                    printf("dpdk do_one_frag second return false\n");
                     return false;
                 }
 
@@ -1088,17 +1090,20 @@ build_mbuf_cluster:
             // rte_iova_t iova = rte_mem_virt2iova(va);
             uint64_t iova = fast_virt2iova(va);
             if (iova == RTE_BAD_IOVA) {
+                printf("dpdk set_one_data_buf BAD_IOVA: 0x%lx, 0x%lx\n", iova, (uint64_t)va);
                 return copy_one_data_buf(qp, m, va, buf_len);
             }
 
             tx_buf* buf = qp.get_tx_buf();
             if (!buf) {
+                printf("dpdk set_one_data_buf !buf\n");
                 return 0;
             }
 
             size_t len = std::min(buf_len, max_frag_len);
             buf->set_zc_info(va, iova, len);
             m = buf->rte_mbuf_p();
+            printf("dpdk set_one_datta_buf normal return: %lu\n", len);
             return len;
         }
 

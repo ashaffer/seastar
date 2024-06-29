@@ -260,6 +260,7 @@ namespace seastar {
                 printf("net packet send\n");
                 uint32_t sent = 0;
                 while (!p.empty()) {
+                    printf("net send loop: %lu\n", p.sixe());
                     // FIXME: future is discarded
                     (void)send(std::move(p.front()));
                     p.pop_front();

@@ -144,6 +144,13 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
         }
     }
 
+    char src_ip[64]{0};
+    char dst_ip[64]{0};
+    
+    inet_ntop(AF_INET, &iph->src_ip, src_ip, sizeof(src_ip) - 1);
+    inet_ntop(AF_INET, &iph->dst_ip, dst_ip, sizeof(dst_ip) - 1);
+    printf("IP received: %s src, %s dst\n", src_ip, dst_ip);
+
     auto h = ntoh(*iph);
     unsigned ip_len = h.len;
     unsigned ip_hdr_len = h.ihl * 4;
@@ -161,11 +168,6 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
         return make_ready_future<>();
     }
 
-    char src_ip[64]{0};
-    char dst_ip[64]{0};
-    inet_ntop(AF_INET, &h.src_ip, src_ip, sizeof(src_ip) - 1);
-    inet_ntop(AF_INET, &h.dst_ip, dst_ip, sizeof(dst_ip) - 1);
-    printf("IP received: %s src, %s dst\n", src_ip, dst_ip);
     // FIXME: process options
     if (in_my_netmask(h.src_ip) && !_arp.is_self(h.src_ip)) {
         // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {

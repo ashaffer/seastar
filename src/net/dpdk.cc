@@ -1103,7 +1103,7 @@ build_mbuf_cluster:
             size_t len = std::min(buf_len, max_frag_len);
             buf->set_zc_info(va, iova, len);
             m = buf->rte_mbuf_p();
-            printf("dpdk set_one_datta_buf normal return: %lu\n", len);
+            printf("dpdk set_one_data_buf normal return: %lu, 0x%lx\n", len, (uint64_t)m);
             return len;
         }
 
@@ -1330,7 +1330,7 @@ build_mbuf_cluster:
 
             pkt = _ring.back();
             _ring.pop_back();
-            printf("dpdk tx_buf_factory get _ring.pop_back()\n");
+            printf("dpdk tx_buf_factory get _ring.pop_back(), %lu, 0x%lx\n", _ring.size(), (uint64_t)pkt);
             return pkt;
         }
 

@@ -1066,6 +1066,12 @@ namespace seastar {
             static_assert(std::is_same<future<>, typename futurize<std::invoke_result_t<Func>>::type>::value, "bad Func signature");
             printf("invoke_on_all\n");
             return parallel_for_each(all_cpus(), [&func] (unsigned id) {
+                auto z{all_cpus()};
+                printf("all cpus:");
+                for (auto c : z) {
+                    printf(" %lu", c);
+                }
+                printf("\n");
                 printf("invoke_on_all submit_to: %u (%u)\n", id, engine().cpu_id());
                 return smp::submit_to(id, Func(func));
             });

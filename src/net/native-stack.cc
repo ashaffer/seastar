@@ -420,6 +420,7 @@ future<> native_network_stack::initialize() {
 
 void arp_learn(ethernet_address l2, ipv4_address l3)
 {
+    printf("outer arp_learn\n");
     // Run arp_learn on all shard in the background
     (void)smp::invoke_on_all([l2, l3] {
         auto & ns = static_cast<native_network_stack&>(engine().net());

@@ -162,8 +162,10 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     }
 
     char src_ip[64]{0};
-    inet_ntop(AF_INET, &src_ip, src_ip, sizeof(src_ip) - 1);
-    printf("IP received src IP: %s\n", src_ip);
+    char dst_ip[64]{0};
+    inet_ntop(AF_INET, &h.src_ip, src_ip, sizeof(src_ip) - 1);
+    inet_ntop(AF_INET, &h.dst_ip, dst_ip, sizeof(dst_ip) - 1);
+    printf("IP received: %s src, %s dst\n", src_ip, dst_ip);
     // FIXME: process options
     if (in_my_netmask(h.src_ip) && !_arp.is_self(h.src_ip)) {
         // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {

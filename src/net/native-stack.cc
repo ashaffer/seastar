@@ -218,9 +218,6 @@ public:
     virtual bool has_per_core_namespace() override { return true; };
     void arp_learn(ethernet_address l2, ipv4_address l3) {
         printf("native-stack arp_learn\n");
-        if (!_inet_map.empty()) {
-            _inet_map.begin().second->learn(l2, l3);
-        }
         std::unordererd_set<interface *> seen;
         for (auto ii : _inet_map) {
             if (!seen.contains(ii->netif())) {

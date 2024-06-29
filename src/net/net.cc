@@ -107,6 +107,7 @@ bool qp::poll_tx() {
 }
 
 void qp::send_immediate(packet p) {
+    printf("net send_immediate called\n");
     _tx_packetq.push_back(std::move(p));
     _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
 }

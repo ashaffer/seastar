@@ -1069,7 +1069,7 @@ namespace seastar {
                 auto z{all_cpus()};
                 printf("all cpus:");
                 for (auto c : z) {
-                    printf(" %lu", c);
+                    printf(" %u", c);
                 }
                 printf("\n");
                 printf("invoke_on_all submit_to: %u (%u)\n", id, engine().cpu_id());

@@ -1309,6 +1309,7 @@ build_mbuf_cluster:
         tx_buf* get() {
             // Take completed from the HW first
             tx_buf *pkt = get_one_completed();
+            printf("dpdk tx_buf_factory get: 0x%lx\n", (uint64_t)pkt);
             if (pkt) {
                 if (HugetlbfsMemBackend) {
                     pkt->reset_zc();
@@ -1322,12 +1323,13 @@ build_mbuf_cluster:
             // factory's cache.
             //
             if (_ring.empty()) {
+                printf("dpdk tx_buf_factory get _ring.empty()\n");
                 return nullptr;
             }
 
             pkt = _ring.back();
             _ring.pop_back();
-
+            printf("dpdk tx_buf_factory get _ring.pop_back()\n");
             return pkt;
         }
 

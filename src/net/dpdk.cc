@@ -1251,8 +1251,7 @@ build_mbuf_cluster:
                 // the circular_buffer and then poll them from there anyway, so
                 // we prefer to make a mempool non-atomic in this case.
                 //
-                _pool =
-                    rte_mempool_create_empty(name.c_str(),
+                _pool = rte_mempool_create_empty(name.c_str(),
                                              mbufs_per_queue_tx,
                                              inline_mbuf_size,
                                              mbuf_cache_size,
@@ -1262,7 +1261,7 @@ build_mbuf_cluster:
                     rte_pktmbuf_pool_init(_pool, nullptr);
 
                     printf("rte_mempool_populate_virt: 0x%lx pool, 0x%lx xmem, 0x%lx size, 0x%lx page_size\n", (uint64_t)_pool, (uint64_t)_xmem.get(), xmem_size, page_size);
-                    int res = rte_mempool_populate_iova(_pool, (char*)(_xmem.get()),
+                    int res = rte_mempool_populate_virt(_pool, (char*)(_xmem.get()),
                                                   xmem_size, page_size,
                                                   nullptr, nullptr);
                     if (res <= 0) {
@@ -1273,6 +1272,8 @@ build_mbuf_cluster:
                     }
 
                     rte_mempool_obj_iter(_pool, rte_pktmbuf_init, nullptr);
+                } else {
+                    printf("te_mempool_create_empty failed\n");
                 }
 
             } else {
@@ -1380,7 +1381,7 @@ build_mbuf_cluster:
          */
         tx_buf* get_one_completed() {
             auto *buf{rte_pktmbuf_alloc(_pool)};
-            printf("dpdk get_one_completed: 0x%lx (0x%lx)\n", (uint64_t)buf, (uint64_t)_pool);
+            printf("dpdk get_one_completed: 0x%lx (0x%lx, %u)\n", (uint64_t)buf, (uint64_t)_pool, _pool->size);
             return tx_buf::me(buf);
         }
 

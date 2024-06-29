@@ -1414,13 +1414,15 @@ private:
         printf("dpdk _send: %lu\n", _tx_burst.size());
         if (_tx_burst.size() == 0) {
             uint64_t start = ticks();
-
+            printf("dpdk zero tx burst: %lu\n", pb.size());
             for (auto&& p : pb) {
+                printf("dpdk in pb loop\n");
                 // TODO: assert() in a fast path! Remove me ASAP!
                 // assert(p.len());
                 p.notifyTransmitted(start, 2);
                 tx_buf* buf = packet_to_tx_buf_p(std::move(p));
                 if (!buf) {
+                    printf("dpdk no buf break\n");
                     break;
                 }
 

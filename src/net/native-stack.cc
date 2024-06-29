@@ -46,6 +46,7 @@
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
 #include <exception>
+#include <unordered_set>
 
 namespace seastar {
 

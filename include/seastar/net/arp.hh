@@ -232,7 +232,7 @@ arp_for<L3>::lookup(const l3addr& paddr) {
         });
         res._timeout_timer.arm_periodic(std::chrono::seconds(1));
         // FIXME: future is discarded
-        printf("ARP send query\n");
+        printf("ARP send query: %u cpu\n", engine().cpu_id());
         printf("ARP paddr: %s\n", paddr.to_string().c_str());
         (void)send_query(paddr);
     }

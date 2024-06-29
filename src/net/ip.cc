@@ -55,6 +55,7 @@ ipv4::ipv4(interface* netif)
     , _netmask(0)
     , _l3(netif, eth_protocol_num::ipv4, [this] { return get_packet(); })
     , _rx_packets(_l3.receive([this] (packet p, ethernet_address ea) {
+        printf("received IP packet\n");
         return handle_received_packet(std::move(p), ea); },
       [this] (forward_hash& out_hash_data, packet& p, size_t off) {
         return forward(out_hash_data, p, off);}))
@@ -160,6 +161,9 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
         return make_ready_future<>();
     }
 
+    char src_ip[64]{0};
+    inet_ntop(AF_INET, &src_ip, src_ip, sizeof(src_ip) - 1);
+    printf("IP received src IP: %s\n", src_ip);
     // FIXME: process options
     if (in_my_netmask(h.src_ip) && !_arp.is_self(h.src_ip)) {
         // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {

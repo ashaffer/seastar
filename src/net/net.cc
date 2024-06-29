@@ -89,6 +89,7 @@ bool qp::poll_tx() {
                 auto p = pr();
                 if (p) {
                     work++;
+                    printf("net pushing to tx_packetq\n");
                     _tx_packetq.push_back(std::move(p.value()));
                     if (_tx_packetq.size() == 128) {
                         break;
@@ -99,7 +100,7 @@ bool qp::poll_tx() {
     }
 
     if (!_tx_packetq.empty()) {
-        printf("poll_tx send\n");
+        printf("poll_tx send: %lu\n", _tx_packetq.size());
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
         return true;
     }

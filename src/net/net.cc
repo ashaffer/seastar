@@ -99,6 +99,7 @@ bool qp::poll_tx() {
     }
 
     if (!_tx_packetq.empty()) {
+        printf("poll_tx send\n");
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
         return true;
     }

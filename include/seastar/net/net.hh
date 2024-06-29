@@ -89,7 +89,7 @@ namespace seastar {
             // Maximum Transmission Unit
             uint16_t mtu = 1500;
             // Maximun packet len when TCP/UDP offload is enabled
-            uint16_t max_packet_len = ::seastar::net::ip_packet_len_max - ::seastar::net::eth_hdr_len;
+            uint16_t max_packet_len = seastar::net::ip_packet_len_max - seastar::net::eth_hdr_len;
         };
 
         class l3_protocol {
@@ -102,7 +102,7 @@ namespace seastar {
             using packet_provider_type = std::function<std::optional<l3packet> ()>;
         private:
             interface* _netif;
-            ::seastar::net::eth_protocol_num _proto_num;
+            seastar::net::eth_protocol_num _proto_num;
         public:
             explicit l3_protocol(interface* netif, seastar::net::eth_protocol_num proto_num, packet_provider_type func);
             subscription<seastar::net::packet, ethernet_address> receive(
@@ -115,25 +115,25 @@ namespace seastar {
 
         class interface {
             struct l3_rx_stream {
-                stream<::seastar::net::packet, ethernet_address> packet_stream;
+                stream<seastar::net::packet, ethernet_address> packet_stream;
                 future<> ready;
                 std::function<bool (forward_hash&, seastar::net::packet&, size_t)> forward;
                 l3_rx_stream(std::function<bool (forward_hash&, seastar::net::packet&, size_t)>&& fw) : ready(packet_stream.started()), forward(fw) {}
             };
             std::unordered_map<uint16_t, l3_rx_stream> _proto_map;
             std::shared_ptr<device> _dev;
-            subscription<::seastar::net::packet> _rx;
+            subscription<seastar::net::packet> _rx;
             ethernet_address _hw_address;
             net::hw_features _hw_features;
             std::vector<l3_protocol::packet_provider_type> _pkt_providers;
         private:
-            future<> dispatch_packet(::seastar::net::packet p);
+            future<> dispatch_packet(seastar::net::packet p);
         public:
             explicit interface(std::shared_ptr<device> dev);
             ~interface();
             ethernet_address hw_address() { return _hw_address; }
             const net::hw_features& hw_features() const { return _hw_features; }
-            subscription<seastar::net::packet, ethernet_address> register_l3(::seastar::net::eth_protocol_num proto_num,
+            subscription<seastar::net::packet, ethernet_address> register_l3(seastar::net::eth_protocol_num proto_num,
                     std::function<future<> (seastar::net::packet p, ethernet_address from)> next,
                     std::function<bool (forward_hash&, seastar::net::packet&, size_t)> forward);
             void forward(unsigned cpuid, seastar::net::packet p);

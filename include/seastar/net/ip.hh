@@ -555,12 +555,12 @@ namespace seastar {
             ipv4_udp& get_udp() { return _udp; }
             void register_l4(proto_type id, ip_protocol* handler);
             const net::hw_features& hw_features() const { return _netif->hw_features(); }
-            static bool needs_frag(::seastar::net::packet& p, seastar::net::ip_protocol_num proto_num, net::hw_features hw_features);
+            static bool needs_frag(seastar::net::packet& p, seastar::net::ip_protocol_num proto_num, net::hw_features hw_features);
             void learn(ethernet_address l2, ipv4_address l3) {
                 _arp.learn(l2, l3);
             }
             void register_packet_provider(ipv4_traits::packet_provider_type&& func) {
-                _pkt_providers.push_back(::std::move(func));
+                _pkt_providers.push_back(std::move(func));
             }
             future<ethernet_address> get_l2_dst_address(ipv4_address to);
         };

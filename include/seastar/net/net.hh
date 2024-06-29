@@ -236,7 +236,7 @@ namespace seastar {
         };
 
         class qp {
-            using packet_provider_type = std::function<std::optional<::seastar::net::packet> ()>;
+            using packet_provider_type = std::function<std::optional<seastar::net::packet> ()>;
             std::vector<packet_provider_type> _pkt_providers;
             std::optional<std::array<uint8_t, 128>> _sw_reta;
             circular_buffer<::seastar::net::packet> _proxy_packetq;
@@ -255,8 +255,9 @@ namespace seastar {
                const std::string stats_plugin_name = std::string("network"),
                uint8_t qid = 0, uint8_t port_idx = 0);
             virtual ~qp();
-            virtual future<> send(::seastar::net::packet p) = 0;
-            virtual uint32_t send(circular_buffer<::seastar::net::packet>& p) {
+            virtual future<> send(seastar::net::packet p) = 0;
+            virtual uint32_t send(circular_buffer<seastar::net::packet>& p) {
+                printf("net packet send\n");
                 uint32_t sent = 0;
                 while (!p.empty()) {
                     // FIXME: future is discarded
@@ -273,7 +274,7 @@ namespace seastar {
             void configure_proxies(const std::map<unsigned, float>& cpu_weights);
             // build REdirection TAble for cpu_weights map: target cpu -> weight
             void build_sw_reta(const std::map<unsigned, float>& cpu_weights);
-            void proxy_send(::seastar::net::packet&& p) {
+            void proxy_send(seastar::net::packet&& p) {
                 _proxy_packetq.push_back(std::move(p));
             }
             void register_packet_provider(packet_provider_type func) {
@@ -302,10 +303,10 @@ namespace seastar {
                 return qid;
                 // return _qid2cpuid[qid]; 
             }
-            void l2receive(::seastar::net::packet p) { 
+            void l2receive(seastar::net::packet p) { 
                 (void)_queues[engine().cpu_id()]->_rx_stream.produce(std::move(p)); 
             }
-            subscription<::seastar::net::packet> receive(std::function<future<> (::seastar::net::packet)> next_packet);
+            subscription<seastar::net::packet> receive(std::function<future<> (seastar::net::packet)> next_packet);
             virtual ethernet_address hw_address() = 0;
             virtual net::hw_features hw_features() = 0;
             virtual uint16_t port_idx() { return 0; }

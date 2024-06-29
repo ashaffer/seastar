@@ -140,7 +140,7 @@ private:
     std::unordered_map<l3addr, l2addr> _table;
     std::unordered_map<l3addr, resolution> _in_progress;
 private:
-    ::seastar::net::packet make_query_packet(l3addr paddr);
+    seastar::net::packet make_query_packet(l3addr paddr);
     virtual future<> received(::seastar::net::packet p) override;
     future<> handle_request(arp_hdr* ah);
     l2addr l2self() { return _arp.l2self(); }
@@ -164,7 +164,7 @@ public:
 };
 
 template <typename L3>
-::seastar::net::packet
+seastar::net::packet
 arp_for<L3>::make_query_packet(l3addr paddr) {
     arp_hdr hdr;
     hdr.htype = ethernet::arp_hardware_type();
@@ -184,8 +184,8 @@ arp_for<L3>::make_query_packet(l3addr paddr) {
 }
 
 template <typename L3>
-void arp_for<L3>::send(l2addr to, ::seastar::net::packet p) {
-    _arp._packetq.push_back(l3_protocol::l3packet{::seastar::net::eth_protocol_num::arp, to, std::move(p)});
+void arp_for<L3>::send(l2addr to, seastar::net::packet p) {
+    _arp._packetq.push_back(l3_protocol::l3packet{seastar::net::eth_protocol_num::arp, to, std::move(p)});
 }
 
 template <typename L3>
@@ -269,7 +269,7 @@ arp_for<L3>::is_self(l3addr paddr) {
 
 template <typename L3>
 future<>
-arp_for<L3>::received(::seastar::net::packet p) {
+arp_for<L3>::received(seastar::net::packet p) {
     printf("received arp packet\n");
     auto ah = p.get_header(0, arp_hdr::size());
     if (!ah) {
@@ -298,8 +298,10 @@ arp_for<L3>::received(::seastar::net::packet p) {
 template <typename L3>
 future<>
 arp_for<L3>::handle_request(arp_hdr* ah) {
+    printf("arp handle_request\n");
     if (is_self(ah->target_paddr)
             && _selves.begin()->first != L3::broadcast_address()) {
+        printf("arp is self\n");
         ah->oper = op_reply;
         ah->target_hwaddr = ah->sender_hwaddr;
         ah->target_paddr = ah->sender_paddr;
@@ -308,6 +310,8 @@ arp_for<L3>::handle_request(arp_hdr* ah) {
         auto p = ::seastar::net::packet();
         ah->write(p.prepend_uninitialized_header(ah->size()));
         send(ah->target_hwaddr, std::move(p));
+    } else {
+        printf("arp is not self\n");
     }
     return make_ready_future<>();
 }

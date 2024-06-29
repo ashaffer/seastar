@@ -105,7 +105,7 @@ struct ethernet {
 struct eth_hdr {
     ethernet_address dst_mac;
     ethernet_address src_mac;
-    ::seastar::net::packed<uint16_t> eth_proto;
+    seastar::net::packed<uint16_t> eth_proto;
     template <typename Adjuster>
     auto adjust_endianness(Adjuster a) {
         return a(eth_proto);

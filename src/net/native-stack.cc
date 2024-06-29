@@ -217,6 +217,7 @@ public:
     }
     virtual bool has_per_core_namespace() override { return true; };
     void arp_learn(ethernet_address l2, ipv4_address l3) {
+        printf("native-stack arp_learn\n");
         for (auto ii : _inet_map) {
             ii.second->learn(l2, l3);
         }

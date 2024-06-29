@@ -557,6 +557,7 @@ namespace seastar {
             const net::hw_features& hw_features() const { return _netif->hw_features(); }
             static bool needs_frag(seastar::net::packet& p, seastar::net::ip_protocol_num proto_num, net::hw_features hw_features);
             void learn(ethernet_address l2, ipv4_address l3) {
+                printf("ip.hh learn -> arp.learn\n");
                 _arp.learn(l2, l3);
             }
             void register_packet_provider(ipv4_traits::packet_provider_type&& func) {

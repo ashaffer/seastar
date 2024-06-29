@@ -225,6 +225,7 @@ public:
 
             if (!seen.contains(iface)) {
                 seen.insert(iface);
+                printf("native-stack ii.second->learn\n");
                 ii.second->learn(l2, l3);
             }
         }
@@ -424,6 +425,7 @@ void arp_learn(ethernet_address l2, ipv4_address l3)
     // Run arp_learn on all shard in the background
     (void)smp::invoke_on_all([l2, l3] {
         auto & ns = static_cast<native_network_stack&>(engine().net());
+        printf("outer arp_learn inside invoke_on_all: %u\n", engine().cpu_id());
         ns.arp_learn(l2, l3);
     });
 }

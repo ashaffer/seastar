@@ -1381,7 +1381,7 @@ build_mbuf_cluster:
          */
         tx_buf* get_one_completed() {
             auto *buf{rte_pktmbuf_alloc(_pool)};
-            printf("dpdk get_one_completed: 0x%lx (0x%lx, %u)\n", (uint64_t)buf, (uint64_t)_pool, _pool->size);
+            // printf("dpdk get_one_completed: 0x%lx (0x%lx, %u)\n", (uint64_t)buf, (uint64_t)_pool, _pool->size);
             return tx_buf::me(buf);
         }
 

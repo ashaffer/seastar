@@ -1411,7 +1411,7 @@ private:
 
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
-        printf("dpdk _send\n");
+        printf("dpdk _send: %lu\n", _tx_burst.size());
         if (_tx_burst.size() == 0) {
             uint64_t start = ticks();
 
@@ -1434,6 +1434,7 @@ private:
                                          _tx_burst.size() - _tx_burst_idx);
         uint64_t nr_frags = 0, bytes = 0;
 
+        printf("dpdk sent: %hu\n", sent);
         for (int i = 0; i < sent; i++) {
             rte_mbuf* m = _tx_burst[_tx_burst_idx + i];
             bytes    += m->pkt_len;

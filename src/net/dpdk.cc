@@ -1090,20 +1090,17 @@ build_mbuf_cluster:
             // rte_iova_t iova = rte_mem_virt2iova(va);
             uint64_t iova = fast_virt2iova(va);
             if (iova == RTE_BAD_IOVA) {
-                printf("dpdk set_one_data_buf BAD_IOVA: 0x%lx, 0x%lx\n", iova, (uint64_t)va);
                 return copy_one_data_buf(qp, m, va, buf_len);
             }
 
             tx_buf* buf = qp.get_tx_buf();
             if (!buf) {
-                printf("dpdk set_one_data_buf !buf\n");
                 return 0;
             }
 
             size_t len = std::min(buf_len, max_frag_len);
             buf->set_zc_info(va, iova, len);
             m = buf->rte_mbuf_p();
-            printf("dpdk set_one_data_buf normal return: %lu, 0x%lx\n", len, (uint64_t)m);
             return len;
         }
 

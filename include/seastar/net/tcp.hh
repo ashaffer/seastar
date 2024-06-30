@@ -1136,7 +1136,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
 // Send packet does not belong to any tcb
 template <typename InetTraits>
 void tcp<InetTraits>::send_packet_without_tcb(ipaddr from, ipaddr to, packet p) {
-    printf("TCP try wait\n");
     if (_queue_space.try_wait(p.len())) { // drop packets that do not fit the queue
         // FIXME: future is discarded
         (void)_inet.get_l2_dst_address(to).then([this, from, to, p = std::move(p)] (ethernet_address e_dst) mutable {

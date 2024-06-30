@@ -143,13 +143,6 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
         }
     }
 
-    char src_ip[64]{0};
-    char dst_ip[64]{0};
-    
-    inet_ntop(AF_INET, &iph->src_ip, src_ip, sizeof(src_ip) - 1);
-    inet_ntop(AF_INET, &iph->dst_ip, dst_ip, sizeof(dst_ip) - 1);
-    printf("IP received: %s src, %s dst (%u cpu)\n", src_ip, dst_ip, engine().cpu_id());
-
     auto h = ntoh(*iph);
     unsigned ip_len = h.len;
     unsigned ip_hdr_len = h.ihl * 4;
@@ -170,7 +163,6 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     // FIXME: process options
     if (in_my_netmask(h.src_ip) && !_arp.is_self(h.src_ip)) {
         // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {
-        printf("ip.cc arp learn\n");
         _arp.learn(from, h.src_ip);
     }
 
@@ -265,7 +257,6 @@ future<ethernet_address> ipv4::get_l2_dst_address(ipv4_address to) {
 }
 
 void ipv4::send(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst) {
-    printf("ipv4 send\n");
     auto needs_frag = this->needs_frag(p, proto_num, hw_features());
 
     auto send_pkt = [this, to, proto_num, needs_frag, e_dst, from] (packet& pkt, uint16_t remaining, uint16_t offset) mutable  {
@@ -358,7 +349,6 @@ void ipv4::send_immediate(ipv4_address from, ipv4_address to, ip_protocol_num pr
             iph->csum = csum.get();
         }
 
-        printf("ipv4 send_immediate\n");
         _netif->send(l3_protocol::l3packet{eth_protocol_num::ipv4, e_dst, std::move(pkt)});
     };
 
@@ -391,7 +381,6 @@ std::optional<l3_protocol::l3packet> ipv4::get_packet() {
             }
             if (l4p) {
                 auto l4pv = std::move(l4p.value());
-                printf("ipv4 get_packet send\n");
                 send(l4pv.from, l4pv.to, l4pv.proto_num, std::move(l4pv.p), l4pv.e_dst);
                 break;
             }
@@ -556,7 +545,6 @@ void icmp::received(packet p, ipaddr from, ipaddr to) {
     checksummer csum;
     csum.sum(reinterpret_cast<char*>(hdr), p.len());
     hdr->csum = csum.get();
-    printf("IP try wait\n");
     if (_queue_space.try_wait(p.len())) { // drop packets that do not fit the queue
         // FIXME: future is discarded        
         (void)_inet.get_l2_dst_address(from).then([this, from, to, p = std::move(p)] (ethernet_address e_dst) mutable {

@@ -803,7 +803,6 @@ private:
 build_mbuf_cluster:
             rte_mbuf *head = nullptr, *last_seg = nullptr;
             unsigned nsegs = 0;
-            printf("dpdk from_packet_zc\n");
 
             // Create a HEAD of the fragmented packet
             if (!translate_one_frag(qp, p.frag(0), head, last_seg, nsegs)) {
@@ -852,7 +851,6 @@ build_mbuf_cluster:
                 goto build_mbuf_cluster;
             }
 
-            printf("dpdk from_packet_zc returning Successfully\n");
             me(last_seg)->set_packet(std::move(p));
             return me(head);
         }

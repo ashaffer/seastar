@@ -41,14 +41,9 @@ namespace seastar {
     class lambda_task final : public task {
         Func _func;
     public:
-        lambda_task(scheduling_group sg, const Func& func) : task(sg), _func(func) {
-            printf("Constructed const lambda_task\n");
-        }
-        lambda_task(scheduling_group sg, Func&& func) : task(sg), _func(std::move(func)) {
-            printf("Constructed moved lambda_task\n");
-        }
+        lambda_task(scheduling_group sg, const Func& func) : task(sg), _func(func) {}
+        lambda_task(scheduling_group sg, Func&& func) : task(sg), _func(std::move(func)) {}
         virtual void run_and_dispose() noexcept override {
-            printf("run_and_dispose\n");
             _func();
             delete this;
         }

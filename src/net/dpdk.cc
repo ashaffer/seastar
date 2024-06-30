@@ -1310,7 +1310,6 @@ build_mbuf_cluster:
         tx_buf* get() {
             // Take completed from the HW first
             tx_buf *pkt = get_one_completed();
-            printf("dpdk tx_buf_factory get: 0x%lx\n", (uint64_t)pkt);
             if (pkt) {
                 if (HugetlbfsMemBackend) {
                     pkt->reset_zc();
@@ -1324,13 +1323,11 @@ build_mbuf_cluster:
             // factory's cache.
             //
             if (_ring.empty()) {
-                printf("dpdk tx_buf_factory get _ring.empty()\n");
                 return nullptr;
             }
 
             pkt = _ring.back();
             _ring.pop_back();
-            printf("dpdk tx_buf_factory get _ring.pop_back(), %lu, 0x%lx\n", _ring.size(), (uint64_t)pkt);
             return pkt;
         }
 
@@ -1338,7 +1335,6 @@ build_mbuf_cluster:
             if (HugetlbfsMemBackend) {
                 buf->reset_zc();
             }
-            printf("rx packets: %lu\n", _ring.size());
             _ring.push_back(buf);
         }
 
@@ -1406,13 +1402,11 @@ public:
     virtual uint32_t send(circular_buffer<packet>& pb) override {
         if (HugetlbfsMemBackend) {
             // Zero-copy send
-            printf("dpdk zc send\n");
             return _send(pb, [&] (packet&& p) {
                 return tx_buf::from_packet_zc(std::move(p), *this);
             });
         } else {
             // "Copy"-send
-            printf("dpdk copy send\n");
             return _send(pb, [&](packet&& p) {
                 return tx_buf::from_packet_copy(std::move(p), *this);
             });
@@ -1425,22 +1419,17 @@ private:
 
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
-        printf("dpdk _send: %lu\n", _tx_burst.size());
         if (_tx_burst.size() == 0) {
             uint64_t start = ticks();
-            printf("dpdk zero tx burst: %lu\n", pb.size());
             for (auto&& p : pb) {
-                printf("dpdk in pb loop\n");
                 // TODO: assert() in a fast path! Remove me ASAP!
                 // assert(p.len());
                 p.notifyTransmitted(start, 2);
                 tx_buf* buf = packet_to_tx_buf_p(std::move(p));
                 if (!buf) {
-                    printf("dpdk no buf break\n");
                     break;
                 }
 
-                printf("_tx_burst: %lu\n", _tx_burst.size());
                 _tx_burst.push_back(buf->rte_mbuf_p());
             }
         }
@@ -1450,7 +1439,6 @@ private:
                                          _tx_burst.size() - _tx_burst_idx);
         uint64_t nr_frags = 0, bytes = 0;
 
-        printf("dpdk sent: %hu\n", sent);
         for (int i = 0; i < sent; i++) {
             rte_mbuf* m = _tx_burst[_tx_burst_idx + i];
             bytes    += m->pkt_len;

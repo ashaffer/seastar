@@ -66,10 +66,6 @@ namespace seastar {
             explicit ipv4_address(uint32_t ip) : ip(ip) {}
             explicit ipv4_address(const std::string& addr);
             ipv4_address(seastar::ipv4_addr addr) {
-                char buf[64]{0};
-                inet_ntop((int)AF_INET, &addr.ip, buf, sizeof(buf) - 1);
-                printf("ipv4_address: %s\n", buf);
-
                 ip = addr.ip;
             }
 
@@ -557,7 +553,6 @@ namespace seastar {
             const net::hw_features& hw_features() const { return _netif->hw_features(); }
             static bool needs_frag(seastar::net::packet& p, seastar::net::ip_protocol_num proto_num, net::hw_features hw_features);
             void learn(ethernet_address l2, ipv4_address l3) {
-                printf("ip.hh learn -> arp.learn\n");
                 _arp.learn(l2, l3);
             }
             void register_packet_provider(ipv4_traits::packet_provider_type&& func) {

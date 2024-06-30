@@ -257,10 +257,8 @@ namespace seastar {
             virtual ~qp();
             virtual future<> send(seastar::net::packet p) = 0;
             virtual uint32_t send(circular_buffer<seastar::net::packet>& p) {
-                printf("net packet send\n");
                 uint32_t sent = 0;
                 while (!p.empty()) {
-                    printf("net send loop: %lu\n", p.size());
                     // FIXME: future is discarded
                     (void)send(std::move(p.front()));
                     p.pop_front();

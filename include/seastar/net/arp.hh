@@ -191,7 +191,6 @@ void arp_for<L3>::send(l2addr to, seastar::net::packet p) {
 template <typename L3>
 future<>
 arp_for<L3>::send_query(const l3addr& paddr) {
-    printf("arp send_query\n");
     send(ethernet::broadcast_address(), make_query_packet(paddr));
     return make_ready_future<>();
 }
@@ -233,8 +232,6 @@ arp_for<L3>::lookup(const l3addr& paddr) {
         });
         res._timeout_timer.arm_periodic(std::chrono::seconds(1));
         // FIXME: future is discarded
-        printf("ARP send query: %u cpu\n", engine().cpu_id());
-        printf("ARP paddr: %s\n", paddr.to_string().c_str());
         (void)send_query(paddr);
     }
 
@@ -249,7 +246,6 @@ arp_for<L3>::lookup(const l3addr& paddr) {
 template <typename L3>
 void
 arp_for<L3>::learn(l2addr hwaddr, l3addr paddr) {
-    printf("arp learn: %s, %s\n", hwaddr.to_string().c_str(), paddr.to_string().c_str());
     _table[paddr] = hwaddr;
     auto i = _in_progress.find(paddr);
     if (i != _in_progress.end()) {
@@ -271,7 +267,6 @@ arp_for<L3>::is_self(l3addr paddr) {
 template <typename L3>
 future<>
 arp_for<L3>::received(seastar::net::packet p) {
-    printf("received arp packet\n");
     auto ah = p.get_header(0, arp_hdr::size());
     if (!ah) {
         return make_ready_future<>();
@@ -281,17 +276,15 @@ arp_for<L3>::received(seastar::net::packet p) {
     if (h.hlen != sizeof(l2addr) || h.plen != sizeof(l3addr)) {
         return make_ready_future<>();
     }
-    printf("arp packet received: %hu\n", h.oper);
+
     switch (h.oper) {
     case op_request:
-        printf("op_request\n");
         return handle_request(&h);
     case op_reply:
         printf("arp op_reply: %s\n", h.sender_paddr.to_string().c_str());
         arp_learn(h.sender_hwaddr, h.sender_paddr);
         return make_ready_future<>();
     default:
-        printf("arp default\n");
         return make_ready_future<>();
     }
 }
@@ -299,10 +292,8 @@ arp_for<L3>::received(seastar::net::packet p) {
 template <typename L3>
 future<>
 arp_for<L3>::handle_request(arp_hdr* ah) {
-    printf("arp handle_request\n");
     if (is_self(ah->target_paddr)
             && _selves.begin()->first != L3::broadcast_address()) {
-        printf("arp is self\n");
         ah->oper = op_reply;
         ah->target_hwaddr = ah->sender_hwaddr;
         ah->target_paddr = ah->sender_paddr;
@@ -311,9 +302,8 @@ arp_for<L3>::handle_request(arp_hdr* ah) {
         auto p = ::seastar::net::packet();
         ah->write(p.prepend_uninitialized_header(ah->size()));
         send(ah->target_hwaddr, std::move(p));
-    } else {
-        printf("arp is not self\n");
     }
+
     return make_ready_future<>();
 }
 

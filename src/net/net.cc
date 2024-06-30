@@ -89,7 +89,6 @@ bool qp::poll_tx() {
                 auto p = pr();
                 if (p) {
                     work++;
-                    printf("net pushing to tx_packetq\n");
                     _tx_packetq.push_back(std::move(p.value()));
                     if (_tx_packetq.size() == 128) {
                         break;
@@ -100,7 +99,6 @@ bool qp::poll_tx() {
     }
 
     if (!_tx_packetq.empty()) {
-        printf("poll_tx send: %lu\n", _tx_packetq.size());
         _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
         return true;
     }
@@ -109,7 +107,6 @@ bool qp::poll_tx() {
 }
 
 void qp::send_immediate(packet p) {
-    printf("net send_immediate called\n");
     _tx_packetq.push_back(std::move(p));
     _stats.tx.good.update_pkts_bunch(send(_tx_packetq));
 }
@@ -213,7 +210,6 @@ void qp::configure_proxies(const std::map<unsigned, float>& cpu_weights) {
     register_packet_provider([this] {
         std::optional<packet> p;
         if (!_proxy_packetq.empty()) {
-            printf("proxy_packetq: %lu\n", _proxy_packetq.size());
             p = std::move(_proxy_packetq.front());
             _proxy_packetq.pop_front();
         }
@@ -294,7 +290,6 @@ interface::interface(std::shared_ptr<device> dev)
 }
 
 void interface::send(l3_protocol::l3packet l3pv) {
-    printf("interface send called\n");
     decorate(l3pv);
     _dev->local_queue().send_immediate(std::move(l3pv.p));
 }
@@ -382,7 +377,6 @@ future<> interface::dispatch_packet(packet p) {
                 }
             });
 
-            printf("received packet: %u dst cpu, %u cur cpu\n", fw, engine().cpu_id());
             if (fw != engine().cpu_id()) {
                 forward(fw, std::move(p));
             } else {

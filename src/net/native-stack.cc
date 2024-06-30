@@ -326,11 +326,6 @@ seastar::socket native_network_stack::socket(socket_address sa) {
     }
     
     std::string ip = std::format("{}", sa);
-    printf("contains addr: %lu, %s\n", _inet_map.count(sa.addr()), ip.c_str());
-    for (auto&& it : _inet_map) {
-        std::string iip = std::format("{}", it.first);
-        printf("\t%s\n", iip.c_str());
-    }
     return tcpv4_socket(_inet_map[sa.addr()]->get_tcp());
 }
 

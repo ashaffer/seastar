@@ -128,7 +128,6 @@ namespace seastar {
 
         static inline ipv4_addr from_string (const char *str, std::error_code& ec) noexcept {
             ipv4_addr ip;
-            printf("inet_pton: %s\n", str);
             int res = inet_pton(AF_INET, str, &ip.ip);
             // This needs to be returned in host byte order, but inet_pton constructs IP in network byte order
             ip.ip = htonl(ip.ip);

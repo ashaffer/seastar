@@ -477,7 +477,7 @@ namespace seastar {
             ipv4_address _gw_address;
             ipv4_address _netmask;
             l3_protocol _l3;
-            subscription<::seastar::net::packet, ethernet_address> _rx_packets;
+            subscription<seastar::net::packet, ethernet_address> _rx_packets;
             ipv4_tcp _tcp;
             ipv4_icmp _icmp;
             ipv4_udp _udp;

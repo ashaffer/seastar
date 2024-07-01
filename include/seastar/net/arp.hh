@@ -44,14 +44,14 @@ protected:
 public:
     arp_for_protocol(arp& a, uint16_t proto_num);
     virtual ~arp_for_protocol();
-    virtual future<> received(::seastar::net::packet p) = 0;
+    virtual future<> received(seastar::net::packet p) = 0;
     virtual bool forward(forward_hash& out_hash_data, ::seastar::net::packet& p, size_t off) { return false; }
 };
 
 class arp {
     interface* _netif;
     l3_protocol _proto;
-    subscription<::seastar::net::packet, ethernet_address> _rx_packets;
+    subscription<seastar::net::packet, ethernet_address> _rx_packets;
     std::unordered_map<uint16_t, arp_for_protocol*> _arp_for_protocol;
     circular_buffer<l3_protocol::l3packet> _packetq;
 private:
@@ -177,7 +177,7 @@ arp_for<L3>::make_query_packet(l3addr paddr) {
     hdr.target_hwaddr = ethernet::broadcast_address();
     hdr.target_paddr = paddr;
     printf("ARP packet: %s sender_hwaddr, %s sender_paddr, %s target_hwaddr, %s target_paddr\n", hdr.sender_hwaddr.to_string().c_str(), hdr.sender_paddr.to_string().c_str(), hdr.target_hwaddr.to_string().c_str(), hdr.target_paddr.to_string().c_str());
-    auto p = ::seastar::net::packet();
+    auto p = seastar::net::packet();
     p.prepend_uninitialized_header(hdr.size());
     hdr.write(p.get_header(0, hdr.size()));
     return p;

@@ -271,6 +271,7 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
                 printf("setting host address...\n");
                 inet->set_host_address(sa);
                 printf("setting map address...\n");
+                inet->set_host_address(sa);
                 _inet_map[(inet_address)sa] = inet;
                 printf("map address set\n");
             }
@@ -416,11 +417,10 @@ future<> native_network_stack::initialize() {
 
 void arp_learn(ethernet_address l2, ipv4_address l3)
 {
-    printf("outer arp_learn\n");
+    printf("native-stack arp_learn: %s, %s\n", l2.to_string().c_str(), l3.to_string().c_str());
     // Run arp_learn on all shard in the background
     (void)smp::invoke_on_all([l2, l3] {
         auto & ns = static_cast<native_network_stack&>(engine().net());
-        printf("outer arp_learn inside invoke_on_all: %u\n", engine().cpu_id());
         ns.arp_learn(l2, l3);
     });
 }

@@ -1414,7 +1414,6 @@ private:
 
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
-        printf("sending on %u\n", (unsigned)_dev->port_idx());
         if (_tx_burst.size() == 0) {
             uint64_t start = ticks();
             for (auto&& p : pb) {
@@ -2567,7 +2566,6 @@ std::unique_ptr<net::device> create_dpdk_net_device(
 {
     if (hw_cfg.mac_address != "") {
         uint portIdx = get_port_index_by_mac(hw_cfg.mac_address);
-        printf("portIdx by mac: %s (%u)\n", hw_cfg.mac_address.c_str(), portIdx);
         return create_dpdk_net_device(portIdx, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash, rssSort);
     } else {
         return create_dpdk_net_device(*hw_cfg.port_index, num_queues, hw_cfg.lro, hw_cfg.hw_fc, fullHash, initialHash, rssSort);

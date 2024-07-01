@@ -261,8 +261,6 @@ arp_for<L3>::learn(l2addr hwaddr, l3addr paddr) {
 template <typename L3>
 bool
 arp_for<L3>::is_self(l3addr paddr) {
-    printf("arp is_self: %s (%lu, %u)\n", paddr.to_string().c_str(), _selves.size(), _selves.find(paddr) != _selves.end());
-    printf("arp ips:");
     for(auto&& it : _selves) {
         printf(" %s", it.first.to_string().c_str());
     }
@@ -287,7 +285,6 @@ arp_for<L3>::received(seastar::net::packet p) {
     case op_request:
         return handle_request(&h);
     case op_reply:
-        printf("arp op_reply: %s\n", h.sender_paddr.to_string().c_str());
         arp_learn(h.sender_hwaddr, h.sender_paddr);
         return make_ready_future<>();
     default:

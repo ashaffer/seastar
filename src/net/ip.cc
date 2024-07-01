@@ -161,7 +161,6 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     }
 
     // FIXME: process options
-    printf("received ip packet: %u, %u, %u (%s, %s)\n", in_my_netmask(h.src_ip), _arp.is_self(h.src_ip), _arp.is_self(h.dst_ip), h.src_ip.to_string().c_str(), h.dst_ip.to_string().c_str());
     if (in_my_netmask(h.src_ip) || !_arp.is_self(h.src_ip)) {
         // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {
         _arp.learn(from, h.src_ip);
@@ -259,7 +258,7 @@ future<ethernet_address> ipv4::get_l2_dst_address(ipv4_address to) {
 
 void ipv4::send(ipv4_address from, ipv4_address to, ip_protocol_num proto_num, packet p, ethernet_address e_dst) {
     auto needs_frag = this->needs_frag(p, proto_num, hw_features());
-
+    printf("sending %s -> %s\n", from.to_string().c_str(), to.to_string().c_str());
     auto send_pkt = [this, to, proto_num, needs_frag, e_dst, from] (packet& pkt, uint16_t remaining, uint16_t offset) mutable  {
         auto iph = pkt.prepend_header<ip_hdr>();
         iph->ihl = sizeof(*iph) / 4;

@@ -261,7 +261,7 @@ arp_for<L3>::learn(l2addr hwaddr, l3addr paddr) {
 template <typename L3>
 bool
 arp_for<L3>::is_self(l3addr paddr) {
-    printf("arp is_self: %s (%u)\n", paddr.to_string().c_str(), _selves.find(paddr) != _selves.end());
+    printf("arp is_self: %s (%lu, %u)\n", paddr.to_string().c_str(), _selves.size(), _selves.find(paddr) != _selves.end());
     return _selves.find(paddr) != _selves.end();
 }
 

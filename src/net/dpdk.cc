@@ -1226,7 +1226,7 @@ build_mbuf_cluster:
             using namespace memory;
 
             // sstring name = sstring(pktmbuf_pool_name) + sstring("_") + to_sstring(port_idx) + sstring("_") + to_sstring(qid) + "_tx";
-            sstring name = sstring("pkt_tt") + sstring("_") + to_sstring(port_idx) + to_sstring(qid) + "tx";
+            sstring name = sstring("pkt_tt") + sstring("_") + to_sstring(port_idx) + sstring("_") + to_sstring(qid) + "_tx";
             printf("Creating Tx mbuf pool '%s' [%u mbufs]  [%hu inline_mbuf_size] [%hu mbuf_cache_size]...\n",
                    name.c_str(), mbufs_per_queue_tx, inline_mbuf_size, mbuf_cache_size);
 

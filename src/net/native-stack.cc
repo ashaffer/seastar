@@ -224,7 +224,6 @@ public:
 
             // if (!seen.contains(iface)) {
                 // seen.insert(iface);
-            printf("native-stack ii.second->learn\n");
             ii.second->learn(l2, l3);
             // }
         }

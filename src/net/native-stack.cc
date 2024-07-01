@@ -72,7 +72,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         net_config << fs.rdbuf();
     }
 
-    std::vector<std::shared_ptr<device>> devices;
+    std::unordered_map<std::string, std::shared_ptr<device>> devices;
     device_configs dev_cfgs;
 
     bool fullHash = opts["full-rss-hash"].as<bool>();
@@ -82,9 +82,9 @@ void create_native_net_device(boost::program_options::variables_map opts) {
     if ( deprecated_config_used) {
 // #ifdef SEASTAR_HAVE_DPDK
         if (opts["dpdk-pmd"].as<bool>()) {
-             devices.push_back(create_dpdk_net_device(opts["dpdk-port-index"].as<unsigned>(), smp::count,
+             devices["ens1"] = create_dpdk_net_device(opts["dpdk-port-index"].as<unsigned>(), smp::count,
                 !(opts["lro"].as<std::string>() == "off"),
-                !(opts["hw-fc"].as<std::string>() == "off"), fullHash, initialHash, rssSort));
+                !(opts["hw-fc"].as<std::string>() == "off"), fullHash, initialHash, rssSort);
         } else {
 // #endif
             throw std::runtime_error("[create_native_net_device] invalid config");
@@ -103,7 +103,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             if ( hw_config.port_index || !hw_config.pci_address.empty() || !hw_config.mac_address.empty()) {
                 auto dev = create_dpdk_net_device(hw_config, num_queues, fullHash, initialHash, rssSort);
                 std::shared_ptr<device> sdev(dev.release());
-	            devices.push_back(sdev);
+	            devices[device_config.first] = sdev;
 	        } else 
 #endif  
             {
@@ -126,7 +126,8 @@ void create_native_net_device(boost::program_options::variables_map opts) {
 
     auto sem = std::make_shared<semaphore>(0);
     uint jj = 0;
-    for (auto sdev : devices) {
+    for (auto it : devices) {
+        auto sdev = it.second;
         for (unsigned i = 0; i < smp::count; i++) {
             (void)smp::submit_to(i, [opts, sdev] {
                 auto qid = engine().cpu_id();
@@ -158,7 +159,8 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         printf("Completed device init: awaiting %u devices to signal\n", (uint)devices.size());
         auto sem2 = std::make_shared<semaphore>(0);
         uint i = 0;
-        for (auto sdev : devices) {
+        for (auto it : devices) {
+            auto sdev = it.second;
             (void)sdev->link_ready().then([sem2] {
                 printf("link ready signal: %u\n", engine().cpu_id());
                 sem2->signal();
@@ -202,7 +204,7 @@ private:
     }
     using tcp4 = tcp<ipv4_traits>;
 public:
-    explicit native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs);
+    explicit native_network_stack(boost::program_options::variables_map opts, std::unordered_map<std::string, std::shared_ptr<device>> devices, device_configs dev_cfgs);
     virtual server_socket listen(socket_address sa, listen_options opt) override;
     virtual seastar::socket socket(socket_address local = {}) override;
     virtual udp_channel make_udp_channel(const socket_address& addr) override;
@@ -245,11 +247,12 @@ add_native_net_options_description(boost::program_options::options_description &
 #endif
 }
 
-native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) {
+native_network_stack::native_network_stack(boost::program_options::variables_map opts, std::unordered_map<std::string, std::shared_ptr<device>> devices, device_configs dev_cfgs) {
     uint i = 0; 
 
     for (auto&& device_config : dev_cfgs) {
-        interface *iface = new interface{std::move(devices[i])};
+        printf("Device config: %s\n", device_config.second.hw_cfg.mac_address.c_str());
+        interface *iface = new interface{std::move(devices[device_config.first])};
         ifaces.push_back(iface);
         ipv4 *inet = new ipv4{iface};
         auto& ip_config = device_config.second.ip_cfg;
@@ -413,7 +416,7 @@ void arp_learn(ethernet_address l2, ipv4_address l3)
     });
 }
 
-void create_native_stack(boost::program_options::variables_map opts, std::vector<std::shared_ptr<device>> devices, device_configs dev_cfgs) { 
+void create_native_stack(boost::program_options::variables_map opts, std::unordered_map<std::string, std::shared_ptr<device>> devices, device_configs dev_cfgs) { 
    native_network_stack::ready_promise.set_value(std::unique_ptr<network_stack>(std::make_unique<native_network_stack>(opts, devices, dev_cfgs)));
 }
 

@@ -138,11 +138,8 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                         cpu_weights[i] = 1;
                     }
                     cpu_weights[qid] = opts["hw-queue-weight"].as<float>();
-                    printf("Configutring proxies...\n");
                     qp->configure_proxies(cpu_weights);
-                    printf("Proxies configured, setting local queue...\n");
                     sdev->set_local_queue(std::move(qp), qid);
-                    printf("Local queue set\n");
                 } else {
                     auto master_qid = qid % sdev->hw_queues_count();
                     auto master_cpuid = sdev->qid2cpuid(master_qid);

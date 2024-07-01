@@ -298,6 +298,7 @@ arp_for<L3>::received(seastar::net::packet p) {
 template <typename L3>
 future<>
 arp_for<L3>::handle_request(arp_hdr* ah) {
+    printf("arp handle_request: %s\n", ah->target_paddr.to_string().c_str());
     if (is_self(ah->target_paddr)
             && _selves.begin()->first != L3::broadcast_address()) {
         ah->oper = op_reply;

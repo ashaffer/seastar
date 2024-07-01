@@ -1414,6 +1414,7 @@ private:
 
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
+        printf("sending on %u\n", (unsigned)_dev->port_idx());
         if (_tx_burst.size() == 0) {
             uint64_t start = ticks();
             for (auto&& p : pb) {

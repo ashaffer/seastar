@@ -262,6 +262,11 @@ template <typename L3>
 bool
 arp_for<L3>::is_self(l3addr paddr) {
     printf("arp is_self: %s (%lu, %u)\n", paddr.to_string().c_str(), _selves.size(), _selves.find(paddr) != _selves.end());
+    printf("arp ips:");
+    for(auto&& it : _selves) {
+        printf(" %s", it.first.to_string().c_str());
+    }
+    printf("\n");
     return _selves.find(paddr) != _selves.end();
 }
 

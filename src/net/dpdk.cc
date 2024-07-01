@@ -1225,8 +1225,8 @@ build_mbuf_cluster:
         tx_buf_factory(uint16_t port_idx, uint16_t qid) {
             using namespace memory;
 
-            // sstring name = sstring(pktmbuf_pool_name) + to_sstring(port_idx) + sstring("_") + to_sstring(qid) + "_tx";
-            sstring name = sstring("tt") + to_sstring(port_idx) + to_sstring(qid) + "tx";
+            sstring name = sstring(pktmbuf_pool_name) + sstring("_") + to_sstring(port_idx) + sstring("_") + to_sstring(qid) + "_tx";
+            // sstring name = sstring("tt") + sstring("_") + to_sstring(port_idx) + to_sstring(qid) + "tx";
             printf("Creating Tx mbuf pool '%s' [%u mbufs]  [%hu inline_mbuf_size] [%hu mbuf_cache_size]...\n",
                    name.c_str(), mbufs_per_queue_tx, inline_mbuf_size, mbuf_cache_size);
 
@@ -1975,7 +1975,7 @@ template <bool HugetlbfsMemBackend>
 bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 {
     using namespace memory;
-    sstring name = sstring(pktmbuf_pool_name) + to_sstring(_dev->port_idx()) + sstring("_") + to_sstring(_qid) + "_rx";
+    sstring name = sstring(pktmbuf_pool_name) + sstring("_") + to_sstring(_dev->port_idx()) + sstring("_") + to_sstring(_qid) + "_rx";
 
     printf("Creating Rx mbuf pool '%s' [%u mbufs] [%hu inline_mbuf_size] [%hu mbuf_cache_size]...\n",
            name.c_str(), mbufs_per_queue_rx, inline_mbuf_size, mbuf_cache_size);

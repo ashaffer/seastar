@@ -219,15 +219,15 @@ public:
     virtual bool has_per_core_namespace() override { return true; };
     void arp_learn(ethernet_address l2, ipv4_address l3) {
         printf("native-stack arp_learn\n");
-        std::unordered_set<interface *> seen;
+        // std::unordered_set<interface *> seen;
         for (auto ii : _inet_map) {
-            interface *iface{ii.second->netif()};
+            // interface *iface{ii.second->netif()};
 
-            if (!seen.contains(iface)) {
-                seen.insert(iface);
-                printf("native-stack ii.second->learn\n");
-                ii.second->learn(l2, l3);
-            }
+            // if (!seen.contains(iface)) {
+                // seen.insert(iface);
+            printf("native-stack ii.second->learn\n");
+            ii.second->learn(l2, l3);
+            // }
         }
     }
     virtual std::vector<std::vector<std::string>> getLocalIps() override;

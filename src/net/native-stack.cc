@@ -264,13 +264,10 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
 
         if (!_dhcp) {
             for (auto ip : ip_config.ip) {
-                printf("constructing ipv4_addresss: %s\n", ip.c_str());
                 auto sa = ipv4_address(ip);
-                printf("setting host address...\n");
                 inet->set_host_address(sa);
-                printf("setting map address...\n");
                 _inet_map[(inet_address)sa] = inet;
-                printf("map address set\n");
+                printf("setting host address: %s (%u)\n", ip.c_str(), (unsigned)iface->port_idx());
             }
             // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
             inet->set_gw_address(ipv4_address(ip_config.gateway));
@@ -278,8 +275,8 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
         }
 
         if (i == 0) {
-            socket_address sa = {};
-            _inet_map[sa.addr()] = inet;
+            socket_address sa2 = {};
+            _inet_map[sa2.addr()] = inet;
             default_device = inet;
         }
 
@@ -330,7 +327,6 @@ seastar::socket native_network_stack::socket(socket_address sa) {
 using namespace std::chrono_literals;
 
 future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
-    printf("native stack dhcp semaphore\n");
     auto sem = std::make_shared<semaphore>(0);
 
     for (auto ii : _inet_map) {
@@ -349,13 +345,11 @@ future<> native_network_stack::run_dhcp(bool is_renew, const dhcp::lease& res) {
                     ns.set_ipv4_packet_filter(inet, nullptr);
                 }).then(std::bind(&net::native_network_stack::on_dhcp, this, inet, lease, is_renew));
             }).finally([sem, d = std::move(d)] {
-                printf("dhcp signal: %u\n", engine().cpu_id());
                 sem->signal();
             });
         });
     }
 
-    printf("run_dhcp sem wait: %lu\n", _inet_map.size());
     return sem->wait(_inet_map.size());
 }
 

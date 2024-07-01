@@ -218,7 +218,6 @@ public:
     }
     virtual bool has_per_core_namespace() override { return true; };
     void arp_learn(ethernet_address l2, ipv4_address l3) {
-        printf("native-stack arp_learn\n");
         // std::unordered_set<interface *> seen;
         for (auto ii : _inet_map) {
             // interface *iface{ii.second->netif()};
@@ -271,7 +270,6 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
                 printf("setting host address...\n");
                 inet->set_host_address(sa);
                 printf("setting map address...\n");
-                inet->set_host_address(sa);
                 _inet_map[(inet_address)sa] = inet;
                 printf("map address set\n");
             }

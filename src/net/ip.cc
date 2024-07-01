@@ -161,7 +161,8 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     }
 
     // FIXME: process options
-    if (in_my_netmask(h.src_ip) && !_arp.is_self(h.src_ip)) {
+    printf("received ip packet: %u, %u (%s, %s)\n", in_my_netmask(h.src_ip), _arp.is_self(h.src_ip), _arp.is_self(h.dst_ip), h.src_ip.to_string().c_str(), h.dst_ip.to_string().c_str());
+    if (in_my_netmask(h.src_ip) || !_arp.is_self(h.src_ip)) {
         // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {
         _arp.learn(from, h.src_ip);
     }

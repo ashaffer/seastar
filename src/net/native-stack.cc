@@ -251,7 +251,6 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
     uint i = 0; 
 
     for (auto&& device_config : dev_cfgs) {
-        printf("Device config: %s\n", device_config.second.hw_cfg.mac_address.c_str());
         interface *iface = new interface{std::move(devices[device_config.first])};
         ifaces.push_back(iface);
         ipv4 *inet = new ipv4{iface};
@@ -267,7 +266,6 @@ native_network_stack::native_network_stack(boost::program_options::variables_map
                 auto sa = ipv4_address(ip);
                 inet->set_host_address(sa);
                 _inet_map[(inet_address)sa] = inet;
-                printf("setting host address: %s (%u)\n", ip.c_str(), (unsigned)iface->port_idx());
             }
             // _inet.set_host_address(ipv4_address(_dhcp ? 0 : opts["host-ipv4-addr"].as<std::string>()));
             inet->set_gw_address(ipv4_address(ip_config.gateway));

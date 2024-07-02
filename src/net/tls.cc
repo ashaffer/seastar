@@ -577,7 +577,7 @@ public:
                 return session;
             }(), &gnutls_deinit) {
         socketId = ++numSockets;
-        printf("created wrapped connected_socket\n");
+        printf("created wrapped connected_socket: %s\n", _hostname.c_str());
         gtls_chk(gnutls_set_default_priority(*this));
         gtls_chk(
                 gnutls_credentials_set(*this, GNUTLS_CRD_CERTIFICATE,

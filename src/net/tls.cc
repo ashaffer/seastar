@@ -659,12 +659,14 @@ public:
             auto res = gnutls_handshake(*this);
             printf("gnutls_handshake: %d\n", res);
             if (res < 0) {
+                printf("gnutls res < 0\n");
                 switch (res) {
                 case GNUTLS_E_AGAIN:
                     // #453 always wait for output first.
                     // If none is pending, it should be a no-op
                 {
                     ++_eagainCount;
+                    printf("gnutls eagain\n");
                     int dir = gnutls_record_get_direction(*this);
                     _connState = 3;
                     return wait_for_output().then([this, dir] {

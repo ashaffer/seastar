@@ -874,11 +874,13 @@ public:
 
     future<> do_put(frag_iter i, frag_iter e, std::function<void(uint64_t, int)> onTransmit) {
         out_sem_reason = 1;
+        printf("do_put\n");
 
         assert(_output_pending.available());
         onTransmitFn = onTransmit;
 
         return do_for_each(i, e, [this](net::fragment& f) {
+            printf("\tsending frag\n");
             auto ptr = f.base;
             auto size = f.size;
             size_t off = 0; // here to appease eclipse cdt
@@ -897,7 +899,9 @@ public:
                     printf("Invalid TLS size: %u, %u\n", (uint)size, (uint)(size - off));
                 }
 
+                printf("\tgnutls_record_send\n");
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
+                printf("\tsent: %d\n", res);
                 if (res > 0) { // don't really need to check, but...
                     off += res;
                 }
@@ -914,11 +918,13 @@ public:
     }
 
     future<> put(net::packet p) {
+        printf("tls put\n");
         if (_error || _shutdown) {
             printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
         }
         if (!_connected) {
+            printf("not connected, handshaking...\n");
             return handshake().then([this, p = std::move(p)]() mutable {
                return put(std::move(p));
             }).handle_exception([this] (std::exception_ptr ep) {
@@ -933,10 +939,12 @@ public:
 
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
-
+        printf("connected, sending fragments...\n");
         if (_ignore_semaphore) {
+            printf("ignoring semaphore\n");
             return do_put(i, e, p.getOnTransmit());
         } else {
+            printf("sending with semaphore...\n");
             return with_semaphore_sync(
                 _out_sem, 
                 1, 
@@ -971,6 +979,7 @@ public:
             return -1;
         }
 
+        printf("vec_push\n");
         try {
             scattered_message<char> msg;
             for (int i = 0; i < iovcnt; ++i) {
@@ -982,6 +991,7 @@ public:
 
             p.onTransmit(onTransmitFn);
             p.notifyTransmitted(__rdtsc(), 0);
+            printf("_out put\n");
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {

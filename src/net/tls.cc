@@ -577,6 +577,7 @@ public:
                 return session;
             }(), &gnutls_deinit) {
         socketId = ++numSockets;
+        printf("created wrapped connected_socket\n");
         gtls_chk(gnutls_set_default_priority(*this));
         gtls_chk(
                 gnutls_credentials_set(*this, GNUTLS_CRD_CERTIFICATE,
@@ -648,11 +649,13 @@ public:
         return s;
     }
     future<> do_handshake() {
+        printf("do_handshake\n");
         if (_connected) {
             return make_ready_future<>();
         }
         try {
             _connState = 2;
+            printf("gnutls_handshake...\n");
             auto res = gnutls_handshake(*this);
             if (res < 0) {
                 switch (res) {
@@ -690,9 +693,12 @@ public:
                     return make_exception_future<>(std::system_error(res, glts_errorc));
                 }
             }
+            printf("pre-client auth\n");
             if (_creds->_impl->get_client_auth() != client_auth::NONE) {
+                printf("doing client auth\n");
                 verify();
             }
+            printf("connected true\n");
             _connected = true;
             _hasConnected = true;
             // make sure we reset output_pending
@@ -1352,13 +1358,17 @@ data_sink tls::tls_connected_socket_impl::sink() {
 
 
 future<connected_socket> tls::connect(shared_ptr<certificate_credentials> cred, socket_address sa, sstring name) {
+    printf("tls connect1...\n");
     return engine().connect(sa).then([cred = std::move(cred), name = std::move(name)](connected_socket s) mutable {
+        printf("tl1 wrap_client1...\n");
         return wrap_client(cred, std::move(s), std::move(name));
     });
 }
 
 future<connected_socket> tls::connect(shared_ptr<certificate_credentials> cred, socket_address sa, socket_address local, sstring name) {
+    printf("tls connect2...\n");
     return engine().connect(sa, local).then([cred = std::move(cred), name = std::move(name)](connected_socket s) mutable {
+        printf("tls wrap_client2...\n");
         return wrap_client(cred, std::move(s), std::move(name));
     });
 }

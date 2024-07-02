@@ -1076,6 +1076,7 @@ public:
         }).finally([me = shared_from_this()] {});
     }
     future<> shutdown() {
+        printf("shutdown\n");
         if (_putting) {
             printf("Shutdown called while _putting is true\n");
         }
@@ -1093,6 +1094,7 @@ public:
                         std::bind(&session::wait_for_eof, this));
     }
     void close() {
+        printf("close\n");
         // only do once.
         if (!std::exchange(_shutdown, true)) {
             auto me = shared_from_this();

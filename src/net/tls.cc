@@ -901,7 +901,7 @@ public:
 
                 printf("\tgnutls_record_send\n");
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
-                printf("\tsent: %d\n", res);
+                printf("\tsent: %ld\n", res);
                 if (res > 0) { // don't really need to check, but...
                     off += res;
                 }

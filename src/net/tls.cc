@@ -657,6 +657,7 @@ public:
             _connState = 2;
             printf("gnutls_handshake...\n");
             auto res = gnutls_handshake(*this);
+            printf("gnutls_handshake: %d\n", res);
             if (res < 0) {
                 switch (res) {
                 case GNUTLS_E_AGAIN:

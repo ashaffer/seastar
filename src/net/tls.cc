@@ -842,7 +842,9 @@ public:
             }
 
             temporary_buffer<char> buf(avail);
+            printf("gnutls_record_recv %u...\n", (uint)avail);
             auto n = gnutls_record_recv(*this, buf.get_write(), buf.size());
+            printf("gnuttls_record_recv (%u): %.*s\n", (uint)n, (int)n, buf.get());
 
             if (n < 0) {
                 switch (n) {

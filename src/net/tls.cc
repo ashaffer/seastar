@@ -577,7 +577,6 @@ public:
                 return session;
             }(), &gnutls_deinit) {
         socketId = ++numSockets;
-        printf("created wrapped connected_socket: %s\n", _hostname.c_str());
         gtls_chk(gnutls_set_default_priority(*this));
         gtls_chk(
                 gnutls_credentials_set(*this, GNUTLS_CRD_CERTIFICATE,
@@ -843,9 +842,7 @@ public:
             }
 
             temporary_buffer<char> buf(avail);
-            printf("gnutls_record_recv %u...\n", (uint)avail);
             auto n = gnutls_record_recv(*this, buf.get_write(), buf.size());
-            printf("gnutls_record_recv (%ld): %.*s\n", n, (int)n, buf.get());
 
             if (n < 0) {
                 switch (n) {
@@ -886,13 +883,11 @@ public:
 
     future<> do_put(frag_iter i, frag_iter e, std::function<void(uint64_t, int)> onTransmit) {
         out_sem_reason = 1;
-        printf("do_put\n");
 
         assert(_output_pending.available());
         onTransmitFn = onTransmit;
 
         return do_for_each(i, e, [this](net::fragment& f) {
-            printf("\tsending frag\n");
             auto ptr = f.base;
             auto size = f.size;
             size_t off = 0; // here to appease eclipse cdt
@@ -911,9 +906,7 @@ public:
                     printf("Invalid TLS size: %u, %u\n", (uint)size, (uint)(size - off));
                 }
 
-                printf("\tgnutls_record_send (%lu): %.*s\n",size,  (int)size, ptr);
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
-                printf("\tsent: %ld\n", res);
                 if (res > 0) { // don't really need to check, but...
                     off += res;
                 }
@@ -930,13 +923,11 @@ public:
     }
 
     future<> put(net::packet p) {
-        printf("tls put\n");
         if (_error || _shutdown) {
             printf("tls::put _error/_shutdown: %u/%u\n", (uint)_error, (uint)_shutdown);
             return make_exception_future<>(std::system_error(EINVAL, std::system_category()));
         }
         if (!_connected) {
-            printf("not connected, handshaking...\n");
             return handshake().then([this, p = std::move(p)]() mutable {
                return put(std::move(p));
             }).handle_exception([this] (std::exception_ptr ep) {
@@ -951,12 +942,9 @@ public:
 
         auto i = p.fragments().begin();
         auto e = p.fragments().end();
-        printf("connected, sending fragments...\n");
         if (_ignore_semaphore) {
-            printf("ignoring semaphore\n");
             return do_put(i, e, p.getOnTransmit());
         } else {
-            printf("sending with semaphore...\n");
             return with_semaphore_sync(
                 _out_sem, 
                 1, 
@@ -991,7 +979,6 @@ public:
             return -1;
         }
 
-        printf("vec_push\n");
         try {
             scattered_message<char> msg;
             for (int i = 0; i < iovcnt; ++i) {
@@ -1003,7 +990,6 @@ public:
 
             p.onTransmit(onTransmitFn);
             p.notifyTransmitted(__rdtsc(), 0);
-            printf("_out put\n");
             _output_pending = _out.put(std::move(p));
             return n;
         } catch (...) {
@@ -1082,7 +1068,6 @@ public:
         }).finally([me = shared_from_this()] {});
     }
     future<> shutdown() {
-        printf("shutdown\n");
         if (_putting) {
             printf("Shutdown called while _putting is true\n");
         }
@@ -1100,7 +1085,6 @@ public:
                         std::bind(&session::wait_for_eof, this));
     }
     void close() {
-        printf("close\n");
         // only do once.
         if (!std::exchange(_shutdown, true)) {
             auto me = shared_from_this();
@@ -1370,17 +1354,13 @@ data_sink tls::tls_connected_socket_impl::sink() {
 
 
 future<connected_socket> tls::connect(shared_ptr<certificate_credentials> cred, socket_address sa, sstring name) {
-    printf("tls connect1...\n");
     return engine().connect(sa).then([cred = std::move(cred), name = std::move(name)](connected_socket s) mutable {
-        printf("tl1 wrap_client1...\n");
         return wrap_client(cred, std::move(s), std::move(name));
     });
 }
 
 future<connected_socket> tls::connect(shared_ptr<certificate_credentials> cred, socket_address sa, socket_address local, sstring name) {
-    printf("tls connect2...\n");
     return engine().connect(sa, local).then([cred = std::move(cred), name = std::move(name)](connected_socket s) mutable {
-        printf("tls wrap_client2...\n");
         return wrap_client(cred, std::move(s), std::move(name));
     });
 }

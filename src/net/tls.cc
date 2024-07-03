@@ -734,7 +734,7 @@ public:
              * cipher/key exchange */
             desc = gnutls_session_get_desc(_session.get());
             if (desc != NULL) {
-                auto sess = _session.get();
+                // auto sess = _session.get();
                 printf("- Session: %s\n", desc);
             }
         });

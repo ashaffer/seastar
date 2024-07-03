@@ -197,16 +197,14 @@ qp::qp(bool register_copy_stats,
     }
 }
 
-qp::~qp() {
-    printf("regular qp destroyed\n");
-}
+qp::~qp() {}
 
 void qp::configure_proxies(const std::map<unsigned, float>& cpu_weights) {
     assert(!cpu_weights.empty());
     // if ((cpu_weights.size() == 1 && cpu_weights.begin()->first == engine().cpu_id())) {
     //     // special case queue sending to self only, to avoid requiring a hash value
     //     return;
-    // }
+    // }F
     register_packet_provider([this] {
         std::optional<packet> p;
         if (!_proxy_packetq.empty()) {

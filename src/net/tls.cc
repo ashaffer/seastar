@@ -735,7 +735,7 @@ public:
             desc = gnutls_session_get_desc(_session.get());
             if (desc != NULL) {
                 auto sess = _session.get();
-                printf("- Session: %s (0x%x)\n", desc, (uint)sess->internals.flags);
+                printf("- Session: %s\n", desc);
             }
         });
     }

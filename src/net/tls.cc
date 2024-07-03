@@ -648,24 +648,19 @@ public:
         return s;
     }
     future<> do_handshake() {
-        printf("do_handshake\n");
         if (_connected) {
             return make_ready_future<>();
         }
         try {
             _connState = 2;
-            printf("gnutls_handshake...\n");
             auto res = gnutls_handshake(*this);
-            printf("gnutls_handshake: %d\n", res);
             if (res < 0) {
-                printf("gnutls res < 0\n");
                 switch (res) {
                 case GNUTLS_E_AGAIN:
                     // #453 always wait for output first.
                     // If none is pending, it should be a no-op
                 {
                     ++_eagainCount;
-                    printf("gnutls eagain\n");
                     int dir = gnutls_record_get_direction(*this);
                     _connState = 3;
                     return wait_for_output().then([this, dir] {
@@ -695,12 +690,9 @@ public:
                     return make_exception_future<>(std::system_error(res, glts_errorc));
                 }
             }
-            printf("pre-client auth\n");
             if (_creds->_impl->get_client_auth() != client_auth::NONE) {
-                printf("doing client auth\n");
                 verify();
             }
-            printf("connected true\n");
             _connected = true;
             _hasConnected = true;
             // make sure we reset output_pending
@@ -725,19 +717,19 @@ public:
                 out_sem_reason = 4;
                 return do_handshake();
             });
-        })
-        .then([this] () {
-            char *desc;
-
-            /* get a description of the session connection, protocol,
-             * cipher/key exchange */
-            desc = gnutls_session_get_desc(_session.get());
-            if (desc != NULL) {
-                // auto sess = _session.get();
-                printf("- Session: %s\n", desc);
-                socket().print();
-            }
         });
+        // .then([this] () {
+        //     char *desc;
+
+        //     /* get a description of the session connection, protocol,
+        //      * cipher/key exchange */
+        //     desc = gnutls_session_get_desc(_session.get());
+        //     if (desc != NULL) {
+        //         // auto sess = _session.get();
+        //         printf("- Session: %s\n", desc);
+        //         socket().print();
+        //     }
+        // });
     }
 
     size_t in_avail() const {

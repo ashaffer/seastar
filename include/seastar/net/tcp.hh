@@ -972,7 +972,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
              (netif->hash2cpu(id.hash(rss_conf)) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
-    // printConnid(id, _inet);
+    printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
     tcbp->connect();
@@ -1841,6 +1841,10 @@ void tcp<InetTraits>::tcb::decorate(packet& p, bool data_retransmit) {
     bool syn_on = syn_needs_on();
     bool ack_on = ack_needs_on();
 
+    printf("Decorate:\n");
+    connid id{_local_ip, _foreign_ip, _local_port, _foreign_port};
+    printConnid(id, _tcp._inet);
+
     auto options_size = _option.get_size(syn_on, ack_on);
     auto th = p.prepend_uninitialized_header(tcp_hdr::len + options_size);
     auto h = tcp_hdr{};
@@ -2030,6 +2034,7 @@ future<> tcp<InetTraits>::tcb::wait_send_available() {
 
 template <typename InetTraits>
 future<> tcp<InetTraits>::tcb::send(packet p) {
+    printf("Packet size: %u\n", p.size());
     // We can not send after the connection is closed
     if (closeState > 0 && closeState < 100) {
         printf("[tcp] send called after close called: %u\n", closeState);

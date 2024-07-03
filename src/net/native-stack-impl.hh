@@ -130,6 +130,14 @@ public:
     uint32_t can_send () override {
         return _conn->can_send();
     }
+
+    void print () override {
+        char buf[64]{0};
+        auto ip = _conn->foreign_ip().ip;
+        auto port = _conn->foreign_port();
+        inet_ntop(AF_INET, &ip, buf, sizeof(buf) - 1);
+        printf("native connected sock: %s (%u)\n", buf, port);
+    }
 };
 
 template <typename Protocol>

@@ -736,6 +736,7 @@ public:
             if (desc != NULL) {
                 // auto sess = _session.get();
                 printf("- Session: %s\n", desc);
+                socket().print();
             }
         });
     }
@@ -1258,6 +1259,10 @@ public:
     // gnutls_session_t gnutls_session() {
     //     return (gnutls_session_t)_session.get();
     // }
+
+    void print () override {
+        _session->socket().print();
+    }
 
     void ignore_semaphore () override {
         return _session->ignore_semaphore();

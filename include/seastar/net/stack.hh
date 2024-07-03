@@ -50,6 +50,7 @@ public:
     virtual bool isClosed() const = 0;
     virtual uint32_t can_send() = 0;
     virtual void ignore_semaphore() = 0;
+    virtual void print () = 0;
 };
 
 class socket_impl {

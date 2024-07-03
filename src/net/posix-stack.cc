@@ -181,7 +181,11 @@ public:
 
     void set_alpn_string(const std::string& str) override {
 
-    }    
+    }
+
+    void print () override {
+        
+    }
 
     void ignore_semaphore() override {
         // noop
@@ -256,6 +260,9 @@ public:
 
     }
 
+    void print () override {
+
+    }
 
     void ignore_semaphore() override {
         // noop

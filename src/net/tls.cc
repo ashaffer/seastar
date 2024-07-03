@@ -726,18 +726,18 @@ public:
                 out_sem_reason = 4;
                 return do_handshake();
             });
-        });
-        // .then([this] () {
-        //     char *desc;
+        })
+        .then([this] () {
+            char *desc;
 
-        //     /* get a description of the session connection, protocol,
-        //      * cipher/key exchange */
-        //     desc = gnutls_session_get_desc(_session.get());
-        //     if (desc != NULL) {
-        //         auto sess = _session.get();
-        //         printf("- Session: %s (0x%x)\n", desc, sess->internals.flags);
-        //     }
-        // });
+            /* get a description of the session connection, protocol,
+             * cipher/key exchange */
+            desc = gnutls_session_get_desc(_session.get());
+            if (desc != NULL) {
+                auto sess = _session.get();
+                printf("- Session: %s (0x%x)\n", desc, sess->internals.flags);
+            }
+        });
     }
 
     size_t in_avail() const {

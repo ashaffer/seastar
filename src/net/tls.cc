@@ -908,7 +908,7 @@ public:
                     printf("Invalid TLS size: %u, %u\n", (uint)size, (uint)(size - off));
                 }
 
-                printf("\tgnutls_record_send\n");
+                printf("\tgnutls_record_send (%lu): %.*s\n",size,  (int)size, ptr);
                 auto res = gnutls_record_send(*this, ptr + off, size - off);
                 printf("\tsent: %ld\n", res);
                 if (res > 0) { // don't really need to check, but...

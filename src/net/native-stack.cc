@@ -147,7 +147,6 @@ void create_native_net_device(boost::program_options::variables_map opts) {
                     sdev->set_local_queue(create_proxy_net_device(master_cpuid, sdev.get(), sdev->port_idx()), qid);
                 }
             }).then([sem, sdev] {
-                printf("Queue start signal: %u, %u\n", engine().cpu_id(), smp::count);
                 sem->signal();
             });
         }

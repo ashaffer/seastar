@@ -280,6 +280,7 @@ namespace seastar {
             typename futurator::promise_type _promise; // used on local side
             async_work_item(smp_message_queue& queue, smp_service_group ssg, Func&& func, bool ignoreLimits = false) : work_item(ssg, ignoreLimits), _queue(queue), _func(std::move(func)) {}
             virtual void process() override {
+                printf("async_work_item process: %u\n", _sg.id);
                 try {
                   // Run _func asynchronously and set either _result or _ex.
                   // Respond to _queue when done.

@@ -519,7 +519,7 @@ namespace seastar {
             uint8_t _id;
             sched_clock::duration _runtime = {};
             uint64_t _tasks_processed = 0;
-            circular_buffer<std::unique_ptr<task>> _q;
+            circular_buffer<std::unique_ptr<task>> _q{};
             sstring _name;
             /**
              * This array holds pointers to the scheduling group specific
@@ -539,8 +539,8 @@ namespace seastar {
         boost::container::static_vector<std::unique_ptr<task_queue>, max_scheduling_groups()> _task_queues;
         std::vector<scheduling_group_key_config> _scheduling_group_key_configs;
         int64_t _last_vruntime = 0;
-        task_queue_list _active_task_queues;
-        task_queue_list _activating_task_queues;
+        task_queue_list _active_task_queues{};
+        task_queue_list _activating_task_queues{};
     public:
         task_queue* _at_destroy_tasks;
     private:
@@ -561,13 +561,13 @@ namespace seastar {
         std::optional<poller> _epoll_poller;
         std::optional<pollable_fd> _aio_eventfd;
         const bool _reuseport;
-        circular_buffer<double> _loads;
+        circular_buffer<double> _loads{};
         double _load = 0;
         sched_clock::duration _total_idle;
         sched_clock::duration _total_sleep;
         sched_clock::time_point _start_time = sched_clock::now();
         std::chrono::nanoseconds _max_poll_time = calculate_poll_time();
-        circular_buffer<output_stream<char>* > _flush_batching;
+        circular_buffer<output_stream<char>* > _flush_batching{};
         std::atomic<bool> _sleeping alignas(seastar::cache_line_size);
         pthread_t _thread_id alignas(seastar::cache_line_size) = pthread_self();
         bool _strict_o_direct = true;

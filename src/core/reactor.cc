@@ -923,7 +923,6 @@ namespace seastar {
         _task_queues.push_back(std::make_unique<task_queue>(0, "main", 1000));
         _task_queues.push_back(std::make_unique<task_queue>(1, "atexit", 1000));
         _at_destroy_tasks = _task_queues.back().get();
-        printf("pushed task_queues (main, atexit): %lu\n", _task_queues.size());
         g_need_preempt = &(this->_preemption_monitor);
         seastar::thread_impl::init();
         _backend->start_tick();
@@ -3357,7 +3356,6 @@ namespace seastar {
     }
 
     void schedule(std::unique_ptr<task>&& t) noexcept {
-        printf("schedule: %u\n", internal::scheduling_group_index(t->group()));
         engine().add_task(std::move(t));
     }
 
@@ -4492,7 +4490,6 @@ namespace seastar {
     future<> reactor::init_scheduling_group(seastar::scheduling_group sg, sstring name, float shares) {
         _task_queues.resize(std::max<size_t>(_task_queues.size(), sg._id + 1));
         _task_queues[sg._id] = std::make_unique<task_queue>(sg._id, name, shares);
-        printf("init_scheduling_group: %u\n", sg._id);
         unsigned long num_keys = s_next_scheduling_group_specific_key.load(std::memory_order_relaxed);
 
         return with_scheduling_group(sg, [this, num_keys, sg] () {
@@ -4526,7 +4523,6 @@ namespace seastar {
                     }
                     free(val);
                     _task_queues[sg._id]->_scheduling_group_specific_vals[key_id] = nullptr;
-                    printf("destroy_scheduling_group: %u\n", sg._id);
                 }
             }
         }).then( [this, sg] () {

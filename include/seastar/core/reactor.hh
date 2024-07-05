@@ -260,9 +260,7 @@ namespace seastar {
             size_t _last_rcv_batch = 0;
         };
         struct work_item {
-            explicit work_item(smp_service_group ssg, bool ignoreLimits = false) : ssg(ssg), ignoreLimits{ignoreLimits} {
-                printf("work_item created: %u\n", internal::scheduling_group_index(sg));
-            }
+            explicit work_item(smp_service_group ssg, bool ignoreLimits = false) : ssg(ssg), ignoreLimits{ignoreLimits} {}
             smp_service_group ssg;
             scheduling_group sg = current_scheduling_group();
             bool ignoreLimits = false;
@@ -282,7 +280,6 @@ namespace seastar {
             typename futurator::promise_type _promise; // used on local side
             async_work_item(smp_message_queue& queue, smp_service_group ssg, Func&& func, bool ignoreLimits = false) : work_item(ssg, ignoreLimits), _queue(queue), _func(std::move(func)) {}
             virtual void process() override {
-                printf("async_work_item process: %u\n", internal::scheduling_group_index(this->sg));
                 try {
                   // Run _func asynchronously and set either _result or _ex.
                   // Respond to _queue when done.
@@ -788,7 +785,6 @@ namespace seastar {
 
         void add_task(std::unique_ptr<task>&& t) {
             auto sg = t->group();
-            printf("add_task sg._id: %u\n", sg._id);
             auto* q = _task_queues[sg._id].get();
             bool was_empty = q->_q.empty();
             q->_q.push_back(std::move(t));

@@ -2747,7 +2747,7 @@ namespace seastar {
         std::function<bool()> pure_check_for_work = [this] () {
             return pure_poll_once() || have_more_tasks();
         };
-        printf("Entering run loop\n");
+
         while (true) {
             run_some_tasks();
             if (_stopped) {

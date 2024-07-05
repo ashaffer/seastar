@@ -26,6 +26,7 @@
 #include <seastar/core/aligned_buffer.hh>
 #include <seastar/core/cacheline.hh>
 #include <seastar/core/circular_buffer_fixed_capacity.hh>
+#include <boost/container/static_vector.hpp>
 #include <memory>
 #include <type_traits>
 #include <sys/epoll.h>
@@ -52,7 +53,6 @@
 #include <boost/lockfree/spsc_queue.hpp>
 #include <seastar/core/linux-aio.hh>
 #include <seastar/util/eclipse.hh>
-#include <seastar/util/static_vector.hh>
 #include <seastar/core/future.hh>
 #include <seastar/core/posix.hh>
 #include <seastar/core/apply.hh>
@@ -503,9 +503,9 @@ namespace seastar {
         timer_set<timer<manual_clock>, &timer<manual_clock>::_link>::timer_list_t _expired_manual_timers;
         internal::linux_abi::aio_context_t _io_context;
         alignas(cache_line_size) std::array<internal::linux_abi::iocb, max_aio> _iocb_pool;
-        std::stack<internal::linux_abi::iocb*, static_vector<internal::linux_abi::iocb*, max_aio>> _free_iocbs;
-        static_vector<internal::linux_abi::iocb*, max_aio> _pending_aio;
-        static_vector<internal::linux_abi::iocb*, max_aio> _pending_aio_retry;
+        std::stack<internal::linux_abi::iocb*, boost::container::static_vector<internal::linux_abi::iocb*, max_aio>> _free_iocbs;
+        boost::container::static_vector<internal::linux_abi::iocb*, max_aio> _pending_aio;
+        boost::container::static_vector<internal::linux_abi::iocb*, max_aio> _pending_aio_retry;
         io_stats _io_stats;
         uint64_t _fsyncs = 0;
         uint64_t _cxx_exceptions = 0;
@@ -536,7 +536,7 @@ namespace seastar {
         private:
             void register_stats();
         };
-        static_vector<std::unique_ptr<task_queue>, max_scheduling_groups()> _task_queues;
+        boost::container::static_vector<std::unique_ptr<task_queue>, max_scheduling_groups()> _task_queues;
         std::vector<scheduling_group_key_config> _scheduling_group_key_configs;
         int64_t _last_vruntime = 0;
         task_queue_list _active_task_queues;

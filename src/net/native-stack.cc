@@ -169,7 +169,7 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         (void)sem2->wait(devices.size()).then([opts, devices, dev_cfgs] {
             printf("All devices signaled\n");
             for (unsigned i = 0; i < smp::count; i++) {
-                (void)smp::submit_to(i, [i, opts, devices, dev_cfgs] {
+                (void)smp::submit_to(i, [opts, devices, dev_cfgs] {
                     create_native_stack(opts, devices, dev_cfgs);
                 });
             }

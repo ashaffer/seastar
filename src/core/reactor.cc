@@ -4475,7 +4475,7 @@ namespace seastar {
     future<> reactor::init_scheduling_group(seastar::scheduling_group sg, sstring name, float shares) {
         _task_queues.resize(std::max<size_t>(_task_queues.size(), sg._id + 1));
         _task_queues[sg._id] = std::make_unique<task_queue>(sg._id, name, shares);
-        printf("init_scheduling_group: %lu\n", sg._id);
+        printf("init_scheduling_group: %u\n", sg._id);
         unsigned long num_keys = s_next_scheduling_group_specific_key.load(std::memory_order_relaxed);
 
         return with_scheduling_group(sg, [this, num_keys, sg] () {
@@ -4509,7 +4509,7 @@ namespace seastar {
                     }
                     free(val);
                     _task_queues[sg._id]->_scheduling_group_specific_vals[key_id] = nullptr;
-                    printf("destroy_scheduling_group: %lu\n", sg._id);
+                    printf("destroy_scheduling_group: %u\n", sg._id);
                 }
             }
         }).then( [this, sg] () {

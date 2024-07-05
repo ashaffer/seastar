@@ -785,7 +785,7 @@ namespace seastar {
 
         void add_task(std::unique_ptr<task>&& t) {
             auto sg = t->group();
-            printf("add_task sg._id: %lu\n", sg._id);
+            printf("add_task sg._id: %u\n", sg._id);
             auto* q = _task_queues[sg._id].get();
             bool was_empty = q->_q.empty();
             q->_q.push_back(std::move(t));

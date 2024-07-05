@@ -2118,7 +2118,7 @@ void tcp<InetTraits>::tcb::close() {
             char foreign_ip[16] = {0};
             inet_ntop(AF_INET, &local, local_ip, sizeof(local_ip) - 1);
             inet_ntop(AF_INET, &foreign, foreign_ip, sizeof(foreign_ip) - 1);
-            printf("[tcp] tcb::close error2: %s (%u, %u, %u, %s,s %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, local_ip, _local_port, foreign_ip, _foreign_port);
+            printf("[tcp] tcb::close error2: %s (%u, %u, %u, %s, %u, %s, %u)\n", e.what(), this->closeCalled, this->closeState, this->resetState, local_ip, _local_port, foreign_ip, _foreign_port);
 
         }
     });

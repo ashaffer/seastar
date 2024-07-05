@@ -3341,7 +3341,7 @@ namespace seastar {
     }
 
     void schedule(std::unique_ptr<task>&& t) noexcept {
-        printf("schedule: %u\n", t->group()._id);
+        printf("schedule: %u\n", internal::scheduling_group_index(t->group()));
         engine().add_task(std::move(t));
     }
 

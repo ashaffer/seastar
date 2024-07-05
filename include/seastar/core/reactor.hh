@@ -260,7 +260,9 @@ namespace seastar {
             size_t _last_rcv_batch = 0;
         };
         struct work_item {
-            explicit work_item(smp_service_group ssg, bool ignoreLimits = false) : ssg(ssg), ignoreLimits{ignoreLimits} {}
+            explicit work_item(smp_service_group ssg, bool ignoreLimits = false) : ssg(ssg), ignoreLimits{ignoreLimits} {
+                printf("work_item created: %u\n", internal::scheduling_group_index(sg));
+            }
             smp_service_group ssg;
             scheduling_group sg = current_scheduling_group();
             bool ignoreLimits = false;

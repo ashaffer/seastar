@@ -153,7 +153,6 @@ void create_native_net_device(boost::program_options::variables_map opts) {
         jj++;
     }
 
-    printf("awaiting %u, %lu, %lu\n", smp::count, devices.size(), smp::count * devices.size());
     (void)sem->wait(smp::count * devices.size()).then([opts, devices, dev_cfgs] {
         printf("Completed device init: awaiting %u devices to signal\n", (uint)devices.size());
         auto sem2 = std::make_shared<semaphore>(0);
@@ -167,17 +166,13 @@ void create_native_net_device(boost::program_options::variables_map opts) {
             ++i;
         }
 
-        printf("Awaiting semaphore: %lu\n", devices.size());
         (void)sem2->wait(devices.size()).then([opts, devices, dev_cfgs] {
             printf("All devices signaled\n");
-            printf("Needs preempt: %u\n", need_preempt());
             for (unsigned i = 0; i < smp::count; i++) {
                 (void)smp::submit_to(i, [i, opts, devices, dev_cfgs] {
                     create_native_stack(opts, devices, dev_cfgs);
-                    printf("Native stack %u created\n", i);
                 });
             }
-            printf("Native stacks done\n");
         });
     });
 }

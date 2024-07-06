@@ -149,12 +149,12 @@ app_template::run_deprecated(int argc, const char * const * const argv, std::fun
 #endif
     bpo::variables_map configuration;
     try {
-        bpo::command_line_parser(argc, argv);
-        // bpo::store(bpo::command_line_parser(argc, argv)
-        //             .options(_opts)
-        //             .positional(_pos_opts)
-        //             .run()
-        //     , configuration);
+        // bpo::command_line_parser(argc, argv);
+        bpo::store(bpo::command_line_parser(argc, argv)
+                    .options(_opts)
+                    .positional(_pos_opts)
+                    .run()
+            , configuration);
         _conf_reader(configuration);
     } catch (bpo::error& e) {
         std::cout << std::format("error: {}\n\nTry --help.\n", e.what());
@@ -190,13 +190,10 @@ app_template::run_deprecated(int argc, const char * const * const argv, std::fun
     // No need to wait for this future.
     // func is waited on via engine().run()
     (void)engine().when_started().then([this] {
-        printf("when_started\n");
         return seastar::metrics::configure(this->configuration()).then([this] {
-            printf("metrics configured, calling scollect\n");
             // set scollectd use the metrics configuration, so the later
             // need to be set first
             scollectd::configure(this->configuration());
-            printf("scollected\n");
         });
     }).then(
         std::move(func)

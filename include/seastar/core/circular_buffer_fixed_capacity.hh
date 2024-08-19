@@ -24,12 +24,12 @@
 // A fixed capacity double-ended queue container that can be efficiently
 // extended (and shrunk) from both ends.  Implementation is a single
 // storage vector.
-//
-// Similar to libstdc++'s std::deque, except that it uses a single level
-// store, and so is more efficient for simple stored items.
 
 #include <type_traits>
 #include <cstddef>
+//
+// Similar to libstdc++'s std::deque, except that it uses a single level
+// store, and so is more efficient for simple stored items.
 #include <iterator>
 #include <utility>
 
@@ -207,7 +207,7 @@ template <typename T, size_t Capacity>
 inline
 size_t
 circular_buffer_fixed_capacity<T, Capacity>::size() const {
-    return _end - _begin;
+    return mask(_end - _begin);
 }
 
 template <typename T, size_t Capacity>

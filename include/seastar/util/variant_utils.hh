@@ -22,6 +22,7 @@
 #pragma once
 #include <variant>
 // #include <seastar/util/std-compat.hh>
+#include <boost/variant/apply_visitor.hpp>
 #include <boost/version.hpp>
 
 #if (BOOST_VERSION < 105800)

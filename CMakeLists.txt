@@ -634,7 +634,8 @@ set (Seastar_PRIVATE_CXX_FLAGS
   -Werror
   -Wno-error=deprecated-declarations
   -Wno-deprecated-declarations
-  -Wno-unused-but-set-variable)
+  -Wno-unused-but-set-variable
+  -Wno-vla-cxx-extension)
 
 if (Seastar_COMPRESS_DEBUG)
   # -gz doesn't imply -g, so it is safe to add it regardless of debug

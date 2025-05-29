@@ -398,7 +398,7 @@ namespace seastar {
                 auto new_start = std::move_backward(begin(), first, last);
                 auto i = begin();
                 while (i < new_start) {
-                    *i++.~T();
+                    (i++)->~T();
                 }
                 head = new_start.idx;
                 return last;
@@ -407,7 +407,7 @@ namespace seastar {
                 auto i = new_end;
                 auto e = end();
                 while (i < e) {
-                    *i++.~T();
+                    (i++)->~T();
                 }
                 head = new_end.idx;
                 return first;

@@ -545,9 +545,11 @@ void icmp::received(packet p, ipaddr from, ipaddr to) {
     checksummer csum;
     csum.sum(reinterpret_cast<char*>(hdr), p.len());
     hdr->csum = csum.get();
+    printf("ip received\n");
     if (_queue_space.try_wait(p.len())) { // drop packets that do not fit the queue
         // FIXME: future is discarded        
         (void)_inet.get_l2_dst_address(from).then([this, from, to, p = std::move(p)] (ethernet_address e_dst) mutable {
+            printf("\tpacket emplaced\n");
             _packetq.emplace_back(ipv4_traits::l4packet{to, from, std::move(p), e_dst, ip_protocol_num::icmp});
         });
     }

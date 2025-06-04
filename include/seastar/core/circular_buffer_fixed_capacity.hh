@@ -348,10 +348,7 @@ circular_buffer_fixed_capacity<T, Capacity>::erase(iterator first, iterator last
         auto new_start = std::move_backward(begin(), first, last);
         auto i = begin();
         while (i < new_start) {
-            if constexpr (!std::is_trivially_destructible_v<T>) {
-                *i.~T();
-            }
-            ++i;
+            (i++)->~T();
         }
         _begin = new_start.idx;
         return last;
@@ -360,10 +357,7 @@ circular_buffer_fixed_capacity<T, Capacity>::erase(iterator first, iterator last
         auto i = new_end;
         auto e = end();
         while (i < e) {
-            if constexpr (!std::is_trivially_destructible_v<T>) {
-                *i.~T();
-            }
-            ++i;
+            (i++)->~T();
         }
         _end = new_end.idx;
         return first;

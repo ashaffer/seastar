@@ -207,7 +207,7 @@ template <typename T, size_t Capacity>
 inline
 size_t
 circular_buffer_fixed_capacity<T, Capacity>::size() const {
-    return mask(_end - _begin);
+    return std::min(_end - _begin, Capacity);
 }
 
 template <typename T, size_t Capacity>
@@ -348,7 +348,10 @@ circular_buffer_fixed_capacity<T, Capacity>::erase(iterator first, iterator last
         auto new_start = std::move_backward(begin(), first, last);
         auto i = begin();
         while (i < new_start) {
-            *i++.~T();
+            if constexpr (!std::is_trivially_destructible_v<T>) {
+                *i.~T();
+            }
+            ++i;
         }
         _begin = new_start.idx;
         return last;
@@ -357,7 +360,10 @@ circular_buffer_fixed_capacity<T, Capacity>::erase(iterator first, iterator last
         auto i = new_end;
         auto e = end();
         while (i < e) {
-            *i++.~T();
+            if constexpr (!std::is_trivially_destructible_v<T>) {
+                *i.~T();
+            }
+            ++i;
         }
         _end = new_end.idx;
         return first;

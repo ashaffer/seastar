@@ -353,6 +353,7 @@ uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
 }
 
 future<> interface::dispatch_packet(packet p) {
+    printf("received packet on %u\n", engine(.cpu_id());
     auto eh = p.get_header<eth_hdr>();
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));

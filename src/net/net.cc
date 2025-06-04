@@ -384,6 +384,7 @@ future<> interface::dispatch_packet(packet p) {
                 // avoid chaining, since queue lenth is unlimited
                 // drop instead.
                 if (l3.ready.available()) {
+                    printf("\tl3.ready.available, producing...\n");
                     l3.ready = l3.packet_stream.produce(std::move(p), from);
                 }
             }

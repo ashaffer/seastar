@@ -100,6 +100,7 @@ bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
     auto h = ntoh(*iph);
     auto l4 = _l4[h.ip_proto];
     if (l4) {
+        printf("seastar ip.cc: %u, %u\n", h.mf() == false, h.offset());
         if (h.mf() == false && h.offset() == 0) {
             // This IP datagram is atomic, forward according to tcp or udp connection hash
             l4->forward(out_hash_data, p, off + sizeof(ip_hdr));

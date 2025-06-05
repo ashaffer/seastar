@@ -1085,7 +1085,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
 
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
-        printf("\ttcp: 3.1.1\n");
+            printf("\ttcp: 3.1.1\n");
             // 1) In CLOSE state
             // 1.1 all data in the incoming segment is discarded.  An incoming
             // segment containing a RST is discarded. An incoming segment not
@@ -1099,8 +1099,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // 2) In LISTEN state
             // 2.1 first check for an RST
             if (h.f_rst) {
-            printf("\ttcp: 3.1.1.1\n");
-
+               printf("\ttcp: 3.1.1.1\n");
                 // An incoming RST should be ignored
                 return;
             }
@@ -1129,6 +1128,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // 2.4 fourth other text or control
             // So you are unlikely to get here, but if you do, drop the
             // segment, and return.
+            printf("\ttcp: 3.1.1.3\n");
             return;
         }
     } else {

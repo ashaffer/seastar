@@ -135,7 +135,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     if (!iph) {
         return make_ready_future<>();
     }
-    printf("\t1");
+    printf("\t1\n");
     // Skip checking csum of reassembled IP datagram
     if (!hw_features().rx_csum_offload && !p.offload_info_ref().reassembled) {
         checksummer csum;

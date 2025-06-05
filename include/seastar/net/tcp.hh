@@ -1085,7 +1085,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
 
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
-            printf("\ttcp: 3.1.1 (%u, %u)\n", listener == listening.end(), listener->second->full());
+            printf("\ttcp: 3.1.1 (%u, %u)\n", listener == _listening.end(), listener->second->full());
             // 1) In CLOSE state
             // 1.1 all data in the incoming segment is discarded.  An incoming
             // segment containing a RST is discarded. An incoming segment not

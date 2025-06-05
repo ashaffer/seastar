@@ -1082,7 +1082,7 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     lw_shared_ptr<tcb> tcbp;
 
     if (tcbi == _tcbs.end()) {
-        printf("\ttcp: 3.1\n");
+        printf("\ttcp: 3.1 (local port: %u)\n", id.local_port);
         printConnid(id, _inet);
 
         auto listener = _listening.find(id.local_port);

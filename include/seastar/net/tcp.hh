@@ -976,7 +976,7 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
     printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
-    printf("\tseastar connecting\n");
+    printf("\tseastar connecting (%u)\n", engine().cpu_id());
     tcbp->connect();
     return connection(tcbp);
 }

@@ -151,14 +151,17 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     unsigned pkt_len = p.len();
     auto offset = h.offset();
     if (pkt_len > ip_len) {
+        printf("\t2.1\n");
         // Trim extra data in the packet beyond IP total length
         p.trim_back(pkt_len - ip_len);
     } else if (pkt_len < ip_len) {
+        printf("\t2.2\n");
         // Drop if it contains less than IP total length
         return make_ready_future<>();
     }
     // Drop if the reassembled datagram will be larger than maximum IP size
     if (offset + p.len() > net::ip_packet_len_max) {
+        printf("\t2.3\n");
         return make_ready_future<>();
     }
 
@@ -166,6 +169,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
     // FIXME: process options
     if (in_my_netmask(h.src_ip) && !_arp.is_self(h.src_ip)) {
         // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {
+        printf("\tarp len\n");
         _arp.learn(from, h.src_ip);
     }
     printf("\t4\n");
@@ -182,6 +186,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
 
     printf("5\n");
     if (!_arp.is_self(h.dst_ip)) {
+        printf("\t5.1\n");
         // FIXME: forward
         return make_ready_future<>();
     }
@@ -217,12 +222,15 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
                 hash_data.push_back(hton(h.dst_ip.ip));
                 auto forwarded = l4->forward(hash_data, ip_data, l4_offset);
                 if (forwarded) {
+                    printf("\t6.1 forwarded\n");
                     // cpu_id = _netif->hash2cpu(crc32_hash(hash_data));
                     cpu_id = _netif->hash2cpu(toeplitz_hash(_netif->rss_conf(), hash_data));
                     // No need to forward if the dst cpu is the current cpu
                     if (cpu_id == engine().cpu_id()) {
+                        printf("\t\t6.1.1\n");
                         l4->received(std::move(ip_data), h.src_ip, h.dst_ip);
                     } else {
+                        printf("\t\t6.1.2\n");
                         auto to = _netif->hw_address();
                         auto pkt = frag.get_assembled_packet(from, to);
                         _netif->forward(cpu_id, std::move(pkt));
@@ -234,6 +242,7 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
             frag_drop(frag_id, dropped_size);
             _frags_age.remove(frag_id);
         } else {
+            printf("\t6 missing fragments\n");
             // Some of the fragments are missing
             if (!_frag_timer.armed()) {
                 frag_arm();

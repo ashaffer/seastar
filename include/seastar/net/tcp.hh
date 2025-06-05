@@ -972,7 +972,8 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
              (netif->hash2cpu(id.hash(rss_conf)) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
-    // printConnid(id, _inet);
+    printf("outgoing:\n");
+    printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
     printf("\tseastar connecting\n");

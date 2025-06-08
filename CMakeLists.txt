@@ -162,7 +162,7 @@ set (Seastar_CXX_DIALECT
   "Compile Seastar according to the named C++ standard.")
 
 set (Seastar_CXX_FLAGS
-  "-isystem /usr/lib/llvm-17/include/c++/v1 -L /usr/lib/llvm-17/lib -Wl - r-path,/usr/lib/llvm-17/lib -lc++ -llc"
+  "-isystem /usr/lib/llvm-${LLVM_VERSION}/include/c++/v1 -L /usr/lib/llvm-${LLVM_VERSION}/lib -Wl - r-path,/usr/lib/llvm-${LLVM_VERSION}/lib -lc++ -llc"
   CACHE
   STRING
   "Semicolon-separated list of extra compilation flags for Seastar itself.")

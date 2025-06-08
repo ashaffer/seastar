@@ -675,7 +675,6 @@ private:
 
             if (_rcv._data_received_promise) {
                 this->closeState = 20;
-                printf("do_reset: %u\n", resetState);
                 // printf("[tcp] connection reset: _data_received_promise\n");
                 _rcv._data_received_promise->set_exception(tcp_reset_error());
                 _rcv._data_received_promise = std::nullopt;
@@ -972,11 +971,9 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
              (netif->hash2cpu(id.hash(rss_conf)) != engine().cpu_id()
               || _tcbs.find(id) != _tcbs.end()));
 
-    printf("outgoing:\n");
-    printConnid(id, _inet);
+    // printConnid(id, _inet);
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
-    printf("\tseastar connecting (%u)\n", engine().cpu_id());
     tcbp->connect();
     return connection(tcbp);
 }
@@ -1052,7 +1049,6 @@ void printConnid (Connid &connid, Inet &inet) {
 template <typename InetTraits>
 void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     auto th = p.get_header(0, tcp_hdr::len);
-    printf("\ttcp: 1\n");
     if (!th) {
         return;
     }
@@ -1062,7 +1058,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     if (size_t(data_offset * 4) < tcp_hdr::len) {
         return;
     }
-    printf("\ttcp: 2\n");
 
     if (!hw_features().rx_csum_offload) {
         checksummer csum;
@@ -1073,8 +1068,6 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
         }
     }
 
-    printf("\ttcp: 3\n");
-
     auto h = tcp_hdr::read(th);
     auto id = connid{to, from, h.dst_port, h.src_port};
     auto tcbi = _tcbs.find(id);
@@ -1082,15 +1075,10 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
     lw_shared_ptr<tcb> tcbp;
 
     if (tcbi == _tcbs.end()) {
-        printf("\ttcp: 3.1 (local port: %u)\n", id.local_port);
-        printConnid(id, _inet);
+        // printConnid(id, _inet);
 
         auto listener = _listening.find(id.local_port);
         if (listener == _listening.end() || listener->second->full()) {
-            printf("\ttcp: 3.1.1 (%u)\n", listener == _listening.end());
-            if (listener != _listening.end()) {
-                printf("\t\tlistener full: %u\n", listener->second->full());
-            }
             // 1) In CLOSE state
             // 1.1 all data in the incoming segment is discarded.  An incoming
             // segment containing a RST is discarded. An incoming segment not
@@ -1100,26 +1088,21 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             //      if ACK on:  <SEQ=SEG.ACK><CTL=RST>
             return respond_with_reset(&h, id.local_ip, id.foreign_ip);
         } else {
-            printf("\ttcp: 3.1.2\n");
             // 2) In LISTEN state
             // 2.1 first check for an RST
             if (h.f_rst) {
-                printf("\ttcp: 3.1.1.1\n");
                 // An incoming RST should be ignored
                 return;
             }
             // 2.2 second check for an ACK
             if (h.f_ack) {
-                printf("\ttcp: 3.1.1.2\n");
                 // Any acknowledgment is bad if it arrives on a connection
                 // still in the LISTEN state.
                 // <SEQ=SEG.ACK><CTL=RST>
-                printf("respond_with_reset 2\n");
                 return respond_with_reset(&h, id.local_ip, id.foreign_ip);
             }
             // 2.3 third check for a SYN
             if (h.f_syn) {
-                printf("\ttcp: 3.1.1.2\n");
                 // check the security
                 // NOTE: Ignored for now
                 tcbp = make_lw_shared<tcb>(*this, id);
@@ -1133,20 +1116,16 @@ void tcp<InetTraits>::received(packet p, ipaddr from, ipaddr to) {
             // 2.4 fourth other text or control
             // So you are unlikely to get here, but if you do, drop the
             // segment, and return.
-            printf("\ttcp: 3.1.1.3\n");
             return;
         }
     } else {
-        printf("\ttcp: 3.2\n");
         tcbp = tcbi->second;
         tcbp->setReceivedAt(p.getReceivedAt());
         tcbp->setPollDelay(p.getPollDelay());
         if (tcbp->state() == tcp_state::SYN_SENT) {
-            printf("\ttcp: 3.2.1\n");
             // 3) In SYN_SENT State
             return tcbp->input_handle_syn_sent_state(&h, std::move(p));
         } else {
-            printf("\ttcp: 3.2.2\n");
             // 4) In other state, can be one of the following:
             // SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2
             // CLOSE_WAIT, CLOSING, LAST_ACK, TIME_WAIT
@@ -1371,7 +1350,6 @@ void tcp<InetTraits>::tcb::input_handle_syn_sent_state(tcp_hdr* th, packet p) {
         // If SEG.ACK =< ISS, or SEG.ACK > SND.NXT, send a reset (unless the
         // RST bit is set, if so drop the segment and return)
         if (seg_ack <= _snd.initial || seg_ack > _snd.next) {
-            printf("respond_with_reset 3\n");
             return respond_with_reset(th);
         }
 
@@ -1521,7 +1499,6 @@ void tcp<InetTraits>::tcb::input_handle_other_state(tcp_hdr* th, packet p) {
         // all segment queues should be flushed, the user should also
         // receive an unsolicited general "connection reset" signal, enter
         // the CLOSED state, delete the TCB, and return.
-        printf("respond_with_reset 4\n");
         respond_with_reset(th);
         resetState = 4;
         return do_reset();
@@ -1988,7 +1965,6 @@ template <typename InetTraits>
 void
 tcp<InetTraits>::tcb::abort_reader() {
     if (_rcv._data_received_promise) {
-        printf("abort_reader called\n");
         _rcv._data_received_promise->set_exception(
                 std::make_exception_ptr(std::system_error(ECONNABORTED, std::system_category())));
         _rcv._data_received_promise = std::nullopt;

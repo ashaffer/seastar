@@ -100,7 +100,6 @@ bool ipv4::forward(forward_hash& out_hash_data, packet& p, size_t off)
     auto h = ntoh(*iph);
     auto l4 = _l4[h.ip_proto];
     if (l4) {
-        printf("seastar ip.cc: %u, %u\n", h.mf() == false, h.offset());
         if (h.mf() == false && h.offset() == 0) {
             // This IP datagram is atomic, forward according to tcp or udp connection hash
             l4->forward(out_hash_data, p, off + sizeof(ip_hdr));
@@ -130,12 +129,10 @@ bool ipv4::needs_frag(packet& p, ip_protocol_num prot_num, net::hw_features hw_f
 
 future<>
 ipv4::handle_received_packet(packet p, ethernet_address from) {
-    printf("seastar ip packet received\n");
     auto iph = p.get_header<ip_hdr>(0);
     if (!iph) {
         return make_ready_future<>();
     }
-    printf("\t1\n");
     // Skip checking csum of reassembled IP datagram
     if (!hw_features().rx_csum_offload && !p.offload_info_ref().reassembled) {
         checksummer csum;
@@ -144,54 +141,42 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
             return make_ready_future<>();
         }
     }
-    printf("\t2\n");
     auto h = ntoh(*iph);
     unsigned ip_len = h.len;
     unsigned ip_hdr_len = h.ihl * 4;
     unsigned pkt_len = p.len();
     auto offset = h.offset();
     if (pkt_len > ip_len) {
-        printf("\t2.1\n");
         // Trim extra data in the packet beyond IP total length
         p.trim_back(pkt_len - ip_len);
     } else if (pkt_len < ip_len) {
-        printf("\t2.2\n");
         // Drop if it contains less than IP total length
         return make_ready_future<>();
     }
     // Drop if the reassembled datagram will be larger than maximum IP size
     if (offset + p.len() > net::ip_packet_len_max) {
-        printf("\t2.3\n");
         return make_ready_future<>();
     }
 
-    printf("\t3\n");
     // FIXME: process options
     if (in_my_netmask(h.src_ip) && !_arp.is_self(h.src_ip)) {
         // if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {
-        printf("\tarp len\n");
         _arp.learn(from, h.src_ip);
     }
-    printf("\t4\n");
 
     if (_packet_filter) {
-        printf("\t4.1\n");
         bool handled = false;
         auto r = _packet_filter->handle(p, &h, from, handled);
         if (handled) {
-            printf("\t4.2\n");
             return r;
         }
     }
 
-    printf("5\n");
     if (!_arp.is_self(h.dst_ip)) {
-        printf("\t5.1\n");
         // FIXME: forward
         return make_ready_future<>();
     }
 
-    printf("6\n");
     // Does this IP datagram need reassembly
     auto mf = h.mf();
     if (mf == true || offset != 0) {
@@ -222,15 +207,12 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
                 hash_data.push_back(hton(h.dst_ip.ip));
                 auto forwarded = l4->forward(hash_data, ip_data, l4_offset);
                 if (forwarded) {
-                    printf("\t6.1 forwarded\n");
                     // cpu_id = _netif->hash2cpu(crc32_hash(hash_data));
                     cpu_id = _netif->hash2cpu(toeplitz_hash(_netif->rss_conf(), hash_data));
                     // No need to forward if the dst cpu is the current cpu
                     if (cpu_id == engine().cpu_id()) {
-                        printf("\t\t6.1.1\n");
                         l4->received(std::move(ip_data), h.src_ip, h.dst_ip);
                     } else {
-                        printf("\t\t6.1.2\n");
                         auto to = _netif->hw_address();
                         auto pkt = frag.get_assembled_packet(from, to);
                         _netif->forward(cpu_id, std::move(pkt));
@@ -242,7 +224,6 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
             frag_drop(frag_id, dropped_size);
             _frags_age.remove(frag_id);
         } else {
-            printf("\t6 missing fragments\n");
             // Some of the fragments are missing
             if (!_frag_timer.armed()) {
                 frag_arm();
@@ -251,15 +232,12 @@ ipv4::handle_received_packet(packet p, ethernet_address from) {
         return make_ready_future<>();
     }
 
-    printf("\t7\n");
     auto l4 = _l4[h.ip_proto];
     if (l4) {
         // Trim IP header and pass to upper layer
         p.trim_front(ip_hdr_len);
         l4->received(std::move(p), h.src_ip, h.dst_ip);
-        printf("\t7.1\n");
     }
-    printf("\t8\n");
     return make_ready_future<>();
 }
 
@@ -564,11 +542,9 @@ void icmp::received(packet p, ipaddr from, ipaddr to) {
     checksummer csum;
     csum.sum(reinterpret_cast<char*>(hdr), p.len());
     hdr->csum = csum.get();
-    printf("icmp received\n");
     if (_queue_space.try_wait(p.len())) { // drop packets that do not fit the queue
         // FIXME: future is discarded        
         (void)_inet.get_l2_dst_address(from).then([this, from, to, p = std::move(p)] (ethernet_address e_dst) mutable {
-            printf("\ticmp packet emplaced\n");
             _packetq.emplace_back(ipv4_traits::l4packet{to, from, std::move(p), e_dst, ip_protocol_num::icmp});
         });
     }

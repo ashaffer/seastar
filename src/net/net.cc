@@ -353,7 +353,6 @@ uint16_t rte_softrss16(uint16_t *input_tuple, uint32_t input_len,
 }
 
 future<> interface::dispatch_packet(packet p) {
-    printf("received packet on %u\n", engine().cpu_id());
     auto eh = p.get_header<eth_hdr>();
      if (eh) {
         auto i = _proto_map.find(ntoh(eh->eth_proto));
@@ -374,7 +373,6 @@ future<> interface::dispatch_packet(packet p) {
                 }
             });
 
-            printf("\tfw: %u\n", engine().cpu_id());
             if (fw != engine().cpu_id()) {
                 forward(fw, std::move(p));
             } else {
@@ -384,7 +382,6 @@ future<> interface::dispatch_packet(packet p) {
                 // avoid chaining, since queue lenth is unlimited
                 // drop instead.
                 if (l3.ready.available()) {
-                    printf("\tl3.ready.available, producing...\n");
                     l3.ready = l3.packet_stream.produce(std::move(p), from);
                 }
             }

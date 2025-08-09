@@ -768,7 +768,7 @@ size_t cpu_pages::object_size(void* ptr) {
 
 void cpu_pages::free_cross_cpu(unsigned cpu_id, void* ptr) {
     if (cpu_id > 12) {
-        printf("free_cross_cpu: cpu id out of range: %u, 0x%lx\n", seastar::engine().cpu_id(), (uint64_t)ptr);
+        printf("free_cross_cpu: cpu id out of range: %u, %u, 0x%lx\n", cpu_id, seastar::engine().cpu_id(), (uint64_t)ptr);
     }
     if (!live_cpus[cpu_id].load(std::memory_order_relaxed)) {
         // Thread was destroyed; leak object
@@ -786,11 +786,11 @@ void cpu_pages::free_cross_cpu(unsigned cpu_id, void* ptr) {
     auto& list = all_cpus[cpu_id]->xcpu_freelist;
     auto old = list.load(std::memory_order_relaxed);
     do {
-        p->next = old;
-        if ((uint64_t)old > 0x1000000000000 || old == nullptr) {
-            printf("free_cross_cpu: bad pointer old xcpu_freelist 0x%lx (%u, %u)", (uint64_t)old, cpu_id, engine().cpu_id());
+        if ((uint64_t)p > 0x1000000000000 || p == nullptr) {
+            printf("free_cross_cpu: bad pointer old xcpu_freelist 0x%lx (%u, %u)\n", (uint64_t)p, cpu_id, engine().cpu_id());
             current_backtrace();
         }
+        p->next = old;
     } while (!list.compare_exchange_weak(old, p, std::memory_order_release, std::memory_order_relaxed));
     ++g_cross_cpu_frees;
 }

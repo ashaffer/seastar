@@ -767,7 +767,7 @@ size_t cpu_pages::object_size(void* ptr) {
 }
 
 void cpu_pages::free_cross_cpu(unsigned cpu_id, void* ptr) {
-    if (cpu_id > 12) {
+    if (cpu_id >= max_cpus) {
         printf("free_cross_cpu: cpu id out of range: %u, %u, 0x%lx\n", cpu_id, seastar::engine().cpu_id(), (uint64_t)ptr);
     }
     if (!live_cpus[cpu_id].load(std::memory_order_relaxed)) {

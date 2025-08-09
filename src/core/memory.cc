@@ -800,7 +800,15 @@ bool cpu_pages::drain_cross_cpu_freelist() {
         return false;
     }
     auto p = xcpu_freelist.exchange(nullptr, std::memory_order_acquire);
+    if ((uint64_t)p > 0x1000000000000 || p == nullptr) {
+        printf("drain_cross_cpu_freelist: received bad pointer 0x%lx (%u)\n", (uint64_t)p, engine().cpu_id());
+        current_backtrace();
+    }
     while (p) {
+        if ((uint64_t)p > 0x1000000000000 || p == nullptr) {
+            printf("drain_cross_cpu_freelist: received bad pointer 0x%lx (%u)\n", (uint64_t)p, engine().cpu_id());
+            current_backtrace();
+        }
         auto n = p->next;
         ++g_frees;
         free(p);

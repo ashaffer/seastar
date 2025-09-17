@@ -286,11 +286,15 @@ namespace seastar {
             }
 
             void setReceivedAt (uint64_t receivedAt) {
-                _impl->_receivedAt = receivedAt;
+                if (_impl != nullptr) {
+                    _impl->_receivedAt = receivedAt;
+                }
             }
 
             void setPollDelay (uint64_t pollDelay) {
-                _impl->_pollDelay = pollDelay;
+                if (_impl != nullptr) {
+                    _impl->_pollDelay = pollDelay;
+                }
             }
 
             uint64_t getReceivedAt () {

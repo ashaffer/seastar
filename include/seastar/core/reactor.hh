@@ -511,7 +511,6 @@ namespace seastar {
         boost::container::static_vector<internal::linux_abi::iocb*, max_aio> _pending_aio_retry;
         io_stats _io_stats;
         uint64_t _fsyncs = 0;
-        uint64_t _cxx_exceptions = 0;
         struct task_queue {
             explicit task_queue(unsigned id, sstring name, float shares);
             int64_t _vruntime = 0;
@@ -545,6 +544,8 @@ namespace seastar {
         task_queue_list _active_task_queues{};
         task_queue_list _activating_task_queues{};
     public:
+        uint64_t _cxx_exceptions = 0;
+
         task_queue* _at_destroy_tasks;
     private:
         sched_clock::duration _task_quota;

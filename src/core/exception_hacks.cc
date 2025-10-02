@@ -135,7 +135,7 @@ extern "C"
 [[gnu::visibility("default")]]
 [[gnu::used]]
 _Unwind_Reason_Code _Unwind_RaiseException(struct _Unwind_Exception *h) {
-    using throw_fn =  int (*)(void *);
+    using throw_fn =  _Unwind_Reason_Code (*)(void *);
     static throw_fn org = nullptr;
 
     if (!org) {

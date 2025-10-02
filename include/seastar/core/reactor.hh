@@ -78,6 +78,7 @@
 #include <boost/range/irange.hpp>
 #include "internal/pollable_fd.hh"
 #include "internal/poll.hh"
+#include <unwind.h>
 
 #ifdef HAVE_OSV
 #include <osv/sched.hh>
@@ -87,7 +88,9 @@
 #endif
 
 struct _Unwind_Exception;
-extern "C" int _Unwind_RaiseException(struct _Unwind_Exception *h);
+// extern "C" int _Unwind_RaiseException(struct _Unwind_Exception *h);
+
+extern "C" _Unwind_Reason_Code _Unwind_RaiseException(struct _Unwind_Exception *h);
 
 namespace seastar {
     using shard_id = unsigned;

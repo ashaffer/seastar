@@ -887,6 +887,7 @@ namespace seastar {
         friend class scheduling_group;
         friend void add_to_flush_poller(output_stream<char>* os);
         friend _Unwind_Reason_Code ::_Unwind_RaiseException(struct _Unwind_Exception *h);
+        
         metrics::metric_groups _metric_groups;
         friend future<scheduling_group> create_scheduling_group(sstring name, float shares);
         friend future<> seastar::destroy_scheduling_group(scheduling_group);

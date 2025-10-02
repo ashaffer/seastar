@@ -886,7 +886,6 @@ namespace seastar {
         friend class poller;
         friend class scheduling_group;
         friend void add_to_flush_poller(output_stream<char>* os);
-        friend _Unwind_Reason_Code _Unwind_RaiseException(struct _Unwind_Exception *h);
         
         metrics::metric_groups _metric_groups;
         friend future<scheduling_group> create_scheduling_group(sstring name, float shares);
@@ -911,6 +910,8 @@ namespace seastar {
         friend future<typename function_traits<Reducer>::return_type>
             reduce_scheduling_group_specific(Reducer reducer, Initial initial_val, scheduling_group_key key);
     public:
+        friend _Unwind_Reason_Code _Unwind_RaiseException(struct _Unwind_Exception *h);
+
         bool wait_and_process(int timeout = 0, const sigset_t* active_sigmask = nullptr);
         future<> readable(pollable_fd_state& fd);
         future<> writeable(pollable_fd_state& fd);

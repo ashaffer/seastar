@@ -62,7 +62,7 @@
 #include <seastar/util/backtrace.hh>
 
 namespace seastar {
-using dl_iterate_fn = int (*) (int (*callback) (struct dl_phdr_info *info, size_t size, void *data), void *data);
+using dl_iterate_fn = _Unwind_Reason_Code (*) (int (*callback) (struct dl_phdr_info *info, size_t size, void *data), void *data);
 
 [[gnu::no_sanitize_address]]
 static dl_iterate_fn dl_iterate_phdr_org() {

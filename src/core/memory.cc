@@ -786,7 +786,7 @@ void cpu_pages::free_cross_cpu(unsigned cpu_id, void* ptr) {
     auto& list = all_cpus[cpu_id]->xcpu_freelist;
     auto old = list.load(std::memory_order_relaxed);
     do {
-        if ((uint64_t)p > 0x1000000000000 || p == nullptr) {
+        if ((uint64_t)old > 0x1000000000000 || old == nullptr) {
             printf("free_cross_cpu: bad pointer old xcpu_freelist 0x%lx (%u, %u)\n", (uint64_t)p, cpu_id, engine().cpu_id());
             current_backtrace();
         }
@@ -800,10 +800,6 @@ bool cpu_pages::drain_cross_cpu_freelist() {
         return false;
     }
     auto p = xcpu_freelist.exchange(nullptr, std::memory_order_acquire);
-    if ((uint64_t)p > 0x1000000000000 || p == nullptr) {
-        printf("drain_cross_cpu_freelist: received bad pointer 0x%lx (%u)\n", (uint64_t)p, engine().cpu_id());
-        current_backtrace();
-    }
     while (p) {
         if ((uint64_t)p > 0x1000000000000 || p == nullptr) {
             printf("drain_cross_cpu_freelist: received bad pointer 0x%lx (%u)\n", (uint64_t)p, engine().cpu_id());

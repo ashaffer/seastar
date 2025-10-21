@@ -786,10 +786,10 @@ void cpu_pages::free_cross_cpu(unsigned cpu_id, void* ptr) {
     auto& list = all_cpus[cpu_id]->xcpu_freelist;
     auto old = list.load(std::memory_order_relaxed);
     do {
-        if ((uint64_t)old > 0x1000000000000 || old == nullptr) {
-            printf("free_cross_cpu: bad pointer old xcpu_freelist 0x%lx (%u, %u)\n", (uint64_t)p, cpu_id, engine().cpu_id());
-            current_backtrace();
-        }
+        // if ((uint64_t)old > 0x1000000000000 || old == nullptr) {
+        //     printf("free_cross_cpu: bad pointer old xcpu_freelist 0x%lx (%u, %u)\n", (uint64_t)p, cpu_id, engine().cpu_id());
+        //     current_backtrace();
+        // }
         p->next = old;
     } while (!list.compare_exchange_weak(old, p, std::memory_order_release, std::memory_order_relaxed));
     ++g_cross_cpu_frees;

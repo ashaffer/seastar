@@ -102,9 +102,13 @@ namespace cgroup {
 
 
 std::optional<cpuset> cpu_set() {
-    auto cpuset = read_setting_as<std::string>("/sys/fs/cgroup/cpuset/cpuset.cpus");
-    if (cpuset) {
-        return seastar::parse_cpuset(*cpuset);
+    // Try cgroup v2 first, then fall back to cgroup v1
+    for (auto path : {"/sys/fs/cgroup/cpuset.cpus",
+                      "/sys/fs/cgroup/cpuset/cpuset.cpus"}) {
+        auto cpuset = read_setting_as<std::string>(path);
+        if (cpuset) {
+            return seastar::parse_cpuset(*cpuset);
+        }
     }
 
     seastar_logger.warn("Unable to parse cgroup's cpuset. Ignoring.");
@@ -112,8 +116,19 @@ std::optional<cpuset> cpu_set() {
 }
 
 std::size_t memory_limit() {
-    return read_setting_as<std::size_t>("/sys/fs/cgroup/memory/memory.limit_in_bytes")
-        .value_or(std::numeric_limits<std::size_t>::max());
+    // cgroup v2: /sys/fs/cgroup/memory.max (value is a number or "max")
+    auto v2 = read_setting_as<std::string>("/sys/fs/cgroup/memory.max");
+    if (v2 && *v2 != "max") {
+        try {
+            return boost::lexical_cast<std::size_t>(*v2);
+        } catch (...) {}
+    }
+    if (!v2) {
+        // cgroup v1 fallback
+        return read_setting_as<std::size_t>("/sys/fs/cgroup/memory/memory.limit_in_bytes")
+            .value_or(std::numeric_limits<std::size_t>::max());
+    }
+    return std::numeric_limits<std::size_t>::max();
 }
 
 
@@ -123,7 +138,6 @@ std::optional<T> read_setting_as(std::string path) {
         auto line = read_first_line(path);
         return boost::lexical_cast<T>(line);
     } catch (...) {
-        seastar_logger.warn("Couldn't read cgroup file {}.", path);
     }
 
     return std::nullopt;

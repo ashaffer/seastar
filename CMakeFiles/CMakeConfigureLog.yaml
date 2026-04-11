@@ -511,3 +511,307 @@ events:
         
       exitCode: 2
 ...
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineSystem.cmake:233 (message)"
+      - "CMakeLists.txt:39 (project)"
+    message: |
+      The system is: Linux - 6.17.0-19-generic - x86_64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:39 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /usr/bin/clang++-19 
+      Build flags: -std=c++23;-stdlib=libc++;-nostdinc++;-Wno-unused-command-line-argument
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is Clang, found in:
+        /home/ubuntu/seastar/CMakeFiles/3.28.3/CompilerIdCXX/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "/usr/local/share/cmake-3.28/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:39 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u"
+      binary: "/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u"
+    cmakeVariables:
+      CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS: "/usr/bin/clang-scan-deps-19"
+      CMAKE_CXX_FLAGS: "-std=c++23 -stdlib=libc++ -nostdinc++ -Wno-unused-command-line-argument"
+      CMAKE_EXE_LINKER_FLAGS: "-fuse-ld=lld-19 -lunwind -lrt -ldl -lc++ -lm -lc++abi"
+      CMAKE_MODULE_PATH: "/home/ubuntu/seastar/cmake;/home/ubuntu/seastar"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u'
+        
+        Run Build Command(s): /usr/local/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_fc6c7/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_fc6c7.dir/build.make CMakeFiles/cmTC_fc6c7.dir/build
+        gmake[1]: Entering directory '/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u'
+        Building CXX object CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o
+        /usr/bin/clang++-19   -std=c++23 -stdlib=libc++ -nostdinc++ -Wno-unused-command-line-argument    -v -MD -MT CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -c /usr/local/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp
+        Ubuntu clang version 19.1.1 (1ubuntu1~24.04.2)
+        Target: x86_64-pc-linux-gnu
+        Thread model: posix
+        InstalledDir: /usr/lib/llvm-19/bin
+        Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13
+        Selected GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13
+        Candidate multilib: .;@m64
+        Selected multilib: .;@m64
+         (in-process)
+         "/usr/lib/llvm-19/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -fdebug-compilation-dir=/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u -v -fcoverage-compilation-dir=/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u -nostdinc++ -resource-dir /usr/lib/llvm-19/lib/clang/19 -dependency-file CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -c-isystem /home/ubuntu/boost_1_85_0 -c-isystem /usr/lib/llvm-19/lib/clang/19/include -c-isystem /usr/include -cxx-isystem /home/ubuntu/boost_1_85_0 -cxx-isystem /usr/local/include -cxx-isystem /home/ubuntu/rapidjson/include -cxx-isystem /home/ubuntu/openssl/include -cxx-isystem /home/ubuntu/yaml-cpp -cxx-isystem /usr/include/python -cxx-isystem /home/ubuntu/fixed_math/fixed_lib/include -cxx-isystem /usr/lib/llvm-19/include/c++/v1 -cxx-isystem /usr/include/c++/v1 -cxx-isystem /usr/lib/llvm-19/lib/clang/19/include -cxx-isystem /usr/include -internal-isystem /usr/lib/llvm-19/lib/clang/19/include -internal-isystem /usr/local/include -internal-isystem /usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -Wno-unused-command-line-argument -std=c++23 -fdeprecated-macro -ferror-limit 19 -fgnuc-version=4.2.1 -fno-implicit-modules -fskip-odr-check-in-gmf -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/local/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp
+        clang -cc1 version 19.1.1 based upon LLVM 19.1.1 default target x86_64-pc-linux-gnu
+        ignoring nonexistent directory "/home/ubuntu/openssl/include"
+        ignoring nonexistent directory "/home/ubuntu/yaml-cpp"
+        ignoring nonexistent directory "/usr/include/python"
+        ignoring nonexistent directory "/usr/lib/llvm-19/include/c++/v1"
+        ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/include"
+        ignoring nonexistent directory "/include"
+        ignoring duplicate directory "/usr/lib/llvm-19/lib/clang/19/include"
+        ignoring duplicate directory "/usr/local/include"
+        ignoring duplicate directory "/usr/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /home/ubuntu/boost_1_85_0
+         /usr/local/include
+         /home/ubuntu/rapidjson/include
+         /home/ubuntu/fixed_math/fixed_lib/include
+         /usr/include/c++/v1
+         /usr/lib/llvm-19/lib/clang/19/include
+         /usr/include
+         /usr/include/x86_64-linux-gnu
+        End of search list.
+        Linking CXX executable cmTC_fc6c7
+        /usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fc6c7.dir/link.txt --verbose=1
+        /usr/bin/clang++-19 -std=c++23 -stdlib=libc++ -nostdinc++ -Wno-unused-command-line-argument  -fuse-ld=lld-19 -lunwind -lrt -ldl -lc++ -lm -lc++abi -v CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_fc6c7 
+        Ubuntu clang version 19.1.1 (1ubuntu1~24.04.2)
+        Target: x86_64-pc-linux-gnu
+        Thread model: posix
+        InstalledDir: /usr/lib/llvm-19/bin
+        Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13
+        Selected GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13
+        Candidate multilib: .;@m64
+        Selected multilib: .;@m64
+         "/usr/bin/ld.lld-19" -z relro --hash-style=gnu --build-id --eh-frame-hdr -m elf_x86_64 -pie -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_fc6c7 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/13/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/13 -L/usr/lib/gcc/x86_64-linux-gnu/13/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib -L/home/ubuntu/boost_1_85_0/stage/lib -L/home/ubuntu/openssl -L/home/ubuntu/yaml-cpp/build -L/usr/lib/llvm-19/lib -L/usr/lib/llvm-19/lib/clang/19/lib/linux/ -L/usr/lib/gcc/x86_64-linux-gnu/12 -L/usr/lib/x86_64-linux-gnu -L/home/ubuntu/openssl -lunwind -lrt -ldl -lc++ -lm -lc++abi CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/13/crtendS.o /lib/x86_64-linux-gnu/crtn.o
+        gmake[1]: Leaving directory '/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:127 (message)"
+      - "/usr/local/share/cmake-3.28/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:39 (project)"
+    message: |
+      Parsed CXX implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/home/ubuntu/boost_1_85_0]
+          add: [/usr/local/include]
+          add: [/home/ubuntu/rapidjson/include]
+          add: [/home/ubuntu/fixed_math/fixed_lib/include]
+          add: [/usr/include/c++/v1]
+          add: [/usr/lib/llvm-19/lib/clang/19/include]
+          add: [/usr/include]
+          add: [/usr/include/x86_64-linux-gnu]
+        end of search list found
+        collapse include dir [/home/ubuntu/boost_1_85_0] ==> [/home/ubuntu/boost_1_85_0]
+        collapse include dir [/usr/local/include] ==> [/usr/local/include]
+        collapse include dir [/home/ubuntu/rapidjson/include] ==> [/home/ubuntu/rapidjson/include]
+        collapse include dir [/home/ubuntu/fixed_math/fixed_lib/include] ==> [/home/ubuntu/fixed_math/fixed_lib/include]
+        collapse include dir [/usr/include/c++/v1] ==> [/usr/include/c++/v1]
+        collapse include dir [/usr/lib/llvm-19/lib/clang/19/include] ==> [/usr/lib/llvm-19/lib/clang/19/include]
+        collapse include dir [/usr/include] ==> [/usr/include]
+        collapse include dir [/usr/include/x86_64-linux-gnu] ==> [/usr/include/x86_64-linux-gnu]
+        implicit include dirs: [/home/ubuntu/boost_1_85_0;/usr/local/include;/home/ubuntu/rapidjson/include;/home/ubuntu/fixed_math/fixed_lib/include;/usr/include/c++/v1;/usr/lib/llvm-19/lib/clang/19/include;/usr/include;/usr/include/x86_64-linux-gnu]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:159 (message)"
+      - "/usr/local/share/cmake-3.28/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:39 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld\\.lld-19|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        ignore line: [Change Dir: '/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u']
+        ignore line: []
+        ignore line: [Run Build Command(s): /usr/local/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_fc6c7/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_fc6c7.dir/build.make CMakeFiles/cmTC_fc6c7.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u']
+        ignore line: [Building CXX object CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/usr/bin/clang++-19   -std=c++23 -stdlib=libc++ -nostdinc++ -Wno-unused-command-line-argument    -v -MD -MT CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -c /usr/local/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Ubuntu clang version 19.1.1 (1ubuntu1~24.04.2)]
+        ignore line: [Target: x86_64-pc-linux-gnu]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /usr/lib/llvm-19/bin]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13]
+        ignore line: [Selected GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13]
+        ignore line: [Candidate multilib: .]
+        ignore line: [@m64]
+        ignore line: [Selected multilib: .]
+        ignore line: [@m64]
+        ignore line: [ (in-process)]
+        ignore line: [ "/usr/lib/llvm-19/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -fdebug-compilation-dir=/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u -v -fcoverage-compilation-dir=/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-tpzc3u -nostdinc++ -resource-dir /usr/lib/llvm-19/lib/clang/19 -dependency-file CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -c-isystem /home/ubuntu/boost_1_85_0 -c-isystem /usr/lib/llvm-19/lib/clang/19/include -c-isystem /usr/include -cxx-isystem /home/ubuntu/boost_1_85_0 -cxx-isystem /usr/local/include -cxx-isystem /home/ubuntu/rapidjson/include -cxx-isystem /home/ubuntu/openssl/include -cxx-isystem /home/ubuntu/yaml-cpp -cxx-isystem /usr/include/python -cxx-isystem /home/ubuntu/fixed_math/fixed_lib/include -cxx-isystem /usr/lib/llvm-19/include/c++/v1 -cxx-isystem /usr/include/c++/v1 -cxx-isystem /usr/lib/llvm-19/lib/clang/19/include -cxx-isystem /usr/include -internal-isystem /usr/lib/llvm-19/lib/clang/19/include -internal-isystem /usr/local/include -internal-isystem /usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -Wno-unused-command-line-argument -std=c++23 -fdeprecated-macro -ferror-limit 19 -fgnuc-version=4.2.1 -fno-implicit-modules -fskip-odr-check-in-gmf -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/local/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [clang -cc1 version 19.1.1 based upon LLVM 19.1.1 default target x86_64-pc-linux-gnu]
+        ignore line: [ignoring nonexistent directory "/home/ubuntu/openssl/include"]
+        ignore line: [ignoring nonexistent directory "/home/ubuntu/yaml-cpp"]
+        ignore line: [ignoring nonexistent directory "/usr/include/python"]
+        ignore line: [ignoring nonexistent directory "/usr/lib/llvm-19/include/c++/v1"]
+        ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/include"]
+        ignore line: [ignoring nonexistent directory "/include"]
+        ignore line: [ignoring duplicate directory "/usr/lib/llvm-19/lib/clang/19/include"]
+        ignore line: [ignoring duplicate directory "/usr/local/include"]
+        ignore line: [ignoring duplicate directory "/usr/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /home/ubuntu/boost_1_85_0]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /home/ubuntu/rapidjson/include]
+        ignore line: [ /home/ubuntu/fixed_math/fixed_lib/include]
+        ignore line: [ /usr/include/c++/v1]
+        ignore line: [ /usr/lib/llvm-19/lib/clang/19/include]
+        ignore line: [ /usr/include]
+        ignore line: [ /usr/include/x86_64-linux-gnu]
+        ignore line: [End of search list.]
+        ignore line: [Linking CXX executable cmTC_fc6c7]
+        ignore line: [/usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fc6c7.dir/link.txt --verbose=1]
+        ignore line: [/usr/bin/clang++-19 -std=c++23 -stdlib=libc++ -nostdinc++ -Wno-unused-command-line-argument  -fuse-ld=lld-19 -lunwind -lrt -ldl -lc++ -lm -lc++abi -v CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_fc6c7 ]
+        ignore line: [Ubuntu clang version 19.1.1 (1ubuntu1~24.04.2)]
+        ignore line: [Target: x86_64-pc-linux-gnu]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /usr/lib/llvm-19/bin]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13]
+        ignore line: [Selected GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13]
+        ignore line: [Candidate multilib: .]
+        ignore line: [@m64]
+        ignore line: [Selected multilib: .]
+        ignore line: [@m64]
+        link line: [ "/usr/bin/ld.lld-19" -z relro --hash-style=gnu --build-id --eh-frame-hdr -m elf_x86_64 -pie -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_fc6c7 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/13/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/13 -L/usr/lib/gcc/x86_64-linux-gnu/13/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib -L/home/ubuntu/boost_1_85_0/stage/lib -L/home/ubuntu/openssl -L/home/ubuntu/yaml-cpp/build -L/usr/lib/llvm-19/lib -L/usr/lib/llvm-19/lib/clang/19/lib/linux/ -L/usr/lib/gcc/x86_64-linux-gnu/12 -L/usr/lib/x86_64-linux-gnu -L/home/ubuntu/openssl -lunwind -lrt -ldl -lc++ -lm -lc++abi CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/13/crtendS.o /lib/x86_64-linux-gnu/crtn.o]
+          arg [/usr/bin/ld.lld-19] ==> ignore
+          arg [-zrelro] ==> ignore
+          arg [--hash-style=gnu] ==> ignore
+          arg [--build-id] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [-m] ==> ignore
+          arg [elf_x86_64] ==> ignore
+          arg [-pie] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_fc6c7] ==> ignore
+          arg [/lib/x86_64-linux-gnu/Scrt1.o] ==> obj [/lib/x86_64-linux-gnu/Scrt1.o]
+          arg [/lib/x86_64-linux-gnu/crti.o] ==> obj [/lib/x86_64-linux-gnu/crti.o]
+          arg [/usr/lib/gcc/x86_64-linux-gnu/13/crtbeginS.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/13/crtbeginS.o]
+          arg [-L/usr/lib/gcc/x86_64-linux-gnu/13] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/13]
+          arg [-L/usr/lib/gcc/x86_64-linux-gnu/13/../../../../lib64] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/13/../../../../lib64]
+          arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+          arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+          arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+          arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
+          arg [-L/lib] ==> dir [/lib]
+          arg [-L/usr/lib] ==> dir [/usr/lib]
+          arg [-L/home/ubuntu/boost_1_85_0/stage/lib] ==> dir [/home/ubuntu/boost_1_85_0/stage/lib]
+          arg [-L/home/ubuntu/openssl] ==> dir [/home/ubuntu/openssl]
+          arg [-L/home/ubuntu/yaml-cpp/build] ==> dir [/home/ubuntu/yaml-cpp/build]
+          arg [-L/usr/lib/llvm-19/lib] ==> dir [/usr/lib/llvm-19/lib]
+          arg [-L/usr/lib/llvm-19/lib/clang/19/lib/linux/] ==> dir [/usr/lib/llvm-19/lib/clang/19/lib/linux/]
+          arg [-L/usr/lib/gcc/x86_64-linux-gnu/12] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/12]
+          arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+          arg [-L/home/ubuntu/openssl] ==> dir [/home/ubuntu/openssl]
+          arg [-lunwind] ==> lib [unwind]
+          arg [-lrt] ==> lib [rt]
+          arg [-ldl] ==> lib [dl]
+          arg [-lc++] ==> lib [c++]
+          arg [-lm] ==> lib [m]
+          arg [-lc++abi] ==> lib [c++abi]
+          arg [CMakeFiles/cmTC_fc6c7.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [-lc++] ==> lib [c++]
+          arg [-lm] ==> lib [m]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [-lc] ==> lib [c]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [/usr/lib/gcc/x86_64-linux-gnu/13/crtendS.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/13/crtendS.o]
+          arg [/lib/x86_64-linux-gnu/crtn.o] ==> obj [/lib/x86_64-linux-gnu/crtn.o]
+        collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/13] ==> [/usr/lib/gcc/x86_64-linux-gnu/13]
+        collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/13/../../../../lib64] ==> [/usr/lib64]
+        collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+        collapse library dir [/lib/../lib64] ==> [/lib64]
+        collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+        collapse library dir [/usr/lib/../lib64] ==> [/usr/lib64]
+        collapse library dir [/lib] ==> [/lib]
+        collapse library dir [/usr/lib] ==> [/usr/lib]
+        collapse library dir [/home/ubuntu/boost_1_85_0/stage/lib] ==> [/home/ubuntu/boost_1_85_0/stage/lib]
+        collapse library dir [/home/ubuntu/openssl] ==> [/home/ubuntu/openssl]
+        collapse library dir [/home/ubuntu/yaml-cpp/build] ==> [/home/ubuntu/yaml-cpp/build]
+        collapse library dir [/usr/lib/llvm-19/lib] ==> [/usr/lib/llvm-19/lib]
+        collapse library dir [/usr/lib/llvm-19/lib/clang/19/lib/linux/] ==> [/usr/lib/llvm-19/lib/clang/19/lib/linux]
+        collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/12] ==> [/usr/lib/gcc/x86_64-linux-gnu/12]
+        collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+        collapse library dir [/home/ubuntu/openssl] ==> [/home/ubuntu/openssl]
+        implicit libs: [unwind;rt;dl;c++;m;c++abi;c++;m;gcc_s;gcc;c;gcc_s;gcc]
+        implicit objs: [/lib/x86_64-linux-gnu/Scrt1.o;/lib/x86_64-linux-gnu/crti.o;/usr/lib/gcc/x86_64-linux-gnu/13/crtbeginS.o;/usr/lib/gcc/x86_64-linux-gnu/13/crtendS.o;/lib/x86_64-linux-gnu/crtn.o]
+        implicit dirs: [/usr/lib/gcc/x86_64-linux-gnu/13;/usr/lib64;/lib/x86_64-linux-gnu;/lib64;/usr/lib/x86_64-linux-gnu;/lib;/usr/lib;/home/ubuntu/boost_1_85_0/stage/lib;/home/ubuntu/openssl;/home/ubuntu/yaml-cpp/build;/usr/lib/llvm-19/lib;/usr/lib/llvm-19/lib/clang/19/lib/linux;/usr/lib/gcc/x86_64-linux-gnu/12]
+        implicit fwks: []
+      
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/usr/local/share/cmake-3.28/Modules/CheckCXXSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "/usr/local/share/cmake-3.28/Modules/FindThreads.cmake:99 (CHECK_CXX_SOURCE_COMPILES)"
+      - "/usr/local/share/cmake-3.28/Modules/FindThreads.cmake:163 (_threads_check_libc)"
+      - "/usr/local/share/cmake-3.28/Modules/FindBoost.cmake:2144 (find_package)"
+      - "cmake/SeastarDependencies.cmake:165 (find_package)"
+      - "CMakeLists.txt:278 (seastar_find_dependencies)"
+    checks:
+      - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
+    directories:
+      source: "/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-q9yaHF"
+      binary: "/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-q9yaHF"
+    cmakeVariables:
+      CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS: "/usr/bin/clang-scan-deps-19"
+      CMAKE_CXX_FLAGS: "-std=c++23 -stdlib=libc++ -nostdinc++ -Wno-unused-command-line-argument"
+      CMAKE_EXE_LINKER_FLAGS: "-fuse-ld=lld-19 -lunwind -lrt -ldl -lc++ -lm -lc++abi"
+      CMAKE_MODULE_PATH: "/home/ubuntu/seastar/cmake;/home/ubuntu/seastar"
+    buildResult:
+      variable: "CMAKE_HAVE_LIBC_PTHREAD"
+      cached: true
+      stdout: |
+        Change Dir: '/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-q9yaHF'
+        
+        Run Build Command(s): /usr/local/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_64e9e/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_64e9e.dir/build.make CMakeFiles/cmTC_64e9e.dir/build
+        gmake[1]: Entering directory '/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-q9yaHF'
+        Building CXX object CMakeFiles/cmTC_64e9e.dir/src.cxx.o
+        /usr/bin/clang++-19 -DCMAKE_HAVE_LIBC_PTHREAD  -std=c++23 -stdlib=libc++ -nostdinc++ -Wno-unused-command-line-argument  -MD -MT CMakeFiles/cmTC_64e9e.dir/src.cxx.o -MF CMakeFiles/cmTC_64e9e.dir/src.cxx.o.d -o CMakeFiles/cmTC_64e9e.dir/src.cxx.o -c /home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-q9yaHF/src.cxx
+        Linking CXX executable cmTC_64e9e
+        /usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_64e9e.dir/link.txt --verbose=1
+        /usr/bin/clang++-19 -std=c++23 -stdlib=libc++ -nostdinc++ -Wno-unused-command-line-argument  -fuse-ld=lld-19 -lunwind -lrt -ldl -lc++ -lm -lc++abi  CMakeFiles/cmTC_64e9e.dir/src.cxx.o -o cmTC_64e9e 
+        gmake[1]: Leaving directory '/home/ubuntu/seastar/CMakeFiles/CMakeScratch/TryCompile-q9yaHF'
+        
+      exitCode: 0

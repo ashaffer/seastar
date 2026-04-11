@@ -1,7 +1,7 @@
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++-17")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++-19")
 set(CMAKE_CXX_COMPILER_ARG1 "")
 set(CMAKE_CXX_COMPILER_ID "Clang")
-set(CMAKE_CXX_COMPILER_VERSION "17.0.6")
+set(CMAKE_CXX_COMPILER_VERSION "19.1.1")
 set(CMAKE_CXX_COMPILER_VERSION_INTERNAL "")
 set(CMAKE_CXX_COMPILER_WRAPPER "")
 set(CMAKE_CXX_STANDARD_COMPUTED_DEFAULT "23")
@@ -22,11 +22,11 @@ set(CMAKE_CXX_SIMULATE_VERSION "")
 
 
 
-set(CMAKE_AR "/usr/bin/llvm-ar-17")
-set(CMAKE_CXX_COMPILER_AR "/usr/bin/llvm-ar-17")
-set(CMAKE_RANLIB "/usr/bin/llvm-ranlib-17")
-set(CMAKE_CXX_COMPILER_RANLIB "/usr/bin/llvm-ranlib-17")
-set(CMAKE_LINKER "/usr/bin/ld.lld-17")
+set(CMAKE_AR "/usr/bin/llvm-ar-19")
+set(CMAKE_CXX_COMPILER_AR "/usr/bin/llvm-ar-19")
+set(CMAKE_RANLIB "/usr/bin/llvm-ranlib-19")
+set(CMAKE_CXX_COMPILER_RANLIB "/usr/bin/llvm-ranlib-19")
+set(CMAKE_LINKER "/usr/bin/ld.lld-19")
 set(CMAKE_MT "")
 set(CMAKE_TAPI "CMAKE_TAPI-NOTFOUND")
 set(CMAKE_COMPILER_IS_GNUCXX )
@@ -79,7 +79,7 @@ endif()
 
 
 
-set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/home/andrew/yaml-cpp/include;/usr/lib/llvm-17/include/c++/v1;/usr/lib/llvm-17/lib/clang/17/include;/usr/include;/usr/include/c++/13;/home/andrew/rapidjson/include;/home/andrew/openssl/include;/usr/include/c++;/usr/local/include;/usr/include/x86_64-linux-gnu")
-set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "unwind;rt;dl;c++;m;c++abi;stdc++;m;gcc_s;gcc;c;gcc_s;gcc")
-set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "/usr/lib/gcc/x86_64-linux-gnu/14;/usr/lib64;/lib/x86_64-linux-gnu;/lib64;/usr/lib/x86_64-linux-gnu;/usr/x86_64-linux-gnu/lib;/usr/lib/llvm-17/lib;/lib;/usr/lib;/home/andrew/boost_1_83_0/stage/lib;/home/andrew/yaml-cpp/build;/usr/lib/llvm-17/lib/clang/17/lib/linux;/usr/lib/gcc/x86_64-linux-gnu/13;/home/andrew/openssl")
+set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/home/ubuntu/boost_1_85_0;/usr/local/include;/home/ubuntu/rapidjson/include;/home/ubuntu/fixed_math/fixed_lib/include;/usr/include/c++/v1;/usr/lib/llvm-19/lib/clang/19/include;/usr/include;/usr/include/x86_64-linux-gnu")
+set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "unwind;rt;dl;c++;m;c++abi;c++;m;gcc_s;gcc;c;gcc_s;gcc")
+set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "/usr/lib/gcc/x86_64-linux-gnu/13;/usr/lib64;/lib/x86_64-linux-gnu;/lib64;/usr/lib/x86_64-linux-gnu;/lib;/usr/lib;/home/ubuntu/boost_1_85_0/stage/lib;/home/ubuntu/openssl;/home/ubuntu/yaml-cpp/build;/usr/lib/llvm-19/lib;/usr/lib/llvm-19/lib/clang/19/lib/linux;/usr/lib/gcc/x86_64-linux-gnu/12")
 set(CMAKE_CXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")

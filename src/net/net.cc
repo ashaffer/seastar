@@ -362,11 +362,9 @@ future<> interface::dispatch_packet(packet p) {
             auto fw = _dev->forward_dst(engine().cpu_id(), [&p, &l3, this] () {
                 auto hwrss = p.rss_hash();
                 if (hwrss) {
-                    printf("correct cpu packet\n");
                     return hwrss.value();
                 } else {
                     forward_hash data;
-                    printf("forwarding packet\n");
                     if (l3.forward(data, p, sizeof(eth_hdr))) {
                         return toeplitz_hash(rss_conf(), data);
                     }

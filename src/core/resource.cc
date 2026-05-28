@@ -104,6 +104,7 @@ namespace cgroup {
 std::optional<cpuset> cpu_set() {
     // Try cgroup v2 first, then fall back to cgroup v1
     for (auto path : {"/sys/fs/cgroup/cpuset.cpus",
+                      "/sys/fs/cgroup/cpuset.cpus.effective",
                       "/sys/fs/cgroup/cpuset/cpuset.cpus"}) {
         auto cpuset = read_setting_as<std::string>(path);
         if (cpuset) {

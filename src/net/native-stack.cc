@@ -222,6 +222,8 @@ public:
         }
     }
     virtual std::vector<std::vector<std::string>> getLocalIps() override;
+    virtual void build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, std::string dst_ip) override;
+    virtual std::vector<uint16_t> get_rss_src_ports(std::string src_ip, std::string dst_ip, uint16_t dst_port) override;
     virtual void flush_all() override;
     friend class native_server_socket_impl<tcp4>;
 };
@@ -297,6 +299,26 @@ std::vector<std::vector<std::string>> native_network_stack::getLocalIps () {
     }
 
     return result;
+}
+
+void native_network_stack::build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, std::string dst_ip_str) {
+    auto dst_ip = net::ipv4_address(dst_ip_str);
+    for (auto& ip_str : src_ips) {
+        net::inet_address key{net::ipv4_address(ip_str)};
+        auto it = _inet_map.find(key);
+        if (it != _inet_map.end()) {
+            it->second->get_tcp().build_src_port_table({ip_str}, dst_port, dst_ip);
+        }
+    }
+}
+
+std::vector<uint16_t> native_network_stack::get_rss_src_ports(std::string src_ip_str, std::string dst_ip_str, uint16_t dst_port) {
+    net::inet_address key{net::ipv4_address(src_ip_str)};
+    auto it = _inet_map.find(key);
+    if (it != _inet_map.end()) {
+        return it->second->get_tcp().get_rss_src_ports(src_ip_str, dst_ip_str, dst_port);
+    }
+    return {};
 }
 
 server_socket

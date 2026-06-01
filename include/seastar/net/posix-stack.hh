@@ -251,6 +251,8 @@ public:
     }
     virtual bool has_per_core_namespace() override { return _reuseport; };
     virtual std::vector<std::vector<std::string>> getLocalIps() override;
+    virtual void build_src_port_table(std::vector<std::string>, uint16_t, std::string) override {}
+    virtual std::vector<uint16_t> get_rss_src_ports(std::string, std::string, uint16_t) override { return {}; }
     virtual void flush_all() override;
     bool supports_ipv6() const override;
 };

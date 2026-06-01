@@ -745,7 +745,10 @@ private:
     std::unordered_map<uint16_t, listener*> _listening;
     std::random_device _rd;
     std::default_random_engine _e;
-    std::uniform_int_distribution<uint16_t> _port_dist{41952, 65535};
+    inline static constexpr uint16_t MIN_SRC_PORT{41952};
+    inline static constexpr uint16_t MAX_SRC_PORT{65535};
+    std::uniform_int_distribution<uint16_t> _port_dist{MIN_SRC_PORT, MAX_SRC_PORT};
+    inline static thread_local std::unordered_map<std::size_t, std::vector<uint16_t>> _src_port_table;
     circular_buffer<std::pair<lw_shared_ptr<tcb>, ethernet_address>> _poll_tcbs;
     // queue for packets that do not belong to any tcb
     circular_buffer<ipv4_traits::l4packet> _packetq;
@@ -885,6 +888,8 @@ public:
     bool forward(forward_hash& out_hash_data, packet& p, size_t off);
     listener listen(uint16_t port, size_t queue_length = 100);
     connection connect(socket_address sa, socket_address local);
+    void build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, ipaddr dst_ip);
+    std::vector<uint16_t> get_rss_src_ports(std::string src_ip, std::string dst_ip, uint16_t dst_port);
     const net::hw_features& hw_features() const { return _inet._inet.hw_features(); }
     future<> poll_tcb(ipaddr to, lw_shared_ptr<tcb> tcb);
     void add_connected_tcb(lw_shared_ptr<tcb> tcbp, uint16_t local_port) {
@@ -953,25 +958,74 @@ auto tcp<InetTraits>::listen(uint16_t port, size_t queue_length) -> listener {
 }
 
 template <typename InetTraits>
+void tcp<InetTraits>::build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, ipaddr dst_ip) {
+    auto netif = _inet._inet.netif();
+    auto rss_conf = netif->rss_conf();
+    for (auto& ip : src_ips) {
+        auto src_ip = ipv4_address(ip);
+        auto key = connid{src_ip, dst_ip, 0, dst_port}.hash(rss_conf);
+        auto& ports = _src_port_table[key];
+        ports.clear();
+        for (uint16_t i = MIN_SRC_PORT; i <= MAX_SRC_PORT; ++i) {
+            connid id{src_ip, dst_ip, i, dst_port};
+            if (netif->hash2cpu(id.hash(rss_conf)) == engine().cpu_id()) {
+                ports.push_back(i);
+            }
+        }
+    }
+}
+
+template <typename InetTraits>
+std::vector<uint16_t> tcp<InetTraits>::get_rss_src_ports(std::string src_ip_str, std::string dst_ip_str, uint16_t dst_port) {
+    auto netif = _inet._inet.netif();
+    auto rss_conf = netif->rss_conf();
+    auto src_ip = ipv4_address(src_ip_str);
+    auto dst_ip = ipv4_address(dst_ip_str);
+    auto key = connid{src_ip, dst_ip, 0, dst_port}.hash(rss_conf);
+    auto it = _src_port_table.find(key);
+    if (it != _src_port_table.end()) {
+        return it->second;
+    }
+    return {};
+}
+
+template <typename InetTraits>
 auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connection {
-    uint16_t src_port;
     connid id;
     socket_address lh{};
     auto src_ip = lh == local ? _inet._inet.host_address() : ipv4_address(local);
     auto dst_ip = ipv4_address(sa);
     auto dst_port = net::ntoh(sa.u.in.sin_port);
+    auto src_port = net::ntoh(local.u.in.sin_port);
 
     auto netif = _inet._inet.netif();
     auto rss_conf = netif->rss_conf();
 
-    do {
-        src_port = _port_dist(_e);
+    if (src_port != 0) {
         id = connid{src_ip, dst_ip, src_port, dst_port};
-    } while (netif->hw_queues_count() > 1 &&
-             (netif->hash2cpu(id.hash(rss_conf)) != engine().cpu_id()
-              || _tcbs.find(id) != _tcbs.end()));
+    } else {
+        auto key = connid{src_ip, dst_ip, 0, dst_port}.hash(rss_conf);
+        auto it = _src_port_table.find(key);
+        if (it != _src_port_table.end()) {
+            for (auto port : it->second) {
+                id = connid{src_ip, dst_ip, port, dst_port};
+                if (_tcbs.find(id) == _tcbs.end()) {
+                    src_port = port;
+                    break;
+                }
+            }
+        }
 
-    // printConnid(id, _inet);
+        if (src_port == 0) {
+            do {
+                src_port = _port_dist(_e);
+                id = connid{src_ip, dst_ip, src_port, dst_port};
+            } while (netif->hw_queues_count() > 1 &&
+                     (netif->hash2cpu(id.hash(rss_conf)) != engine().cpu_id()
+                      || _tcbs.find(id) != _tcbs.end()));
+        }
+    }
+
     auto tcbp = make_lw_shared<tcb>(*this, id);
     _tcbs.insert({id, tcbp});
     tcbp->connect();

@@ -333,9 +333,12 @@ seastar::socket native_network_stack::socket(socket_address sa) {
     if (sa == lh) {
         return tcpv4_socket(default_device->get_tcp());
     }
-    
-    std::string ip = std::format("{}", sa);
-    return tcpv4_socket(_inet_map[sa.addr()]->get_tcp());
+
+    auto it = _inet_map.find(sa.addr());
+    if (it == _inet_map.end()) {
+        return tcpv4_socket(default_device->get_tcp());
+    }
+    return tcpv4_socket(it->second->get_tcp());
 }
 
 using namespace std::chrono_literals;

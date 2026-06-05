@@ -972,9 +972,9 @@ future<> tcp<InetTraits>::build_src_port_table(std::vector<std::string> src_ips,
             if (netif->hash2cpu(id.hash(rss_conf)) == engine().cpu_id()) {
                 ports.push_back(i);
             }
+            // yield every 1024 ports to stay within reactor stall threshold
+            if ((i & 0x3FF) == 0) co_await seastar::later();
         }
-        // yield after each source IP to avoid reactor stall
-        co_await later();
     }
 }
 

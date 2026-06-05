@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <coroutine>
 #include <seastar/core/shared_ptr.hh>
 #include <seastar/core/queue.hh>
 #include <seastar/core/semaphore.hh>
@@ -888,7 +889,7 @@ public:
     bool forward(forward_hash& out_hash_data, packet& p, size_t off);
     listener listen(uint16_t port, size_t queue_length = 100);
     connection connect(socket_address sa, socket_address local);
-    void build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, ipaddr dst_ip);
+    future<> build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, ipaddr dst_ip);
     std::vector<uint16_t> get_rss_src_ports(std::string src_ip, std::string dst_ip, uint16_t dst_port);
     const net::hw_features& hw_features() const { return _inet._inet.hw_features(); }
     future<> poll_tcb(ipaddr to, lw_shared_ptr<tcb> tcb);
@@ -958,7 +959,7 @@ auto tcp<InetTraits>::listen(uint16_t port, size_t queue_length) -> listener {
 }
 
 template <typename InetTraits>
-void tcp<InetTraits>::build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, ipaddr dst_ip) {
+future<> tcp<InetTraits>::build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, ipaddr dst_ip) {
     auto netif = _inet._inet.netif();
     auto rss_conf = netif->rss_conf();
     for (auto& ip : src_ips) {
@@ -972,6 +973,8 @@ void tcp<InetTraits>::build_src_port_table(std::vector<std::string> src_ips, uin
                 ports.push_back(i);
             }
         }
+        // yield after each source IP to avoid reactor stall
+        co_await later();
     }
 }
 

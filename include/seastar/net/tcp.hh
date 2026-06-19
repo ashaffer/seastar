@@ -973,7 +973,7 @@ future<> tcp<InetTraits>::build_src_port_table(std::vector<std::string> src_ips,
         for (uint16_t i = MIN_SRC_PORT; i < MAX_SRC_PORT; ++i) {
             connid id{src_ip, dst_ip, i, dst_port};
             if (netif->hash2cpu(id.hash(rss_conf)) == engine().cpu_id()) {
-                std::print("[tcp] build_src_port_table: {} -> {} is a valid RSS port\n", ip, i);
+                // std::print("[tcp] build_src_port_table: {} -> {} is a valid RSS port\n", ip, i);
                 ports.push_back(i);
             }
             // yield every 1024 ports to stay within reactor stall threshold

@@ -978,7 +978,6 @@ future<> tcp<InetTraits>::build_src_port_table(std::vector<std::string> src_ips,
             }
         }
     }
-    std::print("[tcp] build_src_port_table: complete\n");
 }
 
 template <typename InetTraits>

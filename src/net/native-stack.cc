@@ -222,7 +222,7 @@ public:
             // }
         }
     }
-    virtual std::vector<std::vector<std::string>> getLocalIps() override;
+    virtual std::vector<std::tuple<std::string, std::string>> getLocalIps() override;
     virtual seastar::future<> build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, std::string dst_ip) override;
     virtual std::vector<uint16_t> get_rss_src_ports(std::string src_ip, std::string dst_ip, uint16_t dst_port) override;
     virtual void flush_all() override;
@@ -285,8 +285,8 @@ void native_network_stack::flush_all () {
     }
 }
 
-std::vector<std::vector<std::string>> native_network_stack::getLocalIps () {
-    std::vector<std::vector<std::string>> result;
+std::vector<std::tuple<std::string, std::string>> native_network_stack::getLocalIps () {
+    std::vector<std::tuple<std::string, std::string>> result;
 
     for (auto addr : _inet_map) {
         socket_address sa = {};

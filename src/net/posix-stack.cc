@@ -639,8 +639,8 @@ posix_network_stack::listen(socket_address sa, listen_options opt) {
     }
 }
 
-std::vector<std::vector<std::string>> posix_network_stack::getLocalIps () {
-    std::vector<std::vector<std::string>> result;
+std::vector<std::tuple<std::string, std::string>> posix_network_stack::getLocalIps () {
+    std::vector<std::tuple<std::string, std::string>> result;
 
     ifaddrs *ifap;
     getifaddrs(&ifap);

@@ -366,7 +366,7 @@ public:
         return false;
     }
 
-    virtual std::vector<std::vector<std::string>> getLocalIps () = 0;
+    virtual std::vector<std::tuple<std::string, std::string>> getLocalIps () = 0;
     virtual future<> build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, std::string dst_ip) = 0;
     virtual std::vector<uint16_t> get_rss_src_ports(std::string src_ip, std::string dst_ip, uint16_t dst_port) = 0;
     virtual void flush_all () = 0;

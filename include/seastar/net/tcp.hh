@@ -962,9 +962,6 @@ template <typename InetTraits>
 future<> tcp<InetTraits>::build_src_port_table(std::vector<std::string> src_ips, uint16_t dst_port, ipaddr dst_ip) {
     auto netif = _inet._inet.netif();
     auto rss_conf = netif->rss_conf();
-    std::print("[tcp] build_src_port_table: {} src IPs, dst_port={}, shard={}\n",
-               src_ips.size(), dst_port, engine().cpu_id());
-    std::size_t ip_idx = 0;
     for (auto& ip : src_ips) {
         auto src_ip = ipv4_address(ip);
         auto key = connid{src_ip, dst_ip, 0, dst_port}.hash(rss_conf);
@@ -980,8 +977,6 @@ future<> tcp<InetTraits>::build_src_port_table(std::vector<std::string> src_ips,
                 co_await seastar::later();
             }
         }
-        std::print("[tcp] build_src_port_table: {}/{} {} -> {} valid RSS ports\n",
-                   ++ip_idx, src_ips.size(), ip, ports.size());
     }
     std::print("[tcp] build_src_port_table: complete\n");
 }

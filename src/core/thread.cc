@@ -240,7 +240,6 @@ thread_context::run_and_dispose() noexcept {
 
 void
 thread_context::yield() {
-    printf("thread_context yield\n");
     schedule(std::unique_ptr<task>(this));
     switch_out();
 }

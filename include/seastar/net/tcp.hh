@@ -746,7 +746,7 @@ private:
     std::unordered_map<uint16_t, listener*> _listening;
     std::random_device _rd;
     std::default_random_engine _e;
-    inline static constexpr uint16_t MIN_SRC_PORT{41952};
+    inline static constexpr uint16_t MIN_SRC_PORT{1024};
     inline static constexpr uint16_t MAX_SRC_PORT{65535};
     std::uniform_int_distribution<uint16_t> _port_dist{MIN_SRC_PORT, MAX_SRC_PORT};
     inline static thread_local std::unordered_map<std::size_t, std::vector<uint16_t>> _src_port_table;

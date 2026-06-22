@@ -80,6 +80,14 @@ void eal::init(cpuset cpus, boost::program_options::variables_map opts)
     } else if (!opts["dpdk-pmd"].as<bool>()) {
         args.push_back(string2vector("--no-huge"));
     }
+
+    // When not using DPDK networking, skip PCI bus probing. This prevents PMD
+    // drivers (e.g. ENA) from spawning management threads that call free() via
+    // seastar's global allocator before per-shard memory is initialized.
+    if (!opts["dpdk-pmd"].as<bool>()) {
+        args.push_back(string2vector("--no-pci"));
+    }
+
 #ifdef HAVE_OSV
     args.push_back(string2vector("--no-shconf"));
 #endif

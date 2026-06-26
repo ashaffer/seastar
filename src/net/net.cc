@@ -374,6 +374,7 @@ future<> interface::dispatch_packet(packet p) {
             });
 
             if (fw != engine().cpu_id()) {
+                printf("Received packet on the wrong cpu %u (dest: %u)\n", engine().cpu_id(), fw)
                 forward(fw, std::move(p));
             } else {
                 auto h = ntoh(*eh);

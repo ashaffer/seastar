@@ -1451,7 +1451,7 @@ private:
             uint pbSz = (uint)pb.size();
             uint tbi = (uint)_tx_burst_idx;
             later().then([tbi, tbSz, sent, pbSz, nr_frags, bytes] () {
-                printf("Failed to transmit all packets: %u, %u, %u, %u, %u, %u\n", tbi, tbSz, (uint)sent, pbSz, (uint)nr_frags, (uint)bytes);
+                printf("Failed to transmit all packets (%u): %u, %u, %u, %u, %u, %u\n", seastar::engine().cpu_id(), tbi, tbSz, (uint)sent, pbSz, (uint)nr_frags, (uint)bytes);
             });
         }
 

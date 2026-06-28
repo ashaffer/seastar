@@ -26,6 +26,8 @@
 #include <seastar/http/websocket_fragment.hh>
 #include <seastar/http/websocket_message.hh>
 #include <seastar/core/sleep.hh>
+#include <seastar/net/packet.hh>
+#include <functional>
 
 namespace seastar {
 namespace httpd {
@@ -54,13 +56,15 @@ protected:
         memcpy((void *)buf.get(), (void *)header.get(), header.size());
         memcpy((void *)(buf.get() + header.size()), (void *)message.payload.get(), message.payload.size());
         return _stream.write(std::move(buf));
-        // printf("Header: ");
-        // header.print_hex();
-        // return _stream.write(std::move(header)).then([this, message = std::move(message)]() mutable -> future<> {
-        //     printf("Payload: ");
-        //     message.payload.print_text(25);
-        //     return _stream.write(std::move(message.payload));
-        // });
+    }
+
+    future<> write(temporary_buffer<char> header, message_base message, std::function<void(uint64_t, int)> cb) {
+        temporary_buffer<char> buf{header.size() + message.payload.size()};
+        memcpy((void *)buf.get(), (void *)header.get(), header.size());
+        memcpy((void *)(buf.get() + header.size()), (void *)message.payload.get(), message.payload.size());
+        net::packet p(std::move(buf));
+        p.onTransmit(std::move(cb));
+        return _stream.write(std::move(p));
     }
 
     friend class reactor;
@@ -73,6 +77,11 @@ public:
     future<> write(websocket::message<type> message) {
         auto header = message.get_header();
         return output_stream_base::write(std::move(header), std::move(message));
+    };
+
+    future<> write(websocket::message<type> message, std::function<void(uint64_t, int)> cb) {
+        auto header = message.get_header();
+        return output_stream_base::write(std::move(header), std::move(message), std::move(cb));
     };
 };
 
@@ -236,6 +245,10 @@ public:
 
     future<> write(websocket::message<type> message) {
         return _output_stream.write(std::move(message));
+    };
+
+    future<> write(websocket::message<type> message, std::function<void(uint64_t, int)> cb) {
+        return _output_stream.write(std::move(message), std::move(cb));
     };
 
     future<> close(close_status_code code = NORMAL_CLOSURE);

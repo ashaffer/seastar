@@ -1008,6 +1008,9 @@ auto tcp<InetTraits>::connect(socket_address sa, socket_address local) -> connec
 
     if (src_port != 0) {
         id = connid{src_ip, dst_ip, src_port, dst_port};
+        if (netif->hash2cpu(id.hash(rss_conf)) != engine().cpu_id()) {
+            printf("Specified source port %hu does not RSS hash to CPU %u\n", src_port, engine().cpu_id());
+        }
     } else {
         auto key = connid{src_ip, dst_ip, 0, dst_port}.hash(rss_conf);
         auto it = _src_port_table.find(key);

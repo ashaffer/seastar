@@ -284,6 +284,11 @@ public:
                 websocket::output_stream<type>(std::move(_socket.output(buffer_size, batch_flushes))), this);
     }
 
+    // Returns a raw output stream for direct zero-copy writes (bypasses WS framing overhead).
+    seastar::output_stream<char> raw_output(size_t buffer_size = 65536, bool batch_flushes = false) {
+        return _socket.output(buffer_size, batch_flushes);
+    }
+
     void shutdown_output() { _socket.shutdown_output(); }
 
     void shutdown_input() { _socket.shutdown_input(); }

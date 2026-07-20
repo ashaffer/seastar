@@ -30,6 +30,7 @@
 #include <iterator>
 #include <list>
 #include <unordered_map>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <seastar/core/posix.hh>
@@ -178,7 +179,17 @@ uint64_t fast_virt2iova (void *p) {
     constexpr uint mask = (1 << 21) - 1;
     uint offset = (uint64_t)p & mask;
     uint index = ((uint64_t)p - seastar::memory::get_memory_layout().start) >> 21;
-    return virt2iova_table[index] + offset;
+    uint64_t base = virt2iova_table[index];
+    // A cached RTE_BAD_IOVA must propagate as-is: adding offset to the
+    // sentinel produces a plausible-looking but bogus IOVA instead of the
+    // failure value callers check for (see the RTE_BAD_IOVA fallback at the
+    // zero-copy call site). Only reachable when a page's IOVA couldn't be
+    // resolved at table-build time (e.g. unregistered with the IOMMU) --
+    // never happens under IOVA=PA (igb_uio), so this branch is essentially
+    // free: unconditionally correct, unconditionally predicted not-taken
+    // in the only mode where it's mattered so far.
+    if (base == RTE_BAD_IOVA) return RTE_BAD_IOVA;
+    return base + offset;
 }
 
 
@@ -643,6 +654,10 @@ template <bool HugetlbfsMemBackend>
 class dpdk_qp : public net::qp {
     size_t _num_packets = 0;
     static std::unordered_map<uint64_t, bool> dma_mapped;
+    // Guards dma_mapped only -- map_dma() runs once per queue-pair at
+    // startup (multiple shards construct their qp concurrently), never on
+    // the packet hot path, so this lock costs nothing at steady state.
+    static std::mutex dma_mapped_mutex;
     class tx_buf_factory;
 
 public:
@@ -2067,6 +2082,9 @@ bool dpdk_qp<HugetlbfsMemBackend>::init_rx_mbuf_pool()
 template<bool HugeTlbfsMemBackend>
 std::unordered_map<uint64_t, bool> dpdk_qp<HugeTlbfsMemBackend>::dma_mapped;
 
+template<bool HugeTlbfsMemBackend>
+std::mutex dpdk_qp<HugeTlbfsMemBackend>::dma_mapped_mutex;
+
 // Map DMA address explicitly.
 // XXX: does NOT work with Mellanox NICs as they use IB libs instead of VFIO.
 template <bool HugetlbfsMemBackend>
@@ -2075,6 +2093,10 @@ bool dpdk_qp<HugetlbfsMemBackend>::map_dma()
     auto m = memory::get_memory_layout();
     uint pg_sz = RTE_PGSIZE_1G;
 
+    // Startup-only (called once per queue-pair while shards are still
+    // constructing their qps, which can happen concurrently); the lock
+    // never executes again once trading begins.
+    std::lock_guard<std::mutex> lock(dma_mapped_mutex);
     for (uintptr_t p = m.start; p < m.end; p += pg_sz) {
         if (dma_mapped.find((uint64_t)p) == dma_mapped.end()) {
             dma_mapped[(uint64_t)p] = true;
@@ -2152,9 +2174,11 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
     if (HugetlbfsMemBackend) {
         build_virt2iova_table();
     }
-    // if (HugetlbfsMemBackend && !map_dma()) {
-    //     rte_exit(EXIT_FAILURE, "Cannot map DMA\n");
-    // }
+    // Wired in for the igb_uio -> vfio_pci switch: rte_vfio_dma_map requires a
+    // VFIO container, which only exists when the NIC is bound to vfio-pci.
+    if (HugetlbfsMemBackend && !map_dma()) {
+        rte_exit(EXIT_FAILURE, "Cannot map DMA\n");
+    }
 
     static_assert(offsetof(class tx_buf, private_end) -
                   offsetof(class tx_buf, private_start) <= RTE_PKTMBUF_HEADROOM,

@@ -331,6 +331,27 @@ namespace seastar {
                     func(temporary_buffer<char>(f.base, f.size, _impl->_deleter.share()));
                 }
             }
+            // 2026-09-01 (triarb TLS-glue): hand ONE fragment out as a
+            // temporary_buffer WITHOUT consuming the packet. Mirrors release_into():
+            // non-internal fragments ride a pure deleter refcount share (zero
+            // allocation); the internal-data head fragment must keep the packet
+            // header alive instead (its bytes live inside the impl).
+            temporary_buffer<char> share_frag(unsigned idx) {
+                if (idx == 0 && _impl->using_internal_data()) {
+                    // SEQUENCE the share FIRST (review): share() -> unuse_internal_data()
+                    // mallocs a heap copy, REWRITES _frags[0].base to it, and chains the
+                    // free into the deleter. Only after that is frag(0).base safe to hand
+                    // out -- the naive single-expression form (and the OLD per-fragment
+                    // code) read f.base PRE-eviction under clang's left-to-right argument
+                    // evaluation: a latent dangle once the packet is replaced.
+                    auto keep = share();
+                    auto& f2 = frag(idx);
+                    return temporary_buffer<char>(f2.base, f2.size,
+                            make_deleter(deleter(), [p = std::move(keep)] () mutable {}));
+                }
+                auto& f = frag(idx);
+                return temporary_buffer<char>(f.base, f.size, _impl->_deleter.share());
+            }
             std::vector<temporary_buffer<char>> release() {
                 std::vector<temporary_buffer<char>> ret;
                 ret.reserve(_impl->_nr_frags);

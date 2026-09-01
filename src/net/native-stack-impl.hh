@@ -195,10 +195,11 @@ public:
             return make_ready_future<temporary_buffer<char>>(temporary_buffer<char>(0));
         }
         if (_cur_frag != _buf.nr_frags()) {
-            auto& f = _buf.fragments()[_cur_frag++];
-            return make_ready_future<temporary_buffer<char>>(
-                    temporary_buffer<char>(f.base, f.size,
-                            make_deleter(deleter(), [p = _buf.share()] () mutable {})));
+            // 2026-09-01 (triarb TLS-glue): share_frag() rides the packet deleter's
+            // refcount for non-internal fragments -- the old per-fragment
+            // make_deleter closure + packet::share() header were two heap
+            // allocations per fragment on the decrypt-side hot path.
+            return make_ready_future<temporary_buffer<char>>(_buf.share_frag(_cur_frag++));
         }
 
         return _conn->wait_for_data().then([this] {

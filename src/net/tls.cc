@@ -77,6 +77,44 @@ public:
 };
 
 // Helper
+// TLS-glue pooling (2026-09-01): per-SHARD freelist of fixed 20KB slabs recycled
+// across records. A gnutls record is <=16KB, so one slab always fits one recv; the
+// deleter returns the slab to the shard-local pool instead of freeing. Kills the
+// dominant decrypt-side glue cost (fresh temporary_buffer heap alloc per record).
+static constexpr size_t TLS_POOL_CAP = 20 * 1024;
+static constexpr size_t TLS_POOL_MAX = 128;   // per-shard slabs kept (2.5MB cap)
+// INVARIANT (review): pooled-slab SHARES must die on the socket's own shard --
+// deleter::impl::refs is a plain unsigned, so concurrent refcount traffic from two
+// shards on one slab's deleter would be a data race (failure mode: double-recycle
+// -> two sockets recv'ing into ONE slab = silent cross-connection corruption).
+// Every current consumer copies out before submit_to and releases on the rx shard;
+// moving the WHOLE last reference cross-shard is fine (std::free routes foreign
+// pointers via seastar's xcpu free queue; the slab just migrates pools). Teardown:
+// the holder frees remaining slabs and flips `alive` so late-dying buffers free
+// instead of pushing into a destroyed vector (FIX-MD-flush static-teardown class).
+struct TlsBufPool {
+    std::vector<char*> v;
+    bool alive = true;
+    ~TlsBufPool() { alive = false; for (char* b : v) std::free(b); v.clear(); }
+};
+static TlsBufPool& tls_buf_pool() {
+    static thread_local TlsBufPool pool;
+    return pool;
+}
+static char* tls_buf_get() {
+    auto& p = tls_buf_pool();
+    if (p.alive && !p.v.empty()) { char* b = p.v.back(); p.v.pop_back(); return b; }
+    char* b = static_cast<char*>(std::malloc(TLS_POOL_CAP));
+    if (b == nullptr) throw std::bad_alloc();   // parity with the old temporary_buffer throw
+    return b;
+}
+static deleter tls_buf_deleter(char* b) {
+    return make_deleter(deleter(), [b] {
+        auto& p = tls_buf_pool();
+        if (p.alive && p.v.size() < TLS_POOL_MAX) p.v.push_back(b); else std::free(b);
+    });
+}
+
 static future<temporary_buffer<char>> read_fully(const sstring& name, const sstring& what) {
     return open_file_dma(name, open_flags::ro).then([](file f) {
         return do_with(std::move(f), [](file& f) {
@@ -833,8 +871,9 @@ public:
                 printf("Huge TLS alloc attempt: %u (0x%x)\n", (uint)avail, (uint)avail);
             }
 
-            temporary_buffer<char> buf(avail);
-            auto n = gnutls_record_recv(*this, buf.get_write(), buf.size());
+            char* pooled = tls_buf_get();
+            auto pooled_d = tls_buf_deleter(pooled);   // owns on EVERY exit path below
+            auto n = gnutls_record_recv(*this, pooled, std::min(avail, TLS_POOL_CAP));
 
             if (n < 0) {
                 switch (n) {
@@ -849,17 +888,16 @@ public:
                     _connected = false;
                     return make_ready_future<temporary_buffer<char>>();
                 default:
-                    printf("TLS Default: %d, %u\n", (int)n, (uint)buf.size());
+                    printf("TLS Default: %d, %u\n", (int)n, (uint)std::min(avail, TLS_POOL_CAP));
                     _error = true;
                     return make_exception_future<temporary_buffer<char>>(std::system_error(n, glts_errorc));
                 }
             }
-            buf.trim(n);
             if (n == 0) {
                 _eof = true;
                 _eofState = 1;
             }
-
+            temporary_buffer<char> buf(pooled, n, std::move(pooled_d));
             return make_ready_future<temporary_buffer<char>>(std::move(buf));
         }
         if (eof()) {
@@ -972,13 +1010,27 @@ public:
         }
 
         try {
-            scattered_message<char> msg;
-            for (int i = 0; i < iovcnt; ++i) {
-                msg.append(sstring(reinterpret_cast<const char *>(iov[i].iov_base), iov[i].iov_len));
+            // TLS-glue pooling (2026-09-01): one pooled buffer + single memcpy pass
+            // replaces per-iovec sstring alloc+copy + scattered_message machinery on
+            // EVERY encrypt record (order sends included). Ciphertext must be copied
+            // out regardless -- gnutls reuses its buffers after push returns.
+            size_t total = 0;
+            for (int i = 0; i < iovcnt; ++i) total += iov[i].iov_len;
+            char* obuf;
+            deleter od;
+            if (total <= TLS_POOL_CAP) { obuf = tls_buf_get(); od = tls_buf_deleter(obuf); }
+            else {
+                obuf = static_cast<char*>(std::malloc(total));
+                if (obuf == nullptr) throw std::bad_alloc();   // caught below -> EIO, old sstring parity
+                od = make_free_deleter(obuf);
             }
-
-            auto n = msg.size();
-            auto p = std::move(msg).release();
+            size_t off = 0;
+            for (int i = 0; i < iovcnt; ++i) {
+                memcpy(obuf + off, iov[i].iov_base, iov[i].iov_len);
+                off += iov[i].iov_len;
+            }
+            auto n = total;
+            net::packet p(net::fragment{obuf, total}, std::move(od));
 
             p.onTransmit(onTransmitFn);
             p.notifyTransmitted(__rdtsc(), 0);

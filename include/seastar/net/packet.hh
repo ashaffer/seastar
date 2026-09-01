@@ -574,6 +574,17 @@ namespace seastar {
             _impl->_nr_frags += p._impl->_nr_frags;
             p._impl->_deleter.append(std::move(_impl->_deleter));
             _impl->_deleter = std::move(p._impl->_deleter);
+            // 2026-09-01 (triarb wave-B, review fix): TCP's get_transmit_packet
+            // "hard case" merges queued same-socket packets via append(); the
+            // appended packet's onTransmit hook used to die here, so a coalesced-
+            // but-SENT order read stamp 0 (burst-censored TLR rows -- exactly the
+            // same-session-probe rows we most want measured). Chain both hooks;
+            // defaults are no-op lambdas, so unconditional composition is safe.
+            _impl->_onTransmit = [a = std::move(_impl->_onTransmit),
+                                  b = std::move(p._impl->_onTransmit)](uint64_t ts, int i) {
+                a(ts, i);
+                b(ts, i);
+            };
         }
 
         inline
@@ -691,6 +702,12 @@ namespace seastar {
                 offset = 0;
             }
             n._impl->_offload_info = _impl->_offload_info;
+            // 2026-09-01 (triarb wave-B): share() dropped these -- TCP shares packets
+            // for (re)transmit, so the app's onTransmit hook died here and the "NIC"
+            // stamp silently degraded to the enqueue-time fire. Propagate like copy().
+            n._impl->_onTransmit = _impl->_onTransmit;
+            n._impl->_receivedAt = _impl->_receivedAt;
+            n._impl->_pollDelay = _impl->_pollDelay;
             assert(!n._impl->_deleter);
             n._impl->_deleter = _impl->_deleter.share();
             return n;

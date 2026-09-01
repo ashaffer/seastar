@@ -4169,18 +4169,34 @@ namespace seastar {
     }
 
     void report_failed_future(const std::exception_ptr& eptr) noexcept {
+        // 2026-09-01 (triarb wave-B): de-amplifier. Under a burst of exceptional
+        // futures every report generated a printf + TWO backtraces (expensive, and
+        // the 2026-08-19 shard-3 crash lived in exactly this logging path). Always
+        // count; emit the full backtrace at most ~once/sec per shard, a cheap
+        // one-liner otherwise.
+        static thread_local uint64_t rff_n = 0, rff_last_full = 0;
+        ++rff_n;
+        const uint64_t now_t = __rdtsc();   // bare intrinsic: ticks() is the app-side helper (tls.cc precedent)
+        const bool full = (now_t - rff_last_full) > 3800000000ull;   // ~1s @ 3.8GHz
+        if (full) { rff_last_full = now_t; }
         if (eptr) {
             try {
                 std::rethrow_exception(eptr);
             } catch (char const* msg) {
                 printf("Caught char const: %s\n", msg);
             } catch (const std::exception& e) {
-                printf("Exceptional future: %s\n", e.what());
-                print_with_backtrace("Exceptional future");
+                printf("Exceptional future (#%llu this shard): %s\n", (unsigned long long)rff_n, e.what());
+                if (full) {
+                    print_with_backtrace("Exceptional future");
+                }
             }
         }
 
-        seastar_logger.warn("Exceptional future ignored: {}, backtrace: {}", eptr, current_backtrace());
+        if (full) {
+            seastar_logger.warn("Exceptional future ignored (#{} this shard): {}, backtrace: {}", rff_n, eptr, current_backtrace());
+        } else {
+            seastar_logger.warn("Exceptional future ignored (#{} this shard): {} [backtrace suppressed]", rff_n, eptr);
+        }
     }
 
     broken_promise::broken_promise() : logic_error("broken promise") { }

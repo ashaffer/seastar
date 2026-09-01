@@ -673,6 +673,16 @@ private:
             return reinterpret_cast<tx_buf*>(mbuf);
         }
 
+        // 2026-09-01 (triarb wave-B): post-doorbell per-packet transmit stamp. The
+        // stored packet lives on the LAST segment's tx_buf (from_packet_zc), so walk
+        // the chain. Fires index 2 (the app's nicTx slot) with the true
+        // post-rte_eth_tx_burst time -- the SOLE index-2 fire on this path.
+        void fire_transmitted(uint64_t ts) {
+            if (_p) {
+                _p->notifyTransmitted(ts, 2);
+            }
+        }
+
     private:
         /**
          * Checks if the original packet of a given cluster should be linearized
@@ -973,6 +983,11 @@ build_mbuf_cluster:
             head->pkt_len = p.len();
             head->nb_segs = nsegs;
 
+            // 2026-09-01 (triarb wave-B, review fix): hooks are dropped at copy-
+            // conversion (no stored packet -> fire_transmitted() no-ops), so fire the
+            // best-available index-2 stamp here, pre-doorbell. This path is the
+            // non-hugetlbfs fallback only; production DPDK always takes from_packet_zc.
+            p.notifyTransmitted(ticks(), 2);
             copy_packet_to_cluster(p, head);
             set_cluster_offload_info(p, qp, head);
 
@@ -1428,11 +1443,15 @@ private:
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
         if (_tx_burst.size() == 0) {
-            uint64_t start = ticks();
             for (auto&& p : pb) {
                 // TODO: assert() in a fast path! Remove me ASAP!
                 // assert(p.len());
-                p.notifyTransmitted(start, 2);
+                // 2026-09-01 (triarb wave-B, review fix): NO pre-doorbell index-2 fire
+                // here. The zero-copy path stamps post-rte_eth_tx_burst only (below),
+                // so the app's FIRST index-2 fire is a true wire departure and a
+                // same-index repeat is a genuine retransmit. The copy path (hooks
+                // dropped at conversion, fire_transmitted() no-ops) fires its
+                // best-available stamp inside from_packet_copy().
                 tx_buf* buf = packet_to_tx_buf_p(std::move(p));
                 if (!buf) {
                     break;
@@ -1445,12 +1464,21 @@ private:
         uint16_t sent = rte_eth_tx_burst(_dev->port_idx(), _qid,
                                          _tx_burst.data() + _tx_burst_idx,
                                          _tx_burst.size() - _tx_burst_idx);
+        // 2026-09-01 (triarb wave-B): per-SENT-packet post-burst stamp -- the closest
+        // software point to the wire, and the ONLY index-2 fire on the zero-copy path
+        // (the old shared pre-doorbell tick was the nicTx phantom). Packets left in
+        // _tx_burst get stamped by the later _send() that sends them; a never-sent
+        // packet reaches the app with stamp 0.
+        uint64_t wire_tick = ticks();
         uint64_t nr_frags = 0, bytes = 0;
 
         for (int i = 0; i < sent; i++) {
             rte_mbuf* m = _tx_burst[_tx_burst_idx + i];
             bytes    += m->pkt_len;
             nr_frags += m->nb_segs;
+            rte_mbuf* last = m;
+            while (last->next) { last = last->next; }
+            tx_buf::me(last)->fire_transmitted(wire_tick);
             pb.pop_front();
         }
 

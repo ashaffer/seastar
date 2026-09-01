@@ -95,11 +95,21 @@ static constexpr size_t TLS_POOL_MAX = 128;   // per-shard slabs kept (2.5MB cap
 struct TlsBufPool {
     std::vector<char*> v;
     bool alive = true;
-    ~TlsBufPool() { alive = false; for (char* b : v) std::free(b); v.clear(); }
 };
 static TlsBufPool& tls_buf_pool() {
-    static thread_local TlsBufPool pool;
-    return pool;
+    // Strictly-conforming teardown (re-verify LOW): accessing a DESTROYED
+    // function-local thread_local is formal UB ([basic.start.term]/2), even though
+    // the Itanium ABI happens to behave. So the pool NODE is deliberately leaked
+    // (~48B/thread; a trivially-destructible pointer is never 'destroyed', so late
+    // deleter calls read forever-valid heap memory) and a separate sentinel with a
+    // real dtor frees the slabs and flips `alive` at thread exit.
+    static thread_local TlsBufPool* pool = new TlsBufPool;
+    struct Sentinel {
+        TlsBufPool* p;
+        ~Sentinel() { p->alive = false; for (char* b : p->v) std::free(b); p->v.clear(); p->v.shrink_to_fit(); }
+    };
+    static thread_local Sentinel s{pool};
+    return *pool;
 }
 static char* tls_buf_get() {
     auto& p = tls_buf_pool();
@@ -872,7 +882,9 @@ public:
             }
 
             char* pooled = tls_buf_get();
-            auto pooled_d = tls_buf_deleter(pooled);   // owns on EVERY exit path below
+            deleter pooled_d;
+            try { pooled_d = tls_buf_deleter(pooled); }   // owns on EVERY exit path below
+            catch (...) { std::free(pooled); throw; }     // node alloc OOM: no slab leak
             auto n = gnutls_record_recv(*this, pooled, std::min(avail, TLS_POOL_CAP));
 
             if (n < 0) {
@@ -1018,7 +1030,11 @@ public:
             for (int i = 0; i < iovcnt; ++i) total += iov[i].iov_len;
             char* obuf;
             deleter od;
-            if (total <= TLS_POOL_CAP) { obuf = tls_buf_get(); od = tls_buf_deleter(obuf); }
+            if (total <= TLS_POOL_CAP) {
+                obuf = tls_buf_get();
+                try { od = tls_buf_deleter(obuf); }
+                catch (...) { std::free(obuf); throw; }   // node alloc OOM: no slab leak
+            }
             else {
                 obuf = static_cast<char*>(std::malloc(total));
                 if (obuf == nullptr) throw std::bad_alloc();   // caught below -> EIO, old sstring parity

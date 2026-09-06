@@ -550,9 +550,9 @@ namespace seastar {
         task_queue* _at_destroy_tasks;
     private:
         sched_clock::duration _task_quota;
-        // --tickless-preempt: no task-quota timer thread; the quota is this TSC deadline
-        // (set in run_some_tasks, checked per task in run_tasks) and the preemption flag is
-        // cleared when the reactor idles. See task_quota_timer_thread_fn for the thread it replaces.
+        // --tickless-preempt: the task quota is this TSC deadline (set in run_some_tasks,
+        // checked per task in run_tasks); the task-quota timer thread is kept only as a
+        // coarse 100x-quota backstop; the preemption flag is cleared when the reactor idles.
         bool _tickless{false};
         sched_clock::time_point _preempt_deadline{};
         // Tickless + poll-mode: highres (steady_clock) timers are serviced by a poller

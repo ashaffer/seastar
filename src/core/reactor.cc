@@ -1947,6 +1947,14 @@ namespace seastar {
 
     void reactor::enable_timer(steady_clock_type::time_point when)
     {
+        if (_tickless && _max_poll_time == std::chrono::nanoseconds::max()) {
+            // Software-polled highres timer (see highres_timer_pollfn): the reactor never
+            // sleeps in poll-mode, so a per-iteration clock compare replaces the kernel
+            // timer + signal. Falls through to the POSIX timer when the reactor may sleep.
+            _sw_highres_deadline = when;
+            _sw_highres_armed = true;
+            return;
+        }
     #ifndef HAVE_OSV
         itimerspec its;
         its.it_interval = {};
@@ -2379,6 +2387,29 @@ namespace seastar {
         }
     };
 
+    class reactor::highres_timer_pollfn final : public reactor::pollfn {
+        reactor& _r;
+    public:
+        highres_timer_pollfn(reactor& r) : _r(r) {}
+        virtual bool poll() final override {
+            if (_r._sw_highres_armed && steady_clock_type::now() >= _r._sw_highres_deadline) {
+                _r._sw_highres_armed = false;   // service_highres_timer re-arms via enable_timer
+                _r.service_highres_timer();
+                return true;
+            }
+            return false;
+        }
+        virtual bool pure_poll() final override {
+            return _r._sw_highres_armed && steady_clock_type::now() >= _r._sw_highres_deadline;
+        }
+        virtual bool try_enter_interrupt_mode() override {
+            // Only ever armed in poll-mode (enable_timer gate), where the reactor never
+            // sleeps; if a timer is armed refuse to sleep so it cannot be lost.
+            return !_r._sw_highres_armed;
+        }
+        virtual void exit_interrupt_mode() override {}
+    };
+
     class reactor::lowres_timer_pollfn final : public reactor::pollfn {
         reactor& _r;
         // A highres timer is implemented as a waking  signal; so
@@ -2714,6 +2745,7 @@ namespace seastar {
         // may arm the first highres timer, which can add a new signal to be registerd. If the order
         // is reversed, then signal_pollfn::exit_interrupt_mode() can re-block the timer signal.
         poller expire_lowres_timers(std::make_unique<lowres_timer_pollfn>(*this));
+        poller expire_highres_timers(std::make_unique<highres_timer_pollfn>(*this));   // no-op unless tickless armed one
         poller sig_poller(std::make_unique<signal_pollfn>(*this));
 
         using namespace std::chrono_literals;

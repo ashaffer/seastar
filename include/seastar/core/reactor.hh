@@ -394,6 +394,7 @@ namespace seastar {
         class smp_pollfn;
         class drain_cross_cpu_freelist_pollfn;
         class lowres_timer_pollfn;
+        class highres_timer_pollfn;   // tickless: software-polled steady_clock timers (no POSIX timer, no signal)
         class manual_timer_pollfn;
         class epoll_pollfn;
         class syscall_pollfn;
@@ -554,6 +555,12 @@ namespace seastar {
         // cleared when the reactor idles. See task_quota_timer_thread_fn for the thread it replaces.
         bool _tickless{false};
         sched_clock::time_point _preempt_deadline{};
+        // Tickless + poll-mode: highres (steady_clock) timers are serviced by a poller
+        // comparing the vDSO clock against this deadline instead of arming the
+        // CLOCK_MONOTONIC POSIX timer (which cost a signal + timer_settime per expiry --
+        // the last syscall class on the trading cores). Reactor-thread only.
+        bool _sw_highres_armed{false};
+        steady_clock_type::time_point _sw_highres_deadline{};
         /// Handler that will be called when there is no task to execute on cpu.
         /// It represents a low priority work.
         /// 

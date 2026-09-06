@@ -1,5 +1,6 @@
 #pragma once
 #include <type_traits>
+#include <array>
 #include <memory>
 #include <utility>
 #include <algorithm>
@@ -31,8 +32,15 @@ namespace seastar {
     protected:
         using storage = std::aligned_storage_t<sizeof(value_type), alignof(value_type)>;
         std::array<storage, Capacity> _buf;
-        pointer _data{reinterpret_cast<pointer>(&(_buf[0]))};
+        // No stored data pointer (2026-09-06): the implicitly-defaulted copy/move used
+        // to copy the raw pointer verbatim, so every copied/moved static_vector aliased
+        // the SOURCE object's _buf -- saved_backtrace returned from current_backtrace()
+        // iterated a dead stack frame (SIGSEGV at 0x11 inside operator<<: bot shard 3
+        // 2026-08-19, ecmp_tool 2026-09-04 and 2026-09-06).
         size_type nth{0ul};
+        inline constexpr pointer base () const noexcept {
+            return reinterpret_cast<pointer>(const_cast<storage*>(_buf.data()));
+        }
         // constexpr static inline bool nothrow_copyable{std::is_nothrow_copy_constructible_v<T>};
         // constexpr static inline bool nothrow_copy_assignable{std::is_nothrow_copy_assignable_v<T>};
         // constexpr static inline bool nothrow_movable{std::is_nothrow_move_constructible_v<T>};
@@ -43,7 +51,7 @@ namespace seastar {
         // constexpr static inline bool nothrow_constructible{std::is_nothrow_constructible_v<T, Args...>};
 
         inline constexpr pointer ptr_to (size_type idx) noexcept {
-            return std::addressof(_data[idx]);
+            return std::addressof(base()[idx]);
         }
         inline constexpr void copy_to (size_type idx, const_reference val) noexcept(nothrow_copyable) { 
             new (ptr_to(idx)) T{val};
@@ -68,6 +76,25 @@ namespace seastar {
 
         }
 
+        // Element-wise copy/move (see the note at _buf): trivially-copyable T keeps the
+        // bytewise _buf copy of the old implicit members, minus the poison pointer.
+        static_vector (const static_vector& o) noexcept(nothrow_copyable) : nth{0} {
+            if constexpr (std::is_trivially_copyable_v<T>) { _buf = o._buf; nth = o.nth; }
+            else { for (size_type i = 0; i < o.nth; ++i) { copy_to(nth, o.base()[i]); ++nth; } }
+        }
+        static_vector (static_vector&& o) noexcept(nothrow_movable) : nth{0} {
+            if constexpr (std::is_trivially_copyable_v<T>) { _buf = o._buf; nth = o.nth; }
+            else { for (size_type i = 0; i < o.nth; ++i) { move_to(nth, std::move(o.base()[i])); ++nth; } }
+        }
+        static_vector& operator= (const static_vector& o) noexcept(nothrow_copyable && nothrow_erasable) {
+            if (this != &o) { clear(); for (size_type i = 0; i < o.nth; ++i) { copy_to(nth, o.base()[i]); ++nth; } }
+            return *this;
+        }
+        static_vector& operator= (static_vector&& o) noexcept(nothrow_movable && nothrow_erasable) {
+            if (this != &o) { clear(); for (size_type i = 0; i < o.nth; ++i) { move_to(nth, std::move(o.base()[i])); ++nth; } }
+            return *this;
+        }
+
         /**
          * Accessors
          */
@@ -81,11 +108,11 @@ namespace seastar {
         }
 
         inline constexpr reference back () noexcept {
-            return _data[std::max<size_t>(nth, 1) - 1];
+            return base()[std::max<size_t>(nth, 1) - 1];
         }
 
         inline constexpr const_reference cback () const noexcept {
-            return _data[std::max<size_t>(nth, 1) - 1];
+            return base()[std::max<size_t>(nth, 1) - 1];
         }
 
         inline constexpr iterator begin () noexcept {
@@ -93,7 +120,7 @@ namespace seastar {
         }
 
         inline constexpr const_iterator cbegin () const noexcept {
-            return std::addressof(_data[0]);
+            return std::addressof(base()[0]);
         }
 
         inline constexpr iterator end () noexcept {
@@ -109,7 +136,7 @@ namespace seastar {
         }
 
         inline constexpr const_iterator cend () const noexcept {
-            return std::addressof(_data[nth]);
+            return std::addressof(base()[nth]);
         }
 
         inline constexpr pointer data () noexcept {
@@ -117,15 +144,15 @@ namespace seastar {
         }
 
         inline constexpr const_pointer data() const noexcept {
-            return _data;
+            return base();
         }
 
         inline constexpr reference at (size_type idx) noexcept {
-            return _data[idx];
+            return base()[idx];
         }
 
         inline constexpr const_reference at (size_type idx) const noexcept {
-            return _data[idx];
+            return base()[idx];
         }
 
         inline constexpr bool operator== (const static_vector<T, Capacity>& other) const noexcept {
@@ -144,7 +171,7 @@ namespace seastar {
         }
 
         inline constexpr const_reference operator[] (size_type idx) const noexcept {
-            return _data[idx];
+            return base()[idx];
         }
 
         inline constexpr reference operator[] (size_type idx) noexcept {
@@ -246,7 +273,7 @@ namespace seastar {
             if (!empty()) {
                 // This looks like a pessimizing move, but it isn't. We want the empty space to be in a moved
                 // from state.
-                return std::move(_data[--nth]);
+                return std::move(base()[--nth]);
             }
 
             return {};
@@ -256,7 +283,7 @@ namespace seastar {
             size_type n{size()};
 
             while (nth != 0) {
-                std::destroy_at(std::addressof(_data[--nth]));
+                std::destroy_at(std::addressof(base()[--nth]));
             }
 
             return n;

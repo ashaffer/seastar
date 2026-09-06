@@ -1077,6 +1077,7 @@ namespace seastar {
 
     void cpu_stall_detector::update_config(cpu_stall_detector_config cfg) {
         _config = cfg;
+        _disabled = cfg.threshold.count() == 0;   // --blocked-reactor-notify-ms 0: never arm the CPU-time timer (it forbids nohz_full from stopping the tick)
         _threshold = std::chrono::duration_cast<FastClock::duration>(cfg.threshold);
         _slack = std::chrono::duration_cast<FastClock::duration>(cfg.threshold * cfg.slack);
         _stall_detector_reports_per_minute = cfg.stall_detector_reports_per_minute;
@@ -1128,11 +1129,13 @@ namespace seastar {
     }
 
     void cpu_stall_detector::arm_timer() {
+        if (_disabled) { return; }
         auto its = posix::to_relative_itimerspec(_threshold * _report_at + _slack, 0s);
         timer_settime(_timer, 0, &its, nullptr);
     }
 
     void cpu_stall_detector::start_task_run(FastClock::time_point now) {
+        if (_disabled) { return; }
         if (now > _rearm_timer_at) {
             report_suppressions(now);
             _report_at = 1;
@@ -1342,6 +1345,7 @@ namespace seastar {
         _handle_sigint = !vm["no-handle-interrupt"].as<bool>();
         auto task_quota = vm["task-quota-ms"].as<double>() * 1ms;
         _task_quota = std::chrono::duration_cast<sched_clock::duration>(task_quota);
+        _tickless = vm["tickless-preempt"].as<bool>();
 
         auto blocked_time = vm["blocked-reactor-notify-ms"].as<unsigned>() * 1ms;
         cpu_stall_detector_config csdc;
@@ -2173,6 +2177,9 @@ namespace seastar {
             STAP_PROBE(seastar, reactor_run_tasks_single_end);
             ++tq._tasks_processed;
             ++_global_tasks_processed;
+            if (_tickless && FastClock::now() >= _preempt_deadline) {
+                request_preemption();   // TSC deadline replaces the timer thread's 2000/s wakeups
+            }
             // check at end of loop, to allow at least one task to run
             if (need_preempt()) {
                 if (tasks.size() <= _max_task_backlog) {
@@ -2582,6 +2589,7 @@ namespace seastar {
         reset_preemption_monitor();
 
         sched_clock::time_point t_run_completed = FastClock::now();
+        _preempt_deadline = t_run_completed + _task_quota;   // tickless: the quota, enforced in run_tasks()
         STAP_PROBE(seastar, reactor_run_tasks_start);
         _cpu_stall_detector->start_task_run(t_run_completed);
         do {
@@ -2729,7 +2737,11 @@ namespace seastar {
         load_timer.arm_periodic(1s);
 
         itimerspec its = seastar::posix::to_relative_itimerspec(_task_quota, _task_quota);
-        _task_quota_timer.timerfd_settime(0, its);
+        if (!_tickless) {
+            // Tickless: no periodic timerfd (nothing reads it -- the timer thread is not
+            // started); the task quota is a TSC deadline checked in run_tasks().
+            _task_quota_timer.timerfd_settime(0, its);
+        }
         auto& task_quote_itimerspec = its;
 
         struct sigaction sa_block_notifier = {};
@@ -2779,6 +2791,12 @@ namespace seastar {
                     idle_start = idle_end;
                     idle = true;
                 }
+                if (_tickless && need_preempt()) {
+                    // No tasks to run, so nothing will consume the flag: clear it here or every
+                    // .then() on this idle shard is scheduled instead of running inline (the
+                    // submit-done -> first-frame deferral measured on the order shard).
+                    reset_preemption_monitor();
+                }
                 bool go_to_sleep = true;
                 try {
                     // we can't run check_for_work(), because that can run tasks in the context
@@ -2794,7 +2812,7 @@ namespace seastar {
                     if (idle_end - idle_start > _max_poll_time) {
                         // Turn off the task quota timer to avoid spurious wakeups
                         struct itimerspec zero_itimerspec = {};
-                        _task_quota_timer.timerfd_settime(0, zero_itimerspec);
+                        if (!_tickless) _task_quota_timer.timerfd_settime(0, zero_itimerspec);
                         auto start_sleep = sched_clock::now();
                         _cpu_stall_detector->start_sleep();
                         sleep();
@@ -2802,7 +2820,7 @@ namespace seastar {
                         // We may have slept for a while, so freshen idle_end
                         idle_end = sched_clock::now();
                         _total_sleep += idle_end - start_sleep;
-                        _task_quota_timer.timerfd_settime(0, task_quote_itimerspec);
+                        if (!_tickless) _task_quota_timer.timerfd_settime(0, task_quote_itimerspec);
                     }
                 } else {
                     // We previously ran pure_check_for_work(), might not actually have performed
@@ -3446,6 +3464,7 @@ namespace seastar {
             ("poll-aio", bpo::value<bool>()->default_value(true),
                     "busy-poll for disk I/O (reduces latency and increases throughput)")
             ("task-quota-ms", bpo::value<double>()->default_value(cfg.task_quota / 1ms), "Max time (ms) between polls")
+            ("tickless-preempt", bpo::value<bool>()->default_value(false), "Do not run the per-reactor task-quota timer thread; enforce the task quota with a TSC deadline inside the reactor instead, and clear the preemption flag when the reactor goes idle. Removes ~2000 context switches/s per reactor and lets nohz_full stop the tick (combine with --poll-mode and --blocked-reactor-notify-ms 0)")
             ("max-task-backlog", bpo::value<unsigned>()->default_value(1000), "Maximum number of task backlog to allow; above this we ignore I/O")
             ("blocked-reactor-notify-ms", bpo::value<unsigned>()->default_value(2000), "threshold in miliseconds over which the reactor is considered blocked if no progress is made")
             ("blocked-reactor-reports-per-minute", bpo::value<unsigned>()->default_value(5), "Maximum number of backtraces reported by stall detector per minute")
@@ -4193,7 +4212,12 @@ namespace seastar {
         }
 
         if (full) {
-            seastar_logger.warn("Exceptional future ignored (#{} this shard): {}, backtrace: {}", rff_n, eptr, current_backtrace());
+            if (seastar_logger.is_enabled(log_level::warn)) {
+                // Capture only when it will print: --logger-log-level seastar=error must
+                // skip backtrace() + the dl walk, not just the formatting.
+                saved_backtrace bt = current_backtrace();
+                seastar_logger.warn("Exceptional future ignored (#{} this shard): {}, backtrace: {}", rff_n, eptr, bt);
+            }
         } else {
             seastar_logger.warn("Exceptional future ignored (#{} this shard): {} [backtrace suppressed]", rff_n, eptr);
         }

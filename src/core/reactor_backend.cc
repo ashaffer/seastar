@@ -321,6 +321,9 @@ reactor_backend_epoll::~reactor_backend_epoll() {
 }
 
 void reactor_backend_epoll::start_tick() {
+    if (_r->_tickless) {
+        return;   // no timer thread: the reactor enforces the task quota with a TSC deadline
+    }
     _task_quota_timer_thread = std::thread(&reactor::task_quota_timer_thread_fn, _r);
 
     ::sched_param sp;
@@ -333,6 +336,9 @@ void reactor_backend_epoll::start_tick() {
 
 void reactor_backend_epoll::stop_tick() {
     _r->_dying.store(true, std::memory_order_relaxed);
+    if (!_task_quota_timer_thread.joinable()) {
+        return;   // tickless: never started
+    }
     _r->_task_quota_timer.timerfd_settime(0, seastar::posix::to_relative_itimerspec(1ns, 1ms)); // Make the timer fire soon
     _task_quota_timer_thread.join();
 }

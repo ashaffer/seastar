@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include <seastar/core/print.hh>
+#include <atomic>
 
 
 namespace seastar {
@@ -59,6 +60,25 @@ static std::vector<shared_object> enumerate_shared_objects() {
 
 static const std::vector<shared_object> shared_objects{enumerate_shared_objects()};
 static const shared_object uknown_shared_object{"", 0, std::numeric_limits<uintptr_t>::max()};
+// Flipped BEFORE ~shared_objects runs (defined after it in this TU => destroyed first): a
+// shard that keeps logging while another shard is inside exit() must not walk the freed
+// vector. Keep these two definitions adjacent to shared_objects.
+static std::atomic<bool> g_so_alive{true};
+static struct so_liveness_guard { ~so_liveness_guard() { g_so_alive.store(false, std::memory_order_release); } } g_so_guard;
+static std::atomic<uint64_t> g_bt_rejected_frames{0};   // counter only; surfaced by the app's 5-min report
+
+uint64_t backtrace_rejected_frames() noexcept { return g_bt_rejected_frames.load(std::memory_order_relaxed); }
+
+// A frame's shared_object pointer must point INTO the static vector's storage (or be
+// the sentinel). Anything else is a dangling/garbage pointer: print the raw address.
+static bool frame_so_is_sane(const frame& f) noexcept {
+    if (f.so == &uknown_shared_object) { return true; }
+    if (!g_so_alive.load(std::memory_order_acquire) || shared_objects.empty()) { return false; }
+    const shared_object* b = shared_objects.data();
+    const shared_object* e = b + shared_objects.size();
+    if (f.so < b || f.so >= e) { return false; }
+    return (reinterpret_cast<uintptr_t>(f.so) - reinterpret_cast<uintptr_t>(b)) % sizeof(shared_object) == 0;
+}
 
 bool operator==(const frame& a, const frame& b) {
     return a.so == b.so && a.addr == b.addr;
@@ -67,7 +87,7 @@ bool operator==(const frame& a, const frame& b) {
 frame decorate(uintptr_t addr) {
     // If the shared-objects are not enumerated yet, or the enumeration
     // failed return the addr as-is with a dummy shared-object.
-    if (shared_objects.empty()) {
+    if (!g_so_alive.load(std::memory_order_acquire) || shared_objects.empty()) {
         return {&uknown_shared_object, addr};
     }
 
@@ -81,36 +101,37 @@ frame decorate(uintptr_t addr) {
 }
 
 saved_backtrace current_backtrace() noexcept {
-    saved_backtrace::vector_type v;
+    // Captured in place (no temporary vector): together with static_vector's element-wise
+    // move this is what makes the returned frames outlive this call. The two
+    // backtrace_symbols_fd dumps that used to live here were fed `frame` structs as if
+    // they were void*[] -- garbage, and two blocking writes per report on the reactor.
+    saved_backtrace sb;
     back_trace([&] (frame f) {
-        if (v.size() < v.capacity()) {
-            v.emplace_back(std::move(f));
+        if (sb._frames.size() < sb._frames.capacity()) {
+            sb._frames.emplace_back(f);
         }
     });
-
-    backtrace_symbols_fd((void *const *)&v[0], v.size(), STDERR_FILENO);
-    backtrace_symbols_fd((void *const *)&v[0], v.size(), STDOUT_FILENO);
-
-    return saved_backtrace(std::move(v));
+    return sb;
 }
 
 size_t saved_backtrace::hash() const {
     size_t h = 0;
-    for (auto f : _frames) {
-        h = ((h << 5) - h) ^ (f.so->begin + f.addr);
+    for (const auto& f : _frames) {
+        h = ((h << 5) - h) ^ ((frame_so_is_sane(f) ? f.so->begin : 0) + f.addr);
     }
     return h;
 }
 
 std::ostream& operator<<(std::ostream& out, const saved_backtrace& b) {
-    for (auto f : b._frames) {
+    for (const auto& f : b._frames) {
         out << "  ";
-        if (f.so == nullptr) {
-            out << std::format("Empty line\n");
-        } else if (!f.so->name.empty()) {
-            out << f.so->name << "+";
-            out << std::format("0x{:x}", f.addr) << "\n";
+        if (!frame_so_is_sane(f)) {
+            g_bt_rejected_frames.fetch_add(1, std::memory_order_relaxed);
+            out << std::format("?+0x{:x}\n", f.addr);          // raw; never touch f.so
+            continue;
         }
+        if (!f.so->name.empty()) { out << f.so->name << "+"; }
+        out << std::format("0x{:x}\n", f.addr);                 // executable frames (empty name) now printed too
     }
     return out;
 }

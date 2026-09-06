@@ -549,6 +549,11 @@ namespace seastar {
         task_queue* _at_destroy_tasks;
     private:
         sched_clock::duration _task_quota;
+        // --tickless-preempt: no task-quota timer thread; the quota is this TSC deadline
+        // (set in run_some_tasks, checked per task in run_tasks) and the preemption flag is
+        // cleared when the reactor idles. See task_quota_timer_thread_fn for the thread it replaces.
+        bool _tickless{false};
+        sched_clock::time_point _preempt_deadline{};
         /// Handler that will be called when there is no task to execute on cpu.
         /// It represents a low priority work.
         /// 

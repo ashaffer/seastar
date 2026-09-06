@@ -59,6 +59,7 @@ class cpu_stall_detector {
     FastClock::time_point _run_started_at{};
     FastClock::duration _threshold;
     FastClock::duration _slack;
+    bool _disabled{false};   // threshold 0 => timer never armed (tickless reactor cores)
     cpu_stall_detector_config _config;
     friend reactor;
 private:

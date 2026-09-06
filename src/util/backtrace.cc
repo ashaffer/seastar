@@ -30,6 +30,7 @@
 
 #include <seastar/core/print.hh>
 #include <atomic>
+#include <iostream>
 
 
 namespace seastar {
@@ -68,6 +69,12 @@ static struct so_liveness_guard { ~so_liveness_guard() { g_so_alive.store(false,
 static std::atomic<uint64_t> g_bt_rejected_frames{0};   // counter only; surfaced by the app's 5-min report
 
 uint64_t backtrace_rejected_frames() noexcept { return g_bt_rejected_frames.load(std::memory_order_relaxed); }
+
+// Declared in backtrace.hh; used by the allocator-corruption diagnostics in memory.cc
+// (which used to rely on the garbage backtrace_symbols_fd side effect of current_backtrace()).
+void print_backtrace () {
+    std::cerr << current_backtrace() << std::flush;
+}
 
 // A frame's shared_object pointer must point INTO the static vector's storage (or be
 // the sentinel). Anything else is a dangling/garbage pointer: print the raw address.

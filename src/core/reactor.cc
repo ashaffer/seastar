@@ -2736,12 +2736,13 @@ namespace seastar {
         });
         load_timer.arm_periodic(1s);
 
-        itimerspec its = seastar::posix::to_relative_itimerspec(_task_quota, _task_quota);
-        if (!_tickless) {
-            // Tickless: no periodic timerfd (nothing reads it -- the timer thread is not
-            // started); the task quota is a TSC deadline checked in run_tasks().
-            _task_quota_timer.timerfd_settime(0, its);
-        }
+        // Tickless (2026-09-06): the fine-grained task quota is a TSC deadline checked in
+        // run_tasks(); the timer thread stays only as a COARSE backstop (100x the quota,
+        // 50ms at the default) against a runaway inline continuation chain, cutting its
+        // wakeups from ~2000/s to ~20/s per core so nohz_full can keep the tick stopped.
+        const auto timer_period = _tickless ? _task_quota * 100 : _task_quota;
+        itimerspec its = seastar::posix::to_relative_itimerspec(timer_period, timer_period);
+        _task_quota_timer.timerfd_settime(0, its);
         auto& task_quote_itimerspec = its;
 
         struct sigaction sa_block_notifier = {};
@@ -2812,7 +2813,7 @@ namespace seastar {
                     if (idle_end - idle_start > _max_poll_time) {
                         // Turn off the task quota timer to avoid spurious wakeups
                         struct itimerspec zero_itimerspec = {};
-                        if (!_tickless) _task_quota_timer.timerfd_settime(0, zero_itimerspec);
+                        _task_quota_timer.timerfd_settime(0, zero_itimerspec);
                         auto start_sleep = sched_clock::now();
                         _cpu_stall_detector->start_sleep();
                         sleep();
@@ -2820,7 +2821,7 @@ namespace seastar {
                         // We may have slept for a while, so freshen idle_end
                         idle_end = sched_clock::now();
                         _total_sleep += idle_end - start_sleep;
-                        if (!_tickless) _task_quota_timer.timerfd_settime(0, task_quote_itimerspec);
+                        _task_quota_timer.timerfd_settime(0, task_quote_itimerspec);
                     }
                 } else {
                     // We previously ran pure_check_for_work(), might not actually have performed
@@ -3464,7 +3465,7 @@ namespace seastar {
             ("poll-aio", bpo::value<bool>()->default_value(true),
                     "busy-poll for disk I/O (reduces latency and increases throughput)")
             ("task-quota-ms", bpo::value<double>()->default_value(cfg.task_quota / 1ms), "Max time (ms) between polls")
-            ("tickless-preempt", bpo::value<bool>()->default_value(false), "Do not run the per-reactor task-quota timer thread; enforce the task quota with a TSC deadline inside the reactor instead, and clear the preemption flag when the reactor goes idle. Removes ~2000 context switches/s per reactor and lets nohz_full stop the tick (combine with --poll-mode and --blocked-reactor-notify-ms 0)")
+            ("tickless-preempt", bpo::value<bool>()->default_value(false), "Enforce the task quota with a TSC deadline inside the reactor and clear the preemption flag when the reactor goes idle; the per-reactor timer thread becomes a coarse backstop at 100x the quota (~20 wakeups/s instead of ~2000). Lets nohz_full keep the tick stopped (combine with --poll-mode and --blocked-reactor-notify-ms 0). Pass as --tickless-preempt 1")
             ("max-task-backlog", bpo::value<unsigned>()->default_value(1000), "Maximum number of task backlog to allow; above this we ignore I/O")
             ("blocked-reactor-notify-ms", bpo::value<unsigned>()->default_value(2000), "threshold in miliseconds over which the reactor is considered blocked if no progress is made")
             ("blocked-reactor-reports-per-minute", bpo::value<unsigned>()->default_value(5), "Maximum number of backtraces reported by stall detector per minute")

@@ -696,7 +696,7 @@ allocation_site_ptr get_allocation_site() {
     if (insert_result.second) {
         if ((uint64_t)cpu_mem.alloc_site_list_head > 0x1000000000000) {
             printf("get_allocation_site: cpu_mem.alloc_site_list_head 0x%lx", (uint64_t)cpu_mem.alloc_site_list_head);
-            current_backtrace();
+            print_backtrace();
         }
         alloc_site->next = cpu_mem.alloc_site_list_head;
         cpu_mem.alloc_site_list_head = alloc_site;
@@ -780,7 +780,7 @@ void cpu_pages::free_cross_cpu(unsigned cpu_id, void* ptr) {
 
     if ((uint64_t)p > 0x1000000000000 || p == nullptr) {
         printf("free_cross_cpu: received bad pointer 0x%lx (%u, %u)\n", (uint64_t)p, engine().cpu_id(), cpu_id);
-        current_backtrace();
+        print_backtrace();
     }
 
     auto& list = all_cpus[cpu_id]->xcpu_freelist;
@@ -803,7 +803,7 @@ bool cpu_pages::drain_cross_cpu_freelist() {
     while (p) {
         if ((uint64_t)p > 0x1000000000000 || p == nullptr) {
             printf("drain_cross_cpu_freelist: received bad pointer 0x%lx (%u)\n", (uint64_t)p, engine().cpu_id());
-            current_backtrace();
+            print_backtrace();
         }
         auto n = p->next;
         ++g_frees;
@@ -816,7 +816,7 @@ bool cpu_pages::drain_cross_cpu_freelist() {
 void cpu_pages::free(void* ptr) {
     if ((uint64_t)ptr > 0x1000000000000) {
         printf("cpu_pages::free bad pointer 0x%lx\n (%u)", (uint64_t)ptr, engine().cpu_id());
-        current_backtrace();
+        print_backtrace();
     }
 
     page* span = to_page(ptr);
@@ -838,7 +838,7 @@ void cpu_pages::free(void* ptr) {
 void cpu_pages::free(void* ptr, size_t size) {
     if ((uint64_t)ptr > 0x1000000000000) {
         printf("cpu_pages::free bad pointer 0x%lx\n (%u, %lu)", (uint64_t)ptr, engine().cpu_id(), size);
-        current_backtrace();
+        print_backtrace();
     }
     // match action on allocate() so hit the right pool
     if (size <= sizeof(free_object)) {
@@ -1123,7 +1123,7 @@ small_pool::allocate() {
     _free = _free->next;
     if ((uint64_t)_free > 0x1000000000000 || (uint64_t)obj > 0x1000000000000) {
         printf("Bad next pointer in allocate() 0x%lx, 0x%lx (%u, 0x%lx, %lu, %u, 0x%x, 0x%x, 0x%x, 0x%x)\n", (uint64_t)_free, (uint64_t)obj, engine().cpu_id(), (uint64_t)obj, _free_count, added, canary1, canary2, obj->canary1, obj->canary2);
-        current_backtrace();
+        print_backtrace();
     }
     --_free_count;
     return obj;
@@ -1134,7 +1134,7 @@ small_pool::deallocate(void* object) {
     auto o = reinterpret_cast<free_object*>(object);
     if ((uint64_t)o > 0x1000000000000 | (uint64_t)_free > 0x1000000000000) {
         printf("Bad pointer deallocate detected: 0x%lx, 0x%lx (%u)\n", (uint64_t)o, (uint64_t)_free, engine().cpu_id());
-        current_backtrace();
+        print_backtrace();
     }
 
     o->next = _free;
@@ -1150,7 +1150,7 @@ small_pool::add_more_objects() {
     auto goal = (_min_free + _max_free) / 2;
     if ((uint64_t)_free > 0x1000000000000) {
         printf("add_more_objects: bad pointer added from span freelist 0x%lx (%lu, %lu)\n", (uint64_t)_free, _free_count, goal);
-        current_backtrace();
+        print_backtrace();
     }
 
     while (!_span_list.empty() && _free_count < goal) {
@@ -1160,7 +1160,7 @@ small_pool::add_more_objects() {
             auto obj = span.freelist;
             if ((uint64_t)obj > 0x1000000000000 || (uint64_t)_free > 0x1000000000000) {
                 printf("add_more_objects: bad pointer added from span freelist 0x%lx, 0x%lx (%u, %lu, %lu)\n", (uint64_t)obj, (uint64_t)_free, engine().cpu_id(), _free_count, goal);
-                current_backtrace();
+                print_backtrace();
             }
             span.freelist = span.freelist->next;
             obj->next = _free;
@@ -1193,7 +1193,7 @@ small_pool::add_more_objects() {
             auto h = reinterpret_cast<free_object*>(data + offset);
             if ((uint64_t)h > 0x1000000000000 || (uint64_t)_free > 0x1000000000000) {
                 printf("add_more_objects: bad pointer added from freshly allocated pages 0x%lx, 0x%lx (%u, 0x%x, %u, %lu)\n", (uint64_t)h, (uint64_t)_free, engine().cpu_id(), span_size, offset, _object_size);
-                current_backtrace();
+                print_backtrace();
             }
             h->next = _free;
             _free = h;
@@ -1211,7 +1211,7 @@ small_pool::trim_free_list() {
         _free = _free->next;
         if ((uint64_t)_free > 0x1000000000000 || (uint64_t)obj > 0x1000000000000) {
             printf("trim_free_list bad pointer added from _free->next 0x%lx, 0x%lx (%u, %lu, %lu)\n", (uint64_t)obj, (uint64_t)_free, engine().cpu_id(), _free_count, goal);
-            current_backtrace();
+            print_backtrace();
         }
         --_free_count;
         page* span = cpu_mem.to_page(obj);
@@ -1223,7 +1223,7 @@ small_pool::trim_free_list() {
 
         if ((uint64_t)span->freelist > 0x1000000000000) {
             printf("trim_free_list bad pointer added from span->freelist 0x%lx (%lu, %lu)\n", (uint64_t)span->freelist, _free_count, goal);
-            current_backtrace();
+            print_backtrace();
         }
         obj->next = span->freelist;
         span->freelist = obj;

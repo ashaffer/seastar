@@ -986,6 +986,18 @@ public:
         auto e = p.fragments().end();
         if (_ignore_semaphore) {
             return do_put(i, e, p.getOnTransmit());
+        } else if (_out_sem.try_wait(1)) {
+            // Uncontended fast path (2026-09-07): take the unit synchronously so encrypt +
+            // TCP enqueue run INLINE even while need_preempt() is set. with_semaphore_sync's
+            // get_units() is a plain .then that then_impl schedules under need_preempt,
+            // which deferred every send issued after a preemption request past its own
+            // transmit doorbell (measured on REST slots: 38us p50 / 114us p90 enqueue->NIC
+            // vs 2us; also ~8% of whole baskets on every transport). try_wait honours
+            // may_proceed(), so FIFO against queued waiters is preserved; the unit is
+            // returned on completion exactly as the units-guard in the slow path does.
+            return futurize_apply([this, i, e, &p] { return do_put(i, e, p.getOnTransmit()); })
+                .finally([this] { _out_sem.signal(1); })
+                .finally([p = std::move(p)] {});
         } else {
             return with_semaphore_sync(
                 _out_sem, 

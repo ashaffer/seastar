@@ -3133,6 +3133,27 @@ namespace seastar {
     }
 
     void smp_message_queue::submit_item(shard_id t, std::unique_ptr<smp_message_queue::work_item> item, bool ignoreLimits) {
+      // FAST PATH (ignoreLimits, re-enabled 2026-09-07): the item goes straight onto the
+      // SPSC wire queue -- no service-group units (process_completions() skips the signal
+      // for ignoreLimits items, so the accounting stays balanced) and no pending_fifo batch
+      // (which otherwise only moves at batch_size or at this shard's next poll, i.e. after
+      // the current task ends). This shard is the queue's single producer, so the push is
+      // race-free; if the queue is momentarily full, fall back to the batch fifo (still no
+      // units). Used for the rx -> shard 1 tip hops and the shard 1 -> shard 3 trade set.
+      if (ignoreLimits) {
+        if (_pending.push(item.get())) {
+          item.release();
+          _current_queue_length += 1;
+          _last_snt_batch = 1;
+          _sent += 1;
+          _pending.maybe_wakeup();   // no-op while the consumer busy-polls (never sleeps under --poll-mode / DPDK)
+          return;
+        }
+        _tx.a.pending_fifo.push_back(item.get());
+        item.release();
+        if (_tx.a.pending_fifo.size() >= batch_size) move_pending();
+        return;
+      }
       // matching signal() in process_completions()
       auto ssg_id = internal::smp_service_group_id(item->ssg);
       auto& sem = smp_service_groups[ssg_id].clients[t];

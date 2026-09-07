@@ -20,6 +20,12 @@
  */
 #pragma once
 
+// triarb fork marker (2026-09-07): session::put takes the output semaphore INLINE when it is
+// uncontended (src/net/tls.cc, commit 494c6631) instead of scheduling the encrypt+send as a
+// task that an idle shard's preempt flag defers by ~100us. The application checks this define
+// at boot and warns loudly if a rebase ever drops the patch. Keep it next to the patch.
+#define SEASTAR_FORK_TLS_INLINE_PUT 1
+
 #include <vector>
 #include <map>
 

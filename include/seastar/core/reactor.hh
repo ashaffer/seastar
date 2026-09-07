@@ -1007,6 +1007,13 @@ namespace seastar {
         static void request_preemption (uint cpu) {
             _reactors[cpu]->request_preemption();
         }
+        // Consumed by smp_message_queue::process_incoming for ignoreLimits (fast-path)
+        // items: the sender asked for preemption to get the item picked up; once it is
+        // being processed the flag must not stay set, or every `.then` inside the item's
+        // work would be scheduled instead of running inline (2026-09-07 live regression).
+        static void reset_preemption_monitor (uint cpu) {
+            _reactors[cpu]->reset_preemption_monitor();
+        }
 
         /// Runs a function on a remote core.
         ///
@@ -1045,10 +1052,14 @@ namespace seastar {
                 }
             } else {
                 // printf("submit_to else\n");
-                auto f = _qs[t][engine().cpu_id()].submit(t, ssg, std::forward<Func>(func), ignoreLimits);
+                // Preemption request BEFORE the push (2026-09-07): with the ignoreLimits
+                // direct push the item is visible immediately, so the flag must already be
+                // set when the target polls -- and the target clears it as it picks the
+                // item up (process_incoming), never leaving it set across the item's work.
                 if (preempt) {
                     _reactors[t]->request_preemption();
                 }
+                auto f = _qs[t][engine().cpu_id()].submit(t, ssg, std::forward<Func>(func), ignoreLimits);
                 return std::move(f);
             }
         }

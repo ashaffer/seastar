@@ -3366,6 +3366,10 @@ namespace seastar {
 
     size_t smp_message_queue::process_incoming() {
         auto nr = process_queue<prefetch_cnt>(_pending, [] (work_item* wi) {
+            // Fast-path item: consume the sender's preemption request so the work runs
+            // with need_preempt clear (continuations inline). The tickless deadline
+            // re-arms the flag on its own if the quota expires.
+            if (wi->ignoreLimits) smp::reset_preemption_monitor(engine().cpu_id());
             wi->process();
         });
         _received += nr;

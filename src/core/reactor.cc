@@ -2769,10 +2769,10 @@ namespace seastar {
         load_timer.arm_periodic(1s);
 
         // Tickless (2026-09-06): the fine-grained task quota is a TSC deadline checked in
-        // run_tasks(); the timer thread stays only as a COARSE backstop (100x the quota,
+        // run_tasks(); the timer thread stays only as a COARSE backstop (1000x the quota,
         // 50ms at the default) against a runaway inline continuation chain, cutting its
         // wakeups from ~2000/s to ~20/s per core so nohz_full can keep the tick stopped.
-        const auto timer_period = _tickless ? _task_quota * 100 : _task_quota;
+        const auto timer_period = _tickless ? _task_quota * 1000 : _task_quota;   // 1000x (2026-09-07): 100x still cost 20 RES IPIs/s per isolated core
         itimerspec its = seastar::posix::to_relative_itimerspec(timer_period, timer_period);
         _task_quota_timer.timerfd_settime(0, its);
         auto& task_quote_itimerspec = its;
@@ -3497,7 +3497,7 @@ namespace seastar {
             ("poll-aio", bpo::value<bool>()->default_value(true),
                     "busy-poll for disk I/O (reduces latency and increases throughput)")
             ("task-quota-ms", bpo::value<double>()->default_value(cfg.task_quota / 1ms), "Max time (ms) between polls")
-            ("tickless-preempt", bpo::value<bool>()->default_value(false), "Enforce the task quota with a TSC deadline inside the reactor and clear the preemption flag when the reactor goes idle; the per-reactor timer thread becomes a coarse backstop at 100x the quota (~20 wakeups/s instead of ~2000). Lets nohz_full keep the tick stopped (combine with --poll-mode and --blocked-reactor-notify-ms 0). Pass as --tickless-preempt 1")
+            ("tickless-preempt", bpo::value<bool>()->default_value(false), "Enforce the task quota with a TSC deadline inside the reactor and clear the preemption flag when the reactor goes idle; the per-reactor timer thread becomes a coarse backstop at 1000x the quota (~2 wakeups/s instead of ~2000). Lets nohz_full keep the tick stopped (combine with --poll-mode and --blocked-reactor-notify-ms 0). Pass as --tickless-preempt 1")
             ("max-task-backlog", bpo::value<unsigned>()->default_value(1000), "Maximum number of task backlog to allow; above this we ignore I/O")
             ("blocked-reactor-notify-ms", bpo::value<unsigned>()->default_value(2000), "threshold in miliseconds over which the reactor is considered blocked if no progress is made")
             ("blocked-reactor-reports-per-minute", bpo::value<unsigned>()->default_value(5), "Maximum number of backtraces reported by stall detector per minute")

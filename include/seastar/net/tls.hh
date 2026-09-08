@@ -278,6 +278,12 @@ namespace tls {
     /// @{
     future<connected_socket> wrap_client(shared_ptr<certificate_credentials>, connected_socket&&, sstring name = {});
     future<connected_socket> wrap_server(shared_ptr<server_credentials>, connected_socket&&);
+
+    /// Fork (2026-09-08): drive the LAZY client handshake to completion now, so a caller can stamp its
+    /// first application message after the handshake instead of before it (Binance FIX Logon RecvWindow:
+    /// the handshake used to sit inside the Logon's SendingTime age). No-op on a non-TLS socket.
+    future<> wait_handshake(connected_socket&);
+#define SEASTAR_FORK_TLS_WAIT_HANDSHAKE 1
     /// @}
 
     /**

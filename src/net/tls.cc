@@ -43,6 +43,9 @@ public:
     static std::unique_ptr<connected_socket_impl> get(connected_socket s) {
         return std::move(s._csi);
     }
+    static connected_socket_impl* peek(connected_socket& s) {   // fork: non-owning (wait_handshake)
+        return s._csi.get();
+    }
 };
 
 class blob_wrapper: public gnutls_datum_t {
@@ -1445,6 +1448,14 @@ future<connected_socket> tls::wrap_client(shared_ptr<certificate_credentials> cr
     session::session_ref sess(make_lw_shared<session>(session::type::CLIENT, std::move(cred), std::move(s), std::move(name)));
     connected_socket sock(std::make_unique<tls_connected_socket_impl>(std::move(sess)));
     return make_ready_future<connected_socket>(std::move(sock));
+}
+
+future<> tls::wait_handshake(connected_socket& s) {
+    auto* impl = dynamic_cast<tls_connected_socket_impl*>(net::get_impl::peek(s));
+    if (!impl || !impl->_session) {
+        return make_ready_future<>();
+    }
+    return impl->_session->handshake();
 }
 
 future<connected_socket> tls::wrap_server(shared_ptr<server_credentials> cred, connected_socket&& s) {

@@ -1450,6 +1450,11 @@ future<connected_socket> tls::wrap_client(shared_ptr<certificate_credentials> cr
     return make_ready_future<connected_socket>(std::move(sock));
 }
 
+socket_address tls::local_address(connected_socket& s) {
+    auto* impl = net::get_impl::peek(s);
+    return impl ? impl->local_address() : socket_address();
+}
+
 future<> tls::wait_handshake(connected_socket& s) {
     auto* impl = dynamic_cast<tls_connected_socket_impl*>(net::get_impl::peek(s));
     if (!impl || !impl->_session) {

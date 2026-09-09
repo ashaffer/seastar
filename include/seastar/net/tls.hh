@@ -284,6 +284,10 @@ namespace tls {
     /// the handshake used to sit inside the Logon's SendingTime age). No-op on a non-TLS socket.
     future<> wait_handshake(connected_socket&);
 #define SEASTAR_FORK_TLS_WAIT_HANDSHAKE 1
+    /// Fork (2026-09-09): the bound local address of a connected socket (TLS-wrapped or not) -- the
+    /// stack-assigned source port is otherwise invisible to the application.
+    socket_address local_address(connected_socket&);
+#define SEASTAR_FORK_TLS_LOCAL_ADDRESS 1
     /// @}
 
     /**

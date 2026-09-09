@@ -140,6 +140,9 @@ public:
     virtual data_sink sink() override {
         return data_sink(std::make_unique< posix_data_sink_impl>(_fd));
     }
+    socket_address local_address() const override {
+        return _fd->get_file_desc().get_address();
+    }
     virtual void shutdown_input() override {
         _fd->shutdown(SHUT_RD);
     }

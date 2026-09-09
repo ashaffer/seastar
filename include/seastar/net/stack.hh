@@ -51,6 +51,9 @@ public:
     virtual uint32_t can_send() = 0;
     virtual void ignore_semaphore() = 0;
     virtual void print () = 0;
+    // fork 2026-09-09: local endpoint of a connected socket (stack-assigned source-port read-back for the app's
+    // TLR/roster 5-tuples). Defaulted so impls with no local address (unix sockets) need not override.
+    virtual socket_address local_address() const { return socket_address(); }
 };
 
 class socket_impl {

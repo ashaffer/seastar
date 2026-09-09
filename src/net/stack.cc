@@ -93,6 +93,10 @@ output_stream<char> connected_socket::output(size_t buffer_size, bool batch_flus
     return output_stream<char>(_csi->sink(), buffer_size, false, batch_flushes);
 }
 
+socket_address connected_socket::local_address() const {
+    return _csi->local_address();
+}
+
 void connected_socket::set_nodelay(bool nodelay) {
     _csi->set_nodelay(nodelay);
 }

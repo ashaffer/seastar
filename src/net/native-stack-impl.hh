@@ -103,6 +103,9 @@ public:
     void set_keepalive_parameters(const keepalive_params&) override;
     keepalive_params get_keepalive_parameters() const override;
 
+    socket_address local_address() const override {
+        return socket_address(ipv4_addr(_conn->local_ip().ip, _conn->local_port()));
+    }
     uint32_t closeState () const override {
         return _conn->closeState();
     }

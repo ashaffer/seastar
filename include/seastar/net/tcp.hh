@@ -801,6 +801,9 @@ public:
         uint16_t local_port() {
             return _tcb->_local_port;
         }
+        ipaddr local_ip() {
+            return _tcb->_local_ip;
+        }
 
         void setReceivedAt (uint64_t receivedAt) {
             _receivedAt = receivedAt;

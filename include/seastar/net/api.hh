@@ -174,6 +174,9 @@ public:
     output_stream<char> output(size_t buffer_size = 8192, bool batch_flushes = true);
     /// Sets the TCP_NODELAY option (disabling Nagle's algorithm)
     void set_nodelay(bool nodelay);
+    /// fork 2026-09-09: the local endpoint (ip:port) of this connection; an empty address when the stack has none.
+    socket_address local_address() const;
+#define SEASTAR_FORK_CONNECTED_SOCKET_LOCAL_ADDRESS 1
     /// Gets the TCP_NODELAY option (Nagle's algorithm)
     ///
     /// \return whether the nodelay option is enabled or not

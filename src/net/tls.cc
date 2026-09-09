@@ -1282,6 +1282,9 @@ public:
     bool get_nodelay() const override {
         return _session->socket().get_nodelay();
     }
+    socket_address local_address() const override {
+        return _session->socket().local_address();
+    }
     void set_keepalive(bool keepalive) override {
         _session->socket().set_keepalive(keepalive);
     }

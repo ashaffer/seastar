@@ -64,6 +64,7 @@ namespace net {
 // stack (consumed once); clear to return to the RFC6528 default. Implemented in src/net/tcp.cc.
 void set_forced_isn(uint32_t isn);
 void clear_forced_isn();
+uint32_t last_isn();   // the ISN the native stack used for the most recent connection set up on this shard
 
 // see linux tcp(7) for parameter explanation
 struct tcp_keepalive_params {

@@ -56,6 +56,7 @@ namespace net {
 // 2026-09-12 (ECMP mechanism test P-isn1): per-shard one-shot forced ISN consumed by the next tcb::get_isn();
 // std::nullopt = the RFC6528 default. AWS NLBs hash the TCP sequence number into their target choice.
 inline thread_local std::optional<uint32_t> tcp_forced_isn;
+inline thread_local uint32_t tcp_last_isn = 0;   // 2026-09-12: the ISN the stack actually used for the last tcb set up on this shard (read-back for the mechanism test)
 
 struct tcp_hdr;
 
@@ -2417,7 +2418,7 @@ void tcp<InetTraits>::tcb::cleanup() {
 
 template <typename InetTraits>
 tcp_seq tcp<InetTraits>::tcb::get_isn() {
-    if (tcp_forced_isn) { const uint32_t v = *tcp_forced_isn; tcp_forced_isn.reset(); return make_seq(v); }   // 2026-09-12 hook
+    if (tcp_forced_isn) { const uint32_t v = *tcp_forced_isn; tcp_forced_isn.reset(); tcp_last_isn = v; return make_seq(v); }   // 2026-09-12 hook
     // Per RFC6528, TCP SHOULD generate its Initial Sequence Numbers
     // with the expression:
     //   ISN = M + F(localip, localport, remoteip, remoteport, secretkey)
@@ -2432,6 +2433,7 @@ tcp_seq tcp<InetTraits>::tcb::get_isn() {
     auto seq = hash[0];
     auto m = duration_cast<microseconds>(clock_type::now().time_since_epoch());
     seq += m.count() / 4;
+    tcp_last_isn = seq;
     return make_seq(seq);
 }
 

@@ -173,5 +173,6 @@ namespace net {
 // 2026-09-12: see include/seastar/net/api.hh
 void set_forced_isn(uint32_t isn) { tcp_forced_isn = isn; }
 void clear_forced_isn() { tcp_forced_isn.reset(); }
+uint32_t last_isn() { return tcp_last_isn; }
 }
 }

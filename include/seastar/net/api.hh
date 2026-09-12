@@ -60,6 +60,11 @@ socket_address make_ipv4_address(uint32_t ip, uint16_t port) {
 
 namespace net {
 
+// 2026-09-12 (ECMP/NLB mechanism test): force the ISN of the next TCP connection opened on this shard by the native
+// stack (consumed once); clear to return to the RFC6528 default. Implemented in src/net/tcp.cc.
+void set_forced_isn(uint32_t isn);
+void clear_forced_isn();
+
 // see linux tcp(7) for parameter explanation
 struct tcp_keepalive_params {
     std::chrono::seconds idle; // TCP_KEEPIDLE

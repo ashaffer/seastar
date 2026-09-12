@@ -359,6 +359,7 @@ struct port_stats {
 
         struct {
             uint64_t dropped;      // missed packets (e.g. full FIFO)
+            uint64_t nombuf;       // rx_nombuf: packets dropped because no mbuf was available (pool exhausted) -- 2026-09-12
             uint64_t crc;          // packets with CRC error
             uint64_t len;          // packets with a bad length
             uint64_t total;        // total number of erroneous received packets
@@ -567,6 +568,9 @@ public:
                             sm::description("Counts a number of dropped received packets. "
                                             "A non-zero value of this counter indicated the overflow of ingress HW buffers. "
                                             "This usually happens because of a rate of a sender on the other side of the link is higher than we can process as a receiver."), {sm::shard_label(_stats_plugin_inst)}),
+
+            sm::make_derive("rx_nombuf", _stats.rx.bad.nombuf,
+                            sm::description("Counts received packets dropped because no mbuf was available (rx mempool exhausted)."), {sm::shard_label(_stats_plugin_inst)}),
 
             sm::make_derive("rx_bad_length_errors", _stats.rx.bad.len,
                             sm::description("Counts a number of received packets with a bad length value. "
@@ -1932,6 +1936,10 @@ void dpdk_device::init_port_fini()
             printf("Failed to get port statistics: %s\n", strerror(rc));
         }
 
+        // 2026-09-12: rx.bad.dropped was registered as the rx_dropped metric but never assigned (read 0 forever);
+        // imissed = packets the HW dropped for lack of rx descriptors (ring full) = the queue-binding signal.
+        _stats.rx.bad.dropped     = rte_stats.imissed;
+        _stats.rx.bad.nombuf      = rte_stats.rx_nombuf;
         _stats.rx.good.mcast      =
             _xstats.get_value(dpdk_xstats::xstat_id::rx_multicast_packets);
         _stats.rx.good.pause_xon  =

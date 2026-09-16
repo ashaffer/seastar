@@ -284,6 +284,9 @@ namespace tls {
     /// the handshake used to sit inside the Logon's SendingTime age). No-op on a non-TLS socket.
     future<> wait_handshake(connected_socket&);
 #define SEASTAR_FORK_TLS_WAIT_HANDSHAKE 1
+    /// Fork (2026-09-16): session::verify() no longer runs gnutls_certificate_verify_peers3 when the verdict is
+    /// discarded (client_auth != REQUIRE) -- ~0.8 ms less non-preemptible crypto per client dial, no behavioural change.
+#define SEASTAR_FORK_TLS_SKIP_UNUSED_VERIFY 1
     /// @}
 
     /**

@@ -829,12 +829,15 @@ public:
     }
 
     void verify() {
-        unsigned int status;
-        auto res = gnutls_certificate_verify_peers3(*this, _type != type::CLIENT || _hostname.empty()
-                        ? nullptr : _hostname.c_str(), &status);
+        // SEASTAR_FORK_TLS_SKIP_UNUSED_VERIFY (2026-09-16): the verdict below is only acted on under client_auth::REQUIRE,
+        // yet gnutls_certificate_verify_peers3 (chain + hostname, ~0.8 ms of non-preemptible crypto per dial) ran for every
+        // client handshake and was then discarded. Skip the computation when its result is ignored; behaviour is unchanged.
         if (_creds->_impl->get_client_auth() != client_auth::REQUIRE) {
             return;
         }
+        unsigned int status;
+        auto res = gnutls_certificate_verify_peers3(*this, _type != type::CLIENT || _hostname.empty()
+                        ? nullptr : _hostname.c_str(), &status);
         if (res < 0) {
             throw std::system_error(res, glts_errorc);
         }

@@ -34,7 +34,7 @@ namespace seastar {
 
 
 inline int ticks_to_ns (uint64_t delta) {
-    uint64_t hz = eal_tsc_resolution_hz;//rte_get_tsc_hz();
+    uint64_t hz = rte_get_tsc_hz();   // DPDK >= 20.11: eal_tsc_resolution_hz is internal
     return (1000000000 * delta) / hz;
 }
 

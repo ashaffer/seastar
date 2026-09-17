@@ -31,5 +31,17 @@ if (dpdk_FOUND AND NOT (TARGET dpdk::dpdk))
   # Everything the static link needs, in pkg-config's order; consumed by the seastar-dpdk.o partial link.
   string (REPLACE ";" " " dpdk_STATIC_LDFLAGS_STR "${dpdk_STATIC_LDFLAGS}")
   set (dpdk_LIBRARIES ${dpdk_STATIC_LDFLAGS})
+  # The system libraries DPDK's static archives depend on (-lnuma -lm -ldl -lpthread, and whatever optional deps meson found:
+  # archive/pcap/bsd/elf/...) are NOT folded into seastar-dpdk.o (see CMakeLists.txt); consumers must link them, so carry
+  # them on the interface target.
+  set (dpdk_SYSTEM_LIBRARIES "")
+  foreach (arg IN LISTS dpdk_STATIC_LDFLAGS)
+    if (arg MATCHES "^-l[^:]" AND NOT arg MATCHES "^-lrte_")
+      list (APPEND dpdk_SYSTEM_LIBRARIES ${arg})
+    endif ()
+  endforeach ()
+  list (REMOVE_DUPLICATES dpdk_SYSTEM_LIBRARIES)
+  set_property (TARGET dpdk::dpdk PROPERTY INTERFACE_LINK_LIBRARIES "${dpdk_SYSTEM_LIBRARIES}")
+  message (STATUS "dpdk system libraries for consumers: ${dpdk_SYSTEM_LIBRARIES}")
   message (STATUS "dpdk ${dpdk_VERSION} via pkg-config: ${dpdk_INCLUDE_DIRS}")
 endif ()

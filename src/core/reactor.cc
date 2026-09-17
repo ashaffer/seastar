@@ -4156,7 +4156,7 @@ namespace seastar {
         if (_using_dpdk) {
             auto it = _thread_loops.begin();
             uint ll = 0;
-            RTE_LCORE_FOREACH_WORKER(i)   // DPDK >= 20.11 name {
+            RTE_LCORE_FOREACH_WORKER(i) {   // DPDK >= 20.11 name
                 rte_eal_remote_launch(dpdk_thread_adaptor, static_cast<void*>(&*(it++)), i);
                 ++ll;
             }

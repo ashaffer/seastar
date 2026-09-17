@@ -798,7 +798,16 @@ if (Seastar_DPDK)
   # combine dpdk into a single relocatable object. DPDK >= 20.11: the exact static link line (whole-archive PMDs,
   # their order, and the -l: static names) comes from pkg-config (dpdk_STATIC_LDFLAGS, cmake/Finddpdk.cmake)
   # instead of the cooked 19.05 list. -nostdlib: a partial link must not resolve system libraries.
-  separate_arguments (dpdk_static_ldflags_list UNIX_COMMAND "${dpdk_STATIC_LDFLAGS_STR}")
+  separate_arguments (dpdk_static_ldflags_all UNIX_COMMAND "${dpdk_STATIC_LDFLAGS_STR}")
+  # Keep only the DPDK archives and the whole-archive brackets: pkg-config's static line also carries -lm/-ldl/-lnuma/... and a
+  # partial (-r) link would fold libm.a/libc.a members (ifunc resolvers referencing glibc-private _dl_x86_cpu_features) into
+  # seastar-dpdk.o, which no final link can resolve. The system libraries are linked by the final executable as before.
+  set (dpdk_static_ldflags_list "")
+  foreach (arg IN LISTS dpdk_static_ldflags_all)
+    if (arg MATCHES "^-l:librte_" OR arg MATCHES "^-lrte_" OR arg MATCHES "^-L" OR arg STREQUAL "-Wl,--whole-archive" OR arg STREQUAL "-Wl,--no-whole-archive")
+      list (APPEND dpdk_static_ldflags_list ${arg})
+    endif ()
+  endforeach ()
   add_custom_command (
     OUTPUT seastar-dpdk.o
     COMMAND ${CMAKE_C_COMPILER} -r -nostdlib -o seastar-dpdk.o -Wl,-fuse-ld=lld ${dpdk_static_ldflags_list}

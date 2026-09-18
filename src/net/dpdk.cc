@@ -1443,6 +1443,22 @@ public:
     dpdk_device& port() const { return *_dev; }
     tx_buf* get_tx_buf() { return _tx_buf_factory.get(); }
 private:
+    // 2026-09-18 (bb5 P-wc1 instrument, env-gated TRIARB_TXBURST_TIMING=1): rdtsc cost of the rte_eth_tx_burst() call
+    // itself (ENA LLQ descriptor push + doorbell) per shard, to A/B the write-combining BAR mapping against stock UC.
+    // Off = one predictable branch per burst. Prints a per-shard line every 1000 timed bursts (harness use only).
+    bool _txburst_timing{false};
+    uint64_t _tb_n{0}, _tb_n1{0}, _tb_sum{0}, _tb_max{0}, _tb_hist[6]{};
+    void tb_record(uint64_t dt_ticks, uint16_t sent) {
+        static const double ns_per_tick = 1e9 / (double)rte_get_tsc_hz();
+        const uint64_t ns = (uint64_t)(dt_ticks * ns_per_tick);
+        ++_tb_n; _tb_n1 += (sent == 1); _tb_sum += ns; if (ns > _tb_max) _tb_max = ns;
+        ++_tb_hist[ns < 250 ? 0 : ns < 500 ? 1 : ns < 1000 ? 2 : ns < 2000 ? 3 : ns < 4000 ? 4 : 5];
+        if ((_tb_n % 1000) == 0) {
+            printf("[txburst] cpu %u q%u: n=%lu (single-pkt %lu) mean=%lu ns max=%lu ns | <250 %lu | <500 %lu | <1us %lu | <2us %lu | <4us %lu | >=4us %lu\n",
+                   (unsigned)engine().cpu_id(), (unsigned)_qid, _tb_n, _tb_n1, _tb_sum / _tb_n, _tb_max,
+                   _tb_hist[0], _tb_hist[1], _tb_hist[2], _tb_hist[3], _tb_hist[4], _tb_hist[5]);
+        }
+    }
 
     template <class Func>
     uint32_t _send(circular_buffer<packet>& pb, Func packet_to_tx_buf_p) {
@@ -1465,6 +1481,7 @@ private:
             }
         }
 
+        const uint64_t tb_t0 = _txburst_timing ? ticks() : 0;   // P-wc1 instrument (bb5)
         uint16_t sent = rte_eth_tx_burst(_dev->port_idx(), _qid,
                                          _tx_burst.data() + _tx_burst_idx,
                                          _tx_burst.size() - _tx_burst_idx);
@@ -1474,6 +1491,7 @@ private:
         // _tx_burst get stamped by the later _send() that sends them; a never-sent
         // packet reaches the app with stamp 0.
         uint64_t wire_tick = ticks();
+        if (__builtin_expect(_txburst_timing, false) && sent > 0) { tb_record(wire_tick - tb_t0, sent); }
         uint64_t nr_frags = 0, bytes = 0;
 
         for (int i = 0; i < sent; i++) {
@@ -2194,6 +2212,8 @@ dpdk_qp<HugetlbfsMemBackend>::dpdk_qp(dpdk_device* dev, uint16_t qid,
     }
 
     printf("Rx mbuf pool initialized\n");
+    _txburst_timing = (getenv("TRIARB_TXBURST_TIMING") != nullptr);   // P-wc1 instrument (bb5)
+    if (_txburst_timing) { printf("[txburst] timing ON (cpu %u q%u)\n", (unsigned)engine().cpu_id(), (unsigned)qid); }
 
     if (HugetlbfsMemBackend) {
         build_virt2iova_table();

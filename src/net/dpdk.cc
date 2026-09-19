@@ -31,6 +31,9 @@
 #include <list>
 #include <unordered_map>
 #include <mutex>
+#include <thread>
+#include <condition_variable>
+#include <cerrno>
 #include <string>
 #include <string_view>
 #include <seastar/core/posix.hh>
@@ -56,11 +59,15 @@
 
 #include <getopt.h>
 #include <malloc.h>
+#include <pthread.h>
+#include <sched.h>
+#include <signal.h>
 
 #include <cinttypes>
 #include <rte_config.h>
 #include <rte_common.h>
 #include <rte_eal.h>
+#include <rte_lcore.h>
 #include <rte_pci.h>
 #include <rte_ethdev.h>
 #include <rte_cycles.h>
@@ -481,6 +488,16 @@ class dpdk_device : public device {
     // rss_key_type _rss_key;
     port_stats _stats;
     timer<> _stats_collector;
+    // 2026-09-19: the hardware counters are fetched by a helper thread, never by the reactor (see stats_thread_main()).
+    std::thread _stats_thread;
+    std::mutex _stats_thread_mutex;
+    std::condition_variable _stats_thread_cv;
+    bool _stats_thread_stop = false;
+    std::atomic<uint64_t> _hw_imissed{0};
+    std::atomic<uint64_t> _hw_rx_nombuf{0};
+    std::atomic<uint64_t> _hw_ierrors{0};
+    std::atomic<uint64_t> _hw_oerrors{0};
+    std::atomic<uint64_t> _hw_stats_failures{0};
     const std::string _stats_plugin_name;
     const std::string _stats_plugin_inst;
     metrics::metric_groups _metrics;
@@ -531,6 +548,13 @@ private:
      * Configures the HW Flow Control
      */
     void set_hw_flow_control();
+
+    /**
+     * Off-reactor hardware statistics collection (started once the link is up, stopped in the destructor).
+     */
+    void start_stats_thread();
+    void stop_stats_thread();
+    void stats_thread_main();
 
 public:
     dpdk_device(uint16_t port_idx, uint16_t num_queues, bool use_lro,
@@ -611,6 +635,7 @@ public:
     ~dpdk_device() {
         printf("dpdk_device destructor called\n");
         _stats_collector.cancel();
+        stop_stats_thread();
     }
 
     ethernet_address hw_address() override {
@@ -1928,18 +1953,19 @@ void dpdk_device::init_port_fini()
        show up only after port initization */
     _xstats.start();
 
+    // 2026-09-19: this callback runs on the reactor that owns the device (shard 0 = the order-book/arb shard in
+    // production) and used to call rte_eth_stats_get() itself. On the ENA PMD that is an admin-queue command whose
+    // completion is awaited on a condition variable (the driver switches the admin queue to interrupt mode after
+    // start), so the reactor thread blocked in pthread_cond_timedwait for ~36 us about once per second. Trading
+    // doctrine: shard 0/1 never blocks. The device fetch now lives in a dedicated helper thread (stats_thread_main)
+    // that publishes the consumed fields into atomics; this callback only copies them into _stats so the metric
+    // registrations and the app's periodic read of _stats ([nic] report: rx.bad.dropped / rx.bad.nombuf) are unchanged.
+    // The _xstats reads below are cheap: they index the array filled once by _xstats.start() (never refreshed, as before).
     _stats_collector.set_callback([&] {
-        rte_eth_stats rte_stats = {};
-        int rc = rte_eth_stats_get(_port_idx, &rte_stats);
-
-        if (rc) {
-            printf("Failed to get port statistics: %s\n", strerror(rc));
-        }
-
         // 2026-09-12: rx.bad.dropped was registered as the rx_dropped metric but never assigned (read 0 forever);
         // imissed = packets the HW dropped for lack of rx descriptors (ring full) = the queue-binding signal.
-        _stats.rx.bad.dropped     = rte_stats.imissed;
-        _stats.rx.bad.nombuf      = rte_stats.rx_nombuf;
+        _stats.rx.bad.dropped     = _hw_imissed.load(std::memory_order_relaxed);
+        _stats.rx.bad.nombuf      = _hw_rx_nombuf.load(std::memory_order_relaxed);
         _stats.rx.good.mcast      =
             _xstats.get_value(dpdk_xstats::xstat_id::rx_multicast_packets);
         _stats.rx.good.pause_xon  =
@@ -1953,14 +1979,14 @@ void dpdk_device::init_port_fini()
             _xstats.get_value(dpdk_xstats::xstat_id::rx_length_errors) +
             _xstats.get_value(dpdk_xstats::xstat_id::rx_undersize_errors) +
             _xstats.get_value(dpdk_xstats::xstat_id::rx_oversize_errors);
-        _stats.rx.bad.total       = rte_stats.ierrors;
+        _stats.rx.bad.total       = _hw_ierrors.load(std::memory_order_relaxed);
 
         _stats.tx.good.pause_xon  =
             _xstats.get_value(dpdk_xstats::xstat_id::tx_xon_packets);
         _stats.tx.good.pause_xoff =
             _xstats.get_value(dpdk_xstats::xstat_id::tx_xoff_packets);
 
-        _stats.tx.bad.total       = rte_stats.oerrors;
+        _stats.tx.bad.total       = _hw_oerrors.load(std::memory_order_relaxed);
     });
 
     // TODO: replace deprecated filter api with generic flow api
@@ -2175,6 +2201,7 @@ void dpdk_device::check_port_link_status()
             _link_ready_promise.set_value();
 
             // We may start collecting statistics only after the Link is UP.
+            start_stats_thread();
             _stats_collector.arm_periodic(2s);
         } else if (count++ < max_check_time) {
              std::cout << "." << std::flush;
@@ -2187,6 +2214,90 @@ void dpdk_device::check_port_link_status()
     });
 
     t->arm_periodic(check_interval);
+}
+
+// 2026-09-19: off-reactor hardware statistics (see the comment at the _stats_collector callback in init_port_fini()).
+//
+// The helper thread calls rte_eth_stats_get() every 2 s and publishes the four fields the reactor consumes. On ENA the
+// admin queue is spinlock-protected (q_lock) and each command has its own completion context, so submitting from a
+// non-EAL thread is safe alongside the PMD's own alarm/interrupt-thread commands; nothing here touches mbufs or
+// per-lcore state. The device outlives the thread: stop_stats_thread() is joined from the destructor before the
+// port goes away, and the wait is condition-variable based so the join returns immediately.
+void dpdk_device::start_stats_thread()
+{
+    if (_stats_thread.joinable()) {
+        return;
+    }
+    try {
+        _stats_thread = std::thread([this] { stats_thread_main(); });
+    } catch (const std::exception& e) {
+        printf("Port %u: cannot start the dpdk-stats thread (%s); hardware counters will read 0\n", _port_idx, e.what());
+    }
+}
+
+void dpdk_device::stop_stats_thread()
+{
+    if (!_stats_thread.joinable()) {
+        return;
+    }
+    {
+        std::lock_guard<std::mutex> lk(_stats_thread_mutex);
+        _stats_thread_stop = true;
+    }
+    _stats_thread_cv.notify_all();
+    _stats_thread.join();
+}
+
+void dpdk_device::stats_thread_main()
+{
+    pthread_setname_np(pthread_self(), "dpdk-stats");
+
+    // Never take a signal here: seastar's handlers run against the reactor's thread-locals (same as thread_pool).
+    sigset_t sigs;
+    sigfillset(&sigs);
+    ::pthread_sigmask(SIG_BLOCK, &sigs, nullptr);
+
+    // A std::thread inherits the affinity of the (pinned) reactor thread that created it, so without this it would
+    // time-slice with shard 0. Allow every configured cpu except the DPDK lcores: seastar hands EAL a "-c" coremask
+    // of exactly the reactor cpus, so lcore id == cpu id. The kernel intersects the mask with the cpuset cgroup.
+    cpu_set_t allowed;
+    CPU_ZERO(&allowed);
+    long ncpus = sysconf(_SC_NPROCESSORS_CONF);
+    for (long cpu = 0; cpu < ncpus && cpu < CPU_SETSIZE; ++cpu) {
+        CPU_SET(cpu, &allowed);
+    }
+    unsigned lcore;
+    RTE_LCORE_FOREACH(lcore) {
+        if (lcore < CPU_SETSIZE) {
+            CPU_CLR(lcore, &allowed);
+        }
+    }
+    if (CPU_COUNT(&allowed) == 0 || sched_setaffinity(0, sizeof(allowed), &allowed) != 0) {
+        // Better no counters than a helper thread sharing a reactor cpu.
+        printf("Port %u: dpdk-stats thread has no non-reactor cpu to run on (%s); hardware counters will read 0\n",
+               _port_idx, strerror(errno));
+        return;
+    }
+
+    std::unique_lock<std::mutex> lk(_stats_thread_mutex);
+    while (!_stats_thread_stop) {
+        lk.unlock();
+
+        rte_eth_stats rte_stats = {};
+        int rc = rte_eth_stats_get(_port_idx, &rte_stats);
+        if (rc == 0) {
+            _hw_imissed.store(rte_stats.imissed, std::memory_order_relaxed);
+            _hw_rx_nombuf.store(rte_stats.rx_nombuf, std::memory_order_relaxed);
+            _hw_ierrors.store(rte_stats.ierrors, std::memory_order_relaxed);
+            _hw_oerrors.store(rte_stats.oerrors, std::memory_order_relaxed);
+        } else if (_hw_stats_failures.fetch_add(1, std::memory_order_relaxed) == 0) {
+            // Once, not every 2 s.
+            printf("Failed to get port statistics: %s\n", strerror(rc < 0 ? -rc : rc));
+        }
+
+        lk.lock();
+        _stats_thread_cv.wait_for(lk, std::chrono::seconds(2), [this] { return _stats_thread_stop; });
+    }
 }
 
 // This function uses offsetof with non POD types.
